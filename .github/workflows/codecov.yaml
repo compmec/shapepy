@@ -2,6 +2,8 @@ name: Coverage
 
 on:
   push:
+    paths-ignore:
+      - 'docs/**'
     branches: [ main ]
   pull_request:
     branches: [ main ]
