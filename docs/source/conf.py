@@ -20,13 +20,13 @@ import os
 import sys
 
 sys.path.insert(0, os.path.abspath("../../src/compmec/"))
-from section import __version__ as ver
+from shape import __version__ as ver
 
 autodoc_mock_imports = []
 
 # -- Project information -----------------------------------------------------
 
-project = "compmec-section"
+project = "compmec-shape"
 copyright = "2023, Carlos Adir"
 author = "Carlos Adir"
 
@@ -114,7 +114,7 @@ html_static_path = []
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "compmec-section-doc"
+htmlhelp_basename = "compmec-shape-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -140,8 +140,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "compmec-section.tex",
-        "compmec-section Documentation",
+        "compmec-shape.tex",
+        "compmec-shape Documentation",
         "Carlos Adir",
         "manual",
     ),
@@ -151,9 +151,9 @@ latex_documents = [
 # -- Options for manual page output ------------------------------------------
 
 # One entry per manual page. List of tuples
-# (source start file, name, description, authors, manual section).
+# (source start file, name, description, authors, manual shape).
 man_pages = [
-    (master_doc, "compmec-section", "compmec-section Documentation", [author], 1)
+    (master_doc, "compmec-shape", "compmec-shape Documentation", [author], 1)
 ]
 
 
@@ -165,11 +165,11 @@ man_pages = [
 texinfo_documents = [
     (
         master_doc,
-        "compmec-section",
-        "compmec-section Documentation",
+        "compmec-shape",
+        "compmec-shape Documentation",
         author,
-        "compmec-section",
-        "Arbitrary beam cross section by boundary element method",
+        "compmec-shape",
+        "Geometry 2D library",
         "Miscellaneous",
     ),
 ]

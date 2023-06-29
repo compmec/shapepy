@@ -7,8 +7,10 @@ You can assemble JordanCurves to create shapes with holes,
 or even unconnected shapes.
 """
 
-import numpy as np
 from typing import List
+
+import numpy as np
+
 
 class JordanCurve:
     """
@@ -23,10 +25,10 @@ class JordanCurve:
 
     def __eq__(self, other):
         raise NotImplementedError
-    
+
     def __ne__(self, other):
         return not self == other
-    
+
     def __neg__(self):
         raise NotImplementedError
 
@@ -150,7 +152,7 @@ class Shape:
 
     def __mul__(self, other_shape):
         raise NotImplementedError
-    
+
     def __and__(self, other_shape):
         raise NotImplementedError
 
@@ -165,6 +167,6 @@ class Shape:
 
     def __eq__(self, other):
         raise NotImplementedError
-    
+
     def __ne__(self, other):
         return not self == other

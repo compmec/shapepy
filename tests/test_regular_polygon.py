@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from compmec.shape.primitive import regular_polygon
@@ -28,7 +27,7 @@ class TestInitial:
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestInitial::test_begin"])
-    def test_error_create_regular_polygon(self):
+    def test_error_create_regular(self):
         with pytest.raises(TypeError):
             regular_polygon("asd")
         with pytest.raises(ValueError):
@@ -36,7 +35,7 @@ class TestInitial:
         with pytest.raises(ValueError):
             regular_polygon(-1)
 
-
+    @pytest
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
@@ -49,7 +48,3 @@ class TestInitial:
     )
     def test_end(self):
         pass
-
-
-
-

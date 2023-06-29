@@ -6,6 +6,7 @@ This file contains functions to create primitive shapes such as:
 """
 
 import numpy as np
+
 from compmec.shape.shape import JordanCurve, Shape
 
 
@@ -25,4 +26,3 @@ def regular_polygon(nsides: int):
     points[:, 1] = np.sin(theta)
     curve = JordanCurve(points)
     return Shape([curve])
-
