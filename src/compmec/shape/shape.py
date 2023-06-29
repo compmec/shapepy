@@ -29,7 +29,7 @@ class Shape:
     """
 
     def __init__(self, curves: List[JordanCurve]):
-        self._curves = curves
+        self.curves = curves
 
     def move(self, horizontal: float = 0, vertical: float = 0):
         """
@@ -76,22 +76,37 @@ class Shape:
             curve.scale(horizontal, vertical)
         return self
 
-    def __add__(self, other_shape):
+    def invert(self):
+        """
+        Inverts the orientation of all the jordan curves inside
+        """
+        for curve in self:
+            curve.invert()
+
+    def deepcopy(self):
+        """
+        Creates a deep copy of all internal objects
+        """
+        newcurves = [curve.deepcopy() for curve in self]
+        newshape = self.__class__(newcurves)
+        return newshape
+
+    def __add__(self, other):
         raise NotImplementedError
 
-    def __sub__(self, other_shape):
+    def __sub__(self, other):
         raise NotImplementedError
 
-    def __mul__(self, other_shape):
+    def __mul__(self, other):
         raise NotImplementedError
 
-    def __and__(self, other_shape):
+    def __and__(self, other):
         raise NotImplementedError
 
-    def __or__(self, other_shape):
+    def __or__(self, other):
         raise NotImplementedError
 
-    def __xor__(self, other_shape):
+    def __xor__(self, other):
         raise NotImplementedError
 
     def __neg__(self):
@@ -107,5 +122,5 @@ class Shape:
         return not self == other
 
     def __iter__(self):
-        for curve in self._curves:
+        for curve in self.curves:
             yield curve

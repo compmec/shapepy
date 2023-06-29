@@ -15,11 +15,11 @@ class JordanCurve:
     """
 
     def __init__(self, points: np.ndarray):
-        self._segments = []
+        self.segments = []
         knotvector = GeneratorKnotVector.bezier(1)
         for ctrlpoints in zip(points[:-1], points[1:]):
             splinecurve = SplineCurve(knotvector, ctrlpoints)
-            self._segments.append(splinecurve)
+            self.segments.append(splinecurve)
 
     def __eq__(self, other):
         raise NotImplementedError
@@ -31,7 +31,7 @@ class JordanCurve:
         raise NotImplementedError
 
     def __iter__(self):
-        for segment in self._segments:
+        for segment in self.segments:
             yield segment
 
     def move(self, horizontal: float = 0, vertical: float = 0):
@@ -88,4 +88,18 @@ class JordanCurve:
         """
         Inverts the orientation of the jordan curve
         """
-        raise NotImplementedError
+        self.segments = self.segments[::-1]
+        for segment in self:
+            segment.ctrlpoints = segment.ctrlpts[::-1]
+        return self
+
+    def deepcopy(self):
+        """
+        Creates a deep copy of all internal objects
+        """
+        newsegments = []
+        for segment in self:
+            ctrlpts = np.copy(segment.ctrlpts)
+            knotvector = np.copy(segment.knot_vector)
+            newsegments.append(SplineCurve(knotvector, ctrlpts))
+        return self.__class__(newsegments)
