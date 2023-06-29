@@ -10,6 +10,7 @@ or even unconnected shapes.
 from typing import List
 
 import numpy as np
+from compmec.nurbs import GeneratorKnotVector, SplineCurve
 
 
 class JordanCurve:
@@ -20,8 +21,11 @@ class JordanCurve:
     """
 
     def __init__(self, points: np.ndarray):
-        points = np.array(points)
-        self._points = points
+        self._segments = []
+        knotvector = GeneratorKnotVector.bezier(1)
+        for ctrlpoints in zip(points[:-1], points[1:]):
+            splinecurve = SplineCurve(knotvector, ctrlpoints)
+            self._segments.append(splinecurve)
 
     def __eq__(self, other):
         raise NotImplementedError
@@ -40,8 +44,9 @@ class JordanCurve:
             (1, 2) becomes (2, 4)
             (1, 0) becomes (2, 2)
         """
-        self._points[:, 0] += horizontal
-        self._points[:, 1] += vertical
+        for segment in self:
+            segment.ctrlpoints[:, 0] += horizontal
+            segment.ctrlpoints[:, 1] += vertical
         return self
 
     def rotate_radians(self, angle: float):
@@ -55,8 +60,9 @@ class JordanCurve:
         rotation_matrix = cossinus * np.eye(2)
         rotation_matrix[0, 1] = sinus
         rotation_matrix[1, 0] = -sinus
-        for i, point in enumerate(self._points):
-            self._points[i] = rotation_matrix @ point
+        for segment in self:
+            for i, point in enumerate(segment.ctrlpoints):
+                segment.ctrlpoints[i] = rotation_matrix @ point
         return self
 
     def rotate_degrees(self, angle: float):
@@ -75,8 +81,9 @@ class JordanCurve:
             (1, 0) becomes (1, 0)
             (1, 3) becomes (1, 6)
         """
-        self._points[:, 0] *= horizontal
-        self._points[:, 1] *= vertical
+        for segment in self:
+            segment.ctrlpoints[:, 0] *= horizontal
+            segment.ctrlpoints[:, 1] *= vertical
         return self
 
     def invert(self):

@@ -8,6 +8,7 @@ packages = [{ include = "compmec/shape", from = "src" }]
 
 [tool.poetry.dependencies]
 numpy = "^1.0.0"
+compmec-nurbs = "^1.0.0"
 python = "^3.7"
 
 [tool.poetry.dev-dependencies]

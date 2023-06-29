@@ -1,4 +1,5 @@
 numpy
+compmec-nurbs>=1.0.0
 matplotlib>=3.4
 sphinx
 sphinx-rtd-theme
