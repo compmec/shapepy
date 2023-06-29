@@ -152,9 +152,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual shape).
-man_pages = [
-    (master_doc, "compmec-shape", "compmec-shape Documentation", [author], 1)
-]
+man_pages = [(master_doc, "compmec-shape", "compmec-shape Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
