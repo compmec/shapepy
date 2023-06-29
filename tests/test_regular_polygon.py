@@ -88,10 +88,10 @@ class TestTransformation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "TestOperations::test_move",
-            "TestOperations::test_rotate",
-            "TestOperations::test_scale",
-            "TestOperations::test_invert",
+            "TestTransformation::test_move",
+            "TestTransformation::test_rotate",
+            "TestTransformation::test_scale",
+            "TestTransformation::test_invert",
         ]
     )
     def test_end(self):

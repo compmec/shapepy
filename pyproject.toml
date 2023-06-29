@@ -11,10 +11,7 @@ numpy = "^1.0.0"
 python = "^3.7"
 
 [tool.poetry.dev-dependencies]
-pytest = "^7.0.0"
-pytest-order = "^1.0.0"
-pytest-timeout = "^2.0.0"
-pytest-dependency = "^0.5.0"
+pytest = "^5.2"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
