@@ -79,6 +79,12 @@ class JordanCurve:
         self._points[:, 1] *= vertical
         return self
 
+    def invert(self):
+        """
+        Inverts the orientation of the jordan curve
+        """
+        raise NotImplementedError
+
 
 class Shape:
     """
@@ -163,6 +169,9 @@ class Shape:
         raise NotImplementedError
 
     def __neg__(self):
+        raise NotImplementedError
+
+    def __invert__(self):
         raise NotImplementedError
 
     def __eq__(self, other):
