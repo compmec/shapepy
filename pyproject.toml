@@ -1,0 +1,25 @@
+[tool.poetry]
+name = "compmec-shape"
+version = "0.1.3"
+description = "Geometric 2D library"
+authors = ["Carlos Adir <carlos.adir.leite@gmail.com>"]
+readme = "README.md"
+packages = [{ include = "compmec/shape", from = "src" }]
+
+[tool.poetry.dependencies]
+numpy = "^1.0.0"
+python = "^3.7"
+
+[tool.poetry.dev-dependencies]
+pytest = "^5.2"
+
+[tool.poetry.group.dev.dependencies]
+pre-commit = "^3.3.3"
+scriv = {extras = ["toml"], version = "^1.3.1"}
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
+
+[tool.scriv]
+version = "literal: src/compmec/shape/__init__.py: __version__"
