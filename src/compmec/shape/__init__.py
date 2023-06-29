@@ -5,4 +5,4 @@ For the moment, it only uses polygon shapes:
     retangular is a 4-side shape while a circle is a polygon with many sides
 """
 
-__version__ = "0.1.3"
+__version__ = "0.1.0"
