@@ -2,8 +2,9 @@ name: Lint with Black
 
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
+    paths:
+      - src/**
+      - tests/**
     branches:
       - main
   pull_request:
@@ -16,6 +17,6 @@ jobs:
 
       - uses: psf/black@stable
         with:
-          options: "--check --verbose --exclude docs""
+          options: "--check --verbose --exclude docs"
     
 

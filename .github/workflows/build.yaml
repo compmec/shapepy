@@ -5,8 +5,9 @@ name: Tests
 # Controls when the workflow will run
 on:
   push:
-    paths-ignore:
-      - 'docs/**'
+    paths:
+      - src/**
+      - tests/**
     branches: [ main ]
   pull_request:
     branches: [ main ]
