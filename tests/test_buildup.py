@@ -37,11 +37,21 @@ class TestInitial:
 
     @pytest.mark.order(1)
     @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestInitial::test_create_regular"])
+    def test_iterable(self):
+        triangle = regular_polygon(3)
+        for curve in triangle:
+            for segment in curve:
+                assert callable(segment)
+
+    @pytest.mark.order(1)
+    @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
             "TestInitial::test_begin",
             "TestInitial::test_create_regular",
             "TestInitial::test_error_create_regular",
+            "TestInitial::test_iterable",
         ]
     )
     def test_end(self):

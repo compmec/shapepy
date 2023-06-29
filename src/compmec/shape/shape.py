@@ -36,6 +36,10 @@ class JordanCurve:
     def __neg__(self):
         raise NotImplementedError
 
+    def __iter__(self):
+        for segment in self._segments:
+            yield segment
+
     def move(self, horizontal: float = 0, vertical: float = 0):
         """
         Move all the curve by an amount of (x, y)
@@ -186,3 +190,7 @@ class Shape:
 
     def __ne__(self, other):
         return not self == other
+
+    def __iter__(self):
+        for curve in self.curves:
+            yield curve
