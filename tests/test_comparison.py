@@ -80,11 +80,21 @@ class TestContainsPoint:
         assert not square.contains((-1, 0))
         assert not square.contains((0, -1))
 
+    @pytest.mark.order(3)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(
+        depends=[
+            "TestContainsPoint::test_RP_cont_origin",
+            "TestContainsPoint::test_RP_notcontains",
+        ]
+    )
+    def test_end(self):
+        pass
+
 
 class TestComparison:
     @pytest.mark.order(3)
-    @pytest.mark.skip(reason="Needs implementation")
-    @pytest.mark.dependency(depends=["test_begin"])
+    @pytest.mark.dependency(depends=["TestContainsPoint::test_end"])
     def test_begin(self):
         pass
 
@@ -106,39 +116,24 @@ class TestComparison:
 
     @pytest.mark.order(3)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency(
-        depends=["TestComparison::test_begin", "TestTransformation::test_end"]
-    )
+    @pytest.mark.dependency(depends=["TestComparison::test_begin"])
     def test_shape_is_inside(self):
         small_triangle = primitive.regular_polygon(3)
         small_square = primitive.regular_polygon(4)
         big_square = primitive.regular_polygon(4).scale(3, 3)
-        assert small_triangle < big_square
-        assert small_square < big_square
+        assert big_square.contains(small_triangle)
+        assert big_square.contains(small_square)
+        assert not small_triangle.contains(big_square)
+        assert not small_square.contains(big_square)
 
     @pytest.mark.order(3)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency(
-        depends=["TestComparison::test_begin", "TestTransformation::test_end"]
-    )
-    def test_shape_is_outside(self):
-        small_triangle = primitive.regular_polygon(3)
-        small_square = primitive.regular_polygon(4)
-        big_square = primitive.regular_polygon(4).scale(3, 3)
-        assert big_square > small_triangle
-        assert big_square > small_square
-
-    @pytest.mark.order(3)
-    @pytest.mark.timeout(1)
-    @pytest.mark.dependency(
-        depends=["TestComparison::test_begin", "TestTransformation::test_end"]
-    )
+    @pytest.mark.dependency(depends=["TestComparison::test_begin"])
     def test_shape_is_neither(self):
         small_triangle = primitive.regular_polygon(3)
         small_square = primitive.regular_polygon(4)
-        assert not (small_triangle > small_square)
-        assert not (small_triangle == small_square)
-        assert not (small_triangle < small_square)
+        assert not small_square.contains(small_triangle)
+        assert not small_triangle.contains(small_square)
 
     @pytest.mark.order(3)
     @pytest.mark.timeout(1)
@@ -147,7 +142,6 @@ class TestComparison:
             "TestComparison::test_equal",
             "TestComparison::test_inequal",
             "TestComparison::test_shape_is_inside",
-            "TestComparison::test_shape_is_outside",
             "TestComparison::test_shape_is_neither",
         ]
     )

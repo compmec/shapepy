@@ -24,7 +24,20 @@ class JordanCurve:
             self.segments.append(splinecurve)
 
     def __eq__(self, other):
-        raise NotImplementedError
+        if len(self.segments) != len(other.segments):
+            return False
+        indexroll = 0
+        for segment in other:
+            if segment == self.segments[0]:
+                break
+            indexroll += 1
+        else:
+            return False
+        rolledlist = np.roll(other.segments, -indexroll)
+        for seg1, seg2 in zip(self, rolledlist):
+            if seg1 != seg2:
+                return False
+        return True
 
     def __ne__(self, other):
         return not self == other
@@ -164,10 +177,10 @@ def find_line_equation(point0: Tuple, point1: Tuple) -> Tuple:
         a * xA + b * yA + c = 0
         a * xB + b * yB + c = 0
     """
-    coef_a = point1[1] - point0[1]
-    coef_b = point0[0] - point1[0]
-    coef_c = point0[1] * point1[0] - point0[0] * point1[1]
-    return coef_a, coef_b, coef_c
+    coefa = point1[1] - point0[1]
+    coefb = point0[0] - point1[0]
+    coefc = point0[1] * point1[0] - point0[0] * point1[1]
+    return coefa, coefb, coefc
 
 
 def get_angle_ray(vertices: np.ndarray) -> Tuple[float]:
@@ -183,6 +196,7 @@ def get_angle_ray(vertices: np.ndarray) -> Tuple[float]:
         # Loop to be sure the ray doesn't pass thought a vertices
         angle = np.arctan2(vertex[1], vertex[0]) % np.pi
         forbid_angles.append(angle)
+
     # Find a good angle for ray tracing
     forbid_angles = np.array(forbid_angles)
     forbid_angles.sort()
@@ -223,6 +237,27 @@ def ray_pass_through_segment(angle: float, vert0: Tuple, vert1: Tuple) -> bool:
     return False
 
 
+def is_origin_in_boundary(vertices: np.ndarray) -> bool:
+    """
+    Verify if at least one pass through the origin.
+    First, it verifies if at least one vertice is at (0, 0)
+    Second, it verifies if the point (0, 0) is in at least one edge
+    """
+    for vertex in vertices:
+        if np.linalg.norm(vertex) < 1e-9:
+            return True
+    for vertex0, vertex1 in zip(vertices[:-1], vertices[1:]):
+        coefa, coefb, coefc = find_line_equation(vertex0, vertex1)
+        if np.abs(coefc / np.sqrt(coefa**2 + coefb**2)) < 1e-9:  # tolerance
+            modvertex0 = np.linalg.norm(vertex0)
+            modvertex1 = np.linalg.norm(vertex1)
+            moddiffver = np.linalg.norm(vertex1 - vertex0)
+            tparameter = (modvertex1**2 - modvertex0**2) / (moddiffver**2)
+            if np.abs(tparameter) <= 1:
+                return True
+    return False
+
+
 def is_origin_inside_polygon(vertices: np.ndarray) -> bool:
     """
     Given a point like (xp, yp), verifies if this point is inside the polygon
@@ -234,9 +269,8 @@ def is_origin_inside_polygon(vertices: np.ndarray) -> bool:
     Third: For each segment, find the line's parameter (a, b, c)
         if 'c' is zero, then we must test if the origin is on the boundary
     """
-    for vertex in vertices:
-        if np.linalg.norm(vertex) < 1e-9:
-            return False
+    if is_origin_in_boundary(vertices):
+        return False
     rayangle = get_angle_ray(vertices)
     counter = 0
     for vertex0, vertex1 in zip(vertices[:-1], vertices[1:]):

@@ -116,7 +116,12 @@ class Shape:
         raise NotImplementedError
 
     def __eq__(self, other):
-        raise NotImplementedError
+        if len(self.curves) != len(other.curves):
+            return False
+        for curve1, curve2 in zip(self, other):
+            if curve1 != curve2:
+                return False
+        return True
 
     def __ne__(self, other):
         return not self == other
@@ -131,7 +136,14 @@ class Shape:
         are inside all the positive parts of 'self'
         Mathematically: A.contains(B) <=> A + B == A
         """
+        if not isinstance(other, Shape):
+            for curve in self:
+                if not curve.contains(other):
+                    return False
+            return True
+
         for curve in self:
-            if not curve.contains(other):
-                return False
+            for curve2 in other:
+                if not curve.contains(curve2):
+                    return False
         return True
