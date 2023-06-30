@@ -3,6 +3,8 @@ This modules contains a powerful class called JordanCurve which
 is in fact, stores a list of spline-curves.
 """
 
+from typing import Tuple
+
 import numpy as np
 from compmec.nurbs import GeneratorKnotVector, SplineCurve
 
@@ -56,8 +58,8 @@ class JordanCurve:
         """
         cossinus, sinus = np.cos(angle), np.sin(angle)
         rotation_matrix = cossinus * np.eye(2)
-        rotation_matrix[0, 1] = sinus
-        rotation_matrix[1, 0] = -sinus
+        rotation_matrix[0, 1] = -sinus
+        rotation_matrix[1, 0] = sinus
         for segment in self:
             for i, point in enumerate(segment.ctrlpoints):
                 segment.ctrlpoints[i] = rotation_matrix @ point
@@ -90,7 +92,7 @@ class JordanCurve:
         """
         self.segments = self.segments[::-1]
         for segment in self:
-            segment.ctrlpoints = segment.ctrlpts[::-1]
+            segment.ctrlpoints = segment.ctrlpoints[::-1]
         return self
 
     def deepcopy(self):
@@ -103,3 +105,141 @@ class JordanCurve:
             knotvector = np.copy(segment.knot_vector)
             newsegments.append(SplineCurve(knotvector, ctrlpts))
         return self.__class__(newsegments)
+
+    def polygon_points(self, ndiv: int = 1):
+        """
+        Discretize each segment of the curve and transform it into a polygon
+        Result shape is ndiv * len(curve.segments) + 1
+        The last point is equal to the first one
+        """
+        points = np.zeros((ndiv * len(self.segments) + 1, 2))
+        tsample = np.linspace(0, 1, ndiv, endpoint=False)
+        for i, segment in enumerate(self):
+            lower = i * ndiv
+            upper = (i + 1) * ndiv
+            points[lower:upper] = segment(tsample)
+        points[-1] = points[0]
+        return points
+
+    def contains_point(self, points: np.ndarray) -> bool:
+        """
+        Verifies if the current jordan curve contains the specified point
+        This function displaces all the points, turning each desired point
+        in the origin, and then verifies if the polygon contains the origin
+        """
+        points = np.array(points)
+        displaced_vertices = self.polygon_points()
+        if points.ndim == 1:  # Only one point
+            displaced_vertices[:, 0] -= points[0]
+            displaced_vertices[:, 1] -= points[1]
+            return is_origin_inside_polygon(displaced_vertices)
+        for point in points:
+            displaced_vertices[:, 0] -= point[0]
+            displaced_vertices[:, 1] -= point[1]
+            if not is_origin_inside_polygon(displaced_vertices):
+                return False
+            displaced_vertices[:, 0] += point[0]
+            displaced_vertices[:, 1] += point[1]
+        return True
+
+    def contains(self, other) -> bool:
+        """
+        Verifies if the current jordan curve contains the object
+        The object can be
+            * a point
+            * a set of points
+            * another jordan curve
+        If the jordan curve is negative, it switches the interior
+        and exterior part of a positive jordan curve
+        """
+        if isinstance(other, JordanCurve):
+            other = other.polygon_points()
+        return self.contains_point(other)
+
+
+def find_line_equation(point0: Tuple, point1: Tuple) -> Tuple:
+    """
+    Given two points, like A = (xA, yA) and B = (xB, yB)
+    This functions finds the coefficients (a, b, c) such
+        a * xA + b * yA + c = 0
+        a * xB + b * yB + c = 0
+    """
+    coef_a = point1[1] - point0[1]
+    coef_b = point0[0] - point1[0]
+    coef_c = point0[1] * point1[0] - point0[0] * point1[1]
+    return coef_a, coef_b, coef_c
+
+
+def get_angle_ray(vertices: np.ndarray) -> Tuple[float]:
+    """
+    Given a polygon, it computes the good angle for ray-tracing.
+    The ray-tracing is used to decide if a point is inside a polygon.
+    This function computes the forbiden angles, and sets the ray's
+    angle such stays away for all these angles.
+    Forbiden means: The ray does't intersect any vertex
+    """
+    forbid_angles = [0, np.pi]
+    for vertex in vertices:
+        # Loop to be sure the ray doesn't pass thought a vertices
+        angle = np.arctan2(vertex[1], vertex[0]) % np.pi
+        forbid_angles.append(angle)
+    # Find a good angle for ray tracing
+    forbid_angles = np.array(forbid_angles)
+    forbid_angles.sort()
+    diffangles = forbid_angles[1:] - forbid_angles[:-1]
+    index = np.where(diffangles == np.max(diffangles))[0]
+    index = index[np.random.randint(len(index))]
+    rayangle = 0.5 * (forbid_angles[index] + forbid_angles[index + 1])
+    return rayangle
+
+
+def ray_pass_through_segment(angle: float, vert0: Tuple, vert1: Tuple) -> bool:
+    """
+    Given two vertex, called vertex0 = (x0, y0) and vertex1 = (x1, y1)
+    This function returns if the ray that starts at (0, 0) and goes to
+    infinity touches the segment (x0, y0) -> (x1, y1)
+    The ray's equation is:
+        r(u) = (u*cos(angle), u*sin(angle))
+    The line's equation is:
+        l(t) = ((x0+x1)/2 + t*(x1-x0)/2,
+                (y0+y1)/2 + t*(y1+y0)/2)
+    There's an intersection point only if:
+        * Line l(t) is not parallel to the ray r(u)
+        * Parameter u is positive (ray can't go other direction)
+        * Parameter t is between (-1, 1)
+    """
+    cosray, sinray = np.cos(angle), np.sin(angle)
+    meanx = vert1[0] + vert0[0]
+    meany = vert1[1] + vert0[1]
+    deltax = vert1[0] - vert0[0]
+    deltay = vert1[1] - vert0[1]
+    denomin = deltay * cosray - deltax * sinray
+    if denomin == 0:  # Parallel line
+        return False
+    tparam = (meanx * sinray - meany * cosray) / denomin
+    uparam = meany + deltay * tparam
+    if np.abs(tparam) < 1 and uparam > 0:
+        return True
+    return False
+
+
+def is_origin_inside_polygon(vertices: np.ndarray) -> bool:
+    """
+    Given a point like (xp, yp), verifies if this point is inside the polygon
+    made by the points ``vertices``. If a point is on the boundary -> outside
+    Algorithm used: ray-casting
+    Frist: It translate all the points, such (xp, yp) becomes origin
+    Second: For each vertex (xi, pi), find the forbid angle
+        to be sure the ray don't pass through a vertex
+    Third: For each segment, find the line's parameter (a, b, c)
+        if 'c' is zero, then we must test if the origin is on the boundary
+    """
+    for vertex in vertices:
+        if np.linalg.norm(vertex) < 1e-9:
+            return False
+    rayangle = get_angle_ray(vertices)
+    counter = 0
+    for vertex0, vertex1 in zip(vertices[:-1], vertices[1:]):
+        if ray_pass_through_segment(rayangle, vertex0, vertex1):
+            counter += 1
+    return bool(counter % 2)

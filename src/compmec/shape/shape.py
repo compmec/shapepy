@@ -124,3 +124,14 @@ class Shape:
     def __iter__(self):
         for curve in self.curves:
             yield curve
+
+    def contains(self, other) -> bool:
+        """
+        Returns if all the positive parts of 'other'
+        are inside all the positive parts of 'self'
+        Mathematically: A.contains(B) <=> A + B == A
+        """
+        for curve in self:
+            if not curve.contains(other):
+                return False
+        return True
