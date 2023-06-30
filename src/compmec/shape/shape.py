@@ -6,8 +6,10 @@ like ```move```, ```rotate``` and ```scale``` to model your desired curve.
 You can assemble JordanCurves to create shapes with holes,
 or even unconnected shapes.
 """
+from typing import List, Tuple
 
-from typing import List
+import numpy as np
+from compmec.nurbs import SplineCurve
 
 from compmec.shape.jordancurve import JordanCurve
 
@@ -116,12 +118,10 @@ class Shape:
         raise NotImplementedError
 
     def __eq__(self, other):
-        if len(self.curves) != len(other.curves):
-            return False
-        for curve1, curve2 in zip(self, other):
-            if curve1 != curve2:
-                return False
-        return True
+        """
+        For the moment, only valid with one curves
+        """
+        return self.curves[0] == other.curves[0]
 
     def __ne__(self, other):
         return not self == other
@@ -147,3 +147,33 @@ class Shape:
                 if not curve.contains(curve2):
                     return False
         return True
+
+
+def intersection(segment0: SplineCurve, segment1: SplineCurve) -> Tuple:
+    """
+    Verifies if the segmentA touches the segmentB.
+        segmentA is parametrized like A(t), 0 <= t <= 1
+        segmentB is parametrized like B(u), 0 <= u <= 1
+    Returns all the pairs (t, u) such A(t) == B(u)
+        ((t0, u0), (t1, u1), ...)
+    If there's no intersection, returns an empty Tuple
+
+    This algorithm consider only linear segments.
+    If SplineCurve.degree != 1, raises ValueError
+    """
+    if segment0.degree != 1:
+        raise ValueError
+    if segment1.degree != 1:
+        raise ValueError
+    point0init, point0end = segment0.ctrlpoints
+    point1init, point1end = segment1.ctrlpoints
+    matrix = np.array([point0end - point0init, point1end - point1init]).T
+    if np.linalg.det(matrix) < 1e-9:
+        return tuple()  # Parallel lines, no solution
+    force = point1init - point0init
+    param0, param1 = np.linalg.solve(matrix, force)
+    if param0 < 0 or 1 < param0:
+        return tuple()  # Outside the interval of t
+    if param1 < 0 or 1 < param1:
+        return tuple()  # Outside the interval of u
+    return tuple(((param0, param1),))

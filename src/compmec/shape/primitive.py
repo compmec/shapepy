@@ -27,7 +27,7 @@ def regular_polygon(nsides: int) -> Shape:
     theta = np.linspace(0, 2 * np.pi, nsides + 1)
     points[:, 0] = np.cos(theta)
     points[:, 1] = np.sin(theta)
-    curve = JordanCurve(points)
+    curve = JordanCurve.init_from_points(points)
     return Shape([curve])
 
 

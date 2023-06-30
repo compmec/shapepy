@@ -16,12 +16,22 @@ class JordanCurve:
     The standard is to receive a list of points
     """
 
-    def __init__(self, points: np.ndarray):
-        self.segments = []
+    @staticmethod
+    def init_from_points(vertices: np.ndarray):
+        """
+        Given a list of points, this function creates a polygon which
+        vertices are `vertices`.
+        Each segment is straight.
+        """
+        segments = []
         knotvector = GeneratorKnotVector.bezier(1)
-        for ctrlpoints in zip(points[:-1], points[1:]):
+        for ctrlpoints in zip(vertices[:-1], vertices[1:]):
             splinecurve = SplineCurve(knotvector, ctrlpoints)
-            self.segments.append(splinecurve)
+            segments.append(splinecurve)
+        return JordanCurve(segments)
+
+    def __init__(self, segments: Tuple[SplineCurve]):
+        self.segments = segments
 
     def __eq__(self, other):
         if len(self.segments) != len(other.segments):
@@ -114,9 +124,15 @@ class JordanCurve:
         """
         newsegments = []
         for segment in self:
-            ctrlpts = np.copy(segment.ctrlpts)
-            knotvector = np.copy(segment.knot_vector)
-            newsegments.append(SplineCurve(knotvector, ctrlpts))
+            ctrlpoints = np.copy(segment.ctrlpoints)
+            knotvector = np.copy(segment.knotvector)
+            print(type(ctrlpoints))
+            print(ctrlpoints)
+            print(ctrlpoints.dtype)
+            ctrlpoints = np.array(ctrlpoints, dtype="float64")
+            print("What")
+            newsegment = SplineCurve(knotvector, ctrlpoints)
+            newsegments.append(newsegment)
         return self.__class__(newsegments)
 
     def polygon_points(self, ndiv: int = 1):

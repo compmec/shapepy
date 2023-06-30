@@ -1,6 +1,6 @@
 import pytest
 
-from compmec.shape.primitive import regular_polygon
+from compmec.shape import primitive
 
 
 @pytest.mark.order(4)
@@ -27,8 +27,8 @@ class TestOperation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestOperation::test_begin"])
     def test_sum_regular(self):
-        triangle = regular_polygon(3)
-        square = regular_polygon(4)
+        triangle = primitive.regular_polygon(3)
+        square = primitive.regular_polygon(4)
         triangle + square
         triangle | square
         triangle or square
@@ -37,8 +37,8 @@ class TestOperation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestOperation::test_begin"])
     def test_sub_regular(self):
-        triangle = regular_polygon(3)
-        square = regular_polygon(4)
+        triangle = primitive.regular_polygon(3)
+        square = primitive.regular_polygon(4)
         triangle - square
         square - triangle
 
@@ -46,8 +46,8 @@ class TestOperation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestOperation::test_begin"])
     def test_mul_regular(self):
-        triangle = regular_polygon(3)
-        square = regular_polygon(4)
+        triangle = primitive.regular_polygon(3)
+        square = primitive.regular_polygon(4)
         triangle * square
         triangle & square
         square and triangle
@@ -56,8 +56,8 @@ class TestOperation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestOperation::test_begin"])
     def test_xor_regular(self):
-        triangle = regular_polygon(3)
-        square = regular_polygon(4)
+        triangle = primitive.regular_polygon(3)
+        square = primitive.regular_polygon(4)
         triangle ^ square
 
     @pytest.mark.order(4)

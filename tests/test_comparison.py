@@ -115,6 +115,17 @@ class TestComparison:
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
+    @pytest.mark.dependency(
+        depends=["TestComparison::test_equal", "TestComparison::test_inequal"]
+    )
+    def test_deepcopy(self):
+        triangle = primitive.regular_polygon(3)
+        new_triangle = triangle.deepcopy()
+        assert triangle == new_triangle
+        assert id(triangle) != id(new_triangle)
+
+    @pytest.mark.order(2)
+    @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestComparison::test_begin"])
     def test_shape_is_inside(self):
         small_triangle = primitive.triangle(side=1)
@@ -142,6 +153,7 @@ class TestComparison:
             "TestComparison::test_inequal",
             "TestComparison::test_shape_is_inside",
             "TestComparison::test_shape_is_neither",
+            "TestComparison::test_deepcopy",
         ]
     )
     def test_end(self):
