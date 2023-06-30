@@ -7,6 +7,7 @@ from compmec.shape.primitive import regular_polygon
 @pytest.mark.dependency(
     depends=[
         "tests/test_buildup.py::test_end",
+        "tests/test_comparison.py::test_end",
     ],
     scope="session",
 )
