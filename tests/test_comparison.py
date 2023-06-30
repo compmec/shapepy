@@ -60,8 +60,8 @@ class TestContainsPoint:
         RP = regular polygon
         """
         square = primitive.square(side=2)
-        print(square.curves[0].polygon_points())
         assert square.contains((0, 0))
+        assert not square.omits((0, 0))
         assert square.contains((0.99, 0.99))
         assert square.contains((-0.99, 0.99))
         assert square.contains((-0.99, -0.99))
@@ -81,10 +81,33 @@ class TestContainsPoint:
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
+    def test_shape_is_inside(self):
+        small_triangle = primitive.triangle(side=1)
+        small_square = primitive.square(side=1)
+        big_square = primitive.square(side=3)
+        assert big_square.contains(small_triangle)
+        assert big_square.contains(small_square)
+        assert not small_triangle.contains(big_square)
+        assert not small_square.contains(big_square)
+
+    @pytest.mark.order(2)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
+    def test_shape_is_neither(self):
+        small_triangle = primitive.regular_polygon(3)
+        small_square = primitive.regular_polygon(4)
+        assert not small_square.contains(small_triangle)
+        assert not small_triangle.contains(small_square)
+
+    @pytest.mark.order(2)
+    @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
             "TestContainsPoint::test_RP_cont_origin",
             "TestContainsPoint::test_RP_notcontains",
+            "TestContainsPoint::test_shape_is_inside",
+            "TestContainsPoint::test_shape_is_neither",
         ]
     )
     def test_end(self):
@@ -126,33 +149,10 @@ class TestComparison:
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency(depends=["TestComparison::test_begin"])
-    def test_shape_is_inside(self):
-        small_triangle = primitive.triangle(side=1)
-        small_square = primitive.square(side=1)
-        big_square = primitive.square(side=3)
-        assert big_square.contains(small_triangle)
-        assert big_square.contains(small_square)
-        assert not small_triangle.contains(big_square)
-        assert not small_square.contains(big_square)
-
-    @pytest.mark.order(2)
-    @pytest.mark.timeout(1)
-    @pytest.mark.dependency(depends=["TestComparison::test_begin"])
-    def test_shape_is_neither(self):
-        small_triangle = primitive.regular_polygon(3)
-        small_square = primitive.regular_polygon(4)
-        assert not small_square.contains(small_triangle)
-        assert not small_triangle.contains(small_square)
-
-    @pytest.mark.order(2)
-    @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
             "TestComparison::test_equal",
             "TestComparison::test_inequal",
-            "TestComparison::test_shape_is_inside",
-            "TestComparison::test_shape_is_neither",
             "TestComparison::test_deepcopy",
         ]
     )

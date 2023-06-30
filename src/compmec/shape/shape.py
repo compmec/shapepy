@@ -142,11 +142,32 @@ class Shape:
                     return False
             return True
 
-        for curve in self:
-            for curve2 in other:
-                if not curve.contains(curve2):
+        return self.contains(other.curves[0])
+
+    def omits(self, other) -> bool:
+        """
+        Returns if all the positive parts of 'other'
+        are outside all the positive parts of 'self'
+        Mathematically: A.omits(B) <=> A * B == None
+        """
+        if not isinstance(other, Shape):
+            for curve in self:
+                if not curve.omits(other):
                     return False
-        return True
+            return True
+        return self.omits(other.curves[0])
+
+    def intersects(self, other) -> bool:
+        """
+        Returns if there's at least one intersection
+        Mathematically: A.intersects(B) <=> A * B != None
+        """
+        if not isinstance(other, Shape):
+            for curve in self:
+                if not curve.omits(other):
+                    return False
+            return True
+        return self.omits(other.curves[0])
 
 
 def intersection(segment0: SplineCurve, segment1: SplineCurve) -> Tuple:

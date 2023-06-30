@@ -126,11 +126,7 @@ class JordanCurve:
         for segment in self:
             ctrlpoints = np.copy(segment.ctrlpoints)
             knotvector = np.copy(segment.knotvector)
-            print(type(ctrlpoints))
-            print(ctrlpoints)
-            print(ctrlpoints.dtype)
             ctrlpoints = np.array(ctrlpoints, dtype="float64")
-            print("What")
             newsegment = SplineCurve(knotvector, ctrlpoints)
             newsegments.append(newsegment)
         return self.__class__(newsegments)
@@ -150,26 +146,89 @@ class JordanCurve:
         points[-1] = points[0]
         return points
 
-    def contains_point(self, points: np.ndarray) -> bool:
+    def contains_point(self, point: np.ndarray) -> bool:
         """
         Verifies if the current jordan curve contains the specified point
         This function displaces all the points, turning each desired point
         in the origin, and then verifies if the polygon contains the origin
         """
-        points = np.array(points)
+        point = np.array(point)
         displaced_vertices = self.polygon_points()
-        if points.ndim == 1:  # Only one point
-            displaced_vertices[:, 0] -= points[0]
-            displaced_vertices[:, 1] -= points[1]
-            return is_origin_inside_polygon(displaced_vertices)
+        displaced_vertices[:, 0] -= point[0]
+        displaced_vertices[:, 1] -= point[1]
+        if is_origin_in_boundary(displaced_vertices):
+            return False
+        return is_origin_inside_polygon(displaced_vertices)
+
+    def contains_points(self, points: np.ndarray) -> bool:
+        """
+        Verifies if the current jordan curve contains all the points
+        """
+        displaced_vertices = self.polygon_points()
         for point in points:
             displaced_vertices[:, 0] -= point[0]
             displaced_vertices[:, 1] -= point[1]
+            if is_origin_in_boundary(displaced_vertices):
+                return False
             if not is_origin_inside_polygon(displaced_vertices):
                 return False
             displaced_vertices[:, 0] += point[0]
             displaced_vertices[:, 1] += point[1]
         return True
+
+    def omits_point(self, point: np.ndarray) -> bool:
+        """
+        Verifies if the current jordan curve contains the specified point
+        This function displaces all the points, turning each desired point
+        in the origin, and then verifies if the polygon contains the origin
+        """
+        point = np.array(point)
+        displaced_vertices = self.polygon_points()
+        displaced_vertices[:, 0] -= point[0]
+        displaced_vertices[:, 1] -= point[1]
+        if is_origin_in_boundary(displaced_vertices):
+            return False
+        return not is_origin_inside_polygon(displaced_vertices)
+
+    def omits_points(self, points: np.ndarray) -> bool:
+        """
+        Verifies if the current jordan curve omits all the points
+        """
+        displaced_vertices = self.polygon_points()
+        for point in points:
+            displaced_vertices[:, 0] -= point[0]
+            displaced_vertices[:, 1] -= point[1]
+            if is_origin_in_boundary(displaced_vertices):
+                return False
+            if is_origin_inside_polygon(displaced_vertices):
+                return False
+            displaced_vertices[:, 0] += point[0]
+            displaced_vertices[:, 1] += point[1]
+        return True
+
+    def intersects_point(self, point: np.ndarray) -> bool:
+        """
+        Verifies if the current jordan curve omits all the points
+        """
+        point = np.array(point)
+        displaced_vertices = self.polygon_points()
+        displaced_vertices[:, 0] -= point[0]
+        displaced_vertices[:, 1] -= point[1]
+        return is_origin_in_boundary(displaced_vertices)
+
+    def intersects_points(self, points: np.ndarray) -> bool:
+        """
+        Verifies if the current jordan curve omits all the points
+        """
+        displaced_vertices = self.polygon_points()
+        for point in points:
+            displaced_vertices[:, 0] -= point[0]
+            displaced_vertices[:, 1] -= point[1]
+            if is_origin_in_boundary(displaced_vertices):
+                return True
+            displaced_vertices[:, 0] += point[0]
+            displaced_vertices[:, 1] += point[1]
+        return False
 
     def contains(self, other) -> bool:
         """
@@ -183,7 +242,42 @@ class JordanCurve:
         """
         if isinstance(other, JordanCurve):
             other = other.polygon_points()
-        return self.contains_point(other)
+        other = np.array(other)
+        if other.ndim == 1:
+            return self.contains_point(other)
+        return self.contains_points(other)
+
+    def omits(self, other) -> bool:
+        """
+        Verifies if the object is outside the current jordan curve
+        The object can be
+            * a point
+            * a set of points
+            * another jordan curve
+        If the jordan curve is negative, it switches the interior
+        and exterior part of a positive jordan curve
+        """
+        if isinstance(other, JordanCurve):
+            other = other.polygon_points()
+        other = np.array(other)
+        if other.ndim == 1:
+            return self.omits_point(other)
+        return self.omits_points(other)
+
+    def intersects(self, other) -> bool:
+        """
+        Verifies if the object  intersects the current jordan curve
+        The object can be
+            * a point
+            * a set of points
+            * another jordan curve
+        """
+        if isinstance(other, JordanCurve):
+            other = other.polygon_points()
+        other = np.array(other)
+        if other.ndim == 1:
+            return self.intersects_point(other)
+        return self.intersects_points(other)
 
 
 def find_line_equation(point0: Tuple, point1: Tuple) -> Tuple:
@@ -277,7 +371,7 @@ def is_origin_in_boundary(vertices: np.ndarray) -> bool:
 def is_origin_inside_polygon(vertices: np.ndarray) -> bool:
     """
     Given a point like (xp, yp), verifies if this point is inside the polygon
-    made by the points ``vertices``. If a point is on the boundary -> outside
+    made by the points ``vertices``.
     Algorithm used: ray-casting
     Frist: It translate all the points, such (xp, yp) becomes origin
     Second: For each vertex (xi, pi), find the forbid angle
@@ -285,8 +379,6 @@ def is_origin_inside_polygon(vertices: np.ndarray) -> bool:
     Third: For each segment, find the line's parameter (a, b, c)
         if 'c' is zero, then we must test if the origin is on the boundary
     """
-    if is_origin_in_boundary(vertices):
-        return False
     rayangle = get_angle_ray(vertices)
     counter = 0
     for vertex0, vertex1 in zip(vertices[:-1], vertices[1:]):
