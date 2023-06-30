@@ -105,7 +105,6 @@ class TestComparison:
         square2 = primitive.regular_polygon(4)
         assert square1 == square2
 
-
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestComparison::test_begin"])
@@ -113,7 +112,6 @@ class TestComparison:
         triangle = primitive.regular_polygon(3)
         square = primitive.regular_polygon(4)
         assert triangle != square
-
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
