@@ -164,10 +164,10 @@ class Shape:
         """
         if not isinstance(other, Shape):
             for curve in self:
-                if not curve.omits(other):
+                if not curve.intersects(other):
                     return False
             return True
-        return self.omits(other.curves[0])
+        return self.intersects(other.curves[0])
 
 
 def intersection(segment0: SplineCurve, segment1: SplineCurve) -> Tuple:

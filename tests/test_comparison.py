@@ -34,50 +34,103 @@ class TestContainsPoint:
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestContainsPoint::test_RP_cont_origin"])
-    def test_RP_notcontains(self):
+    def test_square_near_boundary(self):
         """
         RP = regular polygon
         """
-        for nsides in range(3, 15):
-            print("nsides = ", nsides)
-            polygon = primitive.regular_polygon(nsides)
-            assert polygon.contains((0.99, 0))
-            assert not polygon.contains((1, 0))
-            assert not polygon.contains((0, 1))
-            assert not polygon.contains((-1, 0))
-            assert not polygon.contains((0, -1))
-
-    @pytest.mark.order(2)
-    @pytest.mark.timeout(1)
-    @pytest.mark.dependency(
-        depends=[
-            "TestContainsPoint::test_RP_cont_origin",
-            "TestContainsPoint::test_RP_notcontains",
-        ]
-    )
-    def test_square_boundary(self):
-        """
-        RP = regular polygon
-        """
-        square = primitive.square(side=2)
+        square = primitive.square(side=2, center=(0, 0))
         assert square.contains((0, 0))
         assert not square.omits((0, 0))
-        assert square.contains((0.99, 0.99))
-        assert square.contains((-0.99, 0.99))
-        assert square.contains((-0.99, -0.99))
-        assert square.contains((0.99, -0.99))
+        assert not square.intersects((0, 0))
 
-        # Vertex
+        # Near interior
+        assert square.contains(
+            [
+                (0.99, 0.99),
+                (0, 0.99),
+                (-0.99, 0.99),
+                (-0.99, 0),
+                (-0.99, -0.99),
+                (0, -0.99),
+                (0.99, -0.99),
+                (0.99, 0),
+            ]
+        )
+        assert not square.omits((0.99, 0.99))
+        assert not square.omits((0, 0.99))
+        assert not square.omits((-0.99, 0.99))
+        assert not square.omits((-0.99, 0))
+        assert not square.omits((-0.99, -0.99))
+        assert not square.omits((0, -0.99))
+        assert not square.omits((0.99, -0.99))
+        assert not square.omits((0.99, 0))
+        assert not square.intersects((0.99, 0.99))
+        assert not square.intersects((0, 0.99))
+        assert not square.intersects((-0.99, 0.99))
+        assert not square.intersects((-0.99, 0))
+        assert not square.intersects((-0.99, -0.99))
+        assert not square.intersects((0, -0.99))
+        assert not square.intersects((0.99, -0.99))
+        assert not square.intersects((0.99, 0))
+
+        # Boundary
+        assert not square.contains((1, 0))
         assert not square.contains((1, 1))
+        assert not square.contains((0, 1))
         assert not square.contains((-1, 1))
+        assert not square.contains((-1, 0))
         assert not square.contains((-1, -1))
+        assert not square.contains((0, -1))
         assert not square.contains((1, -1))
 
-        # Lines
-        assert not square.contains((1, 0))
-        assert not square.contains((0, 1))
-        assert not square.contains((-1, 0))
-        assert not square.contains((0, -1))
+        assert square.intersects((1, 0))
+        assert square.intersects((1, 1))
+        assert square.intersects((0, 1))
+        assert square.intersects((-1, 1))
+        assert square.intersects((-1, 0))
+        assert square.intersects((-1, -1))
+        assert square.intersects((0, -1))
+        assert square.intersects((1, -1))
+
+        assert not square.omits((1, 0))
+        assert not square.omits((1, 1))
+        assert not square.omits((0, 1))
+        assert not square.omits((-1, 1))
+        assert not square.omits((-1, 0))
+        assert not square.omits((-1, -1))
+        assert not square.omits((0, -1))
+        assert not square.omits((1, -1))
+
+        # Near exterior
+        assert not square.contains((1.01, 0))
+        assert not square.contains((1.01, 1.01))
+        assert not square.contains((0, 1.01))
+        assert not square.contains((-1.01, 1.01))
+        assert not square.contains((-1.01, 0))
+        assert not square.contains((-1.01, -1.01))
+        assert not square.contains((0, -1.01))
+        assert not square.contains((1.01, -1.01))
+
+        assert not square.intersects((1.01, 0))
+        assert not square.intersects((1.01, 1.01))
+        assert not square.intersects((0, 1.01))
+        assert not square.intersects((-1.01, 1.01))
+        assert not square.intersects((-1.01, 0))
+        assert not square.intersects((-1.01, -1.01))
+        assert not square.intersects((0, -1.01))
+        assert not square.intersects((1.01, -1.01))
+        assert square.omits(
+            [
+                (1.01, 0),
+                (1.01, 1.01),
+                (0, 1.01),
+                (-1.01, 1.01),
+                (-1.01, 0),
+                (-1.01, -1.01),
+                (0, -1.01),
+                (1.01, -1.01),
+            ]
+        )
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
@@ -104,8 +157,8 @@ class TestContainsPoint:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "TestContainsPoint::test_RP_cont_origin",
-            "TestContainsPoint::test_RP_notcontains",
+            "TestContainsPoint::test_square_near_boundary",
+            "TestContainsPoint::test_square_near_boundary",
             "TestContainsPoint::test_shape_is_inside",
             "TestContainsPoint::test_shape_is_neither",
         ]
@@ -135,6 +188,8 @@ class TestComparison:
         triangle = primitive.regular_polygon(3)
         square = primitive.regular_polygon(4)
         assert triangle != square
+        assert triangle.intersects(square)
+        assert square.intersects(triangle)
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
