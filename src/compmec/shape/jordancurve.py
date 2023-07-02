@@ -36,15 +36,14 @@ class JordanCurve:
     def __eq__(self, other):
         if len(self.segments) != len(other.segments):
             return False
-        indexroll = 0
-        for segment in other:
-            if segment == self.segments[0]:
+        nsegmentsother = len(other.segments)
+        for i in range(nsegmentsother):
+            if other.segments[0] == self.segments[0]:
                 break
-            indexroll += 1
+            other.roll()
         else:
             return False
-        rolledlist = np.roll(other.segments, -indexroll)
-        for seg1, seg2 in zip(self, rolledlist):
+        for seg1, seg2 in zip(self, other):
             if seg1 != seg2:
                 return False
         return True
@@ -58,6 +57,13 @@ class JordanCurve:
     def __iter__(self):
         for segment in self.segments:
             yield segment
+
+    def roll(self, times: int = 1):
+        """
+        Rolls the list of segments:
+        times = 1: [A, B, C, D] -> [B, C, D, E]
+        """
+        self.segments = self.segments[times:] + self.segments[:times]
 
     def move(self, horizontal: float = 0, vertical: float = 0):
         """

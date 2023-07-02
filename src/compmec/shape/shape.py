@@ -170,13 +170,44 @@ class Shape:
         return self.intersects(other.curves[0])
 
 
+def add_2_intersect_jordan(curve0: JordanCurve, curve1: JordanCurve) -> Shape:
+    """
+    Given two jordan curves, and knowing they intersect each other,
+    it returns a shape which is the sum of these two curves.
+    This function doesn't check if there's intersection, it supposes.
+    """
+    nseg0 = len(curve0)
+    nseg1 = len(curve1)
+
+    matrix_intersection = np.zeros((nseg0, nseg1)).tolist()
+    for i, segment_i in enumerate(curve0):
+        for j, segment_j in enumerate(curve1):
+            matrix_intersection[i][j] = intersection(segment_i, segment_j)
+
+
+def add_two_jordan(curve0: JordanCurve, curve1: JordanCurve) -> Shape:
+    """
+    Receiving two jordan curves, we can add them togheter:
+    - If A + B == A -> Returns A
+    - If A + B == B -> Returns B
+    - If A * B == None -> Returns A + B directly
+    """
+    if curve0.contains(curve1):
+        return Shape([curve0.deepcopy()])
+    if curve1.contains(curve0):
+        return Shape([curve1.deepcopy()])
+
+    return Shape([])
+
+
 def intersection(segment0: SplineCurve, segment1: SplineCurve) -> Tuple:
     """
-    Verifies if the segmentA touches the segmentB.
-        segmentA is parametrized like A(t), 0 <= t <= 1
-        segmentB is parametrized like B(u), 0 <= u <= 1
     Returns all the pairs (t, u) such A(t) == B(u)
         ((t0, u0), (t1, u1), ...)
+
+        segmentA is parametrized like A(t), 0 <= t <= 1
+        segmentB is parametrized like B(u), 0 <= u <= 1
+
     If there's no intersection, returns an empty Tuple
 
     This algorithm consider only linear segments.
