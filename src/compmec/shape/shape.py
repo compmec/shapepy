@@ -91,7 +91,7 @@ class BaseShape(object):
         return self | other
 
     def __sub__(self, value: BaseShape):
-        return self & (~value)
+        return self & (-value)
 
     def __mul__(self, value: BaseShape):
         return self & value
@@ -106,15 +106,6 @@ class BaseShape(object):
         """
         return float(self) > 0
 
-    def __abs__(self) -> BaseShape:
-        """
-        Returns the same curve, but in positive direction
-        """
-        return self.copy() if self else (~self)
-
-    def copy(self) -> BaseShape:
-        return deepcopy(self)
-
 
 class EmptyShape(BaseShape):
     """
@@ -124,9 +115,9 @@ class EmptyShape(BaseShape):
     __instance = None
 
     def __new__(cls):
-        if cls.__instance is not None:
-            return cls.__instance
-        return super(EmptyShape, cls).__new__(cls)
+        if cls.__instance is None:
+            cls.__instance = super(EmptyShape, cls).__new__(cls)
+        return cls.__instance
 
     def __or__(self, other: BaseShape) -> BaseShape:
         return other.copy()
@@ -135,7 +126,7 @@ class EmptyShape(BaseShape):
         return self
 
     def __float__(self) -> float:
-        return 0
+        return float(0)
 
     def __invert__(self) -> BaseShape:
         return WholeShape()
@@ -152,9 +143,9 @@ class WholeShape(BaseShape):
     __instance = None
 
     def __new__(cls):
-        if cls.__instance is not None:
-            return cls.__instance
-        return super(WholeShape, cls).__new__(cls)
+        if cls.__instance is None:
+            cls.__instance = super(WholeShape, cls).__new__(cls)
+        return cls.__instance
 
     def __or__(self, other: BaseShape) -> BaseShape:
         return self
@@ -173,6 +164,15 @@ class WholeShape(BaseShape):
 
 
 class FiniteShape(BaseShape):
+    def __abs__(self) -> BaseShape:
+        """
+        Returns the same curve, but in positive direction
+        """
+        return self.copy() if self else (~self)
+
+    def copy(self) -> BaseShape:
+        return deepcopy(self)
+    
     def __invert__(self) -> BaseShape:
         return self.copy().invert()
 

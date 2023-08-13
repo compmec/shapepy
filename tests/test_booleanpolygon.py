@@ -5,7 +5,7 @@ This file contains tests functions to test the module polygon.py
 import pytest
 
 from compmec.shape.jordancurve import JordanPolygon
-from compmec.shape.shape import SimpleShape
+from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 
 
 @pytest.mark.order(5)
@@ -21,9 +21,117 @@ def test_begin():
     pass
 
 
-class TestOrSimpleShape:
+class TestEmptyWhole:
     @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["test_begin"])
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_or(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert empty | empty is empty
+        assert empty | whole is whole
+        assert whole | empty is whole
+        assert whole | whole is whole
+
+        assert empty + empty is empty
+        assert empty + whole is whole
+        assert whole + empty is whole
+        assert whole + whole is whole
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_and(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert empty & empty is empty
+        assert empty & whole is empty
+        assert whole & empty is empty
+        assert whole & whole is whole
+
+        assert empty * empty is empty
+        assert empty * whole is empty
+        assert whole * empty is empty
+        assert whole * whole is whole
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_xor(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert empty ^ empty is empty
+        assert empty ^ whole is whole
+        assert whole ^ empty is whole
+        assert whole ^ whole is empty
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_sub(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert empty - empty is empty
+        assert empty - whole is empty
+        assert whole - empty is whole
+        assert whole - whole is empty
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_bool(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert bool(empty) is False
+        assert bool(whole) is True
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_float(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert float(empty) == float(0)
+        assert float(whole) == float("inf")
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_invert(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert ~empty is whole
+        assert ~whole is empty
+        assert ~(~empty) is empty
+        assert ~(~whole) is whole
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_copy(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert empty.copy() is empty
+        assert whole.copy() is whole
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(
+        depends=[
+            "TestEmptyWhole::test_begin",
+            "TestEmptyWhole::test_or",
+            "TestEmptyWhole::test_and",
+            "TestEmptyWhole::test_xor",
+            "TestEmptyWhole::test_sub",
+            "TestEmptyWhole::test_bool",
+            "TestEmptyWhole::test_float",
+            "TestEmptyWhole::test_invert",
+            "TestEmptyWhole::test_copy",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
+class TestOrSimpleShape:
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_end"])
     def test_begin(self):
         pass
 
@@ -67,7 +175,7 @@ class TestOrSimpleShape:
 
 class TestAndSimpleShape:
     @pytest.mark.order(5)
-    @pytest.mark.dependency(depends=["test_begin"])
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_end"])
     def test_begin(self):
         pass
 
@@ -103,7 +211,7 @@ class TestAndSimpleShape:
 class TestMinusSimpleShape:
     @pytest.mark.order(5)
     @pytest.mark.skip(reason="Needs implementation")
-    @pytest.mark.dependency(depends=["test_begin"])
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_end"])
     def test_begin(self):
         pass
 
