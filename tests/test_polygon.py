@@ -7,14 +7,8 @@ from fractions import Fraction as frac
 import numpy as np
 import pytest
 
-from compmec.shape.polygon import (
-    ConvexHull,
-    ConvexPolygon,
-    Point2D,
-    Polygon,
-    Segment,
-    SimplePolygon,
-)
+from compmec.shape.polygon import (ConvexHull, ConvexPolygon, Point2D, Polygon,
+                                   Segment, SimplePolygon)
 
 
 @pytest.mark.order(2)

@@ -350,8 +350,6 @@ class TestTransformationPolygon:
         pass
 
 
-
-
 class TestOthers:
     @pytest.mark.order(3)
     @pytest.mark.dependency(

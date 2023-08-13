@@ -18,7 +18,7 @@ from compmec.shape.polygon import Point2D, Segment
 class IntersectionBeziers:
     tol_du = 1e-9  # tolerance convergence
     tol_norm = 1e-9  # tolerance convergence
-    max_denom = math.ceil(1/tol_du)
+    max_denom = math.ceil(1 / tol_du)
 
     @staticmethod
     def is_equal_controlpoints(cptsa: Tuple[Point2D], cptsb: Tuple[Point2D]) -> bool:
@@ -78,6 +78,7 @@ class IntersectionBeziers:
         If one curve is equal to another, returns a empty tuple
         if there's no intersection, returns a empty tuple
         """
+        tol_du = IntersectionBeziers.tol_du
         if IntersectionBeziers.is_equal_controlpoints(cptsa, cptsb):
             return tuple()
         dega = len(cptsa) - 1
@@ -147,10 +148,10 @@ class IntersectionBeziers:
                         vj = vj.limit_denominator(IntersectionBeziers.max_denom)
                     ui = min(1, max(0, ui))
                     vj = min(1, max(0, vj))
-                    
-                    if abs(oldui - ui) > IntersectionBeziers.tol_du:
+
+                    if abs(oldui - ui) > tol_du:
                         continue
-                    if abs(oldvj - vj) > IntersectionBeziers.tol_du:
+                    if abs(oldvj - vj) > tol_du:
                         continue
                     break
                 if (0 < ui and ui < 1) or (0 < vj and vj < 1):
@@ -158,11 +159,8 @@ class IntersectionBeziers:
         filter_inters = set()
         for ui, vj in intersections:
             for uk, vl in filter_inters:
-                if abs(ui-uk) > IntersectionBeziers.tol_du:
-                    continue
-                if abs(vj-vl) > IntersectionBeziers.tol_du:
-                    continue
-                break
+                if abs(ui - uk) < tol_du and abs(vj - vl) < tol_du:
+                    break
             else:
                 filter_inters.add((ui, vj))
         for ui, vj in tuple(filter_inters):
@@ -191,7 +189,7 @@ class JordanCurve:
 
     def copy(self) -> JordanCurve:
         return deepcopy(self)
-    
+
     def clean(self) -> None:
         self.__segments = None
         self.__full_curve.clean()
@@ -304,10 +302,6 @@ class JordanCurve:
             self.__segments = self.__full_curve.split()
         return tuple([deepcopy(segm) for segm in self.__segments])
 
-    
-
-    
-
     def __and__(self, other: JordanCurve) -> FrozenSet[Tuple[float]]:
         """
         Given two jordan curves, this functions returns the intersection
@@ -338,8 +332,6 @@ class JordanCurve:
                     vj = (1 - vj) * vmin + vj * vmax
                     intersections.add((ui, vj))
         return frozenset(intersections)
-
-    
 
     def __str__(self) -> str:
         msg = f"Jordan Curve of degree {self.__full_curve.degree}\n"
