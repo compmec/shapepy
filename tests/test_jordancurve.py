@@ -4,7 +4,6 @@ This file contains tests functions to test the module polygon.py
 
 from fractions import Fraction
 
-import numpy as np
 import pytest
 
 from compmec import nurbs

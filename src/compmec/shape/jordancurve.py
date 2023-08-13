@@ -184,6 +184,11 @@ class JordanCurve:
     def __init__(self, curve: nurbs.Curve):
         if not isinstance(curve, nurbs.Curve):
             raise TypeError
+        knotvector = curve.knotvector
+        degree = knotvector.degree
+        knots = knotvector.knots
+        for knot in knots[1:-1]:
+            assert knotvector.mult(knot) <= degree
         self.full_curve = curve
 
     def copy(self) -> JordanCurve:
@@ -281,7 +286,7 @@ class JordanCurve:
         knots = knotvector.knots
         for knot in knots:
             mult = knotvector.mult(knot)
-            new_knots = (degree + 1 - mult) * [knot]
+            new_knots = (degree - mult) * [knot]
             other.knot_insert(new_knots)
         self.__full_curve = other
 
