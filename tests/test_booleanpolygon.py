@@ -2,18 +2,13 @@
 This file contains tests functions to test the module polygon.py
 """
 
-from fractions import Fraction
-
-import numpy as np
 import pytest
 
-from compmec import nurbs
-from compmec.shape import Point2D
-from compmec.shape.jordancurve import JordanCurve, JordanPolygon
+from compmec.shape.jordancurve import JordanPolygon
 from compmec.shape.shape import SimpleShape
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 @pytest.mark.dependency(
     depends=[
         "tests/test_polygon.py::test_end",
@@ -26,15 +21,15 @@ def test_begin():
     pass
 
 
-class TestOrSimpleShapeJordanPoly:
-    @pytest.mark.order(4)
+class TestOrSimpleShape:
+    @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
-    @pytest.mark.dependency(depends=["TestOrSimpleShapeJordanPoly::test_begin"])
+    @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
     def test_two_squares(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
         square0 = JordanPolygon(vertices0)
@@ -58,27 +53,27 @@ class TestOrSimpleShapeJordanPoly:
 
         assert square0 | square1 == good_shape
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
-            "TestOrSimpleShapeJordanPoly::test_begin",
-            "TestOrSimpleShapeJordanPoly::test_two_squares",
+            "TestOrSimpleShape::test_begin",
+            "TestOrSimpleShape::test_two_squares",
         ]
     )
     def test_end(self):
         pass
 
 
-class TestAndSimpleShapeJordanPoly:
-    @pytest.mark.order(4)
+class TestAndSimpleShape:
+    @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
-    @pytest.mark.dependency(depends=["TestAndSimpleShapeJordanPoly::test_begin"])
+    @pytest.mark.dependency(depends=["TestAndSimpleShape::test_begin"])
     def test_two_squares(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
         square0 = JordanPolygon(vertices0)
@@ -93,28 +88,28 @@ class TestAndSimpleShapeJordanPoly:
 
         assert square0 & square1 == good_shape
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
-            "TestAndSimpleShapeJordanPoly::test_begin",
-            "TestAndSimpleShapeJordanPoly::test_two_squares",
+            "TestAndSimpleShape::test_begin",
+            "TestAndSimpleShape::test_two_squares",
         ]
     )
     def test_end(self):
         pass
 
 
-class TestMinusSimpleShapeJordanPoly:
-    @pytest.mark.order(4)
+class TestMinusSimpleShape:
+    @pytest.mark.order(5)
     @pytest.mark.skip(reason="Needs implementation")
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
-    @pytest.mark.dependency(depends=["TestMinusSimpleShapeJordanPoly::test_begin"])
+    @pytest.mark.dependency(depends=["TestMinusSimpleShape::test_begin"])
     def test_two_squares(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
         square0 = JordanPolygon(vertices0)
@@ -133,24 +128,24 @@ class TestMinusSimpleShapeJordanPoly:
         assert square0 - square1 == left_shape
         assert square1 - square0 == right_shape
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
-            "TestMinusSimpleShapeJordanPoly::test_begin",
-            "TestMinusSimpleShapeJordanPoly::test_two_squares",
+            "TestMinusSimpleShape::test_begin",
+            "TestMinusSimpleShape::test_two_squares",
         ]
     )
     def test_end(self):
         pass
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 @pytest.mark.dependency(
     depends=[
-        "TestOrSimpleShapeJordanPoly::test_end",
-        "TestAndSimpleShapeJordanPoly::test_end",
-        "TestMinusSimpleShapeJordanPoly::test_end",
+        "TestOrSimpleShape::test_end",
+        "TestAndSimpleShape::test_end",
+        "TestMinusSimpleShape::test_end",
     ]
 )
 def test_end():
