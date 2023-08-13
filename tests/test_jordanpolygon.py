@@ -366,7 +366,6 @@ class TestOthers:
         str(triangle)
         repr(triangle)
 
-        str(triangle.ctrlpoints)
         str(triangle.vertices)
 
 

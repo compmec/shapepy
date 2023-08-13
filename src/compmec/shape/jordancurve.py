@@ -194,13 +194,6 @@ class JordanCurve:
         self.__segments = None
         self.__full_curve.clean()
 
-    def area(self) -> float:
-        """
-        Computes the area of the jordan curves.
-        If
-        """
-        raise NotImplementedError
-
     def move(self, point: Point2D) -> JordanCurve:
         fullctrlpts = list(self.__full_curve.ctrlpoints)
         for i, ctrlpt in enumerate(fullctrlpts):
@@ -279,11 +272,11 @@ class JordanCurve:
             newbeziers += news
 
     @property
-    def ctrlpoints(self) -> Tuple[Point2D]:
+    def full_curve(self) -> Tuple[Point2D]:
         """
         Returns a tuple of control points
         """
-        return tuple(self.__full_curve.ctrlpoints)
+        return self.__full_curve.deepcopy()
 
     @property
     def vertices(self) -> Tuple[Point2D]:
@@ -291,7 +284,7 @@ class JordanCurve:
         Returns a tuple of non repeted points
         """
         allpoints = []
-        for point in self.ctrlpoints:
+        for point in self.__full_curve.ctrlpoints:
             if point not in allpoints:
                 allpoints.append(point)
         return tuple(allpoints)
@@ -311,14 +304,10 @@ class JordanCurve:
         assert isinstance(other, JordanCurve)
         selfsegs = list(self.segments)
         othesegs = list(other.segments)
-        print("bezier self = ")
         for bezier in selfsegs:
             bezier.clean()
-            print(bezier)
-        print("bezier other = ")
         for bezier in othesegs:
             bezier.clean()
-            print(bezier)
         bandb = IntersectionBeziers.intersection_bezier
         intersections = set()
         for sbezier in selfsegs:
@@ -334,8 +323,8 @@ class JordanCurve:
         return frozenset(intersections)
 
     def __str__(self) -> str:
-        msg = f"Jordan Curve of degree {self.__full_curve.degree}\n"
-        msg += str(self.ctrlpoints)
+        msg = f"Jordan Curve of degree {self.__full_curve.degree} and vertices\n"
+        msg += str(self.vertices)
         return msg
 
     def __repr__(self) -> str:
@@ -376,6 +365,9 @@ class JordanCurve:
         return self.copy().invert()
 
     def __contains__(self, point: Point2D) -> bool:
+        """
+        Tells if the point is on the boundary
+        """
         point = Point2D(point)
         projection = nurbs.advanced.Projection.point_on_bezier
         for bezier in self.segments:

@@ -14,8 +14,59 @@ from typing import List, Tuple, Union
 import numpy as np
 from compmec.nurbs import Curve
 
+from compmec import nurbs
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
+
+
+class NumIntegration:
+    @staticmethod
+    def area(ctrlpoints: Tuple[Point2D]) -> float:
+        """
+        Computes the area equivalent from a bezier curve
+        """
+        degree = len(ctrlpoints) - 1
+        knotvector = (degree + 1) * [0] + (degree + 1) * [1]
+        px = nurbs.Curve(knotvector)
+        px.ctrlpoints = [pt[0] for pt in ctrlpoints]
+        py = nurbs.Curve(knotvector)
+        py.ctrlpoints = [pt[1] for pt in ctrlpoints]
+        dpy = nurbs.calculus.Derivate.bezier(py)
+        pxdpy = px * dpy
+        return sum(pxdpy.ctrlpoints) / (pxdpy.degree + 1)
+
+    @staticmethod
+    def winding_number_bezier(ctrlpoints: Tuple[Point2D]) -> float:
+        """
+        Computes the integral for a bezier curve of given control points
+        """
+        degree = len(ctrlpoints) - 1
+        knotvector = [0] * (degree + 1) + [1] * (degree + 1)
+        px = nurbs.Curve(knotvector, [pt[0] for pt in ctrlpoints])
+        py = nurbs.Curve(knotvector, [pt[1] for pt in ctrlpoints])
+        dpx = nurbs.calculus.Derivate.bezier(px)
+        dpy = nurbs.calculus.Derivate.bezier(py)
+
+        numer = px * dpy - py * dpx
+        denom = px * px + py * py
+
+        nintervals = 4 * (degree + 1)
+        nptintegra = 4  # 3/8 simpson
+        weights = np.array([1, 3, 3, 1], dtype="float64") / 8
+        usample = np.linspace(0, 1, nintervals * (nptintegra - 1) + 1)
+        numvals = np.array(numer(usample))
+        denvals = denom(usample)
+        funcvals = numvals / denvals
+        integral = 0
+        for i in range(nintervals):
+            umin, umax = (
+                usample[(nptintegra - 1) * i],
+                usample[(nptintegra - 1) * (i + 1)],
+            )
+            # uvals = usample[(nptintegra-1)*i:(nptintegra-1)*(i+1)+1]
+            fvals = funcvals[(nptintegra - 1) * i : (nptintegra - 1) * (i + 1) + 1]
+            integral += np.dot(weights, fvals) * (umax - umin)
+        return integral / (2 * np.pi)
 
 
 class BaseShape(object):
@@ -123,10 +174,7 @@ class WholeShape(BaseShape):
 
 class FiniteShape(BaseShape):
     def __invert__(self) -> BaseShape:
-        raise NotImplementedError
-
-    def __float__(self) -> float:
-        return sum([float(shape) for shape in self.subshapes])
+        return self.copy().invert()
 
     def move(self, point: Point2D) -> BaseShape:
         self.subshapes = [shape.move(point) for shape in self.subshapes]
@@ -145,15 +193,59 @@ class FiniteShape(BaseShape):
         return self
 
 
-class SimpleShape(BaseShape):
+class SimpleShape(FiniteShape):
     """
     Connected shape with no holes
     """
 
     def __init__(self, jordancurve: JordanCurve):
-        self.subshapes = [jordancurve]
+        self.subshapes = (jordancurve,)
 
-    def __union_simple_shapes(self, other: SimpleShape):
+    def __float__(self) -> float:
+        soma = 0
+        jordancurve = self.subshapes[0]
+        for segment in jordancurve.segments:
+            soma += NumIntegration.area(segment.ctrlpoints)
+        return soma
+
+    def __union_simple_positive(self, other: SimpleShape):
+        """ """
+        assert isinstance(other, SimpleShape)
+        jordan0, jordan1 = self.subshapes[0], other.subshapes[0]
+        inters = jordan0 & jordan1
+        assert len(inters) != 0
+        nodes_self = set()
+        nodes_other = set()
+        for ui, vj in inters:
+            nodes_self.add(ui)
+            nodes_other.add(vj)
+        jordan0.split(tuple(nodes_self))
+        jordan1.split(tuple(nodes_other))
+        segments0 = jordan0.segments
+        index = 0
+        while True:
+            umin, umax = segments0[index].knotvector.limits
+            mid_node = (umin + umax) / 2
+            mid_point = segments0[index].eval(mid_node)
+            if not jordan1.contains_point(mid_point):
+                break
+        final_beziers = []
+        counter = 0  # for safety purpose
+        while jordan0.segments[index] not in final_beziers:
+            final_beziers.append(jordan0.segments[index])
+            last_point = jordan0.segments.ctrlpoints[-1]
+            if not jordan1.contains_point(last_point):
+                index += 1
+                index %= len(jordan0.segments)
+            for j, segj in jordan0.segments:
+                if segj.ctrlpoints[0] == last_point:
+                    index = j
+                    break
+            jordan0, jordan1 = jordan1, jordan0
+            if counter > 50:
+                raise ValueError
+
+    def __or__(self, other: SimpleShape):
         assert isinstance(other, SimpleShape)
         if self in other:
             return other.copy()
@@ -163,20 +255,46 @@ class SimpleShape(BaseShape):
             lista = [self.subshapes[0], other.subshapes[0]]
             return DisconnectedShape(lista)
 
-    def __or__(self, other: BaseShape):
+        area_self = float(self)
+        area_other = float(other)
+        if area_self > 0 and area_other > 0:
+            return self.__union_simple_positive(other)
         raise NotImplementedError
 
+    def contains_point(self, point: Point2D) -> bool:
+        """
+        We compute the winding number to determine if
+        the point is inside the region.
+        Uses numerical integration
+        See wikipedia for details.
+        """
+        point = Point2D(point)
+        jordancurve = self.subshapes[0]
+        if point in jordancurve:  # point in boundary:
+            return True
+        total = 0
+        for bezier in jordancurve.segments:
+            ctrlpoints = list(bezier.ctrlpoints)
+            for i, ctrlpt in enumerate(ctrlpoints):
+                ctrlpoints[i] = ctrlpt - point
+            ctrlpoints = tuple(ctrlpoints)
+            total += NumIntegration.winding_number_bezier(ctrlpoints)
+        return round(total) == 1
 
-class ConnectedShape(BaseShape):
-    """
-    A connected shape with holes
-    """
+    def contains_simple_shape(self, other: SimpleShape) -> bool:
+        assert isinstance(other, SimpleShape)
+        jordancurve = other.subshapes[0]
+        point = jordancurve.vertices[0]
+        if not point in self:
+            return False
 
-    def __init__(self):
-        pass
+    def __contains__(self, other: Union[Point2D, SimpleShape]) -> bool:
+        if isinstance(other, SimpleShape):
+            return self.contains_simple_shape(other)
+        return self.contains_point(other)
 
 
-class DisconnectedShape(BaseShape):
+class GeneralShape(FiniteShape):
     """
     An arbitrary 2D shape
     Methods:
