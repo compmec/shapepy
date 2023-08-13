@@ -16,6 +16,10 @@ from compmec.shape.polygon import Point2D, Segment
 
 
 class IntersectionBeziers:
+    tol_du = 1e-9  # tolerance convergence
+    tol_norm = 1e-9  # tolerance convergence
+    max_denom = math.ceil(1/tol_du)
+
     @staticmethod
     def is_equal_controlpoints(cptsa: Tuple[Point2D], cptsb: Tuple[Point2D]) -> bool:
         if len(cptsa) != len(cptsb):
@@ -137,23 +141,40 @@ class IntersectionBeziers:
                     oldvj = vj
                     ui -= (mat00 * vec0 + dadb * vec1) / denom
                     vj -= (dadb * vec0 + mat11 * vec1) / denom
+                    if isinstance(ui, Fraction):
+                        ui = ui.limit_denominator(IntersectionBeziers.max_denom)
+                    if isinstance(vj, Fraction):
+                        vj = vj.limit_denominator(IntersectionBeziers.max_denom)
                     ui = min(1, max(0, ui))
                     vj = min(1, max(0, vj))
-                    if abs(oldui - ui) < 1e-9 and abs(oldvj - vj) < 1e-9:
-                        break
+                    
+                    if abs(oldui - ui) > IntersectionBeziers.tol_du:
+                        continue
+                    if abs(oldvj - vj) > IntersectionBeziers.tol_du:
+                        continue
+                    break
                 if (0 < ui and ui < 1) or (0 < vj and vj < 1):
                     intersections.add((ui, vj))
-        for ui, vj in tuple(intersections):
+        filter_inters = set()
+        for ui, vj in intersections:
+            for uk, vl in filter_inters:
+                if abs(ui-uk) > IntersectionBeziers.tol_du:
+                    continue
+                if abs(vj-vl) > IntersectionBeziers.tol_du:
+                    continue
+                break
+            else:
+                filter_inters.add((ui, vj))
+        for ui, vj in tuple(filter_inters):
             aui = IntersectionBeziers.eval_bezier(dega, ui)
             bvj = IntersectionBeziers.eval_bezier(degb, vj)
             pta = aui @ cptsa
             ptb = bvj @ cptsb
             norm = abs(pta - ptb)
-            if norm > 1e-9:
-                intersections.remove((ui, vj))
-        intersections = tuple(intersections)
-
-        return intersections
+            if norm > IntersectionBeziers.tol_norm:
+                filter_inters.remove((ui, vj))
+        filter_inters = tuple(filter_inters)
+        return filter_inters
 
 
 class JordanCurve:
@@ -163,12 +184,17 @@ class JordanCurve:
     """
 
     def __init__(self, curve: nurbs.Curve):
-        assert isinstance(curve, nurbs.Curve)
+        if not isinstance(curve, nurbs.Curve):
+            raise TypeError
         self.__full_curve = deepcopy(curve)
         self.__segments = None
 
     def copy(self) -> JordanCurve:
         return deepcopy(self)
+    
+    def clean(self) -> None:
+        self.__segments = None
+        self.__full_curve.clean()
 
     def area(self) -> float:
         """
@@ -254,34 +280,6 @@ class JordanCurve:
             news = bezier.split(internal_nodes)
             newbeziers += news
 
-    def __and__(self, other: JordanCurve) -> FrozenSet[Tuple[float]]:
-        """
-        Given two jordan curves, this functions returns the intersection
-        between these two jordan curves
-        Returns empty tuple if the curves don't intersect each other
-        """
-        assert isinstance(other, JordanCurve)
-        selfsegs = list(self.segments)
-        othesegs = list(other.segments)
-        for bezier in selfsegs:
-            bezier.clean()
-        for bezier in othesegs:
-            bezier.clean()
-        bandb = IntersectionBeziers.intersection_bezier
-        intersections = set()
-        for sbezier in selfsegs:
-            umin, umax = sbezier.knotvector.limits
-            for obezier in othesegs:
-                vmin, vmax = obezier.knotvector.limits
-                inters = bandb(sbezier.ctrlpoints, obezier.ctrlpoints)
-                # Scale inters from [0, 1] to respective intervals
-                for ui, vj in inters:
-                    ui = (1 - ui) * umin + ui * umax
-                    vj = (1 - vj) * vmin + vj * vmax
-                    intersections.add((ui, vj))
-
-        return frozenset(intersections)
-
     @property
     def ctrlpoints(self) -> Tuple[Point2D]:
         """
@@ -306,9 +304,42 @@ class JordanCurve:
             self.__segments = self.__full_curve.split()
         return tuple([deepcopy(segm) for segm in self.__segments])
 
-    def clean(self) -> None:
-        self.__segments = None
-        self.__full_curve.clean()
+    
+
+    
+
+    def __and__(self, other: JordanCurve) -> FrozenSet[Tuple[float]]:
+        """
+        Given two jordan curves, this functions returns the intersection
+        between these two jordan curves
+        Returns empty tuple if the curves don't intersect each other
+        """
+        assert isinstance(other, JordanCurve)
+        selfsegs = list(self.segments)
+        othesegs = list(other.segments)
+        print("bezier self = ")
+        for bezier in selfsegs:
+            bezier.clean()
+            print(bezier)
+        print("bezier other = ")
+        for bezier in othesegs:
+            bezier.clean()
+            print(bezier)
+        bandb = IntersectionBeziers.intersection_bezier
+        intersections = set()
+        for sbezier in selfsegs:
+            umin, umax = sbezier.knotvector.limits
+            for obezier in othesegs:
+                vmin, vmax = obezier.knotvector.limits
+                inters = bandb(sbezier.ctrlpoints, obezier.ctrlpoints)
+                # Scale inters from [0, 1] to respective intervals
+                for ui, vj in inters:
+                    ui = (1 - ui) * umin + ui * umax
+                    vj = (1 - vj) * vmin + vj * vmax
+                    intersections.add((ui, vj))
+        return frozenset(intersections)
+
+    
 
     def __str__(self) -> str:
         msg = f"Jordan Curve of degree {self.__full_curve.degree}\n"

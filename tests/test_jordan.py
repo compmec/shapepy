@@ -236,12 +236,12 @@ class TestJordanPolygon:
 
 
 class TestTransformationPolygon:
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.dependency(depends=["TestJordanPolygon::test_end"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestTransformationPolygon::test_begin"])
     def test_move(self):
@@ -254,7 +254,7 @@ class TestTransformationPolygon:
 
         assert test_square == good_square
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -270,7 +270,7 @@ class TestTransformationPolygon:
         test_rectangle.scale(2, 3)
         assert test_rectangle == good_rectangle
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -291,7 +291,7 @@ class TestTransformationPolygon:
         test_square.rotate(60, degrees=True)
         assert test_square == good_square
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -319,7 +319,7 @@ class TestTransformationPolygon:
         assert test_square == orig_square
         assert test_square != inve_square
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -335,7 +335,7 @@ class TestTransformationPolygon:
         test_square.split((0, 0.5, 1, 1.5, 2.5, 3.5, 4))
         assert test_square == good_square
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -350,8 +350,10 @@ class TestTransformationPolygon:
         pass
 
 
+
+
 class TestOthers:
-    @pytest.mark.order(5)
+    @pytest.mark.order(3)
     @pytest.mark.dependency(
         depends=["TestJordanPolygon::test_end", "TestTransformationPolygon::test_end"]
     )
@@ -365,6 +367,9 @@ class TestOthers:
         triangle = JordanPolygon(points)
         str(triangle)
         repr(triangle)
+
+        str(triangle.ctrlpoints)
+        str(triangle.vertices)
 
 
 @pytest.mark.order(3)
