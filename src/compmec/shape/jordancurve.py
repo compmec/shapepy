@@ -184,44 +184,32 @@ class JordanCurve:
     def __init__(self, curve: nurbs.Curve):
         if not isinstance(curve, nurbs.Curve):
             raise TypeError
-        self.__full_curve = deepcopy(curve)
-        self.__segments = None
+        self.full_curve = curve
 
     def copy(self) -> JordanCurve:
         return deepcopy(self)
 
     def clean(self) -> None:
-        self.__segments = None
-        self.__full_curve.clean()
+        full_curve = self.full_curve
+        full_curve.clean()
+        self.full_curve = full_curve
 
     def move(self, point: Point2D) -> JordanCurve:
-        fullctrlpts = list(self.__full_curve.ctrlpoints)
-        for i, ctrlpt in enumerate(fullctrlpts):
-            fullctrlpts[i] = ctrlpt + point
-        self.__full_curve.ctrlpoints = tuple(fullctrlpts)
-        segments = list(self.segments)
-        for i, segment in enumerate(segments):
-            ctrlpts = list(segment.ctrlpoints)
-            for j, ctrlpt in enumerate(ctrlpts):
-                ctrlpts[j] = ctrlpt + point
-            segment.ctrlpoints = tuple(ctrlpts)
-            segments[i] = segment
-        self.__segments = segments
+        full_curve = self.full_curve
+        full_ctrlpts = list(full_curve.ctrlpoints)
+        for i, ctrlpt in enumerate(full_ctrlpts):
+            full_ctrlpts[i] = ctrlpt + point
+        full_curve.ctrlpoints = tuple(full_ctrlpts)
+        self.full_curve = full_curve
         return self
 
     def scale(self, xscale: float, yscale: float) -> JordanCurve:
-        fullctrlpts = list(self.__full_curve.ctrlpoints)
-        for i, ctrlpt in enumerate(fullctrlpts):
-            fullctrlpts[i] = Point2D(xscale * ctrlpt[0], yscale * ctrlpt[1])
-        self.__full_curve.ctrlpoints = tuple(fullctrlpts)
-        segments = list(self.segments)
-        for i, segment in enumerate(segments):
-            ctrlpts = list(segment.ctrlpoints)
-            for j, ctrlpt in enumerate(ctrlpts):
-                ctrlpts[j] = Point2D(xscale * ctrlpt[0], yscale * ctrlpt[1])
-            segment.ctrlpoints = tuple(ctrlpts)
-            segments[i] = segment
-        self.__segments = segments
+        full_curve = self.full_curve
+        full_ctrlpts = list(full_curve.ctrlpoints)
+        for i, ctrlpt in enumerate(full_ctrlpts):
+            full_ctrlpts[i] = Point2D(xscale * ctrlpt[0], yscale * ctrlpt[1])
+        full_curve.ctrlpoints = tuple(full_ctrlpts)
+        self.full_curve = full_curve
         return self
 
     def rotate(self, angle: float, degrees: bool = False) -> JordanCurve:
@@ -229,54 +217,42 @@ class JordanCurve:
             angle *= np.pi / 180
         cos, sin = np.cos(angle), np.sin(angle)
 
-        fullctrlpts = list(self.__full_curve.ctrlpoints)
-        for i, ctrlpt in enumerate(fullctrlpts):
+        full_curve = self.full_curve
+        full_ctrlpts = list(full_curve.ctrlpoints)
+        for i, ctrlpt in enumerate(full_ctrlpts):
             newptx = cos * ctrlpt[0] - sin * ctrlpt[1]
             newpty = sin * ctrlpt[0] + cos * ctrlpt[1]
-            fullctrlpts[i] = Point2D(newptx, newpty)
-        self.__full_curve.ctrlpoints = tuple(fullctrlpts)
-        segments = list(self.segments)
-        for i, segment in enumerate(segments):
-            ctrlpts = list(segment.ctrlpoints)
-            for j, ctrlpt in enumerate(ctrlpts):
-                newptx = cos * ctrlpt[0] - sin * ctrlpt[1]
-                newpty = sin * ctrlpt[0] + cos * ctrlpt[1]
-                ctrlpts[j] = Point2D(newptx, newpty)
-            segment.ctrlpoints = tuple(ctrlpts)
-            segments[i] = segment
-        self.__segments = segments
+            full_ctrlpts[i] = Point2D(newptx, newpty)
+        full_curve.ctrlpoints = tuple(full_ctrlpts)
+        self.full_curve = full_curve
         return self
 
     def invert(self) -> JordanCurve:
-        knotvector = self.__full_curve.knotvector
-        ctrlpoints = self.__full_curve.ctrlpoints
-        assert self.__full_curve.weights is None
+        full_curve = self.full_curve
+        knotvector = full_curve.knotvector
+        ctrlpoints = full_curve.ctrlpoints
+        assert full_curve.weights is None
         umin, umax = knotvector.limits
-        newknotvector = [umin + umax - u for u in knotvector[::-1]]
-        self.__full_curve.ctrlpoints = None
-        self.__full_curve.knotvector = newknotvector
-        self.__full_curve.ctrlpoints = ctrlpoints[::-1]
-        self.__segments = None
+        new_knotvector = [umin + umax - u for u in knotvector[::-1]]
+        new_full_curve = full_curve.__class__(new_knotvector)
+        new_full_curve.ctrlpoints = ctrlpoints[::-1]
+        self.full_curve = new_full_curve
         return self
 
     def split(self, nodes: Tuple[float]) -> None:
-        nodes = tuple(sorted(set(nodes)))
-        nodes = np.array(nodes)
-        curbeziers = self.segments
-        newbeziers = []
-        for bezier in curbeziers:
-            limits = bezier.knotvector.limits
-            mask = (limits[0] < nodes) * (nodes < limits[1])
-            internal_nodes = nodes[mask]
-            news = bezier.split(internal_nodes)
-            newbeziers += news
+        full_curve = self.full_curve
+        nodes = set(nodes) - set(full_curve.knotvector.knots)
+        nodes = tuple(sorted(nodes))
+        for node in nodes:
+            full_curve.knot_insert((node,))
+        self.full_curve = full_curve
 
     @property
     def full_curve(self) -> Tuple[Point2D]:
         """
         Returns a tuple of control points
         """
-        return self.__full_curve.deepcopy()
+        return self.__full_curve
 
     @property
     def vertices(self) -> Tuple[Point2D]:
@@ -284,7 +260,7 @@ class JordanCurve:
         Returns a tuple of non repeted points
         """
         allpoints = []
-        for point in self.__full_curve.ctrlpoints:
+        for point in self.full_curve.ctrlpoints:
             if point not in allpoints:
                 allpoints.append(point)
         return tuple(allpoints)
@@ -292,8 +268,22 @@ class JordanCurve:
     @property
     def segments(self) -> Tuple[nurbs.Curve]:
         if self.__segments is None:
-            self.__segments = self.__full_curve.split()
+            self.__segments = self.full_curve.split()
         return tuple([deepcopy(segm) for segm in self.__segments])
+
+    @full_curve.setter
+    def full_curve(self, other: nurbs.Curve):
+        assert isinstance(other, nurbs.Curve)
+        assert other.ctrlpoints[0] == other.ctrlpoints[-1]
+        self.__segments = None
+        knotvector = other.knotvector
+        degree = knotvector.degree
+        knots = knotvector.knots
+        for knot in knots:
+            mult = knotvector.mult(knot)
+            new_knots = (degree + 1 - mult) * [knot]
+            other.knot_insert(new_knots)
+        self.__full_curve = other
 
     def __and__(self, other: JordanCurve) -> FrozenSet[Tuple[float]]:
         """
@@ -323,34 +313,45 @@ class JordanCurve:
         return frozenset(intersections)
 
     def __str__(self) -> str:
-        msg = f"Jordan Curve of degree {self.__full_curve.degree} and vertices\n"
+        msg = f"Jordan Curve of degree {self.full_curve.degree} and vertices\n"
         msg += str(self.vertices)
         return msg
 
     def __repr__(self) -> str:
         msg = "JordanCurve (deg %d, npts %d)"
-        msg %= self.__full_curve.degree, self.__full_curve.npts
+        msg %= self.full_curve.degree, self.full_curve.npts
         return msg
 
     def __eq__(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
         selcopy = self.copy()
-        selcopy.clean()
         othcopy = other.copy()
-        othcopy.clean()
-        segms0 = selcopy.segments
-        segms1 = othcopy.segments
-        nsegments = len(segms0)
-        if len(segms1) != nsegments:
-            return False
+        segms0 = list(selcopy.segments)
+        segms1 = list(othcopy.segments)
+        if len(segms0) != len(segms1):
+            selcopy.clean()
+            othcopy.clean()
+            segms0 = list(selcopy.segments)
+            segms1 = list(othcopy.segments)
+            if len(segms0) != len(segms1):
+                return False
+        for i, segi in enumerate(segms0):
+            segi.clean()
+            segms0[i] = segi
+        for i, segi in enumerate(segms1):
+            segi.clean()
+            segms1[i] = segi
         ctrlpts1 = segms1[0].ctrlpoints
         for index, segment0 in enumerate(segms0):
             ctrlpts0 = segment0.ctrlpoints
+            if len(ctrlpts0) != len(ctrlpts1):
+                continue
             for pt0, pt1 in zip(ctrlpts0, ctrlpts1):
                 if pt0 != pt1:
                     break
             else:
                 break
+        nsegments = len(segms0)
         for i, segment1 in enumerate(segms1):
             segment0 = segms0[(i + index) % nsegments]
             for pt0, pt1 in zip(segment0.ctrlpoints, segment1.ctrlpoints):

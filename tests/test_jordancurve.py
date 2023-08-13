@@ -38,7 +38,7 @@ class TestQuadraticJordan:
         knotvector = [Fraction(knot) for knot in knotvector]
         points = [(0, -1), (2, 0), (0, 1), (0, 1), (0, -1)]
         curve = nurbs.Curve(knotvector)
-        curve.ctrlpoints = np.array(points)
+        curve.ctrlpoints = [Point2D(point) for point in points]
         JordanCurve(curve)
 
     @pytest.mark.order(4)

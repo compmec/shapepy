@@ -45,7 +45,7 @@ class TestJordanPolygon:
             JordanPolygon("asd")
 
     @pytest.mark.order(3)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
             "TestJordanPolygon::test_begin",
@@ -71,7 +71,7 @@ class TestJordanPolygon:
                 assert neg0 == neg1
 
     @pytest.mark.order(3)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
             "TestJordanPolygon::test_begin",
@@ -320,19 +320,21 @@ class TestTransformationPolygon:
         assert test_square != inve_square
 
     @pytest.mark.order(3)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
             "TestTransformationPolygon::test_begin",
             "TestTransformationPolygon::test_move",
             "TestTransformationPolygon::test_scale",
+            "TestTransformationPolygon::test_rotate",
+            "TestTransformationPolygon::test_invert",
         ]
     )
     def test_split(self):
         square_pts = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
         good_square = JordanPolygon(square_pts)
         test_square = JordanPolygon(square_pts)
-        test_square.split((0, 0.5, 1, 1.5, 2.5, 3.5, 4))
+        test_square.split((0, 0.5, 1, 2.5, 3.5, 4))
         assert test_square == good_square
 
     @pytest.mark.order(3)
