@@ -116,9 +116,9 @@ class Point2D:
     def __eq__(self, other: Point2D) -> bool:
         if not isinstance(other, Point2D):
             other = Point2D(other)
-        if self._x != other._x:
+        if abs(self[0] - other[0]) > 1e-9:
             return False
-        if self._y != other._y:
+        if abs(self[1] - other[1]) > 1e-9:
             return False
         return True
 
@@ -126,13 +126,15 @@ class Point2D:
         return self.__class__(-self[0], -self[1])
 
     def __iadd__(self, other: Point2D) -> Point2D:
-        assert isinstance(other, self.__class__)
+        if not isinstance(other, Point2D):
+            other = Point2D(other)
         self._x += other[0]
         self._y += other[1]
         return self
 
     def __isub__(self, other: Point2D) -> Point2D:
-        assert isinstance(other, self.__class__)
+        if not isinstance(other, Point2D):
+            other = Point2D(other)
         self._x -= other[0]
         self._y -= other[1]
         return self

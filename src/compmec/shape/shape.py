@@ -6,15 +6,177 @@ like ```move```, ```rotate``` and ```scale``` to model your desired curve.
 You can assemble JordanCurves to create shapes with holes,
 or even unconnected shapes.
 """
-from typing import List, Tuple
+from __future__ import annotations
+
+from copy import deepcopy
+from typing import List, Tuple, Union
 
 import numpy as np
-from compmec.nurbs import SplineCurve
+from compmec.nurbs import Curve
 
 from compmec.shape.jordancurve import JordanCurve
+from compmec.shape.polygon import Point2D
 
 
-class Shape:
+class BaseShape(object):
+    """
+    Class which allows operations like:
+     - move
+     - scale
+     - rotation
+     - invert
+     - union
+     - intersection
+     - XOR
+    """
+
+    def __init__(self):
+        pass
+
+    def __neg__(self) -> BaseShape:
+        return ~self
+
+    def __add__(self, other: BaseShape):
+        return self | other
+
+    def __sub__(self, value: BaseShape):
+        return self & (~value)
+
+    def __mul__(self, value: BaseShape):
+        return self & value
+
+    def __xor__(self, other: BaseShape):
+        return (self - other) | (other - self)
+
+    def __bool__(self) -> bool:
+        """
+        Returns True if the curve's is positive
+        Else if curve's area is negative
+        """
+        return float(self) > 0
+
+    def __abs__(self) -> BaseShape:
+        """
+        Returns the same curve, but in positive direction
+        """
+        return self.copy() if self else (~self)
+
+    def copy(self) -> BaseShape:
+        return deepcopy(self)
+
+
+class EmptyShape(BaseShape):
+    """
+    A class to represent a empty shape, the zero element
+    """
+
+    __instance = None
+
+    def __new__(cls):
+        if cls.__instance is not None:
+            return cls.__instance
+        return super(EmptyShape, cls).__new__(cls)
+
+    def __or__(self, other: BaseShape) -> BaseShape:
+        return other.copy()
+
+    def __and__(self, other: BaseShape) -> BaseShape:
+        return self
+
+    def __float__(self) -> float:
+        return 0
+
+    def __invert__(self) -> BaseShape:
+        return WholeShape()
+
+    def copy(self) -> BaseShape:
+        return self
+
+
+class WholeShape(BaseShape):
+    """
+    A class to represent a empty shape, the zero element
+    """
+
+    __instance = None
+
+    def __new__(cls):
+        if cls.__instance is not None:
+            return cls.__instance
+        return super(WholeShape, cls).__new__(cls)
+
+    def __or__(self, other: BaseShape) -> BaseShape:
+        return self
+
+    def __and__(self, other: BaseShape) -> BaseShape:
+        return other.copy()
+
+    def __float__(self) -> float:
+        return float("inf")
+
+    def __invert__(self) -> BaseShape:
+        return EmptyShape()
+
+    def copy(self) -> BaseShape:
+        return self
+
+
+class FiniteShape(BaseShape):
+    def __invert__(self) -> BaseShape:
+        raise NotImplementedError
+
+    def __float__(self) -> float:
+        return sum([float(shape) for shape in self.subshapes])
+
+    def move(self, point: Point2D) -> BaseShape:
+        self.subshapes = [shape.move(point) for shape in self.subshapes]
+        return self
+
+    def scale(self, xscale: float, yscale: float) -> BaseShape:
+        self.subshapes = [shape.scale(xscale, yscale) for shape in self.subshapes]
+        return self
+
+    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
+        self.subshapes = [shape.rotate(angle, degrees) for shape in self.subshapes]
+        return self
+
+    def invert(self) -> BaseShape:
+        self.subshapes = [shape.invert() for shape in self.subshapes]
+        return self
+
+
+class SimpleShape(BaseShape):
+    """
+    Connected shape with no holes
+    """
+
+    def __init__(self, jordancurve: JordanCurve):
+        self.subshapes = [jordancurve]
+
+    def __union_simple_shapes(self, other: SimpleShape):
+        assert isinstance(other, SimpleShape)
+        if self in other:
+            return other.copy()
+        if other in self:
+            return self.copy()
+        if other in (~self):
+            lista = [self.subshapes[0], other.subshapes[0]]
+            return DisconnectedShape(lista)
+
+    def __or__(self, other: BaseShape):
+        raise NotImplementedError
+
+
+class ConnectedShape(BaseShape):
+    """
+    A connected shape with holes
+    """
+
+    def __init__(self):
+        pass
+
+
+class DisconnectedShape(BaseShape):
     """
     An arbitrary 2D shape
     Methods:
@@ -130,44 +292,19 @@ class Shape:
         for curve in self.curves:
             yield curve
 
-    def contains(self, other) -> bool:
+    def __contains__(self, other: object) -> bool:
         """
         Returns if all the positive parts of 'other'
         are inside all the positive parts of 'self'
         Mathematically: A.contains(B) <=> A + B == A
         """
-        if not isinstance(other, Shape):
-            for curve in self:
-                if not curve.contains(other):
-                    return False
-            return True
+        if isinstance(other, Shape):
+            return other.curves[0] in self.curves[0]
 
-        return self.contains(other.curves[0])
-
-    def omits(self, other) -> bool:
-        """
-        Returns if all the positive parts of 'other'
-        are outside all the positive parts of 'self'
-        Mathematically: A.omits(B) <=> A * B == None
-        """
-        if not isinstance(other, Shape):
-            for curve in self:
-                if not curve.omits(other):
-                    return False
-            return True
-        return self.omits(other.curves[0])
-
-    def intersects(self, other) -> bool:
-        """
-        Returns if there's at least one intersection
-        Mathematically: A.intersects(B) <=> A * B != None
-        """
-        if not isinstance(other, Shape):
-            for curve in self:
-                if not curve.intersects(other):
-                    return False
-            return True
-        return self.intersects(other.curves[0])
+        for curve in self:
+            if other not in curve:
+                return False
+        return True
 
 
 def add_2_intersect_jordan(curve0: JordanCurve, curve1: JordanCurve) -> Shape:
@@ -200,7 +337,7 @@ def add_two_jordan(curve0: JordanCurve, curve1: JordanCurve) -> Shape:
     return Shape([])
 
 
-def intersection(segment0: SplineCurve, segment1: SplineCurve) -> Tuple:
+def intersection(segment0: Curve, segment1: Curve) -> Tuple:
     """
     Returns all the pairs (t, u) such A(t) == B(u)
         ((t0, u0), (t1, u1), ...)
@@ -211,7 +348,7 @@ def intersection(segment0: SplineCurve, segment1: SplineCurve) -> Tuple:
     If there's no intersection, returns an empty Tuple
 
     This algorithm consider only linear segments.
-    If SplineCurve.degree != 1, raises ValueError
+    If Curve.degree != 1, raises ValueError
     """
     if segment0.degree != 1:
         raise ValueError

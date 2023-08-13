@@ -7,8 +7,14 @@ from fractions import Fraction as frac
 import numpy as np
 import pytest
 
-from compmec.shape.polygon import (ConvexHull, ConvexPolygon, Point2D, Polygon,
-                                   Segment, SimplePolygon)
+from compmec.shape.polygon import (
+    ConvexHull,
+    ConvexPolygon,
+    Point2D,
+    Polygon,
+    Segment,
+    SimplePolygon,
+)
 
 
 @pytest.mark.order(2)
@@ -95,6 +101,9 @@ class TestPoint:
         assert pointa - pointb == aminusb
         assert pointb + pointa == aplusb
         assert pointb - pointa == -aminusb
+
+        assert pointa + (12, 5) == aplusb
+        assert pointa - (12, 5) == aminusb
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)

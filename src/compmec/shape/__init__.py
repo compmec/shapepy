@@ -6,7 +6,7 @@ For the moment, it only uses polygon shapes:
 """
 from compmec.shape import primitive
 from compmec.shape.jordancurve import JordanCurve, JordanPolygon
-from compmec.shape.shape import Shape
+from compmec.shape.shape import SimpleShape
 
 __version__ = "0.1.0"
 
