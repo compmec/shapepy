@@ -252,6 +252,24 @@ class JordanCurve:
             full_curve.knot_insert((node,))
         self.full_curve = full_curve
 
+    def points(self, subnpts: int = 2) -> Tuple[Point2D]:
+        """
+        Returns a list of points on the boundary.
+        Main reason: plot the shape
+        You can choose the precision by changing the ```subnpts``` parameter
+        """
+        full_curve = self.full_curve
+        knots = full_curve.knotvector.knots
+        usample = list(knots[:-1])
+        chebynodes = 2 * np.arange(subnpts) + 1
+        chebynodes = np.cos(chebynodes * np.pi / (2 * subnpts))
+        chebynodes = (1 + chebynodes) / 2
+        for umin, umax in zip(knots[:-1], knots[1:]):
+            usample += list(umin + (umax - umin) * chebynodes)
+        usample = tuple(sorted(usample))
+        all_points = full_curve.eval(usample)
+        return tuple(all_points)
+
     @property
     def full_curve(self) -> Tuple[Point2D]:
         """
