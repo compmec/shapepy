@@ -480,177 +480,32 @@ class ConnectedShape(FiniteShape):
         scale (x or y or both)
     """
 
-    def __init__(self, curves: List[JordanCurve]):
-        self.positivescurves = curves
+    def __init__(self, positive: SimpleShape, holes: Tuple[SimpleShape]):
+        self.positive = positive
+        self.holes = tuple(holes)
 
-    def move(self, horizontal: float = 0, vertical: float = 0):
-        """
-        Move all the curve by an amount of (x, y)
-        Example: move(1, 2)
-            (0, 0) becomes (1, 2)
-            (1, 2) becomes (2, 4)
-            (1, 0) becomes (2, 2)
-        """
-        for curve in self:
-            curve.move(horizontal, vertical)
+    def move(self, point: Point2D) -> BaseShape:
+        self.jordancurve.move(point)
         return self
 
-    def rotate_radians(self, angle: float):
-        """
-        Rotates counter-clockwise by an amount of 'angle' in radians
-        Example: rotate(pi/2)
-            (1, 0) becomes (0, 1)
-            (2, 3) becomes (-3, 2)
-        """
-        for curve in self:
-            curve.rotate_radians(angle)
+    def scale(self, xscale: float, yscale: float) -> BaseShape:
+        self.jordancurve = self.jordancurve.scale(xscale, yscale)
         return self
 
-    def rotate_degrees(self, angle: float):
-        """
-        Rotates counter-clockwise by an amount of 'angle' in degrees
-        Example: rotate(90)
-            (1, 0) becomes (0, 1)
-            (2, 3) becomes (-3, 2)
-        """
-        for curve in self:
-            curve.rotate_degrees(angle)
+    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
+        self.jordancurve.rotate(angle, degrees)
         return self
 
-    def scale(self, horizontal: float = 1, vertical: float = 1):
-        """
-        Scales the current curve by 'x' in x-direction and 'y' in y-direction
-        Example: scale(1, 2)
-            (1, 0) becomes (1, 0)
-            (1, 3) becomes (1, 6)
-        """
-        for curve in self:
-            curve.scale(horizontal, vertical)
+    def invert(self) -> BaseShape:
+        self.jordancurve = self.jordancurve.invert()
         return self
 
-    def invert(self):
-        """
-        Inverts the orientation of all the jordan curves inside
-        """
-        for curve in self:
-            curve.invert()
-
-    def deepcopy(self):
-        """
-        Creates a deep copy of all internal objects
-        """
-        newcurves = [curve.deepcopy() for curve in self]
-        newshape = self.__class__(newcurves)
-        return newshape
-
-    def __add__(self, other):
+    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
+        if isinstance(other, ConnectedShape):
+            raise NotImplementedError
+        if isinstance(other, (Point2D, JordanCurve, BaseShape)):
+            for simple in self.holes + self.positive:
+                if other not in simple:
+                    return False
+            return True
         raise NotImplementedError
-
-    def __sub__(self, other):
-        raise NotImplementedError
-
-    def __mul__(self, other):
-        raise NotImplementedError
-
-    def __and__(self, other):
-        raise NotImplementedError
-
-    def __or__(self, other):
-        raise NotImplementedError
-
-    def __xor__(self, other):
-        raise NotImplementedError
-
-    def __neg__(self):
-        raise NotImplementedError
-
-    def __invert__(self):
-        raise NotImplementedError
-
-    def __eq__(self, other):
-        """
-        For the moment, only valid with one curves
-        """
-        return self.curves[0] == other.curves[0]
-
-    def __ne__(self, other):
-        return not self == other
-
-    def __iter__(self):
-        for curve in self.curves:
-            yield curve
-
-    def __contains__(self, other: object) -> bool:
-        """
-        Returns if all the positive parts of 'other'
-        are inside all the positive parts of 'self'
-        Mathematically: A.contains(B) <=> A + B == A
-        """
-        if isinstance(other, Shape):
-            return other.curves[0] in self.curves[0]
-
-        for curve in self:
-            if other not in curve:
-                return False
-        return True
-
-
-def add_2_intersect_jordan(curve0: JordanCurve, curve1: JordanCurve) -> Shape:
-    """
-    Given two jordan curves, and knowing they intersect each other,
-    it returns a shape which is the sum of these two curves.
-    This function doesn't check if there's intersection, it supposes.
-    """
-    nseg0 = len(curve0)
-    nseg1 = len(curve1)
-
-    matrix_intersection = np.zeros((nseg0, nseg1)).tolist()
-    for i, segment_i in enumerate(curve0):
-        for j, segment_j in enumerate(curve1):
-            matrix_intersection[i][j] = intersection(segment_i, segment_j)
-
-
-def add_two_jordan(curve0: JordanCurve, curve1: JordanCurve) -> Shape:
-    """
-    Receiving two jordan curves, we can add them togheter:
-    - If A + B == A -> Returns A
-    - If A + B == B -> Returns B
-    - If A * B == None -> Returns A + B directly
-    """
-    if curve0.contains(curve1):
-        return Shape([curve0.deepcopy()])
-    if curve1.contains(curve0):
-        return Shape([curve1.deepcopy()])
-
-    return Shape([])
-
-
-def intersection(segment0: Curve, segment1: Curve) -> Tuple:
-    """
-    Returns all the pairs (t, u) such A(t) == B(u)
-        ((t0, u0), (t1, u1), ...)
-
-        segmentA is parametrized like A(t), 0 <= t <= 1
-        segmentB is parametrized like B(u), 0 <= u <= 1
-
-    If there's no intersection, returns an empty Tuple
-
-    This algorithm consider only linear segments.
-    If Curve.degree != 1, raises ValueError
-    """
-    if segment0.degree != 1:
-        raise ValueError
-    if segment1.degree != 1:
-        raise ValueError
-    point0init, point0end = segment0.ctrlpoints
-    point1init, point1end = segment1.ctrlpoints
-    matrix = np.array([point0end - point0init, point1end - point1init]).T
-    if np.linalg.det(matrix) < 1e-9:
-        return tuple()  # Parallel lines, no solution
-    force = point1init - point0init
-    param0, param1 = np.linalg.solve(matrix, force)
-    if param0 < 0 or 1 < param0:
-        return tuple()  # Outside the interval of t
-    if param1 < 0 or 1 < param1:
-        return tuple()  # Outside the interval of u
-    return tuple(((param0, param1),))
