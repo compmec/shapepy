@@ -200,11 +200,12 @@ class SimpleShape(FiniteShape):
         return msg
 
     def __float__(self) -> float:
-        soma = 0
-        jordancurve = self.jordancurve
-        for segment in jordancurve.segments:
-            soma += NumIntegration.area(segment.ctrlpoints)
-        return soma
+        if self.__area is None:
+            self.__area = 0
+            jordancurve = self.jordancurve
+            for segment in jordancurve.segments:
+                self.__area += NumIntegration.area(segment.ctrlpoints)
+        return self.__area
 
     def __eq__(self, other: SimpleShape) -> bool:
         if not isinstance(other, SimpleShape):
@@ -352,8 +353,10 @@ class SimpleShape(FiniteShape):
             return other.copy()
         if other in self:
             return self.copy()
+        if other.jordancurve in self and self.jordancurve in other:
+            return WholeShape()
         if other in (~self):
-            lista = [self.jordancurve, other.jordancurve]
+            # Disconnected shape
             raise NotImplementedError
 
         area_self = float(self)
@@ -372,6 +375,9 @@ class SimpleShape(FiniteShape):
             return other.copy()
         if other in (~self):
             return EmptyShape()
+        if self.jordancurve in other and other.jordancurve in self:
+            # Connected with holes
+            raise NotImplementedError
 
         area_self = float(self)
         area_other = float(other)
@@ -383,10 +389,35 @@ class SimpleShape(FiniteShape):
         else:
             return ~((~self) | (~other))
 
-    def __contains__(self, other: Union[Point2D, SimpleShape]) -> bool:
+    def __contains__(self, other: Union[Point2D, JordanCurve, SimpleShape]) -> bool:
         if isinstance(other, SimpleShape):
             return self.contains_simple_shape(other)
+        if isinstance(other, JordanCurve):
+            return self.contains_jordan_curve(other)
         return self.contains_point(other)
+
+    @property
+    def jordancurve(self) -> JordanCurve:
+        return self.__jordancurve
+
+    @jordancurve.setter
+    def jordancurve(self, other: JordanCurve):
+        assert isinstance(other, JordanCurve)
+        self.__area = None
+        self.__jordancurve = other.copy()
+
+    def __winding_number(self, point: Point2D) -> bool:
+        """
+        Says if the point is in the positive region defined
+        """
+        total = 0
+        for bezier in self.jordancurve.segments:
+            ctrlpoints = list(bezier.ctrlpoints)
+            for i, ctrlpt in enumerate(ctrlpoints):
+                ctrlpoints[i] = ctrlpt - point
+            ctrlpoints = tuple(ctrlpoints)
+            total += NumIntegration.winding_number_bezier(ctrlpoints)
+        return round(total)
 
     def contains_point(self, point: Point2D) -> bool:
         """
@@ -396,31 +427,32 @@ class SimpleShape(FiniteShape):
         See wikipedia for details.
         """
         point = Point2D(point)
-        jordancurve = self.jordancurve
-        if point in jordancurve:  # point in boundary:
+        if point in self.jordancurve:  # point in boundary:
             return True
-        total = 0
-        for bezier in jordancurve.segments:
-            ctrlpoints = list(bezier.ctrlpoints)
-            for i, ctrlpt in enumerate(ctrlpoints):
-                ctrlpoints[i] = ctrlpt - point
-            ctrlpoints = tuple(ctrlpoints)
-            total += NumIntegration.winding_number_bezier(ctrlpoints)
-        return round(total) == 1
+        winding = self.__winding_number(point)
+        positive = bool(self)
+        return winding == 1 if positive else winding == 0
+
+    def contains_jordan_curve(self, other: JordanCurve) -> bool:
+        assert isinstance(other, JordanCurve)
+        points = other.points(0)
+        for point in points:
+            if not self.contains_point(point):
+                return False
+        return True
 
     def contains_simple_shape(self, other: SimpleShape) -> bool:
         assert isinstance(other, SimpleShape)
-        jordancurve = other.jordancurve
-        point = jordancurve.vertices[0]
-        if not point in self:
-            return False
+        if float(self) == float(other) and self == other:
+            return True
+        return other.jordancurve in self and self.jordancurve not in other
 
     def move(self, point: Point2D) -> BaseShape:
         self.jordancurve.move(point)
         return self
 
     def scale(self, xscale: float, yscale: float) -> BaseShape:
-        self.jordancurve.scale(xscale, yscale)
+        self.jordancurve = self.jordancurve.scale(xscale, yscale)
         return self
 
     def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
@@ -428,13 +460,11 @@ class SimpleShape(FiniteShape):
         return self
 
     def invert(self) -> BaseShape:
-        self.jordancurve.invert()
+        self.jordancurve = self.jordancurve.invert()
         return self
 
-    
 
-
-class GeneralShape(FiniteShape):
+class ConnectedShape(FiniteShape):
     """
     An arbitrary 2D shape
     Methods:
