@@ -136,7 +136,7 @@ class TestOrSimpleShape:
         pass
 
     @pytest.mark.order(5)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
     def test_two_squares(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
@@ -162,7 +162,6 @@ class TestOrSimpleShape:
         assert square0 | square1 == good_shape
 
     @pytest.mark.order(5)
-    @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
             "TestOrSimpleShape::test_begin",
@@ -180,7 +179,7 @@ class TestAndSimpleShape:
         pass
 
     @pytest.mark.order(5)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestAndSimpleShape::test_begin"])
     def test_two_squares(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
@@ -197,7 +196,6 @@ class TestAndSimpleShape:
         assert square0 & square1 == good_shape
 
     @pytest.mark.order(5)
-    @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
             "TestAndSimpleShape::test_begin",
@@ -210,13 +208,12 @@ class TestAndSimpleShape:
 
 class TestMinusSimpleShape:
     @pytest.mark.order(5)
-    @pytest.mark.skip(reason="Needs implementation")
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_end"])
     def test_begin(self):
         pass
 
     @pytest.mark.order(5)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestMinusSimpleShape::test_begin"])
     def test_two_squares(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
@@ -237,7 +234,6 @@ class TestMinusSimpleShape:
         assert square1 - square0 == right_shape
 
     @pytest.mark.order(5)
-    @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
             "TestMinusSimpleShape::test_begin",

@@ -172,7 +172,7 @@ class FiniteShape(BaseShape):
 
     def copy(self) -> BaseShape:
         return deepcopy(self)
-    
+
     def __invert__(self) -> BaseShape:
         return self.copy().invert()
 
@@ -192,6 +192,11 @@ class SimpleShape(FiniteShape):
         vertices = tuple([tuple(vertex) for vertex in vertices])
         msg = f"Simple Shape of area {area:.2f} with vertices:\n"
         msg += str(np.array(vertices, dtype="float64"))
+        return msg
+
+    def __repr__(self) -> str:
+        area, vertices = float(self), self.jordancurve.vertices
+        msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
         return msg
 
     def __float__(self) -> float:
@@ -315,13 +320,12 @@ class SimpleShape(FiniteShape):
         final_curve.clean()
         return final_curve
 
-    def __or_simple_positives(self, other: SimpleShape):
+    def __outside_path(self, other: SimpleShape):
         """
         Returns the union of two simple positive shapes
         """
         assert isinstance(other, SimpleShape)
-        assert float(self) > 0
-        assert float(other) > 0
+        # assert float(self) > 0
         self.__split_at_intersection(other)
         index = self.__get_segment_outside_other(other)
         final_beziers = self.__continue_path(other, index)
@@ -329,13 +333,13 @@ class SimpleShape(FiniteShape):
         final_jordan = JordanCurve(final_curve)
         return self.__class__(final_jordan)
 
-    def __and_simple_positives(self, other: SimpleShape):
+    def __inside_path(self, other: SimpleShape):
         """
         Returns the union of two simple positive shapes
         """
         assert isinstance(other, SimpleShape)
-        assert float(self) > 0
-        assert float(other) > 0
+        # assert float(self) > 0
+        # assert float(other) > 0
         self.__split_at_intersection(other)
         index = self.__get_segment_inside_other(other)
         final_beziers = self.__continue_path(other, index)
@@ -355,9 +359,13 @@ class SimpleShape(FiniteShape):
 
         area_self = float(self)
         area_other = float(other)
-        if area_self > 0 and area_other > 0:
-            return self.__or_simple_positives(other)
-        raise NotImplementedError
+        if area_self > 0:
+            if area_other > 0:
+                return self.__outside_path(other)
+            else:  # area_other < 0
+                return other.__inside_path(self)
+        else:  # area_self < 0
+            return ~((~self) & (~other))
 
     def __and__(self, other: SimpleShape):
         assert isinstance(other, SimpleShape)
@@ -370,9 +378,13 @@ class SimpleShape(FiniteShape):
 
         area_self = float(self)
         area_other = float(other)
-        if area_self > 0 and area_other > 0:
-            return self.__and_simple_positives(other)
-        raise NotImplementedError
+        if area_self > 0:
+            if area_other > 0:
+                return self.__inside_path(other)
+            else:
+                return other.__inside_path(self)
+        else:
+            return ~((~self) | (~other))
 
     def __contains__(self, other: Union[Point2D, SimpleShape]) -> bool:
         if isinstance(other, SimpleShape):
@@ -431,7 +443,7 @@ class SimpleShape(FiniteShape):
         """
         full_curve = self.jordancurve.full_curve
         knots = full_curve.knotvector.knots
-        usample = list(knots)
+        usample = list(knots[:-1])
         chebynodes = 2 * np.arange(subnpts) + 1
         chebynodes = np.cos(chebynodes * np.pi / (2 * subnpts))
         chebynodes = (1 + chebynodes) / 2

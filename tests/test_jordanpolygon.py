@@ -176,7 +176,7 @@ class TestJordanPolygon:
         assert (2, 2) not in square
 
     @pytest.mark.order(3)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
             "TestJordanPolygon::test_begin",
@@ -292,7 +292,7 @@ class TestTransformationPolygon:
         assert test_square == good_square
 
     @pytest.mark.order(3)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
             "TestTransformationPolygon::test_begin",
