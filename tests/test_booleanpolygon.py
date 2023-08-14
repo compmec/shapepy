@@ -42,6 +42,12 @@ class TestEmptyWhole:
         assert whole + empty is whole
         assert whole + whole is whole
 
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordan = JordanPolygon(points)
+        shape = SimpleShape(jordan)
+        assert shape | empty == shape
+        assert shape | whole is whole
+
     @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_and(self):
@@ -57,6 +63,12 @@ class TestEmptyWhole:
         assert whole * empty is empty
         assert whole * whole is whole
 
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordan = JordanPolygon(points)
+        shape = SimpleShape(jordan)
+        assert shape & empty is empty
+        assert shape & whole == shape
+
     @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_xor(self):
@@ -67,6 +79,12 @@ class TestEmptyWhole:
         assert whole ^ empty is whole
         assert whole ^ whole is empty
 
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordan = JordanPolygon(points)
+        shape = SimpleShape(jordan)
+        assert shape ^ empty == shape
+        assert shape ^ whole == ~shape
+
     @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_sub(self):
@@ -76,6 +94,14 @@ class TestEmptyWhole:
         assert empty - whole is empty
         assert whole - empty is whole
         assert whole - whole is empty
+
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordan = JordanPolygon(points)
+        shape = SimpleShape(jordan)
+        assert shape - empty == shape
+        assert shape - whole is empty
+        assert empty - shape is empty
+        assert whole - shape == ~shape
 
     @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
@@ -138,7 +164,7 @@ class TestOrSimpleShape:
     @pytest.mark.order(5)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
-    def test_two_squares(self):
+    def test_squares_ab(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
         square0 = JordanPolygon(vertices0)
         square0 = SimpleShape(square0)
@@ -162,10 +188,68 @@ class TestOrSimpleShape:
         assert square0 | square1 == good_shape
 
     @pytest.mark.order(5)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(
+        depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_squares_ab"]
+    )
+    def test_squares_anotb(self):
+        vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
+        square0 = JordanPolygon(vertices0)
+        square0 = SimpleShape(square0)
+        vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
+        square1 = JordanPolygon(vertices1)
+        square1 = SimpleShape(square1)
+
+        good_points = [(0, 1), (1, 2), (3, 0), (1, -2), (0, -1), (1, 0)]
+        good_jordanpoly = JordanPolygon(good_points)
+        good_shape = SimpleShape(good_jordanpoly)
+
+        assert square0 | square1 == good_shape
+
+    @pytest.mark.order(5)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(
+        depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_squares_ab"]
+    )
+    def test_squares_notab(self):
+        vertices0 = [(1, 0), (-1, -2), (-3, 0), (-1, 2)]
+        square0 = JordanPolygon(vertices0)
+        square0 = SimpleShape(square0)
+        vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
+        square1 = JordanPolygon(vertices1)
+        square1 = SimpleShape(square1)
+
+        good_points = [(0, 1), (-1, 0), (0, -1), (-1, -2), (-3, 0), (-1, 2)]
+        good_jordanpoly = JordanPolygon(good_points)
+        good_shape = SimpleShape(good_jordanpoly)
+
+        assert square0 | square1 == good_shape
+
+    @pytest.mark.order(5)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
+    def test_squares_notanotb(self):
+        vertices0 = [(1, 0), (-1, -2), (-3, 0), (-1, 2)]
+        square0 = JordanPolygon(vertices0)
+        square0 = SimpleShape(square0)
+        vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
+        square1 = JordanPolygon(vertices1)
+        square1 = SimpleShape(square1)
+
+        good_points = [(0, 1), (1, 0), (0, -1), (-1, 0)]
+        good_jordanpoly = JordanPolygon(good_points)
+        good_shape = SimpleShape(good_jordanpoly)
+
+        assert square0 | square1 == good_shape
+
+    @pytest.mark.order(5)
     @pytest.mark.dependency(
         depends=[
             "TestOrSimpleShape::test_begin",
-            "TestOrSimpleShape::test_two_squares",
+            "TestOrSimpleShape::test_squares_ab",
+            "TestOrSimpleShape::test_squares_anotb",
+            "TestOrSimpleShape::test_squares_notab",
+            "TestOrSimpleShape::test_squares_notanotb",
         ]
     )
     def test_end(self):
@@ -242,6 +326,42 @@ class TestMinusSimpleShape:
     )
     def test_end(self):
         pass
+
+
+class TestOthers:
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(
+        depends=[
+            "TestOrSimpleShape::test_end",
+            "TestAndSimpleShape::test_end",
+            "TestMinusSimpleShape::test_end",
+        ]
+    )
+    def test_print(self):
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordancurve = JordanPolygon(points)
+        shape = SimpleShape(jordancurve)
+        str(shape)
+        repr(shape)
+
+    @pytest.mark.order(5)
+    @pytest.mark.dependency(
+        depends=[
+            "TestOrSimpleShape::test_end",
+            "TestAndSimpleShape::test_end",
+            "TestMinusSimpleShape::test_end",
+        ]
+    )
+    def test_compare(self):
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordancurve = JordanPolygon(points)
+        shapea = SimpleShape(jordancurve)
+        points = [(0, 0), (0, 1), (1, 0)]
+        jordancurve = JordanPolygon(points)
+        shapeb = SimpleShape(jordancurve)
+        assert shapea != shapeb
+        with pytest.raises(ValueError):
+            shapea != 0
 
 
 @pytest.mark.order(5)

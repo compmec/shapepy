@@ -208,7 +208,7 @@ class SimpleShape(FiniteShape):
 
     def __eq__(self, other: SimpleShape) -> bool:
         if not isinstance(other, SimpleShape):
-            return False
+            raise ValueError
         if abs(float(self) - float(other)) > 1e-6:
             return False
         return self.jordancurve == other.jordancurve
@@ -325,7 +325,6 @@ class SimpleShape(FiniteShape):
         Returns the union of two simple positive shapes
         """
         assert isinstance(other, SimpleShape)
-        # assert float(self) > 0
         self.__split_at_intersection(other)
         index = self.__get_segment_outside_other(other)
         final_beziers = self.__continue_path(other, index)
@@ -338,8 +337,6 @@ class SimpleShape(FiniteShape):
         Returns the union of two simple positive shapes
         """
         assert isinstance(other, SimpleShape)
-        # assert float(self) > 0
-        # assert float(other) > 0
         self.__split_at_intersection(other)
         index = self.__get_segment_inside_other(other)
         final_beziers = self.__continue_path(other, index)
@@ -348,6 +345,8 @@ class SimpleShape(FiniteShape):
         return self.__class__(final_jordan)
 
     def __or__(self, other: SimpleShape):
+        if isinstance(other, (EmptyShape, WholeShape)):
+            return other | self
         assert isinstance(other, SimpleShape)
         if self in other:
             return other.copy()
@@ -358,16 +357,14 @@ class SimpleShape(FiniteShape):
             raise NotImplementedError
 
         area_self = float(self)
-        area_other = float(other)
         if area_self > 0:
-            if area_other > 0:
-                return self.__outside_path(other)
-            else:  # area_other < 0
-                return other.__inside_path(self)
+            return self.__outside_path(other)
         else:  # area_self < 0
             return ~((~self) & (~other))
 
     def __and__(self, other: SimpleShape):
+        if isinstance(other, (EmptyShape, WholeShape)):
+            return other & self
         assert isinstance(other, SimpleShape)
         if self in other:
             return self.copy()
