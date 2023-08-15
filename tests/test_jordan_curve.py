@@ -15,7 +15,7 @@ from compmec.shape.jordancurve import JordanCurve
 @pytest.mark.dependency(
     depends=[
         "tests/test_polygon.py::test_end",
-        "tests/test_jordanpolygon.py::test_end",
+        "tests/test_jordan_polygon.py::test_end",
     ],
     scope="session",
 )

@@ -53,7 +53,10 @@ class NumIntegration:
         nintervals = 4 * (degree + 1)
         nptintegra = 4  # 3/8 simpson
         weights = np.array([1, 3, 3, 1], dtype="float64") / 8
-        usample = np.linspace(0, 1, nintervals * (nptintegra - 1) + 1)
+        nptssample = nintervals * (nptintegra - 1) + 1
+        usample = 1 + 2 * np.arange(nptssample, dtype="float64")
+        usample *= np.pi / (2 * nptssample)
+        usample = (1 - np.cos(usample)) / 2
         numvals = np.array(numer(usample))
         denvals = denom(usample)
         funcvals = numvals / denvals
@@ -98,7 +101,6 @@ class FollowPath:
     def interior_jordan_contains_point(jordan: JordanCurve, point: Point2D) -> bool:
         winding = FollowPath.winding_number(jordan, point)
         area = FollowPath.area_inside_jordan(jordan)
-        print("area = ", area)
         return winding == 1 if area > 0 else winding == 0
 
     @staticmethod
@@ -125,7 +127,8 @@ class FollowPath:
             for i, ctrlpt in enumerate(ctrlpoints):
                 ctrlpoints[i] = ctrlpt - point
             ctrlpoints = tuple(ctrlpoints)
-            total += NumIntegration.winding_number_bezier(ctrlpoints)
+            partial = NumIntegration.winding_number_bezier(ctrlpoints)
+            total += partial
         return round(total)
 
     @staticmethod
@@ -403,9 +406,7 @@ class SimpleShape(FiniteShape):
         return msg
 
     def __float__(self) -> float:
-        if self.__area is None:
-            self.__area = FollowPath.area_inside_jordan(self.jordancurve)
-        return self.__area
+        return float(self.__area)
 
     def __eq__(self, other: SimpleShape) -> bool:
         if not isinstance(other, SimpleShape):
@@ -415,7 +416,7 @@ class SimpleShape(FiniteShape):
         return self.jordancurve == other.jordancurve
 
     def __invert__(self) -> BaseShape:
-        return ConnectedShape(WholeShape(), [self])
+        return ConnectedShape(WholeShape(), [self.copy()])
 
     def __or__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
@@ -488,8 +489,11 @@ class SimpleShape(FiniteShape):
     @jordancurve.setter
     def jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
-        self.__area = None
+        area = FollowPath.area_inside_jordan(other)
+        if area < 0:
+            raise ValueError("Simple Shape area must be always positive!")
         self.__jordancurve = other.copy()
+        self.__area = area
 
     def contains_point(self, point: Point2D) -> bool:
         """

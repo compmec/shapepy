@@ -11,6 +11,7 @@ import numpy as np
 
 from compmec import nurbs
 from compmec.shape.jordancurve import JordanCurve, JordanPolygon
+from compmec.shape.polygon import Point2D
 from compmec.shape.shape import SimpleShape
 
 
@@ -26,51 +27,62 @@ class Primitive:
             raise TypeError("nsides must be an integer")
         if nsides < 3:
             raise ValueError("nsides must be >= 3")
-        points = np.empty((nsides, 2), dtype="float64")
+        vertices = np.empty((nsides, 2), dtype="float64")
         theta = np.linspace(0, 2 * np.pi, nsides, endpoint=False)
-        points[:, 0] = np.cos(theta)
-        points[:, 1] = np.sin(theta)
-        jordan = JordanPolygon(points)
-        return SimpleShape([jordan])
+        vertices[:, 0] = np.cos(theta)
+        vertices[:, 1] = np.sin(theta)
+        vertices = tuple([Point2D(vertex) for vertex in vertices])
+        jordan = JordanPolygon(vertices)
+        return SimpleShape(jordan)
 
     @staticmethod
-    def triangle(side: float = 1, center: Tuple[float] = (0, 0)) -> SimpleShape:
-        """
-        Creates an equilatery triangle of side `side` and center `center`.
-        """
-        vertices = [
-            (0, np.sqrt(3) / 3),
-            (-1 / 2, -np.sqrt(3) / 6),
-            (1 / 2, -np.sqrt(3) / 6),
-        ]
-        vertices = side * np.array(vertices)
-        vertices[:, 0] += center[0]
-        vertices[:, 1] += center[1]
-        vertices = tuple(vertices)
-        jordanpolygon = JordanPolygon(vertices)
-        return SimpleShape([jordanpolygon])
+    def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
+        vertices = [Point2D(vertex) for vertex in vertices]
+        jordan_curve = JordanPolygon(vertices)
+        return SimpleShape(jordan_curve)
 
     @staticmethod
-    def square(side: float = 1, center: Tuple[float] = (0, 0)) -> SimpleShape:
+    def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
         """
         Creates a square of side `side` and center `center`.
         Its edges are aligned with the axes
         """
-
-        vertices = [(1 / 2, 1 / 2), (-1 / 2, 1 / 2), (-1 / 2, -1 / 2), (1 / 2, -1 / 2)]
-        vertices = side * np.array(vertices)
-        vertices[:, 0] += center[0]
-        vertices[:, 1] += center[1]
+        center = Point2D(center)
+        vertices = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
+        vertices = [center + side * Point2D(vertex) for vertex in vertices]
         vertices = tuple(vertices)
-        jordanpolygon = JordanPolygon(vertices)
-        return SimpleShape([jordanpolygon])
+        jordan = JordanPolygon(vertices)
+        return SimpleShape(jordan)
 
     @staticmethod
-    def circle(radius: float = 1, center: Tuple[float] = (0, 0)) -> SimpleShape:
+    def circle(radius: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
         """
         Creates a circle with given radius and center.
         """
-        polygon = Primitive.regular_polygon(16)
-        polygon *= radius
-        polygon += center
-        return polygon
+        degree = 2
+        ndivangle = 16
+        last_knot = ndivangle
+        knotvector = (0, last_knot) + degree * tuple(range(last_knot + 1))
+        knotvector = tuple(sorted(knotvector))
+        knotvector = nurbs.KnotVector(knotvector)
+        curve = nurbs.Curve(knotvector)
+
+        theta = 2 * np.pi / ndivangle
+        cos, sin = np.cos(theta), np.sin(theta)
+        height = np.tan(theta / 2)
+        rotation = np.array(((cos, -sin), (sin, cos)))
+        points = [(1, 0), (1, height), (cos, sin)]
+        for i in range(ndivangle - 1):
+            new_point = rotation @ points[-2]
+            points.append(new_point)
+            new_point = rotation @ points[-2]
+            points.append(new_point)
+        points[-1] = points[0]
+        points = [Point2D(point) for point in points]
+        curve.ctrlpoints = points
+        jordan_curve = JordanCurve(curve)
+        circle = SimpleShape(jordan_curve)
+        center = Point2D(center)
+        circle.scale(radius, radius)
+        circle.move(center)
+        return circle

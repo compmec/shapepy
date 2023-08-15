@@ -260,7 +260,7 @@ class JordanCurve:
         """
         full_curve = self.full_curve
         knots = full_curve.knotvector.knots
-        usample = list(knots[:-1])
+        usample = list(knots)
         chebynodes = 2 * np.arange(subnpts) + 1
         chebynodes = np.cos(chebynodes * np.pi / (2 * subnpts))
         chebynodes = (1 + chebynodes) / 2

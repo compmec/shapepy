@@ -45,7 +45,9 @@ class Point2D:
         float(y)  # entry validation
         self._x = x
         self._y = y
-        if isinstance(x, (int, fractions.Fraction)):
+        isxfrac = isinstance(x, (int, fractions.Fraction))
+        isyfrac = isinstance(y, (int, fractions.Fraction))
+        if isxfrac and isyfrac:
             self._x = fractions.Fraction(x).limit_denominator(1e9)
             self._y = fractions.Fraction(y).limit_denominator(1e9)
 

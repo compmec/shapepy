@@ -12,9 +12,10 @@ from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 @pytest.mark.order(6)
 @pytest.mark.dependency(
     depends=[
-        # "tests/test_polygon.py::test_end",
-        # "tests/test_jordanpolygon.py::test_end",
-        # "tests/test_jordancurve.py::test_end",
+        "tests/test_polygon.py::test_end",
+        "tests/test_jordan_polygon.py::test_end",
+        "tests/test_jordan_curve.py::test_end",
+        "tests/test_primitive.py::test_end",
     ],
     scope="session",
 )
@@ -158,6 +159,7 @@ class TestContainsPoint:
         vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
         square = JordanPolygon(vertices)
         square = SimpleShape(square)
+        assert float(square) > 0
 
         for xval in range(-2, 3):
             for yval in range(-2, 3):
@@ -170,6 +172,7 @@ class TestContainsPoint:
         vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
         square = JordanPolygon(vertices)
         square = SimpleShape(square)
+        assert float(square) > 0
 
         for xval in range(-4, 5):
             for yval in range(-4, 5):
@@ -206,6 +209,8 @@ class TestContainsJordan:
         small_square = SimpleShape(small_jordan)
         big_square = SimpleShape(big_jordan)
 
+        assert float(small_square) > 0
+        assert float(big_square) > 0
         assert small_jordan in big_square
         assert big_jordan not in small_square
 
@@ -278,6 +283,8 @@ class TestContainsShape:
         small_square = SimpleShape(small_square)
         big_square = SimpleShape(big_square)
 
+        assert float(small_square) > 0
+        assert float(big_square) > 0
         assert small_square in small_square
         assert small_square in big_square
         assert big_square in big_square
@@ -495,7 +502,7 @@ class TestOthers:
         points = [(0, 0), (1, 0), (0, 1)]
         jordancurve = JordanPolygon(points)
         shapea = SimpleShape(jordancurve)
-        points = [(0, 0), (0, 1), (1, 0)]
+        points = [(0, 0), (1, 0), (1, 1), (0, 1)]
         jordancurve = JordanPolygon(points)
         shapeb = SimpleShape(jordancurve)
         assert shapea != shapeb
