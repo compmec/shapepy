@@ -12,7 +12,6 @@ from copy import deepcopy
 from typing import List, Tuple, Union
 
 import numpy as np
-from compmec.nurbs import Curve
 
 from compmec import nurbs
 from compmec.shape.jordancurve import JordanCurve
@@ -20,8 +19,9 @@ from compmec.shape.polygon import Point2D
 
 
 class NumIntegration:
+    
     @staticmethod
-    def area(ctrlpoints: Tuple[Point2D]) -> float:
+    def area_bezier(ctrlpoints: Tuple[Point2D]) -> float:
         """
         Computes the area equivalent from a bezier curve
         """
@@ -34,6 +34,18 @@ class NumIntegration:
         dpy = nurbs.calculus.Derivate.bezier(py)
         pxdpy = px * dpy
         return sum(pxdpy.ctrlpoints) / (pxdpy.degree + 1)
+    
+    @staticmethod
+    def area_inside_jordan(jordan_curve: JordanCurve) -> float:
+        """
+        Returns the area of the region defined by jordan
+        If the jordan is negative, it returns the negative
+        of the area
+        """
+        area = 0
+        for segment in jordan_curve.segments:
+            area += NumIntegration.area_bezier(segment.ctrlpoints)
+        return area
 
     @staticmethod
     def winding_number_bezier(ctrlpoints: Tuple[Point2D]) -> float:
@@ -100,20 +112,9 @@ class FollowPath:
     @staticmethod
     def interior_jordan_contains_point(jordan: JordanCurve, point: Point2D) -> bool:
         winding = FollowPath.winding_number(jordan, point)
-        area = FollowPath.area_inside_jordan(jordan)
+        area = NumIntegration.area_inside_jordan(jordan)
         return winding == 1 if area > 0 else winding == 0
 
-    @staticmethod
-    def area_inside_jordan(jordan: JordanCurve) -> float:
-        """
-        Returns the area of the region defined by jordan
-        If the jordan is negative, it returns the negative
-        of the area
-        """
-        area = 0
-        for segment in jordan.segments:
-            area += NumIntegration.area(segment.ctrlpoints)
-        return area
 
     @staticmethod
     def winding_number(jordan: JordanCurve, point: Point2D) -> int:
@@ -489,7 +490,7 @@ class SimpleShape(FiniteShape):
     @jordancurve.setter
     def jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
-        area = FollowPath.area_inside_jordan(other)
+        area = NumIntegration.area_inside_jordan(other)
         if area < 0:
             raise ValueError("Simple Shape area must be always positive!")
         self.__jordancurve = other.copy()

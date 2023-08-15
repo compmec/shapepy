@@ -12,7 +12,7 @@ import numpy as np
 from compmec import nurbs
 from compmec.shape.jordancurve import JordanCurve, JordanPolygon
 from compmec.shape.polygon import Point2D
-from compmec.shape.shape import SimpleShape
+from compmec.shape.shape import SimpleShape, ConnectedShape, WholeShape, NumIntegration
 
 
 class Primitive:
@@ -39,7 +39,11 @@ class Primitive:
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
         vertices = [Point2D(vertex) for vertex in vertices]
         jordan_curve = JordanPolygon(vertices)
-        return SimpleShape(jordan_curve)
+        area = NumIntegration.area_inside_jordan(jordan_curve)
+        if area > 0:
+            return SimpleShape(jordan_curve)
+        simple_shape = SimpleShape(abs(jordan_curve))
+        return ConnectedShape(WholeShape(), [simple_shape])
 
     @staticmethod
     def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
