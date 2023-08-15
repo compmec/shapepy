@@ -315,6 +315,9 @@ class EmptyShape(BaseShape):
     def __and__(self, other: BaseShape) -> BaseShape:
         return self
 
+    def __sub__(self, other: BaseShape) -> BaseShape:
+        return self
+
     def __float__(self) -> float:
         return float(0)
 
@@ -345,6 +348,9 @@ class WholeShape(BaseShape):
 
     def __and__(self, other: BaseShape) -> BaseShape:
         return other.copy()
+
+    def __sub__(self, other: BaseShape) -> BaseShape:
+        return ~other
 
     def __float__(self) -> float:
         return float("inf")
