@@ -15,6 +15,71 @@ from compmec import nurbs
 from compmec.shape.polygon import Point2D, Segment
 
 
+class NumIntegration:
+    @staticmethod
+    def area_bezier(ctrlpoints: Tuple[Point2D]) -> float:
+        """
+        Computes the area equivalent from a bezier curve
+        """
+        degree = len(ctrlpoints) - 1
+        knotvector = (degree + 1) * [0] + (degree + 1) * [1]
+        px = nurbs.Curve(knotvector)
+        px.ctrlpoints = [pt[0] for pt in ctrlpoints]
+        py = nurbs.Curve(knotvector)
+        py.ctrlpoints = [pt[1] for pt in ctrlpoints]
+        dpy = nurbs.calculus.Derivate.bezier(py)
+        pxdpy = px * dpy
+        return sum(pxdpy.ctrlpoints) / (pxdpy.degree + 1)
+
+    @staticmethod
+    def area_inside_jordan(jordan_curve: JordanCurve) -> float:
+        """
+        Returns the area of the region defined by jordan
+        If the jordan is negative, it returns the negative
+        of the area
+        """
+        area = 0
+        for segment in jordan_curve.segments:
+            area += NumIntegration.area_bezier(segment.ctrlpoints)
+        return area
+
+    @staticmethod
+    def winding_number_bezier(ctrlpoints: Tuple[Point2D]) -> float:
+        """
+        Computes the integral for a bezier curve of given control points
+        """
+        degree = len(ctrlpoints) - 1
+        knotvector = [0] * (degree + 1) + [1] * (degree + 1)
+        px = nurbs.Curve(knotvector, [pt[0] for pt in ctrlpoints])
+        py = nurbs.Curve(knotvector, [pt[1] for pt in ctrlpoints])
+        dpx = nurbs.calculus.Derivate.bezier(px)
+        dpy = nurbs.calculus.Derivate.bezier(py)
+
+        numer = px * dpy - py * dpx
+        denom = px * px + py * py
+
+        nintervals = 4 * (degree + 1)
+        nptintegra = 4  # 3/8 simpson
+        weights = np.array([1, 3, 3, 1], dtype="float64") / 8
+        nptssample = nintervals * (nptintegra - 1) + 1
+        usample = 1 + 2 * np.arange(nptssample, dtype="float64")
+        usample *= np.pi / (2 * nptssample)
+        usample = (1 - np.cos(usample)) / 2
+        numvals = np.array(numer(usample))
+        denvals = denom(usample)
+        funcvals = numvals / denvals
+        integral = 0
+        for i in range(nintervals):
+            umin, umax = (
+                usample[(nptintegra - 1) * i],
+                usample[(nptintegra - 1) * (i + 1)],
+            )
+            # uvals = usample[(nptintegra-1)*i:(nptintegra-1)*(i+1)+1]
+            fvals = funcvals[(nptintegra - 1) * i : (nptintegra - 1) * (i + 1) + 1]
+            integral += np.dot(weights, fvals) * (umax - umin)
+        return integral / (2 * np.pi)
+
+
 class IntersectionBeziers:
     tol_du = 1e-9  # tolerance convergence
     tol_norm = 1e-9  # tolerance convergence
