@@ -265,6 +265,7 @@ class JordanCurve:
         self.full_curve = full_curve
 
     def move(self, point: Point2D) -> JordanCurve:
+        point = Point2D(point)
         full_curve = self.full_curve
         full_ctrlpts = list(full_curve.ctrlpoints)
         for i, ctrlpt in enumerate(full_ctrlpts):
@@ -465,6 +466,13 @@ class JordanCurve:
             if vector.norm_square() < 1e-9:
                 return True
         return False
+
+    def __abs__(self) -> JordanCurve:
+        """
+        Returns the same curve, but in positive direction
+        """
+        internal_area = NumIntegration.area_inside_jordan(self)
+        return self.copy() if internal_area > 0 else (~self)
 
     def intersect(self, other: JordanCurve) -> bool:
         """

@@ -6,6 +6,7 @@ Which are in fact positive shapes defined only by one jordan curve
 import pytest
 
 from compmec.shape.jordancurve import JordanPolygon
+from compmec.shape.primitive import Primitive
 from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 
 
@@ -238,8 +239,7 @@ class TestContainsShape:
         empty = EmptyShape()
         whole = WholeShape()
         points = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanPolygon(points)
-        shape = SimpleShape(jordan)
+        shape = Primitive.polygon(points)
         assert float(shape) > 0
 
         # contains
@@ -278,10 +278,8 @@ class TestContainsShape:
     def test_square_in_square(self):
         small_vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
         big_vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
-        small_square = JordanPolygon(small_vertices)
-        big_square = JordanPolygon(big_vertices)
-        small_square = SimpleShape(small_square)
-        big_square = SimpleShape(big_square)
+        small_square = Primitive.polygon(small_vertices)
+        big_square = Primitive.polygon(big_vertices)
 
         assert float(small_square) > 0
         assert float(big_square) > 0
@@ -314,12 +312,8 @@ class TestOrSimpleShape:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
     def test_inside_each(self):
-        small_vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-        small_jordan = JordanPolygon(small_vertices)
-        small_square = SimpleShape(small_jordan)
-        big_vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
-        big_jordan = JordanPolygon(big_vertices)
-        big_square = SimpleShape(big_jordan)
+        small_square = Primitive.square(side=1, center=(0, 0))
+        big_square = Primitive.square(side=2, center=(0, 0))
 
         assert float(small_square) > 0
         assert float(big_square) > 0
@@ -335,28 +329,15 @@ class TestOrSimpleShape:
         depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_inside_each"]
     )
     def test_two_squares(self):
-        vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
+        square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
+        square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
         assert float(square0) > 0
         assert float(square1) > 0
 
-        good_points = [
-            (0, 1),
-            (-1, 2),
-            (-3, 0),
-            (-1, -2),
-            (0, -1),
-            (1, -2),
-            (3, 0),
-            (1, 2),
-        ]
-        good_jordanpoly = JordanPolygon(good_points)
-        good_shape = SimpleShape(good_jordanpoly)
+        good_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2)]
+        good_points += [(0, -1), (1, -2), (3, 0), (1, 2)]
+        good_shape = Primitive.polygon(good_points)
 
         assert square0 | square1 == good_shape
 
@@ -384,12 +365,8 @@ class TestAndSimpleShape:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestAndSimpleShape::test_begin"])
     def test_disjoint(self):
-        vertices0 = [(-2, -1), (-1, -1), (-1, 1), (-2, 1)]
-        vertices1 = [(1, -1), (2, -1), (2, 1), (1, 1)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
+        square0 = Primitive.square(side=2, center=(-2, 0))
+        square1 = Primitive.square(side=2, center=(2, 0))
 
         assert float(square0) > 0
         assert float(square1) > 0
@@ -405,16 +382,9 @@ class TestAndSimpleShape:
         depends=["TestAndSimpleShape::test_begin", "TestAndSimpleShape::test_disjoint"]
     )
     def test_two_squares(self):
-        vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
-
-        good_points = [(0, -1), (1, 0), (0, 1), (-1, 0)]
-        good_jordanpoly = JordanPolygon(good_points)
-        good_shape = SimpleShape(good_jordanpoly)
+        square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
+        square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
+        good_shape = Primitive.regular_polygon(nsides=4, radius=1, center=(0, 0))
 
         assert square0 & square1 == good_shape
 
@@ -446,12 +416,8 @@ class TestSubSimpleShape:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestSubSimpleShape::test_begin"])
     def test_two_squares(self):
-        vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
+        square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
+        square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
         left_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2), (0, -1), (-1, 0)]
         left_jordanpoly = JordanPolygon(left_points)

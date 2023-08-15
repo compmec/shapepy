@@ -49,7 +49,6 @@ class FollowPath:
         area = NumIntegration.area_inside_jordan(jordan)
         return winding == 1 if area > 0 else winding == 0
 
-
     @staticmethod
     def winding_number(jordan: JordanCurve, point: Point2D) -> int:
         """
@@ -70,25 +69,19 @@ class FollowPath:
     def unite_beziers(beziers: Tuple[nurbs.Curve]) -> nurbs.Curve:
         """
         Given a tuple of bezier curves, it returns a unique closed curve
-        The final knotvector is not predictible
         """
+        beziers = list(beziers)
         nbeziers = len(beziers)
+        for i, bezier in enumerate(beziers):
+            degree = bezier.degree
+            knotvector = sorted((degree + 1) * (i, i + 1))
+            new_bezier = bezier.__class__(knotvector)
+            new_bezier.ctrlpoints = bezier.ctrlpoints
+            new_bezier.weights = bezier.weights
+            beziers[i] = new_bezier
         final_curve = beziers[0]
-        for i in range(nbeziers - 1):
-            umax_prev = final_curve.knotvector[-1]
-            bezier1 = beziers[i + 1]
-            knotvector1 = bezier1.knotvector
-            umin_next = knotvector1[0]
-            if umax_prev != umin_next:
-                knotvector1.shift(umax_prev - umin_next)
-                ctrlpoints = bezier1.ctrlpoints
-                weights = bezier1.weights
-                bezier1.ctrlpoints = None
-                bezier1.weights = None
-                bezier1.knotvector = knotvector1
-                bezier1.ctrlpoints = ctrlpoints
-                bezier1.weights = weights
-            final_curve |= bezier1
+        for i in range(1, nbeziers):
+            final_curve |= beziers[i]
         final_curve.clean()
         return final_curve
 
@@ -304,12 +297,6 @@ class WholeShape(BaseShape):
 
 
 class FiniteShape(BaseShape):
-    def __abs__(self) -> BaseShape:
-        """
-        Returns the same curve, but in positive direction
-        """
-        return self.copy() if self else (~self)
-
     def copy(self) -> BaseShape:
         return deepcopy(self)
 
@@ -582,6 +569,14 @@ class ConnectedShape(FiniteShape):
                     return False
             return True
         raise NotImplementedError
+
+    def __float__(self) -> float:
+        soma = 0
+        if not isinstance(self.positive, WholeShape):
+            soma += float(self.positive)
+        for hole in self.holes:
+            soma -= float(hole)
+        return float(soma)
 
 
 class DisjointShape(FiniteShape):

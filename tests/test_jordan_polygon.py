@@ -357,6 +357,11 @@ class TestOthers:
     @pytest.mark.dependency(
         depends=["TestJordanPolygon::test_end", "TestTransformationPolygon::test_end"]
     )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(3)
+    @pytest.mark.dependency(depends=["TestOthers::test_begin"])
     def test_print(self):
         points = [(1, 1), (2, 2), (0, 3)]
         triangle = JordanPolygon(points)
@@ -370,13 +375,32 @@ class TestOthers:
 
         str(triangle.vertices)
 
+    @pytest.mark.order(3)
+    @pytest.mark.dependency(depends=["TestOthers::test_begin"])
+    def test_intersection(self):
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordana = JordanPolygon(points)
+        jordanb = JordanPolygon(points)
+        assert jordana.intersect(jordanb)
+
+    @pytest.mark.order(3)
+    @pytest.mark.dependency(
+        depends=[
+            "TestOthers::test_begin",
+            "TestOthers::test_print",
+            "TestOthers::test_intersection",
+        ]
+    )
+    def test_end(self):
+        pass
+
 
 @pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
         "TestJordanPolygon::test_end",
         "TestTransformationPolygon::test_end",
-        "TestOthers::test_print",
+        "TestOthers::test_end",
     ]
 )
 def test_end():

@@ -12,28 +12,37 @@ import numpy as np
 from compmec import nurbs
 from compmec.shape.jordancurve import JordanCurve, JordanPolygon
 from compmec.shape.polygon import Point2D
-from compmec.shape.shape import SimpleShape, ConnectedShape, WholeShape, NumIntegration
+from compmec.shape.shape import ConnectedShape, NumIntegration, SimpleShape, WholeShape
 
 
 class Primitive:
     @staticmethod
-    def regular_polygon(nsides: int) -> SimpleShape:
+    def regular_polygon(
+        nsides: int, radius: float = 1, center: Point2D = (0, 0)
+    ) -> SimpleShape:
         """
         Creates a regular polygon of n-sides inscribed in a circle of radius 1.
             if nsides = 3, it's a triangle
             if nsides = 4, it's a square, of side square(2)
         """
-        if not isinstance(nsides, int):
-            raise TypeError("nsides must be an integer")
-        if nsides < 3:
-            raise ValueError("nsides must be >= 3")
+        try:
+            assert isinstance(nsides, int)
+            assert nsides >= 3
+            float(radius)
+            assert radius > 0
+            center = Point2D(center)
+        except (ValueError, TypeError, AssertionError):
+            raise ValueError("Input invalid")
         vertices = np.empty((nsides, 2), dtype="float64")
         theta = np.linspace(0, 2 * np.pi, nsides, endpoint=False)
         vertices[:, 0] = np.cos(theta)
         vertices[:, 1] = np.sin(theta)
         vertices = tuple([Point2D(vertex) for vertex in vertices])
-        jordan = JordanPolygon(vertices)
-        return SimpleShape(jordan)
+        jordan_polygon = JordanPolygon(vertices)
+        simple_shape = SimpleShape(jordan_polygon)
+        simple_shape.scale(radius, radius)
+        simple_shape.move(center)
+        return simple_shape
 
     @staticmethod
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
@@ -46,12 +55,22 @@ class Primitive:
         return ConnectedShape(WholeShape(), [simple_shape])
 
     @staticmethod
-    def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
+    def square(side: float = 2, center: Point2D = (0, 0)) -> SimpleShape:
         """
         Creates a square of side `side` and center `center`.
         Its edges are aligned with the axes
         """
-        center = Point2D(center)
+        try:
+            float(side)
+            assert side > 0
+            center = Point2D(center)
+        except (ValueError, TypeError, AssertionError):
+            raise ValueError("Input invalid")
+
+        if isinstance(side, int) and (side % 2 == 0):
+            side //= 2
+        else:
+            side /= 2
         vertices = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
         vertices = [center + side * Point2D(vertex) for vertex in vertices]
         vertices = tuple(vertices)
@@ -63,6 +82,13 @@ class Primitive:
         """
         Creates a circle with given radius and center.
         """
+        try:
+            float(radius)
+            assert radius > 0
+            center = Point2D(center)
+        except (ValueError, TypeError, AssertionError):
+            raise ValueError("Input invalid")
+
         degree = 2
         ndivangle = 16
         last_knot = ndivangle
@@ -86,7 +112,6 @@ class Primitive:
         curve.ctrlpoints = points
         jordan_curve = JordanCurve(curve)
         circle = SimpleShape(jordan_curve)
-        center = Point2D(center)
         circle.scale(radius, radius)
         circle.move(center)
         return circle

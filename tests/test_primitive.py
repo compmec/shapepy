@@ -32,8 +32,30 @@ class TestPrimitive:
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestPrimitive::test_begin"])
     def test_creation(self):
-        Primitive.circle()
         Primitive.square()
+        Primitive.regular_polygon(3)
+        Primitive.circle()
+
+        with pytest.raises(ValueError):
+            Primitive.square(side=-1)
+        with pytest.raises(ValueError):
+            Primitive.square(side=0)
+        with pytest.raises(ValueError):
+            Primitive.square(side="asd")
+
+        with pytest.raises(ValueError):
+            Primitive.regular_polygon(-1)
+        with pytest.raises(ValueError):
+            Primitive.regular_polygon(2)
+        with pytest.raises(ValueError):
+            Primitive.regular_polygon("asd")
+
+        with pytest.raises(ValueError):
+            Primitive.circle(radius=-1)
+        with pytest.raises(ValueError):
+            Primitive.circle(radius=0)
+        with pytest.raises(ValueError):
+            Primitive.circle(radius="asd")
 
     @pytest.mark.order(4)
     @pytest.mark.timeout(10)
@@ -70,6 +92,27 @@ class TestPrimitive:
             "TestPrimitive::test_regular",
         ]
     )
+    def test_polygon(self):
+        points = [(0, 0), (1, 0), (0, 1)]
+        triangle = Primitive.polygon(points)
+        area = 0.5
+        assert abs(float(triangle) - area) < 1e-9
+        points = [(0, 0), (0, 1), (1, 0)]
+        triangle = Primitive.polygon(points)
+        area = -0.5
+        assert abs(float(triangle) - area) < 1e-9
+
+    @pytest.mark.order(4)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestPrimitive::test_begin",
+            "TestPrimitive::test_creation",
+            "TestPrimitive::test_square",
+            "TestPrimitive::test_regular",
+            "TestPrimitive::test_polygon",
+        ]
+    )
     def test_circle(self):
         circle = Primitive.circle()
         area = math.pi
@@ -83,6 +126,7 @@ class TestPrimitive:
             "TestPrimitive::test_creation",
             "TestPrimitive::test_square",
             "TestPrimitive::test_regular",
+            "TestPrimitive::test_polygon",
             "TestPrimitive::test_circle",
         ]
     )
