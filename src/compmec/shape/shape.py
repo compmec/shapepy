@@ -69,6 +69,193 @@ class NumIntegration:
         return integral / (2 * np.pi)
 
 
+class FollowPath:
+    """
+    Class responsible to compute the final jordan curve
+    result from boolean operation between two simple shapes
+
+    """
+
+    @staticmethod
+    def split_at_intersections(
+        jordana: JordanCurve, jordanb: JordanCurve
+    ) -> Tuple[JordanCurve]:
+        inters = jordana & jordanb
+        if len(inters) == 0:
+            return jordana, jordanb
+        nodes_self = set()
+        nodes_other = set()
+        for ui, vj in inters:
+            nodes_self.add(ui)
+            nodes_other.add(vj)
+        nodes_self = tuple(sorted(nodes_self))
+        nodes_other = tuple(sorted(nodes_other))
+        jordana.split(nodes_self)
+        jordanb.split(nodes_other)
+        return jordana, jordanb
+
+    @staticmethod
+    def interior_jordan_contains_point(jordan: JordanCurve, point: Point2D) -> bool:
+        winding = FollowPath.winding_number(jordan, point)
+        area = FollowPath.area_inside_jordan(jordan)
+        print("area = ", area)
+        return winding == 1 if area > 0 else winding == 0
+
+    @staticmethod
+    def area_inside_jordan(jordan: JordanCurve) -> float:
+        """
+        Returns the area of the region defined by jordan
+        If the jordan is negative, it returns the negative
+        of the area
+        """
+        area = 0
+        for segment in jordan.segments:
+            area += NumIntegration.area(segment.ctrlpoints)
+        return area
+
+    @staticmethod
+    def winding_number(jordan: JordanCurve, point: Point2D) -> int:
+        """
+        Computes the winding number of a point,
+        It can be -1, 0 or 1
+        """
+        total = 0
+        for bezier in jordan.segments:
+            ctrlpoints = list(bezier.ctrlpoints)
+            for i, ctrlpt in enumerate(ctrlpoints):
+                ctrlpoints[i] = ctrlpt - point
+            ctrlpoints = tuple(ctrlpoints)
+            total += NumIntegration.winding_number_bezier(ctrlpoints)
+        return round(total)
+
+    @staticmethod
+    def unite_beziers(beziers: Tuple[nurbs.Curve]) -> nurbs.Curve:
+        """
+        Given a tuple of bezier curves, it returns a unique closed curve
+        The final knotvector is not predictible
+        """
+        nbeziers = len(beziers)
+        final_curve = beziers[0]
+        for i in range(nbeziers - 1):
+            umax_prev = final_curve.knotvector[-1]
+            bezier1 = beziers[i + 1]
+            knotvector1 = bezier1.knotvector
+            umin_next = knotvector1[0]
+            if umax_prev != umin_next:
+                knotvector1.shift(umax_prev - umin_next)
+                ctrlpoints = bezier1.ctrlpoints
+                weights = bezier1.weights
+                bezier1.ctrlpoints = None
+                bezier1.weights = None
+                bezier1.knotvector = knotvector1
+                bezier1.ctrlpoints = ctrlpoints
+                bezier1.weights = weights
+            final_curve |= bezier1
+        final_curve.clean()
+        return final_curve
+
+    @staticmethod
+    def index_segment_inside_other(jordana: JordanCurve, jordanb: JordanCurve) -> int:
+        """
+        Given two simple shapes, which intersect each other
+        and they are already divided in their intersection
+        The shape 'self' has at least one segment outside
+        the region inside 'other'
+        Then, this function returns the index such
+            self.jordancurve.segments[index] is outside other
+        """
+        segments = jordana.segments
+        index = 0
+        while True:
+            bezier = segments[index]
+            knotvector = bezier.knotvector
+            umin, umax = knotvector.limits
+            mid_node = (umin + umax) / 2
+            mid_point = segments[index].eval(mid_node)
+            if FollowPath.interior_jordan_contains_point(jordanb, mid_point):
+                return index
+            index += 1
+
+    @staticmethod
+    def index_segment_outside_other(jordana: JordanCurve, jordanb: JordanCurve) -> int:
+        """
+        Given two simple shapes, which intersect each other
+        and they are already divided in their intersection
+        The shape 'self' has at least one segment outside
+        the region inside 'other'
+        Then, this function returns the index such
+            self.jordancurve.segments[index] is outside other
+        """
+        segments = jordana.segments
+        index = 0
+        while True:
+            bezier = segments[index]
+            knotvector = bezier.knotvector
+            umin, umax = knotvector.limits
+            mid_node = (umin + umax) / 2
+            mid_point = segments[index].eval(mid_node)
+            if not FollowPath.interior_jordan_contains_point(jordanb, mid_point):
+                return index
+            index += 1
+
+    @staticmethod
+    def continue_path(
+        jordana: JordanCurve, jordanb: JordanCurve, index: int
+    ) -> Tuple[nurbs.Curve]:
+        """
+        Given a two simple shapes, and a start path (given by index)
+        it returns a list of segments that follows the 'flux'
+        """
+        final_beziers = []
+        segmentsa = jordana.segments
+        segmentsb = jordanb.segments
+        while True:
+            index %= len(segmentsa)
+            segmenta = segmentsa[index]
+            if segmenta in final_beziers:
+                break
+            final_beziers.append(segmenta)
+            last_point = segmenta.ctrlpoints[-1]
+            if last_point not in jordanb:
+                index += 1
+                continue
+            for j, segj in enumerate(segmentsb):
+                if segj.ctrlpoints[0] == last_point:
+                    index = j
+                    break
+            jordana, jordanb = jordanb, jordana
+            segmentsa, segmentsb = segmentsb, segmentsa
+        return tuple(final_beziers)
+
+    @staticmethod
+    def outside_path(jordana: JordanCurve, jordanb: JordanCurve) -> JordanCurve:
+        """
+        Returns the union of two simple positive shapes
+        """
+        assert isinstance(jordana, JordanCurve)
+        assert isinstance(jordanb, JordanCurve)
+        jordana, jordanb = FollowPath.split_at_intersections(jordana, jordanb)
+        index = FollowPath.index_segment_outside_other(jordana, jordanb)
+        final_beziers = FollowPath.continue_path(jordana, jordanb, index)
+        final_curve = FollowPath.unite_beziers(final_beziers)
+        final_jordan = JordanCurve(final_curve)
+        return final_jordan
+
+    @staticmethod
+    def inside_path(jordana: JordanCurve, jordanb: JordanCurve) -> JordanCurve:
+        """
+        Returns the union of two simple positive shapes
+        """
+        assert isinstance(jordana, JordanCurve)
+        assert isinstance(jordanb, JordanCurve)
+        jordana, jordanb = FollowPath.split_at_intersections(jordana, jordanb)
+        index = FollowPath.index_segment_inside_other(jordana, jordanb)
+        final_beziers = FollowPath.continue_path(jordana, jordanb, index)
+        final_curve = FollowPath.unite_beziers(final_beziers)
+        final_jordan = JordanCurve(final_curve)
+        return final_jordan
+
+
 class BaseShape(object):
     """
     Class which allows operations like:
@@ -97,6 +284,9 @@ class BaseShape(object):
         return self & value
 
     def __xor__(self, other: BaseShape):
+        print("XOR: ")
+        print("self = ", self)
+        print("other = ", other)
         return (self - other) | (other - self)
 
     def __bool__(self) -> bool:
@@ -131,6 +321,9 @@ class EmptyShape(BaseShape):
     def __invert__(self) -> BaseShape:
         return WholeShape()
 
+    def __contains__(self, other: BaseShape) -> bool:
+        return self is other
+
     def copy(self) -> BaseShape:
         return self
 
@@ -159,6 +352,9 @@ class WholeShape(BaseShape):
     def __invert__(self) -> BaseShape:
         return EmptyShape()
 
+    def __contains__(self, other: BaseShape) -> bool:
+        return True
+
     def copy(self) -> BaseShape:
         return self
 
@@ -173,13 +369,14 @@ class FiniteShape(BaseShape):
     def copy(self) -> BaseShape:
         return deepcopy(self)
 
-    def __invert__(self) -> BaseShape:
-        return self.copy().invert()
-
 
 class SimpleShape(FiniteShape):
     """
-    Connected shape with no holes
+    Simple class shape which is defined by only one jordan curve
+    Example:
+        - Interior of a circle, which jordan is in fact a circle
+        - Interior of a polygon, which jordan are the edges
+        - Exterior of a circle, when the jordan is a negative circle
     """
 
     def __init__(self, jordancurve: JordanCurve):
@@ -201,195 +398,77 @@ class SimpleShape(FiniteShape):
 
     def __float__(self) -> float:
         if self.__area is None:
-            self.__area = 0
-            jordancurve = self.jordancurve
-            for segment in jordancurve.segments:
-                self.__area += NumIntegration.area(segment.ctrlpoints)
+            self.__area = FollowPath.area_inside_jordan(self.jordancurve)
         return self.__area
 
     def __eq__(self, other: SimpleShape) -> bool:
         if not isinstance(other, SimpleShape):
             raise ValueError
-        if abs(float(self) - float(other)) > 1e-6:
-            return False
+        # if abs(float(self) - float(other)) > 1e-6:
+        #     return False
         return self.jordancurve == other.jordancurve
 
-    def __split_at_intersection(self, other: SimpleShape):
-        """
-        Given two shapes, this function computes the
-        intersection between the two jordan curves and split each
-        jordan curve at the intersections
-        """
-        jordan0, jordan1 = self.jordancurve, other.jordancurve
-        inters = jordan0 & jordan1
-        if len(inters) == 0:
-            return
-        nodes_self = set()
-        nodes_other = set()
-        for ui, vj in inters:
-            nodes_self.add(ui)
-            nodes_other.add(vj)
-        nodes_self = tuple(sorted(nodes_self))
-        nodes_other = tuple(sorted(nodes_other))
-        self.jordancurve.split(nodes_self)
-        other.jordancurve.split(nodes_other)
+    def __invert__(self) -> BaseShape:
+        return ConnectedShape(WholeShape(), [self])
 
-    def __get_segment_outside_other(self, other: SimpleShape) -> int:
-        """
-        Given two simple shapes, which intersect each other
-        and they are already divided in their intersection
-        The shape 'self' has at least one segment outside
-        the region inside 'other'
-        Then, this function returns the index such
-            self.jordancurve.segments[index] is outside other
-        """
-        segments0 = self.jordancurve.segments
-        index = 0
-        while True:
-            knotvector = segments0[index].knotvector
-            umin, umax = knotvector.limits
-            mid_node = (umin + umax) / 2
-            mid_point = segments0[index].eval(mid_node)
-            if not other.contains_point(mid_point):
-                return index
-            index += 1
-
-    def __get_segment_inside_other(self, other: SimpleShape) -> int:
-        """
-        Given two simple shapes, which intersect each other
-        and they are already divided in their intersection
-        The shape 'self' has at least one segment outside
-        the region inside 'other'
-        Then, this function returns the index such
-            self.jordancurve.segments[index] is outside other
-        """
-        segments0 = self.jordancurve.segments
-        index = 0
-        while True:
-            knotvector = segments0[index].knotvector
-            umin, umax = knotvector.limits
-            mid_node = (umin + umax) / 2
-            mid_point = segments0[index].eval(mid_node)
-            if other.contains_point(mid_point):
-                return index
-            index += 1
-
-    def __continue_path(self, other: SimpleShape, index: int) -> Tuple[nurbs.Curve]:
-        """
-        Given a two simple shapes, and a start path (given by index)
-        it returns a list of segments that follows the 'flux'
-        """
-        shape0, shape1 = self, other
-        jordan0, jordan1 = shape0.jordancurve, shape1.jordancurve
-        final_beziers = []
-        while True:
-            segment0 = jordan0.segments[index]
-            if segment0 in final_beziers:
-                break
-            final_beziers.append(segment0)
-            last_point = segment0.ctrlpoints[-1]
-            if last_point not in jordan1:  # shape1.contains_point(last_point):
-                index += 1
-                index %= len(jordan0.segments)
-                continue
-            for j, segj in enumerate(jordan1.segments):
-                if segj.ctrlpoints[0] == last_point:
-                    index = j
-                    break
-            shape0, shape1 = shape1, shape0
-            jordan0, jordan1 = jordan1, jordan0
-        return tuple(final_beziers)
-
-    def __unite_beziers(self, final_beziers: Tuple[nurbs.Curve]):
-        nbeziers = len(final_beziers)
-        final_curve = final_beziers[0]
-        for i in range(nbeziers - 1):
-            umax_prev = final_curve.knotvector[-1]
-            bezier1 = final_beziers[i + 1]
-            knotvector1 = bezier1.knotvector
-            umin_next = knotvector1[0]
-            if umax_prev != umin_next:
-                knotvector1.shift(umax_prev - umin_next)
-                ctrlpoints = bezier1.ctrlpoints
-                weights = bezier1.weights
-                bezier1.ctrlpoints = None
-                bezier1.weights = None
-                bezier1.knotvector = knotvector1
-                bezier1.ctrlpoints = ctrlpoints
-                bezier1.weights = weights
-            final_curve |= bezier1
-        final_curve.clean()
-        return final_curve
-
-    def __outside_path(self, other: SimpleShape):
-        """
-        Returns the union of two simple positive shapes
-        """
-        assert isinstance(other, SimpleShape)
-        self.__split_at_intersection(other)
-        index = self.__get_segment_outside_other(other)
-        final_beziers = self.__continue_path(other, index)
-        final_curve = self.__unite_beziers(final_beziers)
-        final_jordan = JordanCurve(final_curve)
-        return self.__class__(final_jordan)
-
-    def __inside_path(self, other: SimpleShape):
-        """
-        Returns the union of two simple positive shapes
-        """
-        assert isinstance(other, SimpleShape)
-        self.__split_at_intersection(other)
-        index = self.__get_segment_inside_other(other)
-        final_beziers = self.__continue_path(other, index)
-        final_curve = self.__unite_beziers(final_beziers)
-        final_jordan = JordanCurve(final_curve)
-        return self.__class__(final_jordan)
-
-    def __or__(self, other: SimpleShape):
+    def __or__(self, other: BaseShape) -> BaseShape:
+        assert isinstance(other, BaseShape)
         if isinstance(other, (EmptyShape, WholeShape)):
             return other | self
+        if isinstance(other, (ConnectedShape, DisjointShape)):
+            return other | self
         assert isinstance(other, SimpleShape)
+        assert float(other) > 0
+        assert float(self) > 0
         if self in other:
             return other.copy()
         if other in self:
             return self.copy()
-        if other.jordancurve in self and self.jordancurve in other:
-            return WholeShape()
-        if other in (~self):
-            # Disconnected shape
-            raise NotImplementedError
+        intersect = self.jordancurve.intersect(other.jordancurve)
+        if intersect:
+            newjordan = FollowPath.outside_path(self.jordancurve, other.jordancurve)
+            return SimpleShape(newjordan)
+        # Disconnected shape
+        raise NotImplementedError
 
-        area_self = float(self)
-        if area_self > 0:
-            return self.__outside_path(other)
-        else:  # area_self < 0
-            return ~((~self) & (~other))
-
-    def __and__(self, other: SimpleShape):
+    def __and__(self, other: BaseShape) -> BaseShape:
+        assert isinstance(other, BaseShape)
         if isinstance(other, (EmptyShape, WholeShape)):
+            return other & self
+        if isinstance(other, (ConnectedShape, DisjointShape)):
             return other & self
         assert isinstance(other, SimpleShape)
         if self in other:
             return self.copy()
         if other in self:
             return other.copy()
-        if other in (~self):
-            return EmptyShape()
-        if self.jordancurve in other and other.jordancurve in self:
-            # Connected with holes
-            raise NotImplementedError
+        if self.jordancurve.intersect(other.jordancurve):
+            newjordan = FollowPath.inside_path(self.jordancurve, other.jordancurve)
+            return SimpleShape(newjordan)
+        return EmptyShape()
 
-        area_self = float(self)
-        area_other = float(other)
-        if area_self > 0:
-            if area_other > 0:
-                return self.__inside_path(other)
-            else:
-                return other.__inside_path(self)
-        else:
-            return ~((~self) | (~other))
+    def __sub__(self, other: BaseShape) -> BaseShape:
+        assert isinstance(other, BaseShape)
+        if isinstance(other, EmptyShape):
+            return self.copy()
+        if isinstance(other, WholeShape):
+            return EmptyShape()
+        assert isinstance(other, SimpleShape)
+        if self in other:
+            raise EmptyShape()
+        if other in self:
+            return ConnectedShape(self, [other])
+        intersect = self.jordancurve.intersect(other.jordancurve)
+        if intersect:
+            newjordan = FollowPath.inside_path(~other.jordancurve, self.jordancurve)
+            return SimpleShape(newjordan)
+        raise NotImplementedError
 
     def __contains__(self, other: Union[Point2D, JordanCurve, SimpleShape]) -> bool:
+        if isinstance(other, EmptyShape):
+            return True
+        if isinstance(other, WholeShape):
+            return False
         if isinstance(other, SimpleShape):
             return self.contains_simple_shape(other)
         if isinstance(other, JordanCurve):
@@ -406,19 +485,6 @@ class SimpleShape(FiniteShape):
         self.__area = None
         self.__jordancurve = other.copy()
 
-    def __winding_number(self, point: Point2D) -> bool:
-        """
-        Says if the point is in the positive region defined
-        """
-        total = 0
-        for bezier in self.jordancurve.segments:
-            ctrlpoints = list(bezier.ctrlpoints)
-            for i, ctrlpt in enumerate(ctrlpoints):
-                ctrlpoints[i] = ctrlpt - point
-            ctrlpoints = tuple(ctrlpoints)
-            total += NumIntegration.winding_number_bezier(ctrlpoints)
-        return round(total)
-
     def contains_point(self, point: Point2D) -> bool:
         """
         We compute the winding number to determine if
@@ -426,12 +492,11 @@ class SimpleShape(FiniteShape):
         Uses numerical integration
         See wikipedia for details.
         """
+        assert float(self) > 0
         point = Point2D(point)
-        if point in self.jordancurve:  # point in boundary:
+        if point in self.jordancurve:  # point in boundary
             return True
-        winding = self.__winding_number(point)
-        positive = bool(self)
-        return winding == 1 if positive else winding == 0
+        return FollowPath.interior_jordan_contains_point(self.jordancurve, point)
 
     def contains_jordan_curve(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
@@ -459,26 +524,28 @@ class SimpleShape(FiniteShape):
         self.jordancurve.rotate(angle, degrees)
         return self
 
-    def invert(self) -> BaseShape:
-        self.jordancurve = self.jordancurve.invert()
-        return self
-
 
 class ConnectedShape(FiniteShape):
     """
-    An arbitrary 2D shape
-    Methods:
-        C = A + B : union (C = A cup B)
-        C = A * B : intersection (C = A cap B)
-        C = A - B : C = A - (A*B)
-        C = B - A : C = B - (A*B)
-        C = A ^ B : C = (A+B) - (A*B)
+    Class of connected shape
+    This class stores, for example
 
-    Methods:
-        move
-        rotate
-        scale (x or y or both)
+        circle(radius = 2) - circle(radius = 1)
+
+    Also stores the inversion of a simple shape
+
     """
+
+    def __new__(cls, positive: SimpleShape, holes: Tuple[SimpleShape] = None):
+        assert float(positive) > 0
+        if not holes:
+            return SimpleShape(positive)
+        for hole in holes:
+            assert float(hole) > 0
+            if hole not in positive:
+                raise ValueError
+        new_instance = super(ConnectedShape, cls).__new__(cls)
+        return new_instance
 
     def __init__(self, positive: SimpleShape, holes: Tuple[SimpleShape]):
         self.positive = positive
@@ -500,12 +567,81 @@ class ConnectedShape(FiniteShape):
         self.jordancurve = self.jordancurve.invert()
         return self
 
+    def contains_point(self, point: Point2D) -> bool:
+        point = Point2D(point)
+        if point not in self.positive:
+            return False
+        for hole in self.holes:
+            if point in hole and point not in hole.jordancurve:
+                return False
+        return False
+
+    def contains_jordan_curve(self, jordan: JordanCurve) -> bool:
+        assert isinstance(jordan, JordanCurve)
+        points = jordan.points(0)
+        for point in points:
+            if not self.contains_point(point):
+                return False
+        return True
+
+    def contains_simple_shape(self, simple: SimpleShape) -> bool:
+        assert isinstance(simple, SimpleShape)
+        if float(self) == float(simple) and self == simple:
+            return True
+        return simple.jordancurve in self and self.jordancurve not in simple
+
+    def __or__possimple_negsimple(self, other: SimpleShape):
+        assert isinstance(other, SimpleShape)
+        raise NotImplementedError
+
+    def __and__possimple_negsimple(self, other: SimpleShape):
+        assert isinstance(other, SimpleShape)
+        raise NotImplementedError
+
+    def __or__(self, other: BaseShape):
+        if isinstance(other, (EmptyShape, WholeShape)):
+            return other | self
+        if isinstance(other, DisjointShape):
+            return other | self
+        assert isinstance(other, (SimpleShape, ConnectedShape))
+        if isinstance(other, SimpleShape):
+            if self.positive is WholeShape():
+                if len(self.holes) == 1:
+                    self.__or__possimple_negsimple(self, other)
+        raise NotImplementedError
+
+    def __and__(self, other: BaseShape):
+        if isinstance(other, (EmptyShape, WholeShape)):
+            return other | self
+        if isinstance(other, DisjointShape):
+            return other | self
+        assert isinstance(other, (SimpleShape, ConnectedShape))
+        if isinstance(other, SimpleShape):
+            if self.positive is WholeShape():
+                if len(self.holes) == 1:
+                    self.__and__possimple_negsimple(self, other)
+        raise NotImplementedError
+
     def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
+        if isinstance(other, EmptyShape):
+            return True
+        if isinstance(other, WholeShape):
+            return False
         if isinstance(other, ConnectedShape):
             raise NotImplementedError
         if isinstance(other, (Point2D, JordanCurve, BaseShape)):
-            for simple in self.holes + self.positive:
+            if other not in self.positive:
+                return False
+            for simple in self.holes:
                 if other not in simple:
                     return False
             return True
         raise NotImplementedError
+
+
+class DisjointShape(FiniteShape):
+    def __new__(cls, connected_shapes: Tuple[Union[SimpleShape, ConnectedShape]]):
+        for connected in connected_shapes:
+            assert float(connected) > 0
+        new_instance = super(DisjointShape, cls).__new__(cls)
+        return new_instance

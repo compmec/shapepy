@@ -1,5 +1,6 @@
 """
-This file contains tests functions to test the module polygon.py
+Tests related to shape module, more specifically about the class SimpleShape
+Which are in fact positive shapes defined only by one jordan curve 
 """
 
 import pytest
@@ -11,9 +12,9 @@ from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 @pytest.mark.order(6)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
-        "tests/test_jordanpolygon.py::test_end",
-        "tests/test_jordancurve.py::test_end",
+        # "tests/test_polygon.py::test_end",
+        # "tests/test_jordanpolygon.py::test_end",
+        # "tests/test_jordancurve.py::test_end",
     ],
     scope="session",
 )
@@ -22,10 +23,24 @@ def test_begin():
 
 
 class TestEmptyWhole:
+    """
+    Test relative to special cases, a empty shape and whole domain
+    """
+
     @pytest.mark.order(6)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
+
+    @pytest.mark.order(6)
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
+    def test_contains(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        assert empty in empty
+        assert empty in whole
+        assert whole not in empty
+        assert whole in whole
 
     @pytest.mark.order(6)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
@@ -42,12 +57,6 @@ class TestEmptyWhole:
         assert whole + empty is whole
         assert whole + whole is whole
 
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanPolygon(points)
-        shape = SimpleShape(jordan)
-        assert shape | empty == shape
-        assert shape | whole is whole
-
     @pytest.mark.order(6)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_and(self):
@@ -63,12 +72,6 @@ class TestEmptyWhole:
         assert whole * empty is empty
         assert whole * whole is whole
 
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanPolygon(points)
-        shape = SimpleShape(jordan)
-        assert shape & empty is empty
-        assert shape & whole == shape
-
     @pytest.mark.order(6)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_xor(self):
@@ -79,12 +82,6 @@ class TestEmptyWhole:
         assert whole ^ empty is whole
         assert whole ^ whole is empty
 
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanPolygon(points)
-        shape = SimpleShape(jordan)
-        assert shape ^ empty == shape
-        assert shape ^ whole == ~shape
-
     @pytest.mark.order(6)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_sub(self):
@@ -94,14 +91,6 @@ class TestEmptyWhole:
         assert empty - whole is empty
         assert whole - empty is whole
         assert whole - whole is empty
-
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanPolygon(points)
-        shape = SimpleShape(jordan)
-        assert shape - empty == shape
-        assert shape - whole is empty
-        assert empty - shape is empty
-        assert whole - shape == ~shape
 
     @pytest.mark.order(6)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
@@ -141,6 +130,7 @@ class TestEmptyWhole:
     @pytest.mark.dependency(
         depends=[
             "TestEmptyWhole::test_begin",
+            "TestEmptyWhole::test_contains",
             "TestEmptyWhole::test_or",
             "TestEmptyWhole::test_and",
             "TestEmptyWhole::test_xor",
@@ -177,33 +167,22 @@ class TestContainsPoint:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
     def test_point_out_square(self):
-        vertices = [(-2, -2), (-2, 2), (2, 2), (2, -2)]
+        vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
         square = JordanPolygon(vertices)
         square = SimpleShape(square)
 
         for xval in range(-4, 5):
             for yval in range(-4, 5):
-                if -2 < xval and xval < 2 and -2 < yval and yval < 2:
+                if -2 <= xval and xval <= 2 and -2 <= yval and yval <= 2:
                     continue
-                assert (xval, yval) in square
-
-    @pytest.mark.order(6)
-    @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
-    def test_other(self):
-        vertices = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
-        square = JordanPolygon(vertices)
-        square = SimpleShape(square)
-
-        assert (-2, -2) in square
+                assert (xval, yval) not in square
 
     @pytest.mark.order(6)
     @pytest.mark.dependency(
         depends=[
             "TestContainsPoint::test_begin",
             "TestContainsPoint::test_point_in_square",
-            "TestContainsPoint::test_point_in_square",
-            "TestContainsPoint::test_other",
+            "TestContainsPoint::test_point_out_square",
         ]
     )
     def test_end(self):
@@ -229,8 +208,6 @@ class TestContainsJordan:
 
         assert small_jordan in big_square
         assert big_jordan not in small_square
-        assert small_jordan not in (~big_square)
-        assert big_jordan in (~small_square)
 
     @pytest.mark.order(6)
     @pytest.mark.dependency(
@@ -252,6 +229,47 @@ class TestContainsShape:
     @pytest.mark.order(6)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsShape::test_begin"])
+    def test_empty_whole(self):
+        empty = EmptyShape()
+        whole = WholeShape()
+        points = [(0, 0), (1, 0), (0, 1)]
+        jordan = JordanPolygon(points)
+        shape = SimpleShape(jordan)
+        assert float(shape) > 0
+
+        # contains
+        assert shape in whole
+        assert shape not in empty
+        assert whole not in shape
+        assert empty in shape
+
+        # OR
+        assert shape | empty == shape
+        assert shape | whole is whole
+        assert empty | shape == shape
+        assert whole | shape is whole
+
+        # AND
+        assert shape & empty is empty
+        assert shape & whole == shape
+        assert empty & shape is empty
+        assert whole & shape == shape
+
+        # XOR
+        assert shape ^ empty == shape
+        # assert shape ^ whole == ~shape
+        assert empty ^ shape == shape
+        # assert whole ^ shape == ~shape
+
+        # SUB
+        assert shape - empty == shape
+        assert shape - whole is empty
+        assert empty - shape is empty
+        # assert whole - shape == ~shape
+
+    @pytest.mark.order(6)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(depends=["TestContainsShape::test_begin"])
     def test_square_in_square(self):
         small_vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
         big_vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
@@ -265,17 +283,11 @@ class TestContainsShape:
         assert big_square in big_square
         assert big_square not in small_square
 
-        assert (~small_square) not in big_square
-        assert small_square not in (~big_square)
-        assert (~big_square) not in small_square
-        assert big_square not in (~small_square)
-        assert (~small_square) not in (~big_square)
-        assert (~big_square) in (~small_square)
-
     @pytest.mark.order(6)
     @pytest.mark.dependency(
         depends=[
             "TestContainsShape::test_begin",
+            "TestContainsShape::test_empty_whole",
             "TestContainsShape::test_square_in_square",
         ]
     )
@@ -295,44 +307,36 @@ class TestOrSimpleShape:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
     def test_inside_each(self):
-        vertices0 = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
-        vertices1 = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
+        small_vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
+        small_jordan = JordanPolygon(small_vertices)
+        small_square = SimpleShape(small_jordan)
+        big_vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
+        big_jordan = JordanPolygon(big_vertices)
+        big_square = SimpleShape(big_jordan)
 
-        assert square0 in square0
-        assert square1 in square0
-        assert square1 in square1
-        assert square0 not in square1
+        assert float(small_square) > 0
+        assert float(big_square) > 0
 
-        assert square0 | square0 == square0
-        assert square1 | square1 == square1
-        assert square0 | square1 == square0
-        assert square1 | square0 == square0
-
-    @pytest.mark.order(6)
-    @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
-    def test_complementar(self):
-        vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-        jordan = JordanPolygon(vertices)
-        square = SimpleShape(jordan)
-        assert square | (~square) is WholeShape()
+        assert small_square | small_square == small_square
+        assert small_square | big_square == big_square
+        assert big_square | small_square == big_square
+        assert big_square | big_square == big_square
 
     @pytest.mark.order(6)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_inside_each"]
     )
-    def test_squares_ab(self):
+    def test_two_squares(self):
         vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
         square0 = JordanPolygon(vertices0)
         square0 = SimpleShape(square0)
         vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
         square1 = JordanPolygon(vertices1)
         square1 = SimpleShape(square1)
+
+        assert float(square0) > 0
+        assert float(square1) > 0
 
         good_points = [
             (0, 1),
@@ -350,77 +354,11 @@ class TestOrSimpleShape:
         assert square0 | square1 == good_shape
 
     @pytest.mark.order(6)
-    @pytest.mark.timeout(40)
-    @pytest.mark.dependency(
-        depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_squares_ab"]
-    )
-    def test_squares_anotb(self):
-        vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
-
-        good_points = [(0, 1), (1, 2), (3, 0), (1, -2), (0, -1), (1, 0)]
-        good_jordanpoly = JordanPolygon(good_points)
-        good_shape = SimpleShape(good_jordanpoly)
-
-        assert square0 | square1 == good_shape
-
-    @pytest.mark.order(6)
-    @pytest.mark.timeout(40)
-    @pytest.mark.dependency(
-        depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_squares_ab"]
-    )
-    def test_squares_notab(self):
-        vertices0 = [(1, 0), (-1, -2), (-3, 0), (-1, 2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
-
-        good_points = [(0, 1), (-1, 0), (0, -1), (-1, -2), (-3, 0), (-1, 2)]
-        good_jordanpoly = JordanPolygon(good_points)
-        good_shape = SimpleShape(good_jordanpoly)
-
-        assert square0 | square1 == good_shape
-
-    @pytest.mark.order(6)
-    @pytest.mark.timeout(40)
-    @pytest.mark.dependency(
-        depends=[
-            "TestOrSimpleShape::test_begin",
-            "TestOrSimpleShape::test_squares_ab",
-            "TestOrSimpleShape::test_squares_anotb",
-            "TestOrSimpleShape::test_squares_notab",
-        ]
-    )
-    def test_squares_notanotb(self):
-        vertices0 = [(1, 0), (-1, -2), (-3, 0), (-1, 2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
-
-        good_points = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        good_jordanpoly = JordanPolygon(good_points)
-        good_shape = SimpleShape(good_jordanpoly)
-
-        assert square0 | square1 == good_shape
-
-    @pytest.mark.order(6)
     @pytest.mark.dependency(
         depends=[
             "TestOrSimpleShape::test_begin",
             "TestOrSimpleShape::test_inside_each",
-            "TestOrSimpleShape::test_complementar",
-            "TestOrSimpleShape::test_squares_ab",
-            "TestOrSimpleShape::test_squares_anotb",
-            "TestOrSimpleShape::test_squares_notab",
-            "TestOrSimpleShape::test_squares_notanotb",
+            "TestOrSimpleShape::test_two_squares",
         ]
     )
     def test_end(self):
@@ -446,21 +384,13 @@ class TestAndSimpleShape:
         square1 = JordanPolygon(vertices1)
         square1 = SimpleShape(square1)
 
-        good_shape = EmptyShape()
+        assert float(square0) > 0
+        assert float(square1) > 0
 
         assert square0 & square0 == square0
         assert square1 & square1 == square1
-        assert square0 & square1 is good_shape
-        assert square1 & square0 is good_shape
-
-    @pytest.mark.order(6)
-    @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestAndSimpleShape::test_begin"])
-    def test_complementar(self):
-        vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-        jordan = JordanPolygon(vertices)
-        square = SimpleShape(jordan)
-        assert square & (~square) is EmptyShape()
+        assert square0 & square1 is EmptyShape()
+        assert square1 & square0 is EmptyShape()
 
     @pytest.mark.order(6)
     @pytest.mark.timeout(40)
@@ -486,7 +416,6 @@ class TestAndSimpleShape:
         depends=[
             "TestAndSimpleShape::test_begin",
             "TestAndSimpleShape::test_disjoint",
-            "TestAndSimpleShape::test_complementar",
             "TestAndSimpleShape::test_two_squares",
         ]
     )

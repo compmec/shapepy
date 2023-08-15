@@ -401,6 +401,24 @@ class JordanCurve:
                 return True
         return False
 
+    def intersect(self, other: JordanCurve) -> bool:
+        """
+        Tells if a jordan curve intersects another jordan curve
+        Since __and__ operator only computes between parameters
+        this function also checks the points
+        """
+        tolerance = 1e-6
+        self_points = self.points(0)
+        other_points = other.points(0)
+        for pta in self_points:
+            for ptb in other_points:
+                if abs(pta - ptb) < IntersectionBeziers.tol_norm:
+                    return True
+        params = self & other
+        if params:
+            return True
+        return False
+
 
 class JordanPolygon(JordanCurve):
     def __init__(self, vertices: Tuple[Point2D]):
