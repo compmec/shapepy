@@ -215,9 +215,6 @@ class BaseShape(object):
         return self & value
 
     def __xor__(self, other: BaseShape):
-        print("XOR: ")
-        print("self = ", self)
-        print("other = ", other)
         return (self - other) | (other - self)
 
     def __bool__(self) -> bool:
@@ -226,6 +223,28 @@ class BaseShape(object):
         Else if curve's area is negative
         """
         return float(self) > 0
+
+    def __iter__(self):
+        return self
+
+    def __next__(self):
+        raise StopIteration
+
+    def move(self, point: Point2D) -> BaseShape:
+        point = Point2D(point)
+        for jordan in self:
+            jordan.move(point)
+        return self
+
+    def scale(self, xscale: float, yscale: float) -> BaseShape:
+        for jordan in self:
+            jordan.scale(xscale, yscale)
+        return self
+
+    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
+        for jordan in self:
+            jordan.rotate(angle, degrees)
+        return self
 
 
 class EmptyShape(BaseShape):
@@ -257,6 +276,9 @@ class EmptyShape(BaseShape):
 
     def __contains__(self, other: BaseShape) -> bool:
         return self is other
+
+    def __str__(self) -> str:
+        return "EmptyShape"
 
     def copy(self) -> BaseShape:
         return self
@@ -292,11 +314,17 @@ class WholeShape(BaseShape):
     def __contains__(self, other: BaseShape) -> bool:
         return True
 
+    def __str__(self) -> str:
+        return "WholeShape"
+
     def copy(self) -> BaseShape:
         return self
 
 
 class FiniteShape(BaseShape):
+    def __init__(self):
+        pass
+
     def copy(self) -> BaseShape:
         return deepcopy(self)
 
@@ -330,11 +358,11 @@ class SimpleShape(FiniteShape):
     def __float__(self) -> float:
         return float(self.__area)
 
-    def __eq__(self, other: SimpleShape) -> bool:
-        if not isinstance(other, SimpleShape):
+    def __eq__(self, other: BaseShape) -> bool:
+        if not isinstance(other, BaseShape):
             raise ValueError
-        # if abs(float(self) - float(other)) > 1e-6:
-        #     return False
+        if not isinstance(other, SimpleShape):
+            return False
         return self.jordancurve == other.jordancurve
 
     def __invert__(self) -> BaseShape:
@@ -342,13 +370,8 @@ class SimpleShape(FiniteShape):
 
     def __or__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
-        if isinstance(other, (EmptyShape, WholeShape)):
+        if not isinstance(other, SimpleShape):
             return other | self
-        if isinstance(other, (ConnectedShape, DisjointShape)):
-            return other | self
-        assert isinstance(other, SimpleShape)
-        assert float(other) > 0
-        assert float(self) > 0
         if self in other:
             return other.copy()
         if other in self:
@@ -357,21 +380,18 @@ class SimpleShape(FiniteShape):
         if intersect:
             newjordan = FollowPath.outside_path(self.jordancurve, other.jordancurve)
             return SimpleShape(newjordan)
-        # Disconnected shape
-        raise NotImplementedError
+        return DisjointShape([self.copy(), other.copy()])
 
     def __and__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
-        if isinstance(other, (EmptyShape, WholeShape)):
+        if not isinstance(other, SimpleShape):
             return other & self
-        if isinstance(other, (ConnectedShape, DisjointShape)):
-            return other & self
-        assert isinstance(other, SimpleShape)
         if self in other:
             return self.copy()
         if other in self:
             return other.copy()
-        if self.jordancurve.intersect(other.jordancurve):
+        intersect = self.jordancurve.intersect(other.jordancurve)
+        if intersect:
             newjordan = FollowPath.inside_path(self.jordancurve, other.jordancurve)
             return SimpleShape(newjordan)
         return EmptyShape()
@@ -382,27 +402,35 @@ class SimpleShape(FiniteShape):
             return self.copy()
         if isinstance(other, WholeShape):
             return EmptyShape()
-        assert isinstance(other, SimpleShape)
+        if not isinstance(other, SimpleShape):
+            raise NotImplementedError
         if self in other:
-            raise EmptyShape()
+            return EmptyShape()
         if other in self:
             return ConnectedShape(self, [other])
         intersect = self.jordancurve.intersect(other.jordancurve)
         if intersect:
             newjordan = FollowPath.inside_path(~other.jordancurve, self.jordancurve)
             return SimpleShape(newjordan)
-        raise NotImplementedError
+        return EmptyShape()
 
-    def __contains__(self, other: Union[Point2D, JordanCurve, SimpleShape]) -> bool:
+    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
         if isinstance(other, EmptyShape):
             return True
         if isinstance(other, WholeShape):
             return False
         if isinstance(other, SimpleShape):
             return self.contains_simple_shape(other)
+        if isinstance(other, ConnectedShape):
+            return self.contains_connected_shape(other)
+        if isinstance(other, DisjointShape):
+            return self.contains_disjoint_shape(other)
         if isinstance(other, JordanCurve):
             return self.contains_jordan_curve(other)
         return self.contains_point(other)
+
+    def __iter__(self):
+        yield self.jordancurve
 
     @property
     def jordancurve(self) -> JordanCurve:
@@ -424,7 +452,6 @@ class SimpleShape(FiniteShape):
         Uses numerical integration
         See wikipedia for details.
         """
-        assert float(self) > 0
         point = Point2D(point)
         if point in self.jordancurve:  # point in boundary
             return True
@@ -432,8 +459,7 @@ class SimpleShape(FiniteShape):
 
     def contains_jordan_curve(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
-        points = other.points(0)
-        for point in points:
+        for point in other.points(0):
             if not self.contains_point(point):
                 return False
         return True
@@ -444,17 +470,16 @@ class SimpleShape(FiniteShape):
             return True
         return other.jordancurve in self and self.jordancurve not in other
 
-    def move(self, point: Point2D) -> BaseShape:
-        self.jordancurve.move(point)
-        return self
+    def contains_connected_shape(self, other: ConnectedShape) -> bool:
+        assert isinstance(other, ConnectedShape)
+        return other.positive in self
 
-    def scale(self, xscale: float, yscale: float) -> BaseShape:
-        self.jordancurve = self.jordancurve.scale(xscale, yscale)
-        return self
-
-    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
-        self.jordancurve.rotate(angle, degrees)
-        return self
+    def contains_disjoint_shape(self, other: DisjointShape) -> bool:
+        assert isinstance(other, DisjointShape)
+        for subshape in other.subshapes:
+            if subshape not in self:
+                return False
+        return True
 
 
 class ConnectedShape(FiniteShape):
@@ -468,36 +493,22 @@ class ConnectedShape(FiniteShape):
 
     """
 
-    def __new__(cls, positive: SimpleShape, holes: Tuple[SimpleShape] = None):
+    def __new__(
+        cls, positive: Union[WholeShape, SimpleShape], holes: Tuple[SimpleShape]
+    ):
+        assert isinstance(positive, (WholeShape, SimpleShape))
         assert float(positive) > 0
-        if not holes:
-            return SimpleShape(positive)
+        if len(holes) == 0:
+            return positive.copy()
         for hole in holes:
-            assert float(hole) > 0
+            assert isinstance(hole, SimpleShape)
             if hole not in positive:
                 raise ValueError
-        new_instance = super(ConnectedShape, cls).__new__(cls)
-        return new_instance
+        return super(ConnectedShape, cls).__new__(cls)
 
     def __init__(self, positive: SimpleShape, holes: Tuple[SimpleShape]):
         self.positive = positive
         self.holes = tuple(holes)
-
-    def move(self, point: Point2D) -> BaseShape:
-        self.jordancurve.move(point)
-        return self
-
-    def scale(self, xscale: float, yscale: float) -> BaseShape:
-        self.jordancurve = self.jordancurve.scale(xscale, yscale)
-        return self
-
-    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
-        self.jordancurve.rotate(angle, degrees)
-        return self
-
-    def invert(self) -> BaseShape:
-        self.jordancurve = self.jordancurve.invert()
-        return self
 
     def contains_point(self, point: Point2D) -> bool:
         point = Point2D(point)
@@ -506,52 +517,114 @@ class ConnectedShape(FiniteShape):
         for hole in self.holes:
             if point in hole and point not in hole.jordancurve:
                 return False
-        return False
+        return True
 
     def contains_jordan_curve(self, jordan: JordanCurve) -> bool:
         assert isinstance(jordan, JordanCurve)
-        points = jordan.points(0)
-        for point in points:
+        for point in jordan.points(0):
             if not self.contains_point(point):
                 return False
         return True
 
     def contains_simple_shape(self, simple: SimpleShape) -> bool:
         assert isinstance(simple, SimpleShape)
-        if float(self) == float(simple) and self == simple:
-            return True
-        return simple.jordancurve in self and self.jordancurve not in simple
+        if simple not in self.positive:
+            return False
+        for hole in self.holes:
+            if (hole in simple) ^ (simple in hole):
+                return False
+        return True
 
-    def __or__possimple_negsimple(self, other: SimpleShape):
+    def contains_connected_shape(self, connected: ConnectedShape) -> bool:
+        assert isinstance(connected, ConnectedShape)
+        if connected.positive not in self.positive:
+            return False
+        for hole in connected.holes:
+            if not self.contains_jordan_curve(hole.jordancurve):
+                return False
+        return True
+
+    def contains_disjoint_shape(self, disjoint: ConnectedShape) -> bool:
+        assert isinstance(disjoint, DisjointShape)
+        raise NotImplementedError
+
+    def copy(self) -> ConnectedShape:
+        holes = [hole.copy() for hole in self.holes]
+        return ConnectedShape(self.positive.copy(), holes)
+
+    def __or__simple_shape(self, other: SimpleShape) -> ConnectedShape:
+        assert isinstance(other, SimpleShape)
+        newpositive = self.positive | other
+        newholes = []
+        for hole in self.holes:
+            newhole = hole - other
+            if newhole is not EmptyShape():
+                newholes.append(newhole)
+        if isinstance(newholes, SimpleShape):
+            newholes = tuple([newholes])
+        elif isinstance(newholes, DisjointShape):
+            newholes = tuple(newholes.subshapes)
+        return ConnectedShape(newpositive, newholes)
+
+    def __or__connected_shape(self, other: ConnectedShape) -> ConnectedShape:
+        assert isinstance(other, ConnectedShape)
+        newpositive = self.positive | other.positive
+        if isinstance(newpositive, DisjointShape):
+            return DisjointShape([self.copy(), other.copy()])
+        newholes = []
+        for hole in self.holes:
+            newhole = hole - other.positive
+            newholes.append(newhole)
+        for hole in other.holes:
+            newhole = hole - self.positive
+            newholes.append(newhole)
+        for holea in self.holes:
+            for holeb in other.holes:
+                newhole = holea & holeb
+                newholes.append(newhole)
+        return ConnectedShape(newpositive, newholes)
+
+    def __and__simple_shape(self, other: SimpleShape) -> ConnectedShape:
         assert isinstance(other, SimpleShape)
         raise NotImplementedError
 
-    def __and__possimple_negsimple(self, other: SimpleShape):
-        assert isinstance(other, SimpleShape)
+    def __and__connected_shape(self, other: ConnectedShape) -> ConnectedShape:
+        assert isinstance(other, ConnectedShape)
         raise NotImplementedError
 
     def __or__(self, other: BaseShape):
-        if isinstance(other, (EmptyShape, WholeShape)):
+        assert isinstance(other, BaseShape)
+        if isinstance(other, (EmptyShape, WholeShape, DisjointShape)):
             return other | self
-        if isinstance(other, DisjointShape):
-            return other | self
-        assert isinstance(other, (SimpleShape, ConnectedShape))
         if isinstance(other, SimpleShape):
-            if self.positive is WholeShape():
-                if len(self.holes) == 1:
-                    self.__or__possimple_negsimple(self, other)
+            return self.__or__simple_shape(other)
+        if isinstance(other, ConnectedShape):
+            return self.__or__connected_shape(other)
         raise NotImplementedError
 
     def __and__(self, other: BaseShape):
-        if isinstance(other, (EmptyShape, WholeShape)):
-            return other | self
-        if isinstance(other, DisjointShape):
-            return other | self
-        assert isinstance(other, (SimpleShape, ConnectedShape))
+        assert isinstance(other, BaseShape)
+        if isinstance(other, (EmptyShape, WholeShape, DisjointShape)):
+            return other & self
         if isinstance(other, SimpleShape):
-            if self.positive is WholeShape():
-                if len(self.holes) == 1:
-                    self.__and__possimple_negsimple(self, other)
+            return self.__and__simple_shape(other)
+        if isinstance(other, ConnectedShape):
+            return self.__and__connected_shape(other)
+        raise NotImplementedError
+
+    def __sub__(self, other: BaseShape):
+        assert isinstance(other, BaseShape)
+        if isinstance(other, EmptyShape):
+            return self.copy()
+        if isinstance(other, WholeShape):
+            return EmptyShape()
+        raise NotImplementedError
+
+    def __invert__(self) -> Union[SimpleShape, DisjointShape]:
+        if self.positive is WholeShape():
+            if len(self.holes) == 1:
+                return self.holes[0].copy()
+            return DisjointShape(self.holes)
         raise NotImplementedError
 
     def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
@@ -559,16 +632,15 @@ class ConnectedShape(FiniteShape):
             return True
         if isinstance(other, WholeShape):
             return False
+        if isinstance(other, SimpleShape):
+            return self.contains_simple_shape(other)
         if isinstance(other, ConnectedShape):
-            raise NotImplementedError
-        if isinstance(other, (Point2D, JordanCurve, BaseShape)):
-            if other not in self.positive:
-                return False
-            for simple in self.holes:
-                if other not in simple:
-                    return False
-            return True
-        raise NotImplementedError
+            return self.contains_connected_shape(other)
+        if isinstance(other, DisjointShape):
+            return self.contains_disjoint_shape(other)
+        if isinstance(other, JordanCurve):
+            return self.contains_jordan_curve(other)
+        return self.contains_point(other)
 
     def __float__(self) -> float:
         soma = 0
@@ -578,10 +650,49 @@ class ConnectedShape(FiniteShape):
             soma -= float(hole)
         return float(soma)
 
+    def __str__(self) -> str:
+        msg = f"Connected shape with {len(self.holes)} holes,"
+        msg += f" total area {float(self)}.\n"
+        msg += "Positive: " + str(self.positive) + "\n"
+        msg += "Negative: " + str(self.holes) + "\n"
+        return msg
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __eq__(self, other: BaseShape) -> bool:
+        assert isinstance(other, BaseShape)
+        if isinstance(other, (EmptyShape, WholeShape, SimpleShape)):
+            return False
+        if abs(float(self) - float(other)) > 1e-6:
+            return False
+        assert isinstance(other, ConnectedShape)
+        if self.positive != other.positive:
+            return False
+        holesa = list(self.holes)
+        holesb = list(other.holes)
+        if len(holesa) != len(holesb):
+            return False
+        areasa = [float(hole) for hole in holesa]
+        holesa = [hole for _, hole in sorted(zip(areasa, holesa))]
+        areasb = [float(hole) for hole in holesb]
+        holesb = [hole for _, hole in sorted(zip(areasb, holesb))]
+        for holea in holesa:
+            if holea not in holesb:
+                return False
+        return True
+
 
 class DisjointShape(FiniteShape):
-    def __new__(cls, connected_shapes: Tuple[Union[SimpleShape, ConnectedShape]]):
-        for connected in connected_shapes:
-            assert float(connected) > 0
-        new_instance = super(DisjointShape, cls).__new__(cls)
-        return new_instance
+    def __new__(cls, subshapes: Tuple[ConnectedShape]):
+        subshapes = list(subshapes)
+        while EmptyShape() in subshapes:
+            subshapes.remove(EmptyShape())
+        for subshape in subshapes:
+            assert isinstance(subshape, (SimpleShape, ConnectedShape))
+        if len(subshapes) == 1:
+            return subshapes[0].copy()
+        return super(DisjointShape, cls).__new__(cls)
+
+    def __init__(self, subshapes: Tuple[ConnectedShape]):
+        self.subshapes = subshapes
