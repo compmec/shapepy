@@ -280,6 +280,9 @@ class EmptyShape(BaseShape):
     def __str__(self) -> str:
         return "EmptyShape"
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
     def copy(self) -> BaseShape:
         return self
 
@@ -302,9 +305,6 @@ class WholeShape(BaseShape):
     def __and__(self, other: BaseShape) -> BaseShape:
         return other.copy()
 
-    def __sub__(self, other: BaseShape) -> BaseShape:
-        return ~other
-
     def __float__(self) -> float:
         return float("inf")
 
@@ -317,16 +317,34 @@ class WholeShape(BaseShape):
     def __str__(self) -> str:
         return "WholeShape"
 
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __sub__(self, other: BaseShape) -> BaseShape:
+        if isinstance(other, EmptyShape):
+            return self
+        if isinstance(other, WholeShape):
+            return EmptyShape()
+        if isinstance(other, SimpleShape):
+            return ConnectedShape(WholeShape(), [other])
+        if isinstance(other, ConnectedShape):
+            outside = WholeShape() - other.positive
+            return DisjointShape([outside] + other.holes)
+        raise NotImplementedError
+
     def copy(self) -> BaseShape:
         return self
 
 
 class FiniteShape(BaseShape):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
         pass
 
     def copy(self) -> BaseShape:
         return deepcopy(self)
+
+    def __invert__(self) -> BaseShape:
+        return WholeShape() - self
 
 
 class SimpleShape(FiniteShape):
@@ -364,9 +382,6 @@ class SimpleShape(FiniteShape):
         if not isinstance(other, SimpleShape):
             return False
         return self.jordancurve == other.jordancurve
-
-    def __invert__(self) -> BaseShape:
-        return ConnectedShape(WholeShape(), [self.copy()])
 
     def __or__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
@@ -497,18 +512,19 @@ class ConnectedShape(FiniteShape):
         cls, positive: Union[WholeShape, SimpleShape], holes: Tuple[SimpleShape]
     ):
         assert isinstance(positive, (WholeShape, SimpleShape))
-        assert float(positive) > 0
+        holes = list(holes)
+        while EmptyShape() in holes:
+            holes.remove(EmptyShape())
         if len(holes) == 0:
             return positive.copy()
         for hole in holes:
             assert isinstance(hole, SimpleShape)
             if hole not in positive:
                 raise ValueError
-        return super(ConnectedShape, cls).__new__(cls)
-
-    def __init__(self, positive: SimpleShape, holes: Tuple[SimpleShape]):
-        self.positive = positive
-        self.holes = tuple(holes)
+        instance = super(ConnectedShape, cls).__new__(cls)
+        instance.positive = positive
+        instance.holes = holes
+        return instance
 
     def contains_point(self, point: Point2D) -> bool:
         point = Point2D(point)
@@ -586,10 +602,34 @@ class ConnectedShape(FiniteShape):
 
     def __and__simple_shape(self, other: SimpleShape) -> ConnectedShape:
         assert isinstance(other, SimpleShape)
-        raise NotImplementedError
+        newshape = self.positive & other
+        for hole in self.holes:
+            newshape -= hole
+        return newshape
 
     def __and__connected_shape(self, other: ConnectedShape) -> ConnectedShape:
         assert isinstance(other, ConnectedShape)
+        newshape = self.positive & other.positive
+        for hole in self.holes:
+            newshape -= hole
+        for hole in other.holes:
+            newshape -= hole
+        return newshape
+
+    def __sub__simple_shape(self, other: SimpleShape) -> BaseShape:
+        assert isinstance(other, SimpleShape)
+        newshape = self.positive
+        holes = other.copy()
+        for hole in self.holes:
+            holes |= hole
+        return newshape - holes
+
+    def __sub__connected_shape(self, other: ConnectedShape) -> BaseShape:
+        assert isinstance(other, ConnectedShape)
+        raise NotImplementedError
+
+    def __sub__disjoint_shape(self, other: DisjointShape) -> BaseShape:
+        assert isinstance(other, DisjointShape)
         raise NotImplementedError
 
     def __or__(self, other: BaseShape):
@@ -618,14 +658,12 @@ class ConnectedShape(FiniteShape):
             return self.copy()
         if isinstance(other, WholeShape):
             return EmptyShape()
-        raise NotImplementedError
-
-    def __invert__(self) -> Union[SimpleShape, DisjointShape]:
-        if self.positive is WholeShape():
-            if len(self.holes) == 1:
-                return self.holes[0].copy()
-            return DisjointShape(self.holes)
-        raise NotImplementedError
+        if isinstance(other, SimpleShape):
+            return self.__sub__simple_shape(other)
+        if isinstance(other, ConnectedShape):
+            return self.__sub__connected_shape(other)
+        if isinstance(other, DisjointShape):
+            return self.__sub__disjoint_shape(other)
 
     def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
         if isinstance(other, EmptyShape):
@@ -688,11 +726,27 @@ class DisjointShape(FiniteShape):
         subshapes = list(subshapes)
         while EmptyShape() in subshapes:
             subshapes.remove(EmptyShape())
+        if len(subshapes) == 0:
+            return EmptyShape()
         for subshape in subshapes:
             assert isinstance(subshape, (SimpleShape, ConnectedShape))
         if len(subshapes) == 1:
             return subshapes[0].copy()
-        return super(DisjointShape, cls).__new__(cls)
+        instance = super(DisjointShape, cls).__new__(cls)
+        instance.subshapes = subshapes
+        return instance
 
     def __init__(self, subshapes: Tuple[ConnectedShape]):
-        self.subshapes = subshapes
+        pass
+
+    def __or__(self, other: BaseShape) -> BaseShape:
+        assert isinstance(other, BaseShape)
+        raise NotImplementedError
+
+    def __and__(self, other: BaseShape) -> BaseShape:
+        assert isinstance(other, BaseShape)
+        raise NotImplementedError
+
+    def __sub__(self, other: BaseShape) -> BaseShape:
+        assert isinstance(other, BaseShape)
+        raise NotImplementedError

@@ -12,8 +12,7 @@ import numpy as np
 from compmec import nurbs
 from compmec.shape.jordancurve import JordanCurve, JordanPolygon
 from compmec.shape.polygon import Point2D
-from compmec.shape.shape import (ConnectedShape, NumIntegration, SimpleShape,
-                                 WholeShape)
+from compmec.shape.shape import ConnectedShape, NumIntegration, SimpleShape, WholeShape
 
 
 class Primitive:

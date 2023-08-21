@@ -272,7 +272,7 @@ class TestContainsShape:
         pass
 
 
-class TestOrSimpleShape:
+class TestOrConnectedShape:
     @pytest.mark.order(7)
     @pytest.mark.dependency(
         depends=["TestEmptyWhole::test_end", "TestContainsShape::test_end"]
@@ -282,7 +282,7 @@ class TestOrSimpleShape:
 
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
+    @pytest.mark.dependency(depends=["TestOrConnectedShape::test_begin"])
     def test_inside_each(self):
         small_square = Primitive.square(side=2)
         big_square = Primitive.square(side=4)
@@ -301,7 +301,7 @@ class TestOrSimpleShape:
 
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestOrSimpleShape::test_begin"])
+    @pytest.mark.dependency(depends=["TestOrConnectedShape::test_begin"])
     def test_complementar(self):
         square = Primitive.square()
         assert square | (~square) is WholeShape()
@@ -309,7 +309,10 @@ class TestOrSimpleShape:
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
-        depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_inside_each"]
+        depends=[
+            "TestOrConnectedShape::test_begin",
+            "TestOrConnectedShape::test_inside_each",
+        ]
     )
     def test_squares_ab(self):
         square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
@@ -322,7 +325,10 @@ class TestOrSimpleShape:
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
-        depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_squares_ab"]
+        depends=[
+            "TestOrConnectedShape::test_begin",
+            "TestOrConnectedShape::test_squares_ab",
+        ]
     )
     def test_squares_anotb(self):
         square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
@@ -334,7 +340,10 @@ class TestOrSimpleShape:
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
-        depends=["TestOrSimpleShape::test_begin", "TestOrSimpleShape::test_squares_ab"]
+        depends=[
+            "TestOrConnectedShape::test_begin",
+            "TestOrConnectedShape::test_squares_ab",
+        ]
     )
     def test_squares_notab(self):
         square0 = ~Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
@@ -347,52 +356,49 @@ class TestOrSimpleShape:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
-            "TestOrSimpleShape::test_begin",
-            "TestOrSimpleShape::test_squares_ab",
-            "TestOrSimpleShape::test_squares_anotb",
-            "TestOrSimpleShape::test_squares_notab",
+            "TestOrConnectedShape::test_begin",
+            "TestOrConnectedShape::test_squares_ab",
+            "TestOrConnectedShape::test_squares_anotb",
+            "TestOrConnectedShape::test_squares_notab",
         ]
     )
     def test_squares_notanotb(self):
         square0 = ~Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
         square1 = ~Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
-        good_points = [(0, 1), (1, 0), (0, -1), (-1, 0)]
-        good_shape = Primitive.polygon(good_points)
-        union = square0 | square1
-        print("union = ")
-        print(union)
-        print("good shape = ")
-        print(good_shape)
-        assert union == good_shape
+        good_shape = ~Primitive.regular_polygon(nsides=4, radius=1, center=(0, 0))
+        assert square0 | square1 == good_shape
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
         depends=[
-            "TestOrSimpleShape::test_begin",
-            "TestOrSimpleShape::test_inside_each",
-            "TestOrSimpleShape::test_complementar",
-            "TestOrSimpleShape::test_squares_ab",
-            "TestOrSimpleShape::test_squares_anotb",
-            "TestOrSimpleShape::test_squares_notab",
-            "TestOrSimpleShape::test_squares_notanotb",
+            "TestOrConnectedShape::test_begin",
+            "TestOrConnectedShape::test_inside_each",
+            "TestOrConnectedShape::test_complementar",
+            "TestOrConnectedShape::test_squares_ab",
+            "TestOrConnectedShape::test_squares_anotb",
+            "TestOrConnectedShape::test_squares_notab",
+            "TestOrConnectedShape::test_squares_notanotb",
         ]
     )
     def test_end(self):
         pass
 
 
-class TestAndSimpleShape:
+class TestAndConnectedShape:
     @pytest.mark.order(7)
-    @pytest.mark.skip()
     @pytest.mark.dependency(
-        depends=["TestEmptyWhole::test_end", "TestContainsShape::test_end"]
+        depends=[
+            "TestEmptyWhole::test_end",
+            "TestContainsShape::test_end",
+            "TestOrConnectedShape::test_end",
+        ]
     )
     def test_begin(self):
         pass
 
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestAndSimpleShape::test_begin"])
+    @pytest.mark.dependency(depends=["TestAndConnectedShape::test_begin"])
     def test_disjoint(self):
         vertices0 = [(-2, -1), (-1, -1), (-1, 1), (-2, 1)]
         vertices1 = [(1, -1), (2, -1), (2, 1), (1, 1)]
@@ -410,131 +416,48 @@ class TestAndSimpleShape:
 
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestAndSimpleShape::test_begin"])
+    @pytest.mark.dependency(depends=["TestAndConnectedShape::test_begin"])
     def test_complementar(self):
-        vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-        jordan = JordanPolygon(vertices)
-        square = SimpleShape(jordan)
+        square = Primitive.square()
         assert square & (~square) is EmptyShape()
 
     @pytest.mark.order(7)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
-        depends=["TestAndSimpleShape::test_begin", "TestAndSimpleShape::test_disjoint"]
+        depends=[
+            "TestAndConnectedShape::test_begin",
+            "TestAndConnectedShape::test_disjoint",
+        ]
     )
     def test_two_squares(self):
-        vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
-
-        good_points = [(0, -1), (1, 0), (0, 1), (-1, 0)]
-        good_jordanpoly = JordanPolygon(good_points)
-        good_shape = SimpleShape(good_jordanpoly)
-
-        assert square0 & square1 == good_shape
+        square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
+        square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
+        good_shape = ~(square0 | square1)
+        inters = (~square0) & (~square1)
+        print("goodshape = ")
+        print(good_shape)
+        print("inters = ")
+        print(inters)
+        assert inters == good_shape
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
         depends=[
-            "TestAndSimpleShape::test_begin",
-            "TestAndSimpleShape::test_disjoint",
-            "TestAndSimpleShape::test_complementar",
-            "TestAndSimpleShape::test_two_squares",
+            "TestAndConnectedShape::test_begin",
+            "TestAndConnectedShape::test_disjoint",
+            "TestAndConnectedShape::test_complementar",
+            "TestAndConnectedShape::test_two_squares",
         ]
     )
     def test_end(self):
         pass
-
-
-class TestSubSimpleShape:
-    @pytest.mark.order(7)
-    @pytest.mark.dependency(
-        depends=[
-            "TestEmptyWhole::test_end",
-            "TestOrSimpleShape::test_end",
-            "TestAndSimpleShape::test_end",
-        ]
-    )
-    def test_begin(self):
-        pass
-
-    @pytest.mark.order(7)
-    @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestSubSimpleShape::test_begin"])
-    def test_two_squares(self):
-        vertices0 = [(1, 0), (-1, 2), (-3, 0), (-1, -2)]
-        square0 = JordanPolygon(vertices0)
-        square0 = SimpleShape(square0)
-        vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
-        square1 = JordanPolygon(vertices1)
-        square1 = SimpleShape(square1)
-
-        left_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2), (0, -1), (-1, 0)]
-        left_jordanpoly = JordanPolygon(left_points)
-        left_shape = SimpleShape(left_jordanpoly)
-        right_points = [(0, 1), (1, 0), (0, -1), (1, -2), (3, 0), (1, 2)]
-        right_jordanpoly = JordanPolygon(right_points)
-        right_shape = SimpleShape(right_jordanpoly)
-
-        assert square0 - square1 == left_shape
-        assert square1 - square0 == right_shape
-
-    @pytest.mark.order(7)
-    @pytest.mark.dependency(
-        depends=[
-            "TestSubSimpleShape::test_begin",
-            "TestSubSimpleShape::test_two_squares",
-        ]
-    )
-    def test_end(self):
-        pass
-
-
-class TestOthers:
-    @pytest.mark.order(7)
-    @pytest.mark.dependency(
-        depends=[
-            "TestOrSimpleShape::test_end",
-            "TestAndSimpleShape::test_end",
-            "TestSubSimpleShape::test_end",
-        ]
-    )
-    def test_print(self):
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordancurve = JordanPolygon(points)
-        shape = SimpleShape(jordancurve)
-        str(shape)
-        repr(shape)
-
-    @pytest.mark.order(7)
-    @pytest.mark.dependency(
-        depends=[
-            "TestOrSimpleShape::test_end",
-            "TestAndSimpleShape::test_end",
-            "TestSubSimpleShape::test_end",
-        ]
-    )
-    def test_compare(self):
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordancurve = JordanPolygon(points)
-        shapea = SimpleShape(jordancurve)
-        points = [(0, 0), (0, 1), (1, 0)]
-        jordancurve = JordanPolygon(points)
-        shapeb = SimpleShape(jordancurve)
-        assert shapea != shapeb
-        with pytest.raises(ValueError):
-            shapea != 0
 
 
 @pytest.mark.order(7)
 @pytest.mark.dependency(
     depends=[
-        "TestOrSimpleShape::test_end",
-        "TestAndSimpleShape::test_end",
-        "TestSubSimpleShape::test_end",
+        "TestOrConnectedShape::test_end",
+        "TestAndConnectedShape::test_end",
     ]
 )
 def test_end():
