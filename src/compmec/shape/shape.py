@@ -26,22 +26,22 @@ class FollowPath:
     """
 
     @staticmethod
-    def split_at_intersections(
-        jordana: JordanCurve, jordanb: JordanCurve
-    ) -> Tuple[JordanCurve]:
-        inters = jordana & jordanb
-        if len(inters) == 0:
-            return jordana, jordanb
-        nodes_self = set()
-        nodes_other = set()
-        for ui, vj in inters:
-            nodes_self.add(ui)
-            nodes_other.add(vj)
-        nodes_self = tuple(sorted(nodes_self))
-        nodes_other = tuple(sorted(nodes_other))
-        jordana.split(nodes_self)
-        jordanb.split(nodes_other)
-        return jordana, jordanb
+    def split_at_intersections(jordans: Tuple[JordanCurve]) -> Tuple[JordanCurve]:
+        assert isinstance(jordans, (tuple, list))
+        for jordan in jordans:
+            assert isinstance(jordan, JordanCurve)
+        ncurves = len(jordans)
+        all_nodes = [set() for i in range(ncurves)]
+        for i in range(ncurves - 1):
+            for j in range(i + 1, ncurves):
+                inters = jordans[i] & jordans[j]
+                for ui, vj in inters:
+                    all_nodes[i].add(ui)
+                    all_nodes[j].add(vj)
+        all_nodes = [tuple(sorted(nodes)) for nodes in all_nodes]
+        for nodes, jordan in zip(all_nodes, jordans):
+            jordan.split(nodes)
+        return jordans
 
     @staticmethod
     def interior_jordan_contains_point(jordan: JordanCurve, point: Point2D) -> bool:
@@ -130,33 +130,46 @@ class FollowPath:
             index += 1
 
     @staticmethod
-    def continue_path(
-        jordana: JordanCurve, jordanb: JordanCurve, index: int
-    ) -> Tuple[nurbs.Curve]:
+    def pursue_path(jordans: Tuple[JordanCurve], index: int) -> Tuple[Tuple[int]]:
         """
-        Given a two simple shapes, and a start path (given by index)
-        it returns a list of segments that follows the 'flux'
+        Given a list of jordans, it returns a matrix of integers like
+        [(a1, b1), (a2, b2), (a3, b3), ..., (an, bn)] such
+            End point of jordans[a_{i}].segments[b_{i}]
+            Start point of jordans[a_{i+1}].segments[b_{i+1}]
+        are equal
+
+        The first point (a1, b1) = (0, index)
+
+        The end point of jordans[an].segments[bn] is equal to
+        the start point of jordans[a1].segments[b1]
+
+        We suppose there's no triple intersection
         """
-        final_beziers = []
-        segmentsa = jordana.segments
-        segmentsb = jordanb.segments
+        index_jordan = 0
+        index_segment = index
+        matrix = []
+        all_segments = [jordan.segments for jordan in jordans]
         while True:
-            index %= len(segmentsa)
-            segmenta = segmentsa[index]
-            if segmenta in final_beziers:
+            index_segment %= len(all_segments[index_jordan])
+            segment = all_segments[index_jordan][index_segment]
+            if (index_jordan, index_segment) in matrix:
                 break
-            final_beziers.append(segmenta)
-            last_point = segmenta.ctrlpoints[-1]
-            if last_point not in jordanb:
-                index += 1
-                continue
-            for j, segj in enumerate(segmentsb):
-                if segj.ctrlpoints[0] == last_point:
-                    index = j
+            matrix.append((index_jordan, index_segment))
+            last_point = segment.ctrlpoints[-1]
+            for i, jordan in enumerate(jordans):
+                if i == index_jordan:
+                    continue
+                if last_point in jordan:
                     break
-            jordana, jordanb = jordanb, jordana
-            segmentsa, segmentsb = segmentsb, segmentsa
-        return tuple(final_beziers)
+            else:
+                index_segment += 1
+                continue
+            index_jordan = i
+            for j, segj in enumerate(all_segments[index_jordan]):
+                if segj.ctrlpoints[0] == last_point:
+                    index_segment = j
+                    break
+        return tuple(matrix)
 
     @staticmethod
     def outside_path(jordana: JordanCurve, jordanb: JordanCurve) -> JordanCurve:
@@ -165,9 +178,12 @@ class FollowPath:
         """
         assert isinstance(jordana, JordanCurve)
         assert isinstance(jordanb, JordanCurve)
-        jordana, jordanb = FollowPath.split_at_intersections(jordana, jordanb)
+        jordans = [jordana, jordanb]
+        jordans = FollowPath.split_at_intersections(jordans)
+        jordana, jordanb = jordans
         index = FollowPath.index_segment_outside_other(jordana, jordanb)
-        final_beziers = FollowPath.continue_path(jordana, jordanb, index)
+        indexs_paths = FollowPath.pursue_path(jordans, index)
+        final_beziers = [jordans[a].segments[b] for a, b in indexs_paths]
         final_curve = FollowPath.unite_beziers(final_beziers)
         final_jordan = JordanCurve(final_curve)
         return final_jordan
@@ -179,9 +195,12 @@ class FollowPath:
         """
         assert isinstance(jordana, JordanCurve)
         assert isinstance(jordanb, JordanCurve)
-        jordana, jordanb = FollowPath.split_at_intersections(jordana, jordanb)
+        jordans = [jordana, jordanb]
+        jordans = FollowPath.split_at_intersections(jordans)
+        jordana, jordanb = jordans
         index = FollowPath.index_segment_inside_other(jordana, jordanb)
-        final_beziers = FollowPath.continue_path(jordana, jordanb, index)
+        indexs_paths = FollowPath.pursue_path(jordans, index)
+        final_beziers = [jordans[a].segments[b] for a, b in indexs_paths]
         final_curve = FollowPath.unite_beziers(final_beziers)
         final_jordan = JordanCurve(final_curve)
         return final_jordan
