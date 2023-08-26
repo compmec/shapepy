@@ -406,7 +406,7 @@ class TestOthers:
         depends=[
             "TestOthers::test_begin",
             "TestOthers::test_print",
-            "TestOthers::test_intersection",
+            "TestOthers::test_self_intersection",
         ]
     )
     def test_end(self):

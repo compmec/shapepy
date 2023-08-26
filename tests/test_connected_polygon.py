@@ -13,10 +13,10 @@ from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 @pytest.mark.order(7)
 @pytest.mark.dependency(
     depends=[
-        # "tests/test_polygon.py::test_end",
-        # "tests/test_jordan_polygon.py::test_end",
-        # "tests/test_primitive.py::test_end",
-        # "tests/test_simple_polygon.py::test_end",
+        "tests/test_polygon.py::test_end",
+        "tests/test_jordan_polygon.py::test_end",
+        "tests/test_primitive.py::test_end",
+        "tests/test_simple_polygon.py::test_end",
     ],
     scope="session",
 )

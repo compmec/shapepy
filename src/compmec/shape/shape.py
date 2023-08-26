@@ -9,7 +9,7 @@ or even unconnected shapes.
 from __future__ import annotations
 
 from copy import deepcopy
-from typing import List, Tuple, Union
+from typing import Any, List, Tuple, Union
 
 import numpy as np
 
@@ -68,71 +68,42 @@ class FollowPath:
         return round(total)
 
     @staticmethod
-    def unite_beziers(beziers: Tuple[nurbs.Curve]) -> nurbs.Curve:
-        """
-        Given a tuple of bezier curves, it returns a unique closed curve
-        """
-        beziers = list(beziers)
-        nbeziers = len(beziers)
-        for i, bezier in enumerate(beziers):
-            degree = bezier.degree
-            knotvector = sorted((degree + 1) * (i, i + 1))
-            new_bezier = bezier.__class__(knotvector)
-            new_bezier.ctrlpoints = bezier.ctrlpoints
-            new_bezier.weights = bezier.weights
-            beziers[i] = new_bezier
-        final_curve = beziers[0]
-        for i in range(1, nbeziers):
-            final_curve |= beziers[i]
-        final_curve.clean()
-        return final_curve
+    def point_inside(point: Point2D, limiters: Tuple[JordanCurve]) -> bool:
+        contains = FollowPath.interior_jordan_contains_point
+        for limit in limiters:
+            if not contains(limit, point):
+                return False
+        return True
 
     @staticmethod
-    def index_segment_inside_other(jordana: JordanCurve, jordanb: JordanCurve) -> int:
+    def midpoints_inside(
+        jordan: JordanCurve, limiters: Tuple[JordanCurve]
+    ) -> Tuple[bool]:
         """
-        Given two simple shapes, which intersect each other
-        and they are already divided in their intersection
-        The shape 'self' has at least one segment outside
-        the region inside 'other'
-        Then, this function returns the index such
-            self.jordancurve.segments[index] is outside other
+        Given two list of jordan curves, named as As and Bs, this function returns a
+        matrix of booleans which tells if the midpoint of each bezier is inside a region
+        defined by Bs
+
+        len(matrix) = len(As)
+        len(matrix[i]) = len(As[i].segments)
         """
-        segments = jordana.segments
-        index = 0
-        while True:
-            bezier = segments[index]
-            knotvector = bezier.knotvector
-            umin, umax = knotvector.limits
+        assert isinstance(jordan, JordanCurve)
+        assert isinstance(limiters, (tuple, list))
+        for limit in limiters:
+            assert isinstance(limit, JordanCurve)
+        boolvector = []
+        for bezier in jordan.segments:
+            umin, umax = bezier.knotvector.limits
             mid_node = (umin + umax) / 2
-            mid_point = segments[index].eval(mid_node)
-            if FollowPath.interior_jordan_contains_point(jordanb, mid_point):
-                return index
-            index += 1
+            mid_point = bezier.eval(mid_node)
+            inside = FollowPath.point_inside(mid_point, limiters)
+            boolvector.append(inside)
+        return tuple(boolvector)
 
     @staticmethod
-    def index_segment_outside_other(jordana: JordanCurve, jordanb: JordanCurve) -> int:
-        """
-        Given two simple shapes, which intersect each other
-        and they are already divided in their intersection
-        The shape 'self' has at least one segment outside
-        the region inside 'other'
-        Then, this function returns the index such
-            self.jordancurve.segments[index] is outside other
-        """
-        segments = jordana.segments
-        index = 0
-        while True:
-            bezier = segments[index]
-            knotvector = bezier.knotvector
-            umin, umax = knotvector.limits
-            mid_node = (umin + umax) / 2
-            mid_point = segments[index].eval(mid_node)
-            if not FollowPath.interior_jordan_contains_point(jordanb, mid_point):
-                return index
-            index += 1
-
-    @staticmethod
-    def pursue_path(jordans: Tuple[JordanCurve], index: int) -> Tuple[Tuple[int]]:
+    def pursue_path(
+        index_jordan: int, index_segment: int, jordans: Tuple[JordanCurve]
+    ) -> Tuple[Tuple[int]]:
         """
         Given a list of jordans, it returns a matrix of integers like
         [(a1, b1), (a2, b2), (a3, b3), ..., (an, bn)] such
@@ -147,8 +118,6 @@ class FollowPath:
 
         We suppose there's no triple intersection
         """
-        index_jordan = 0
-        index_segment = index
         matrix = []
         all_segments = [jordan.segments for jordan in jordans]
         while True:
@@ -174,38 +143,180 @@ class FollowPath:
         return tuple(matrix)
 
     @staticmethod
-    def outside_path(jordana: JordanCurve, jordanb: JordanCurve) -> JordanCurve:
+    def switch_boolean(boolvector: Tuple[bool]) -> Tuple[int]:
         """
-        Returns the union of two simple positive shapes
+        Given an array of booleans, it returns the index such
+        boolvectors switch from False to True
+        It counts as a Deck, if it switch from last element to first
+
+        Example:
+        [F, T] -> [1]
+        [F, T, F] -> [1]
+        [F, T, F, F] -> [1]
+        [T, F] -> [0]
+        [T, T, F] -> [0]
+        [T, F, T, F] -> [0, 2]
         """
-        assert isinstance(jordana, JordanCurve)
-        assert isinstance(jordanb, JordanCurve)
-        jordans = [jordana, jordanb]
-        jordans = FollowPath.split_at_intersections(jordans)
-        jordana, jordanb = jordans
-        index = FollowPath.index_segment_outside_other(jordana, jordanb)
-        indexs_paths = FollowPath.pursue_path(jordans, index)
-        final_beziers = [jordans[a].segments[b] for a, b in indexs_paths]
-        final_curve = FollowPath.unite_beziers(final_beziers)
-        final_jordan = JordanCurve(final_curve)
-        return final_jordan
+        nvals = len(boolvector)
+        results = []
+        for i in range(nvals):
+            if (not boolvector[i - 1]) and boolvector[i]:
+                results.append(i)
+        return tuple(results)
 
     @staticmethod
-    def inside_path(jordana: JordanCurve, jordanb: JordanCurve) -> JordanCurve:
+    def is_rotation(oneobj: Tuple[Any], other: Tuple[Any]) -> bool:
         """
-        Returns the union of two simple positive shapes
+        Tells if a list is equal to another
         """
-        assert isinstance(jordana, JordanCurve)
-        assert isinstance(jordanb, JordanCurve)
-        jordans = [jordana, jordanb]
-        jordans = FollowPath.split_at_intersections(jordans)
-        jordana, jordanb = jordans
-        index = FollowPath.index_segment_inside_other(jordana, jordanb)
-        indexs_paths = FollowPath.pursue_path(jordans, index)
-        final_beziers = [jordans[a].segments[b] for a, b in indexs_paths]
-        final_curve = FollowPath.unite_beziers(final_beziers)
-        final_jordan = JordanCurve(final_curve)
-        return final_jordan
+        assert isinstance(oneobj, (tuple, list))
+        assert isinstance(other, (tuple, list))
+        oneobj = tuple(oneobj)
+        other = tuple(other)
+        if len(oneobj) != len(other):
+            return False
+        rotation = 0
+        for elem in oneobj:
+            if elem == other[0]:
+                break
+            rotation += 1
+        else:
+            return False
+        nelems = len(other)
+        for i, elem in enumerate(other):
+            j = (i + rotation) % nelems
+            if elem != oneobj[j]:
+                return False
+        return True
+
+    @staticmethod
+    def filter_rotations(matrix: Tuple[Tuple[Any]]):
+        """
+        Remove repeted elements in matrix such they are only rotations
+
+        Example:
+        filter_tuples([[A, B, C], [B, C, A]]) -> [[A, B, C]]
+        filter_tuples([[A, B, C], [C, B, A]]) -> [[A, B, C], [C, B, A]]
+        """
+        filtered = []
+        for line in matrix:
+            for fline in filtered:
+                if FollowPath.is_rotation(line, fline):
+                    break
+            else:
+                filtered.append(line)
+        return tuple(filtered)
+
+    @staticmethod
+    def split_jordans(jordansa: Tuple[JordanCurve], jordansb: Tuple[JordanCurve]):
+        for jordans in (jordansa, jordansb):
+            assert isinstance(jordans, (tuple, list))
+            for jordan in jordans:
+                assert isinstance(jordan, JordanCurve)
+        for jordana in jordansa:
+            for jordanb in jordansb:
+                FollowPath.split_at_intersections((jordana, jordanb))
+
+    @staticmethod
+    def union_indexs(
+        jordansa: Tuple[JordanCurve], jordansb: Tuple[JordanCurve]
+    ) -> Tuple[Tuple[Tuple[int]]]:
+        """
+        Function to find indexs for union_path
+        """
+        FollowPath.split_jordans(jordansa, jordansb)
+        final_index_matrix = []
+        all_jordans = jordansa + jordansb
+        for k in range(2):
+            jordans0 = jordansa if k == 0 else jordansb
+            jordans1 = jordansb if k == 0 else jordansa
+            for local_index_jordan, jordan in enumerate(jordans0):
+                insiders = FollowPath.midpoints_inside(jordan, jordans1)
+                outsiders = [not inside for inside in insiders]
+                start_indexs = FollowPath.switch_boolean(outsiders)
+                global_index_jordan = k * len(jordansa) + local_index_jordan
+                for index_segment in start_indexs:
+                    bezindexs = FollowPath.pursue_path(
+                        global_index_jordan, index_segment, all_jordans
+                    )
+                    final_index_matrix.append(bezindexs)
+        final_index_matrix = FollowPath.filter_rotations(final_index_matrix)
+        return tuple(final_index_matrix)
+
+    @staticmethod
+    def intersection_indexs(
+        jordansa: Tuple[JordanCurve], jordansb: Tuple[JordanCurve]
+    ) -> Tuple[Tuple[Tuple[int]]]:
+        """
+        Function to find indexs for intersection_path
+        """
+        FollowPath.split_jordans(jordansa, jordansb)
+        final_index_matrix = []
+        all_jordans = jordansa + jordansb
+        for k in range(2):
+            jordans0 = jordansa if k == 0 else jordansb
+            jordans1 = jordansb if k == 0 else jordansa
+            for local_index_jordan, jordan in enumerate(jordans0):
+                insiders = FollowPath.midpoints_inside(jordan, jordans1)
+                start_indexs = FollowPath.switch_boolean(insiders)
+                global_index_jordan = k * len(jordansa) + local_index_jordan
+                for index_segment in start_indexs:
+                    bezindexs = FollowPath.pursue_path(
+                        global_index_jordan, index_segment, all_jordans
+                    )
+                    final_index_matrix.append(bezindexs)
+        final_index_matrix = FollowPath.filter_rotations(final_index_matrix)
+        return tuple(final_index_matrix)
+
+    @staticmethod
+    def indexs_to_jordan(
+        jordans: Tuple[JordanCurve], matrix_indexs: Tuple[Tuple[int, int]]
+    ) -> JordanCurve:
+        """
+        Given 'n' jordan curves, and a matrix of integers
+        [(a0, b0), (a1, b1), ..., (am, bm)]
+        Returns a myjordan (JordanCurve instance) such
+        len(myjordan.segments) = matrix_indexs.shape[0]
+        myjordan.segments[i] = jordans[ai].segments[bi]
+        """
+        beziers = []
+        for index_jordan, index_segment in matrix_indexs:
+            new_bezier = jordans[index_jordan].segments[index_segment]
+            beziers.append(new_bezier)
+        new_jordan = JordanCurve.from_segments(beziers)
+        return new_jordan
+
+    @staticmethod
+    def union_path(
+        jordansa: Tuple[JordanCurve], jordansb: Tuple[JordanCurve]
+    ) -> Tuple[JordanCurve]:
+        """
+        Returns a list of jordan curves which is the result
+        of the union between 'jordansa' and 'jordansb'
+        """
+        all_matrices_indexs = FollowPath.union_indexs(jordansa, jordansb)
+        all_jordans = jordansa + jordansb
+        new_jordans = []
+        for matrix_indexs in all_matrices_indexs:
+            jordan = FollowPath.indexs_to_jordan(all_jordans, matrix_indexs)
+            new_jordans.append(jordan)
+        return tuple(new_jordans)
+
+    @staticmethod
+    def intersection_path(
+        jordansa: Tuple[JordanCurve], jordansb: Tuple[JordanCurve]
+    ) -> Tuple[JordanCurve]:
+        """
+        Returns a list of jordan curves which is the result
+        of the intersection between 'jordansa' and 'jordansb'
+        """
+        all_matrices_indexs = FollowPath.intersection_indexs(jordansa, jordansb)
+        all_jordans = jordansa + jordansb
+        new_jordans = []
+        for matrix_indexs in all_matrices_indexs:
+            jordan = FollowPath.indexs_to_jordan(all_jordans, matrix_indexs)
+            new_jordans.append(jordan)
+        return tuple(new_jordans)
 
 
 class BaseShape(object):
@@ -412,11 +523,9 @@ class SimpleShape(FiniteShape):
             return other.copy()
         if other in self:
             return self.copy()
-        intersect = self.jordancurve.intersection(other.jordancurve, end_points=True)
-        if intersect:
-            newjordan = FollowPath.outside_path(self.jordancurve, other.jordancurve)
-            return SimpleShape(newjordan)
-        return DisjointShape([self.copy(), other.copy()])
+        new_jordans = FollowPath.union_path([self.jordancurve], [other.jordancurve])
+        simple_shapes = [SimpleShape(jordan) for jordan in new_jordans]
+        return DisjointShape(simple_shapes)
 
     def __and__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
@@ -427,10 +536,15 @@ class SimpleShape(FiniteShape):
         if other in self:
             return other.copy()
         intersect = self.jordancurve.intersection(other.jordancurve, end_points=True)
-        if intersect:
-            newjordan = FollowPath.inside_path(self.jordancurve, other.jordancurve)
-            return SimpleShape(newjordan)
-        return EmptyShape()
+        if not intersect:
+            return EmptyShape()
+
+        new_jordans = FollowPath.intersection_path(
+            [self.jordancurve], [other.jordancurve]
+        )
+        simple_shapes = [SimpleShape(jordan) for jordan in new_jordans]
+        assert len(simple_shapes) == 1
+        return simple_shapes[0]
 
     def __sub__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
@@ -445,10 +559,14 @@ class SimpleShape(FiniteShape):
         if other in self:
             return ConnectedShape(self, [other])
         intersect = self.jordancurve.intersection(other.jordancurve)
-        if intersect:
-            newjordan = FollowPath.inside_path(~other.jordancurve, self.jordancurve)
-            return SimpleShape(newjordan)
-        return EmptyShape()
+        if not intersect:
+            return EmptyShape()
+        new_jordans = FollowPath.intersection_path(
+            [self.jordancurve], [~other.jordancurve]
+        )
+        simple_shapes = [SimpleShape(jordan) for jordan in new_jordans]
+        assert len(simple_shapes) == 1
+        return simple_shapes[0]
 
     def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
         if isinstance(other, EmptyShape):

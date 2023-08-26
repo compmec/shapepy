@@ -314,28 +314,17 @@ class JordanCurve:
         self.full_curve = full_curve
 
     def move(self, point: Point2D) -> JordanCurve:
-        print("Inside move!")
-        print("point = ", point)
         segments = self.segments
         allctrlpoints = [bezier.ctrlpoints for bezier in segments]
         allctrlpoints = np.array(allctrlpoints)
-        print("all control points = ")
-        print("")
-        print(allctrlpoints)
         for bezier in segments:
             ctrlpoints = bezier.ctrlpoints
             for ctrlpoint in ctrlpoints:
                 ctrlpoint.move(point)
             bezier.ctrlpoints = ctrlpoints
-        print("all control points = ")
-        print("")
-        print(allctrlpoints)
         self.segments = segments
-        print("all control points = ")
-        print("")
         allctrlpoints = [bezier.ctrlpoints for bezier in self.segments]
         allctrlpoints = np.array(allctrlpoints)
-        print(allctrlpoints)
         return self
 
     def scale(self, xscale: float, yscale: float) -> JordanCurve:
@@ -377,7 +366,9 @@ class JordanCurve:
 
     def split(self, indexs: Tuple[int], nodes: Tuple[float]) -> None:
         """
-        Divides the segment
+        Divides a list of segments in the respective nodes
+        If node == 0 or node == 1 (extremities), only ignores
+        the given node
         """
         assert isinstance(indexs, (tuple, list))
         assert isinstance(nodes, (tuple, list))
@@ -392,8 +383,6 @@ class JordanCurve:
         assert len(indexs) == len(nodes)
         indexs = list(indexs)
         new_segments = list(self.segments)
-        for segment in new_segments:
-            print(segment.knotvector)
         inserted = 0
         for index, node in zip(indexs, nodes):
             if abs(node) < 1e-6 or abs(node - 1) < 1e-6:
