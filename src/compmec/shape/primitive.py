@@ -5,12 +5,13 @@ This file contains functions to create primitive shapes such as:
 - Square
 """
 
+from fractions import Fraction
 from typing import Tuple
 
 import numpy as np
 
 from compmec import nurbs
-from compmec.shape.jordancurve import JordanCurve, JordanPolygon
+from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
 from compmec.shape.shape import ConnectedShape, NumIntegration, SimpleShape, WholeShape
 
@@ -38,7 +39,7 @@ class Primitive:
         vertices[:, 0] = np.cos(theta)
         vertices[:, 1] = np.sin(theta)
         vertices = tuple([Point2D(vertex) for vertex in vertices])
-        jordan_polygon = JordanPolygon(vertices)
+        jordan_polygon = JordanCurve.from_vertices(vertices)
         simple_shape = SimpleShape(jordan_polygon)
         simple_shape.scale(radius, radius)
         simple_shape.move(center)
@@ -47,7 +48,7 @@ class Primitive:
     @staticmethod
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
         vertices = [Point2D(vertex) for vertex in vertices]
-        jordan_curve = JordanPolygon(vertices)
+        jordan_curve = JordanCurve.from_vertices(vertices)
         area = NumIntegration.area_inside_jordan(jordan_curve)
         if area > 0:
             return SimpleShape(jordan_curve)
@@ -74,7 +75,7 @@ class Primitive:
         vertices = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
         vertices = [center + side * Point2D(vertex) for vertex in vertices]
         vertices = tuple(vertices)
-        jordan = JordanPolygon(vertices)
+        jordan = JordanCurve.from_vertices(vertices)
         return SimpleShape(jordan)
 
     @staticmethod
@@ -91,26 +92,27 @@ class Primitive:
 
         degree = 2
         ndivangle = 16
-        last_knot = ndivangle
-        knotvector = (0, last_knot) + degree * tuple(range(last_knot + 1))
-        knotvector = tuple(sorted(knotvector))
-        knotvector = nurbs.KnotVector(knotvector)
-        curve = nurbs.Curve(knotvector)
+        knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
 
-        theta = 2 * np.pi / ndivangle
-        cos, sin = np.cos(theta), np.sin(theta)
-        height = np.tan(theta / 2)
-        rotation = np.array(((cos, -sin), (sin, cos)))
-        points = [(1, 0), (1, height), (cos, sin)]
+        angle = 2 * np.pi / ndivangle
+        height = np.tan(angle / 2)
+
+        start_point = Point2D(1, 0)
+        middle_point = Point2D(1, height)
+        beziers = []
         for i in range(ndivangle - 1):
-            new_point = rotation @ points[-2]
-            points.append(new_point)
-            new_point = rotation @ points[-2]
-            points.append(new_point)
-        points[-1] = points[0]
-        points = [Point2D(point) for point in points]
-        curve.ctrlpoints = points
-        jordan_curve = JordanCurve(curve)
+            end_point = start_point.copy().rotate(angle)
+            new_bezier = nurbs.Curve(knotvector)
+            new_bezier.ctrlpoints = [start_point, middle_point, end_point]
+            beziers.append(new_bezier)
+            start_point = end_point.copy()
+            middle_point = middle_point.copy().rotate(angle)
+        end_point = Point2D(1, 0)
+        new_bezier = nurbs.Curve(knotvector)
+        new_bezier.ctrlpoints = [start_point, middle_point, end_point]
+        beziers.append(new_bezier)
+
+        jordan_curve = JordanCurve.from_segments(beziers)
         circle = SimpleShape(jordan_curve)
         circle.scale(radius, radius)
         circle.move(center)

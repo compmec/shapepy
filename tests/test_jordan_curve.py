@@ -4,6 +4,7 @@ This file contains tests functions to test the module polygon.py
 
 from fractions import Fraction
 
+import numpy as np
 import pytest
 
 from compmec import nurbs
@@ -66,18 +67,19 @@ class TestQuadraticJordan:
         knotvector = [Fraction(knot) for knot in knotvector]
 
         pointsa = [(0, -2), (4, 0), (0, 2), (0, 0), (0, -2)]
-        # pointsa = np.array(pointsa, dtype="float64")
         curvea = nurbs.Curve(knotvector)
         curvea.ctrlpoints = [Point2D(pt) for pt in pointsa]
-        jordana = JordanCurve(curvea)
+        jordana = JordanCurve.from_full_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
-        # pointsb = np.array(pointsb, dtype="float64")
         curveb = nurbs.Curve(knotvector)
         curveb.ctrlpoints = [Point2D(pt) for pt in pointsb]
-        jordanb = JordanCurve(curveb)
+        jordanb = JordanCurve.from_full_curve(curveb)
 
-        assert jordana & jordanb == set([(1 / 4, 1 / 4), (3 / 4, 3 / 4)])
+        good = [(0, 0, 1 / 4, 1 / 4), (0, 0, 3 / 4, 3 / 4)]
+        test = jordana & jordanb
+        test = np.array(test, dtype="float64")
+        assert np.all(test == good)
 
     @pytest.mark.order(4)
     @pytest.mark.timeout(10)
@@ -104,20 +106,10 @@ class TestQuadraticJordan:
         curveb.ctrlpoints = [Point2D(pt) for pt in pointsb]
         jordanb = JordanCurve(curveb)
 
-        good_inters = set([(0.25, 0.25), (0.75, 0.75)])
-        test_inters = jordana & jordanb
-
-        set0 = set(test_inters - good_inters)
-        set1 = set(good_inters - test_inters)
-        for ui, vj in tuple(set0):
-            for uk, vl in tuple(set1):
-                if abs(ui - uk) > 1e-9:
-                    continue
-                if abs(vj - vl) > 1e-9:
-                    continue
-                set0.remove((ui, vj))
-                set1.remove((uk, vl))
-        assert (set0 | set1) == set()
+        good = [(0, 0, 0.25, 0.25), (0, 0, 0.75, 0.75)]
+        test = jordana & jordanb
+        test = np.array(test, dtype="float64")
+        np.testing.assert_allclose(test, good)
 
     @pytest.mark.order(4)
     @pytest.mark.timeout(10)

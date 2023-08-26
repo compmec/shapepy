@@ -31,16 +31,18 @@ class FollowPath:
         for jordan in jordans:
             assert isinstance(jordan, JordanCurve)
         ncurves = len(jordans)
-        all_nodes = [set() for i in range(ncurves)]
+        all_positions = [set() for i in range(ncurves)]
         for i in range(ncurves - 1):
             for j in range(i + 1, ncurves):
-                inters = jordans[i] & jordans[j]
-                for ui, vj in inters:
-                    all_nodes[i].add(ui)
-                    all_nodes[j].add(vj)
-        all_nodes = [tuple(sorted(nodes)) for nodes in all_nodes]
-        for nodes, jordan in zip(all_nodes, jordans):
-            jordan.split(nodes)
+                inters = jordans[i].intersection(jordans[j], end_points=False)
+                for ai, bj, ui, vj in inters:
+                    all_positions[i].add((ai, ui))
+                    all_positions[j].add((bj, vj))
+        all_positions = [tuple(sorted(nodes)) for nodes in all_positions]
+        for positions, jordan in zip(all_positions, jordans):
+            indexs = [position[0] for position in positions]
+            nodes = [position[1] for position in positions]
+            jordan.split(indexs, nodes)
         return jordans
 
     @staticmethod
@@ -410,7 +412,7 @@ class SimpleShape(FiniteShape):
             return other.copy()
         if other in self:
             return self.copy()
-        intersect = self.jordancurve.intersect(other.jordancurve)
+        intersect = self.jordancurve.intersection(other.jordancurve, end_points=True)
         if intersect:
             newjordan = FollowPath.outside_path(self.jordancurve, other.jordancurve)
             return SimpleShape(newjordan)
@@ -424,7 +426,7 @@ class SimpleShape(FiniteShape):
             return self.copy()
         if other in self:
             return other.copy()
-        intersect = self.jordancurve.intersect(other.jordancurve)
+        intersect = self.jordancurve.intersection(other.jordancurve, end_points=True)
         if intersect:
             newjordan = FollowPath.inside_path(self.jordancurve, other.jordancurve)
             return SimpleShape(newjordan)
@@ -442,7 +444,7 @@ class SimpleShape(FiniteShape):
             return EmptyShape()
         if other in self:
             return ConnectedShape(self, [other])
-        intersect = self.jordancurve.intersect(other.jordancurve)
+        intersect = self.jordancurve.intersection(other.jordancurve)
         if intersect:
             newjordan = FollowPath.inside_path(~other.jordancurve, self.jordancurve)
             return SimpleShape(newjordan)

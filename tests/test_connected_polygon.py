@@ -5,7 +5,7 @@ Which are in fact positive shapes defined only by one jordan curve
 
 import pytest
 
-from compmec.shape.jordancurve import JordanPolygon
+from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.primitive import Primitive
 from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 
@@ -402,9 +402,9 @@ class TestAndConnectedShape:
     def test_disjoint(self):
         vertices0 = [(-2, -1), (-1, -1), (-1, 1), (-2, 1)]
         vertices1 = [(1, -1), (2, -1), (2, 1), (1, 1)]
-        square0 = JordanPolygon(vertices0)
+        square0 = JordanCurve.from_vertices(vertices0)
         square0 = SimpleShape(square0)
-        square1 = JordanPolygon(vertices1)
+        square1 = JordanCurve.from_vertices(vertices1)
         square1 = SimpleShape(square1)
 
         good_shape = EmptyShape()

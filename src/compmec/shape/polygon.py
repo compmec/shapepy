@@ -124,22 +124,21 @@ class Point2D:
             return False
         return True
 
+    def __ne__(self, other: Point2D) -> bool:
+        return not self.__eq__(other)
+
     def __neg__(self) -> Point2D:
-        return self.__class__(-self[0], -self[1])
+        return self.copy().scale(-1, -1)
 
     def __iadd__(self, other: Point2D) -> Point2D:
         if not isinstance(other, Point2D):
             other = Point2D(other)
-        self._x += other[0]
-        self._y += other[1]
-        return self
+        return self.move(other)
 
     def __isub__(self, other: Point2D) -> Point2D:
         if not isinstance(other, Point2D):
             other = Point2D(other)
-        self._x -= other[0]
-        self._y -= other[1]
-        return self
+        return self.move(-other)
 
     def __imul__(self, other: float) -> Point2D:
         if isinstance(other, self.__class__):
@@ -171,6 +170,35 @@ class Point2D:
 
     def __xor__(self, other: Point2D) -> float:
         return self.cross(other)
+
+    def move(self, vector: Point2D) -> Point2D:
+        """
+        Moves the current point to another position
+        Doesn't create a copy
+        """
+        self._x += vector[0]
+        self._y += vector[1]
+        return self
+
+    def rotate(self, angle: float) -> Point2D:
+        """
+        Rotates the current point with respect to origin
+        Doesn't create a copy
+        """
+        float(angle)
+        cos, sin = np.cos(angle), np.sin(angle)
+        new_x = cos * self._x - sin * self._y
+        new_y = sin * self._x + cos * self._y
+        self._x = new_x
+        self._y = new_y
+        return self
+
+    def scale(self, xscale: float, yscale: float) -> Point2D:
+        float(xscale)
+        float(yscale)
+        self._x *= xscale
+        self._y *= yscale
+        return self
 
 
 class Segment:

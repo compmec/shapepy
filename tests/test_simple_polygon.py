@@ -5,7 +5,7 @@ Which are in fact positive shapes defined only by one jordan curve
 
 import pytest
 
-from compmec.shape.jordancurve import JordanPolygon
+from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.primitive import Primitive
 from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 
@@ -158,7 +158,7 @@ class TestContainsPoint:
     @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
     def test_point_in_square(self):
         vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
-        square = JordanPolygon(vertices)
+        square = JordanCurve.from_vertices(vertices)
         square = SimpleShape(square)
         assert float(square) > 0
 
@@ -171,7 +171,7 @@ class TestContainsPoint:
     @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
     def test_point_out_square(self):
         vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
-        square = JordanPolygon(vertices)
+        square = JordanCurve.from_vertices(vertices)
         square = SimpleShape(square)
         assert float(square) > 0
 
@@ -205,8 +205,8 @@ class TestContainsJordan:
     def test_square_in_square(self):
         small_vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
         big_vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
-        small_jordan = JordanPolygon(small_vertices)
-        big_jordan = JordanPolygon(big_vertices)
+        small_jordan = JordanCurve.from_vertices(small_vertices)
+        big_jordan = JordanCurve.from_vertices(big_vertices)
         small_square = SimpleShape(small_jordan)
         big_square = SimpleShape(big_jordan)
 
@@ -339,7 +339,8 @@ class TestOrSimpleShape:
         good_points += [(0, -1), (1, -2), (3, 0), (1, 2)]
         good_shape = Primitive.polygon(good_points)
 
-        assert square0 | square1 == good_shape
+        test_shape = square0 | square1
+        assert test_shape == good_shape
 
     @pytest.mark.order(6)
     @pytest.mark.dependency(
@@ -356,7 +357,11 @@ class TestOrSimpleShape:
 class TestAndSimpleShape:
     @pytest.mark.order(6)
     @pytest.mark.dependency(
-        depends=["TestEmptyWhole::test_end", "TestContainsShape::test_end"]
+        depends=[
+            "TestEmptyWhole::test_end",
+            "TestContainsShape::test_end",
+            "TestOrSimpleShape::test_end",
+        ]
     )
     def test_begin(self):
         pass
@@ -420,10 +425,10 @@ class TestSubSimpleShape:
         square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
         left_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2), (0, -1), (-1, 0)]
-        left_jordanpoly = JordanPolygon(left_points)
+        left_jordanpoly = JordanCurve.from_vertices(left_points)
         left_shape = SimpleShape(left_jordanpoly)
         right_points = [(0, 1), (1, 0), (0, -1), (1, -2), (3, 0), (1, 2)]
-        right_jordanpoly = JordanPolygon(right_points)
+        right_jordanpoly = JordanCurve.from_vertices(right_points)
         right_shape = SimpleShape(right_jordanpoly)
 
         assert square0 - square1 == left_shape
@@ -451,7 +456,7 @@ class TestOthers:
     )
     def test_print(self):
         points = [(0, 0), (1, 0), (0, 1)]
-        jordancurve = JordanPolygon(points)
+        jordancurve = JordanCurve.from_vertices(points)
         shape = SimpleShape(jordancurve)
         str(shape)
         repr(shape)

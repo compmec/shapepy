@@ -15,6 +15,26 @@ from compmec import nurbs
 from compmec.shape.polygon import Point2D, Segment
 
 
+def unite_beziers(beziers: Tuple[nurbs.Curve]) -> nurbs.Curve:
+    """
+    Given a tuple of bezier curves, it returns a unique closed curve
+    """
+    beziers = list(beziers)
+    nbeziers = len(beziers)
+    for i, bezier in enumerate(beziers):
+        degree = bezier.degree
+        knotvector = sorted((degree + 1) * (i, i + 1))
+        new_bezier = bezier.__class__(knotvector)
+        new_bezier.ctrlpoints = bezier.ctrlpoints
+        new_bezier.weights = bezier.weights
+        beziers[i] = new_bezier
+    final_curve = beziers[0]
+    for i in range(1, nbeziers):
+        final_curve |= beziers[i]
+    final_curve.clean()
+    return final_curve
+
+
 class NumIntegration:
     @staticmethod
     def area_bezier(ctrlpoints: Tuple[Point2D]) -> float:
@@ -145,7 +165,7 @@ class IntersectionBeziers:
         """
         tol_du = IntersectionBeziers.tol_du
         if IntersectionBeziers.is_equal_controlpoints(cptsa, cptsb):
-            return tuple()
+            return ((None, None),)
         dega = len(cptsa) - 1
         degb = len(cptsb) - 1
         dmata = np.array(IntersectionBeziers.matrix_derivate(dega))
@@ -246,15 +266,44 @@ class JordanCurve:
     It stores a list of 'segments': Each 'segment' is a lambda function.
     """
 
-    def __init__(self, curve: nurbs.Curve):
-        if not isinstance(curve, nurbs.Curve):
+    def __init__(self, curve: nurbs.Curve = None):
+        self.__full_curve = None
+        self.__segments = None
+        if curve is not None:
+            self.full_curve = curve
+
+    @classmethod
+    def from_full_curve(cls, curve: nurbs.Curve):
+        instance = cls()
+        instance.full_curve = curve
+        return instance
+
+    @classmethod
+    def from_segments(cls, beziers: Tuple[nurbs.Curve]) -> JordanCurve:
+        assert isinstance(beziers, (tuple, list))
+        for bezier in beziers:
+            assert isinstance(bezier, nurbs.Curve)
+        instance = cls()
+        instance.segments = beziers
+        return instance
+
+    @classmethod
+    def from_vertices(cls, vertices: Tuple[Point2D]) -> JordanCurve:
+        if not isinstance(vertices, (tuple, list)):
             raise TypeError
-        knotvector = curve.knotvector
-        degree = knotvector.degree
-        knots = knotvector.knots
-        for knot in knots[1:-1]:
-            assert knotvector.mult(knot) <= degree
-        self.full_curve = curve
+        vertices = list(vertices)
+        for i, vertex in enumerate(vertices):
+            vertices[i] = Point2D(vertex)
+        nverts = len(vertices)
+        vertices.append(vertices[0])
+        knotvector = (0, 0, 1, 1)
+        knotvector = tuple([Fraction(knot) for knot in knotvector])
+        beziers = [0] * nverts
+        for i in range(nverts):
+            ctrlpoints = vertices[i : i + 2]
+            new_bezier = nurbs.Curve(knotvector, ctrlpoints)
+            beziers[i] = new_bezier
+        return cls.from_segments(beziers)
 
     def copy(self) -> JordanCurve:
         return deepcopy(self)
@@ -265,37 +314,53 @@ class JordanCurve:
         self.full_curve = full_curve
 
     def move(self, point: Point2D) -> JordanCurve:
-        point = Point2D(point)
-        full_curve = self.full_curve
-        full_ctrlpts = list(full_curve.ctrlpoints)
-        for i, ctrlpt in enumerate(full_ctrlpts):
-            full_ctrlpts[i] = ctrlpt + point
-        full_curve.ctrlpoints = tuple(full_ctrlpts)
-        self.full_curve = full_curve
+        print("Inside move!")
+        print("point = ", point)
+        segments = self.segments
+        allctrlpoints = [bezier.ctrlpoints for bezier in segments]
+        allctrlpoints = np.array(allctrlpoints)
+        print("all control points = ")
+        print("")
+        print(allctrlpoints)
+        for bezier in segments:
+            ctrlpoints = bezier.ctrlpoints
+            for ctrlpoint in ctrlpoints:
+                ctrlpoint.move(point)
+            bezier.ctrlpoints = ctrlpoints
+        print("all control points = ")
+        print("")
+        print(allctrlpoints)
+        self.segments = segments
+        print("all control points = ")
+        print("")
+        allctrlpoints = [bezier.ctrlpoints for bezier in self.segments]
+        allctrlpoints = np.array(allctrlpoints)
+        print(allctrlpoints)
         return self
 
     def scale(self, xscale: float, yscale: float) -> JordanCurve:
-        full_curve = self.full_curve
-        full_ctrlpts = list(full_curve.ctrlpoints)
-        for i, ctrlpt in enumerate(full_ctrlpts):
-            full_ctrlpts[i] = Point2D(xscale * ctrlpt[0], yscale * ctrlpt[1])
-        full_curve.ctrlpoints = tuple(full_ctrlpts)
-        self.full_curve = full_curve
+        float(xscale)
+        float(yscale)
+        segments = self.segments
+        for bezier in segments:
+            ctrlpoints = bezier.ctrlpoints
+            for ctrlpoint in ctrlpoints:
+                ctrlpoint.scale(xscale, yscale)
+            bezier.ctrlpoints = ctrlpoints
+        self.segments = segments
         return self
 
     def rotate(self, angle: float, degrees: bool = False) -> JordanCurve:
+        float(angle)
         if degrees:
             angle *= np.pi / 180
-        cos, sin = np.cos(angle), np.sin(angle)
-
-        full_curve = self.full_curve
-        full_ctrlpts = list(full_curve.ctrlpoints)
-        for i, ctrlpt in enumerate(full_ctrlpts):
-            newptx = cos * ctrlpt[0] - sin * ctrlpt[1]
-            newpty = sin * ctrlpt[0] + cos * ctrlpt[1]
-            full_ctrlpts[i] = Point2D(newptx, newpty)
-        full_curve.ctrlpoints = tuple(full_ctrlpts)
-        self.full_curve = full_curve
+        segments = self.segments
+        for bezier in segments:
+            ctrlpoints = bezier.ctrlpoints
+            for ctrlpoint in ctrlpoints:
+                ctrlpoint.rotate(angle)
+            bezier.ctrlpoints = ctrlpoints
+        self.segments = segments
         return self
 
     def invert(self) -> JordanCurve:
@@ -310,13 +375,35 @@ class JordanCurve:
         self.full_curve = new_full_curve
         return self
 
-    def split(self, nodes: Tuple[float]) -> None:
-        full_curve = self.full_curve
-        nodes = set(nodes) - set(full_curve.knotvector.knots)
-        nodes = tuple(sorted(nodes))
+    def split(self, indexs: Tuple[int], nodes: Tuple[float]) -> None:
+        """
+        Divides the segment
+        """
+        assert isinstance(indexs, (tuple, list))
+        assert isinstance(nodes, (tuple, list))
+        for index in indexs:
+            assert isinstance(index, int)
+            assert 0 <= index
+            assert index < len(self.segments)
         for node in nodes:
-            full_curve.knot_insert((node,))
-        self.full_curve = full_curve
+            float(node)
+            assert 0 <= node
+            assert node <= 1
+        assert len(indexs) == len(nodes)
+        indexs = list(indexs)
+        new_segments = list(self.segments)
+        for segment in new_segments:
+            print(segment.knotvector)
+        inserted = 0
+        for index, node in zip(indexs, nodes):
+            if abs(node) < 1e-6 or abs(node - 1) < 1e-6:
+                continue
+            segment = new_segments[index + inserted]
+            bezleft, bezrigh = segment.split([node])
+            new_segments[index + inserted] = bezleft
+            new_segments.insert(index + inserted + 1, bezrigh)
+            inserted += 1
+        self.segments = tuple(new_segments)
 
     def points(self, subnpts: int = 2) -> Tuple[Point2D]:
         """
@@ -341,7 +428,17 @@ class JordanCurve:
         """
         Returns a tuple of control points
         """
+        if self.__full_curve is None:
+            self.__full_curve = unite_beziers(self.segments)
         return self.__full_curve
+
+    @property
+    def segments(self) -> Tuple[nurbs.Curve]:
+        if self.__segments is None:
+            if self.__full_curve is None:
+                raise ValueError
+            self.segments = self.full_curve.split()
+        return tuple(self.__segments)
 
     @property
     def vertices(self) -> Tuple[Point2D]:
@@ -354,52 +451,51 @@ class JordanCurve:
                 allpoints.append(point)
         return tuple(allpoints)
 
-    @property
-    def segments(self) -> Tuple[nurbs.Curve]:
-        if self.__segments is None:
-            self.__segments = self.full_curve.split()
-        return tuple([deepcopy(segm) for segm in self.__segments])
-
     @full_curve.setter
     def full_curve(self, other: nurbs.Curve):
-        assert isinstance(other, nurbs.Curve)
+        if not isinstance(other, nurbs.Curve):
+            raise TypeError
         assert other.ctrlpoints[0] == other.ctrlpoints[-1]
         self.__segments = None
-        knotvector = other.knotvector
-        degree = knotvector.degree
-        knots = knotvector.knots
-        for knot in knots:
-            mult = knotvector.mult(knot)
-            new_knots = (degree - mult) * [knot]
-            other.knot_insert(new_knots)
+        degree = other.degree
+        knots = other.knotvector.knots
+        for knot in knots[1:-1]:
+            mult = other.knotvector.mult(knot)
+            assert mult <= degree
         self.__full_curve = other
 
-    def __and__(self, other: JordanCurve) -> FrozenSet[Tuple[float]]:
+    @segments.setter
+    def segments(self, other: Tuple[nurbs.Curve]):
+        assert isinstance(other, (tuple, list))
+        for segment in other:
+            if not isinstance(segment, nurbs.Curve):
+                raise TypeError
+        ncurves = len(other)
+        for i in range(ncurves - 1):
+            end_point = other[i].ctrlpoints[-1]
+            start_point = other[i + 1].ctrlpoints[0]
+            assert np.all(start_point == end_point)
+        for segment in other:
+            segment.degree_clean()
+        self.__full_curve = None
+        segments = []
+        for bezier in other:
+            npts = bezier.knotvector.npts
+            knotvector = tuple(npts * [Fraction(0)] + npts * [Fraction(1)])
+            new_bezier = bezier.__class__(knotvector)
+            ctrlpoints = [Point2D(point) for point in bezier.ctrlpoints]
+            new_bezier.ctrlpoints = ctrlpoints
+            new_bezier.weights = bezier.weights
+            segments.append(new_bezier)
+        self.__segments = tuple(segments)
+
+    def __and__(self, other: JordanCurve) -> Tuple[Tuple[int, int, float, float]]:
         """
         Given two jordan curves, this functions returns the intersection
         between these two jordan curves
         Returns empty tuple if the curves don't intersect each other
         """
-        assert isinstance(other, JordanCurve)
-        selfsegs = list(self.segments)
-        othesegs = list(other.segments)
-        for bezier in selfsegs:
-            bezier.clean()
-        for bezier in othesegs:
-            bezier.clean()
-        bandb = IntersectionBeziers.intersection_bezier
-        intersections = set()
-        for sbezier in selfsegs:
-            umin, umax = sbezier.knotvector.limits
-            for obezier in othesegs:
-                vmin, vmax = obezier.knotvector.limits
-                inters = bandb(sbezier.ctrlpoints, obezier.ctrlpoints)
-                # Scale inters from [0, 1] to respective intervals
-                for ui, vj in inters:
-                    ui = (1 - ui) * umin + ui * umax
-                    vj = (1 - vj) * vmin + vj * vmax
-                    intersections.add((ui, vj))
-        return frozenset(intersections)
+        return self.intersection(other, end_points=True)
 
     def __str__(self) -> str:
         msg = f"Jordan Curve of degree {self.full_curve.degree} and vertices\n"
@@ -474,42 +570,31 @@ class JordanCurve:
         internal_area = NumIntegration.area_inside_jordan(self)
         return self.copy() if internal_area > 0 else (~self)
 
-    def intersect(self, other: JordanCurve) -> bool:
+    def intersection(
+        self, other: JordanCurve, end_points=False
+    ) -> Tuple[Tuple[int, int, float, float]]:
         """
-        Tells if a jordan curve intersects another jordan curve
-        Since __and__ operator only computes between parameters
-        this function also checks the points
+        Returns the intersection between two curves A and B
+        result = ((a0, b0, u0, v0), (a1, b1, u1, v1), ...)
+        Which
+            A.segments[ai].eval(ui) == B.segments[bi].eval(vi)
+        0 <= ai < len(A.segments)
+        0 <= bi < len(B.segments)
+        0 <= u0 <= 1
+        0 <= v0 <= 1
         """
-        tolerance = 1e-6
-        self_points = self.points(0)
-        other_points = other.points(0)
-        for pta in self_points:
-            for ptb in other_points:
-                if abs(pta - ptb) < IntersectionBeziers.tol_norm:
-                    return True
-        params = self & other
-        if params:
-            return True
-        return False
-
-
-class JordanPolygon(JordanCurve):
-    def __init__(self, vertices: Tuple[Point2D]):
-        """
-        Init a closed jordan polygon.
-        Valid case:
-            vertices[0] != vertices[1]
-        """
-        if not isinstance(vertices, (list, tuple)):
-            raise TypeError
-        ctrlpoints = []
-        for vertex in vertices:
-            point = Point2D(vertex)
-            ctrlpoints.append(point)
-        ctrlpoints.append(ctrlpoints[0])
-        npts = len(ctrlpoints)
-        knotvector = (0,) + tuple(range(0, npts)) + (npts - 1,)
-        knotvector = [Fraction(knot) for knot in knotvector]
-        fullcurve = nurbs.Curve(knotvector)
-        fullcurve.ctrlpoints = ctrlpoints
-        super().__init__(fullcurve)
+        assert isinstance(other, JordanCurve)
+        bandb = IntersectionBeziers.intersection_bezier
+        intersections = set()
+        for ai, sbezier in enumerate(self.segments):
+            for bj, obezier in enumerate(other.segments):
+                inters = bandb(sbezier.ctrlpoints, obezier.ctrlpoints)
+                for item in inters:
+                    ui, vj = item
+                    intersections.add((ai, bj, ui, vj))
+        if not end_points:
+            for ai, bi, ui, vi in tuple(intersections):
+                if (0 < ui and ui < 1) or (0 < vi and vi < 1):
+                    continue
+                intersections.remove((ai, bi, ui, vi))
+        return tuple(sorted(intersections))

@@ -104,6 +104,8 @@ class TestPoint:
         assert pointa + (12, 5) == aplusb
         assert pointa - (12, 5) == aminusb
 
+        assert pointa != (12, 5)
+
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
