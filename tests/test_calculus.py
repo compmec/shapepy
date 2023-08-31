@@ -8,6 +8,7 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
+from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.calculus import BezierCurveIntegral, JordanCurveIntegral
 from compmec.shape.primitive import Primitive
 
@@ -36,7 +37,8 @@ class TestIntegralSurface:
     def test_centered_rectangular(self):
         width, height = 6, 10  # sides of rectangle
         nx, ny = 5, 5  # Max exponential
-        rectangular = Primitive.square().scale(width // 2, height // 2)
+        rectangular = Primitive.square()
+        rectangular.scale(width // 2, height // 2)
         jordan_curve = rectangular.jordancurve
         segments = jordan_curve.segments
         for expx in range(nx):
@@ -91,7 +93,8 @@ class TestIntegralSurface:
     )
     def test_centered_rombo(self):
         width, height = 3, 5
-        rombo = Primitive.regular_polygon(4).scale(width, height)
+        rombo = Primitive.regular_polygon(4)
+        rombo.scale(width, height)
         jordan_curve = rombo.jordancurve
         segments = jordan_curve.segments
         nx, ny = 5, 5
@@ -149,11 +152,62 @@ class TestWindingNumber:
         pass
 
 
+
+class TestLenght:
+    @pytest.mark.order(4)
+    @pytest.mark.dependency(depends=["test_begin", "TestIntegralSurface::test_end"])
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(4)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestLenght::test_begin"])
+    def test_square(self):
+        side = 3
+        square = Primitive.square(side)
+        jordan_curve = square.jordancurve
+        assert abs(jordan_curve.lenght - 4*side) < 1e-9
+
+    @pytest.mark.order(4)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestLenght::test_begin"])
+    def test_regular_polygon(self):
+        for nsides in range(3, 10):
+            lenght = 2 * nsides * np.sin(math.pi/nsides)
+            shape = Primitive.regular_polygon(nsides)
+            jordan_curve = shape.jordancurve
+            assert (jordan_curve.lenght - lenght) < 1e-9
+
+    @pytest.mark.order(4)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestLenght::test_begin"])
+    def test_circle(self):
+        shape = Primitive.circle()
+        jordan_curve = shape.jordancurve
+        test = jordan_curve.lenght
+        good = math.tau
+        assert abs(test - good) < 1e-3
+
+    @pytest.mark.order(4)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestLenght::test_begin",
+            "TestLenght::test_square",
+            "TestLenght::test_regular_polygon",
+            "TestLenght::test_circle",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
 @pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
         "TestIntegralSurface::test_end",
         "TestWindingNumber::test_end",
+        "TestLenght::test_end",
     ]
 )
 def test_end():

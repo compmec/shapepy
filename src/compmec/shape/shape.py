@@ -49,8 +49,7 @@ class FollowPath:
     @staticmethod
     def interior_jordan_contains_point(jordan: JordanCurve, point: Point2D) -> bool:
         winding = FollowPath.winding_number(jordan, point)
-        area = float(jordan)
-        return winding == 1 if area > 0 else winding == 0
+        return winding == 1 if jordan.lenght > 0 else winding == 0
 
     @staticmethod
     def winding_number(jordan: JordanCurve, point: Point2D) -> int:
@@ -589,11 +588,10 @@ class SimpleShape(FiniteShape):
     @jordancurve.setter
     def jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
-        area = JordanCurveIntegral.area(other.segments)
-        if area < 0:
+        if other.lenght < 0:
             raise ValueError("Simple Shape area must be always positive!")
         self.__jordancurve = other.copy()
-        self.__area = area
+        self.__area = JordanCurveIntegral.area(other.segments)
 
     def contains_point(self, point: Point2D) -> bool:
         """

@@ -215,8 +215,7 @@ class BezierCurveIntegral:
         expx, expy = coefs
         assert isinstance(expx, int)
         assert isinstance(expy, int)
-        npts = len(ctrlpoints) - 1
-        knotvector = nurbs.GeneratorKnotVector.bezier(degree=npts - 1)
+        knotvector = nurbs.GeneratorKnotVector.bezier(len(ctrlpoints) - 1)
         px = nurbs.Curve(knotvector, [point[0] for point in ctrlpoints])
         py = nurbs.Curve(knotvector, [point[1] for point in ctrlpoints])
         dpx = nurbs.calculus.Derivate.bezier(px)

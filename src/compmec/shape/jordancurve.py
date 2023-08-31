@@ -207,6 +207,7 @@ class JordanCurve:
         self.__segments = None
         if curve is not None:
             self.full_curve = curve
+        self.__lenght = None
 
     @classmethod
     def from_full_curve(cls, curve: nurbs.Curve):
@@ -347,6 +348,16 @@ class JordanCurve:
         usample = tuple(sorted(usample))
         all_points = full_curve.eval(usample)
         return tuple(all_points)
+    
+    @property
+    def lenght(self) -> float:
+        if self.__lenght is None:
+            function = calculus.BezierCurveIntegral.polynomial_scalar_bezier
+            segments = self.segments
+            self.__lenght = 0
+            for bezier in segments:
+                self.__lenght += function((0, 0), bezier.ctrlpoints)
+        return self.__lenght
 
     @property
     def full_curve(self) -> Tuple[Point2D]:
@@ -382,6 +393,7 @@ class JordanCurve:
             raise TypeError
         assert other.ctrlpoints[0] == other.ctrlpoints[-1]
         self.__segments = None
+        self.__lenght = None
         degree = other.degree
         knots = other.knotvector.knots
         for knot in knots[1:-1]:
@@ -403,6 +415,7 @@ class JordanCurve:
         for segment in other:
             segment.degree_clean()
         self.__full_curve = None
+        self.__lenght = None
         segments = []
         for bezier in other:
             npts = bezier.knotvector.npts
