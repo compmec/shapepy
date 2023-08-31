@@ -195,12 +195,7 @@ class TestJordanPolygon:
         vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
         square1 = JordanCurve.from_vertices(vertices1)
 
-        equal_squares = (
-            (0, 0, None, None),
-            (1, 1, None, None),
-            (2, 2, None, None),
-            (3, 3, None, None),
-        )
+        equal_squares = tuple()
         assert square0 & square0 == equal_squares
         assert square1 & square1 == equal_squares
         good = [(0, 0, 0.5, 0.5), (3, 3, 0.5, 0.5)]
@@ -399,6 +394,14 @@ class TestOthers:
         jordanb = JordanCurve.from_vertices(points)
         assert id(jordana) != id(jordanb)
         inters = jordana & jordanb
+        assert not bool(inters)
+        inters = jordana.intersection(jordanb, equal_beziers=False, end_points=False)
+        assert not bool(inters)
+        inters = jordana.intersection(jordanb, equal_beziers=False, end_points=True)
+        assert bool(inters)
+        inters = jordana.intersection(jordanb, equal_beziers=True, end_points=False)
+        assert bool(inters)
+        inters = jordana.intersection(jordanb, equal_beziers=True, end_points=True)
         assert bool(inters)
 
     @pytest.mark.order(3)

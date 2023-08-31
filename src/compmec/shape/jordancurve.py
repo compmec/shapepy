@@ -175,8 +175,9 @@ class IntersectionBeziers:
                     if abs(oldvj - vj) > tol_du:
                         continue
                     break
-                if (0 < ui and ui < 1) or (0 < vj and vj < 1):
-                    intersections.add((ui, vj))
+                if ui < 0 or 1 < ui or vj < 0 or 1 < vj:
+                    continue
+                intersections.add((ui, vj))
         filter_inters = set()
         for ui, vj in intersections:
             for uk, vl in filter_inters:
@@ -348,7 +349,7 @@ class JordanCurve:
         usample = tuple(sorted(usample))
         all_points = full_curve.eval(usample)
         return tuple(all_points)
-    
+
     @property
     def lenght(self) -> float:
         if self.__lenght is None:
@@ -433,7 +434,7 @@ class JordanCurve:
         between these two jordan curves
         Returns empty tuple if the curves don't intersect each other
         """
-        return self.intersection(other, end_points=True)
+        return self.intersection(other, equal_beziers=False, end_points=False)
 
     def __str__(self) -> str:
         msg = f"Jordan Curve of degree {self.full_curve.degree} and vertices\n"
@@ -500,7 +501,7 @@ class JordanCurve:
             if vector.norm_square() < 1e-9:
                 return True
         return False
-    
+
     def __abs__(self) -> JordanCurve:
         """
         Returns the same curve, but in positive direction
@@ -509,7 +510,7 @@ class JordanCurve:
         return self.copy() if internal_area > 0 else (~self)
 
     def intersection(
-        self, other: JordanCurve, end_points=False
+        self, other: JordanCurve, equal_beziers: bool = True, end_points: bool = True
     ) -> Tuple[Tuple[int, int, float, float]]:
         """
         Returns the intersection between two curves A and B
@@ -530,9 +531,13 @@ class JordanCurve:
                 for item in inters:
                     ui, vj = item
                     intersections.add((ai, bj, ui, vj))
+        if not equal_beziers:
+            for ai, bi, ui, vi in tuple(intersections):
+                if ui is None:
+                    intersections.remove((ai, bi, ui, vi))
         if not end_points:
             for ai, bi, ui, vi in tuple(intersections):
-                if (0 < ui and ui < 1) or (0 < vi and vi < 1):
+                if ui is None or (0 < ui and ui < 1) or (0 < vi and vi < 1):
                     continue
                 intersections.remove((ai, bi, ui, vi))
         return tuple(sorted(intersections))
