@@ -8,8 +8,8 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.calculus import BezierCurveIntegral, JordanCurveIntegral
+from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.primitive import Primitive
 
 
@@ -152,7 +152,6 @@ class TestWindingNumber:
         pass
 
 
-
 class TestLenght:
     @pytest.mark.order(4)
     @pytest.mark.dependency(depends=["test_begin", "TestIntegralSurface::test_end"])
@@ -166,14 +165,14 @@ class TestLenght:
         side = 3
         square = Primitive.square(side)
         jordan_curve = square.jordancurve
-        assert abs(jordan_curve.lenght - 4*side) < 1e-9
+        assert abs(jordan_curve.lenght - 4 * side) < 1e-9
 
     @pytest.mark.order(4)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestLenght::test_begin"])
     def test_regular_polygon(self):
         for nsides in range(3, 10):
-            lenght = 2 * nsides * np.sin(math.pi/nsides)
+            lenght = 2 * nsides * np.sin(math.pi / nsides)
             shape = Primitive.regular_polygon(nsides)
             jordan_curve = shape.jordancurve
             assert (jordan_curve.lenght - lenght) < 1e-9
