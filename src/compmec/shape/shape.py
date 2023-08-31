@@ -14,7 +14,8 @@ from typing import Any, List, Tuple, Union
 import numpy as np
 
 from compmec import nurbs
-from compmec.shape.jordancurve import JordanCurve, NumIntegration
+from compmec.shape.calculus import JordanCurveIntegral
+from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
 
 
@@ -48,7 +49,7 @@ class FollowPath:
     @staticmethod
     def interior_jordan_contains_point(jordan: JordanCurve, point: Point2D) -> bool:
         winding = FollowPath.winding_number(jordan, point)
-        area = NumIntegration.area_inside_jordan(jordan)
+        area = float(jordan)
         return winding == 1 if area > 0 else winding == 0
 
     @staticmethod
@@ -57,15 +58,10 @@ class FollowPath:
         Computes the winding number of a point,
         It can be -1, 0 or 1
         """
-        total = 0
-        for bezier in jordan.segments:
-            ctrlpoints = list(bezier.ctrlpoints)
-            for i, ctrlpt in enumerate(ctrlpoints):
-                ctrlpoints[i] = ctrlpt - point
-            ctrlpoints = tuple(ctrlpoints)
-            partial = NumIntegration.winding_number_bezier(ctrlpoints)
-            total += partial
-        return round(total)
+        jordan.move(-point)
+        wind = JordanCurveIntegral.winding_number(jordan.segments)
+        jordan.move(point)
+        return wind
 
     @staticmethod
     def point_inside(point: Point2D, limiters: Tuple[JordanCurve]) -> bool:
@@ -593,7 +589,7 @@ class SimpleShape(FiniteShape):
     @jordancurve.setter
     def jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
-        area = NumIntegration.area_inside_jordan(other)
+        area = JordanCurveIntegral.area(other.segments)
         if area < 0:
             raise ValueError("Simple Shape area must be always positive!")
         self.__jordancurve = other.copy()

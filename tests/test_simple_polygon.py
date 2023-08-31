@@ -157,9 +157,7 @@ class TestContainsPoint:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
     def test_point_in_square(self):
-        vertices = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
-        square = JordanCurve.from_vertices(vertices)
-        square = SimpleShape(square)
+        square = Primitive.square(side=4)
         assert float(square) > 0
 
         for xval in range(-2, 3):

@@ -10,11 +10,12 @@ import pytest
 from compmec.shape import Primitive
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 @pytest.mark.dependency(
     depends=[
         "tests/test_polygon.py::test_end",
         "tests/test_jordan_polygon.py::test_end",
+        "tests/test_calculus.py::test_end",
     ],
     scope="session",
 )
@@ -23,12 +24,12 @@ def test_begin():
 
 
 class TestPrimitive:
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestPrimitive::test_begin"])
     def test_creation(self):
@@ -57,7 +58,7 @@ class TestPrimitive:
         with pytest.raises(ValueError):
             Primitive.circle(radius="asd")
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=["TestPrimitive::test_begin", "TestPrimitive::test_creation"]
@@ -67,7 +68,7 @@ class TestPrimitive:
         area = 4
         assert abs(float(square) - area) < 1e-9
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -82,7 +83,7 @@ class TestPrimitive:
             area = nsides * math.sin(2 * math.pi / nsides) / 2
             assert abs(float(polygon) - area) < 1e-9
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -102,7 +103,7 @@ class TestPrimitive:
         area = -0.5
         assert abs(float(triangle) - area) < 1e-9
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -118,7 +119,7 @@ class TestPrimitive:
         area = math.pi
         assert abs(float(circle) - area) < 1e-3
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -134,7 +135,7 @@ class TestPrimitive:
         pass
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 @pytest.mark.dependency(
     depends=[
         "TestPrimitive::test_end",

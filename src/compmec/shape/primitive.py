@@ -5,15 +5,17 @@ This file contains functions to create primitive shapes such as:
 - Square
 """
 
+import math
 from fractions import Fraction
 from typing import Tuple
 
 import numpy as np
 
 from compmec import nurbs
+from compmec.shape.calculus import JordanCurveIntegral
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
-from compmec.shape.shape import ConnectedShape, NumIntegration, SimpleShape, WholeShape
+from compmec.shape.shape import ConnectedShape, SimpleShape, WholeShape
 
 
 class Primitive:
@@ -35,7 +37,7 @@ class Primitive:
         except (ValueError, TypeError, AssertionError):
             raise ValueError("Input invalid")
         vertices = np.empty((nsides, 2), dtype="float64")
-        theta = np.linspace(0, 2 * np.pi, nsides, endpoint=False)
+        theta = np.linspace(0, math.tau, nsides, endpoint=False)
         vertices[:, 0] = np.cos(theta)
         vertices[:, 1] = np.sin(theta)
         vertices = tuple([Point2D(vertex) for vertex in vertices])
@@ -49,7 +51,7 @@ class Primitive:
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
         vertices = [Point2D(vertex) for vertex in vertices]
         jordan_curve = JordanCurve.from_vertices(vertices)
-        area = NumIntegration.area_inside_jordan(jordan_curve)
+        area = JordanCurveIntegral.area(jordan_curve.segments)
         if area > 0:
             return SimpleShape(jordan_curve)
         simple_shape = SimpleShape(abs(jordan_curve))
@@ -69,7 +71,7 @@ class Primitive:
             raise ValueError("Input invalid")
 
         if isinstance(side, int) and (side % 2 == 0):
-            side //= 2
+            side = Fraction(side, 2)
         else:
             side /= 2
         vertices = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
@@ -94,7 +96,7 @@ class Primitive:
         ndivangle = 16
         knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
 
-        angle = 2 * np.pi / ndivangle
+        angle = math.tau / ndivangle
         height = np.tan(angle / 2)
 
         start_point = Point2D(1, 0)
