@@ -10,13 +10,15 @@ from compmec.shape.primitive import Primitive
 from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(9)
 @pytest.mark.dependency(
     depends=[
         "tests/test_polygon.py::test_end",
         "tests/test_jordan_polygon.py::test_end",
         "tests/test_primitive.py::test_end",
         "tests/test_simple_polygon.py::test_end",
+        "tests/test_calculus.py::test_end",
+        "tests/test_contains.py::test_end",
     ],
     scope="session",
 )
@@ -25,12 +27,12 @@ def test_begin():
 
 
 class TestEmptyWhole:
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_or(self):
         empty = EmptyShape()
@@ -51,7 +53,7 @@ class TestEmptyWhole:
         assert shape | empty == shape
         assert shape | whole is whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_and(self):
         empty = EmptyShape()
@@ -72,7 +74,7 @@ class TestEmptyWhole:
         assert shape & empty is empty
         assert shape & whole == shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_xor(self):
         empty = EmptyShape()
@@ -88,7 +90,7 @@ class TestEmptyWhole:
         assert shape ^ empty == shape
         assert shape ^ whole == ~shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_sub(self):
         empty = EmptyShape()
@@ -106,7 +108,7 @@ class TestEmptyWhole:
         assert empty - shape is empty
         assert whole - shape == ~shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_bool(self):
         empty = EmptyShape()
@@ -114,7 +116,7 @@ class TestEmptyWhole:
         assert bool(empty) is False
         assert bool(whole) is True
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_float(self):
         empty = EmptyShape()
@@ -122,7 +124,7 @@ class TestEmptyWhole:
         assert float(empty) == float(0)
         assert float(whole) == float("inf")
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_invert(self):
         empty = EmptyShape()
@@ -132,7 +134,7 @@ class TestEmptyWhole:
         assert ~(~empty) is empty
         assert ~(~whole) is whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestEmptyWhole::test_begin"])
     def test_copy(self):
         empty = EmptyShape()
@@ -140,7 +142,7 @@ class TestEmptyWhole:
         assert empty.copy() is empty
         assert whole.copy() is whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=[
             "TestEmptyWhole::test_begin",
@@ -159,12 +161,12 @@ class TestEmptyWhole:
 
 
 class TestContainsPoint:
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["test_begin", "TestEmptyWhole::test_end"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
     def test_point_in_square(self):
@@ -174,7 +176,7 @@ class TestContainsPoint:
             for yval in range(-1, 2):
                 assert (xval, yval) not in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
     def test_point_out_square(self):
@@ -186,7 +188,7 @@ class TestContainsPoint:
                     continue
                 assert (xval, yval) in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsPoint::test_begin"])
     def test_other(self):
@@ -194,7 +196,7 @@ class TestContainsPoint:
         assert float(square) < 0
         assert (-10, -10) in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=[
             "TestContainsPoint::test_begin",
@@ -208,12 +210,12 @@ class TestContainsPoint:
 
 
 class TestContainsJordan:
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestContainsPoint::test_end"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsJordan::test_begin"])
     def test_square_in_square(self):
@@ -225,7 +227,7 @@ class TestContainsJordan:
         assert small_square.jordancurve not in (~big_square)
         assert big_square.jordancurve in (~small_square)
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=[
             "TestContainsJordan::test_begin",
@@ -237,12 +239,12 @@ class TestContainsJordan:
 
 
 class TestContainsShape:
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["TestContainsJordan::test_end"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestContainsShape::test_begin"])
     def test_square_in_square(self):
@@ -261,7 +263,7 @@ class TestContainsShape:
         assert (~small_square) not in (~big_square)
         assert (~big_square) in (~small_square)
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=[
             "TestContainsShape::test_begin",
@@ -273,14 +275,14 @@ class TestContainsShape:
 
 
 class TestOrConnectedShape:
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=["TestEmptyWhole::test_end", "TestContainsShape::test_end"]
     )
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestOrConnectedShape::test_begin"])
     def test_inside_each(self):
@@ -299,14 +301,14 @@ class TestOrConnectedShape:
         assert (~small_square) | small_square == WholeShape()
         assert (~big_square) | big_square == WholeShape()
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestOrConnectedShape::test_begin"])
     def test_complementar(self):
         square = Primitive.square()
         assert square | (~square) is WholeShape()
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -322,7 +324,7 @@ class TestOrConnectedShape:
         good_shape = Primitive.polygon(good_points)
         assert square0 | square1 == good_shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -337,7 +339,7 @@ class TestOrConnectedShape:
         good_shape = Primitive.polygon(good_points)
         assert square0 | square1 == good_shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -352,7 +354,7 @@ class TestOrConnectedShape:
         good_shape = Primitive.polygon(good_points)
         assert square0 | square1 == good_shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -368,7 +370,7 @@ class TestOrConnectedShape:
         good_shape = ~Primitive.regular_polygon(nsides=4, radius=1, center=(0, 0))
         assert square0 | square1 == good_shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=[
             "TestOrConnectedShape::test_begin",
@@ -385,7 +387,7 @@ class TestOrConnectedShape:
 
 
 class TestAndConnectedShape:
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=[
             "TestEmptyWhole::test_end",
@@ -396,7 +398,7 @@ class TestAndConnectedShape:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestAndConnectedShape::test_begin"])
     def test_disjoint(self):
@@ -414,14 +416,14 @@ class TestAndConnectedShape:
         assert square0 & square1 is good_shape
         assert square1 & square0 is good_shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestAndConnectedShape::test_begin"])
     def test_complementar(self):
         square = Primitive.square()
         assert square & (~square) is EmptyShape()
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -434,13 +436,9 @@ class TestAndConnectedShape:
         square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
         good_shape = ~(square0 | square1)
         inters = (~square0) & (~square1)
-        print("goodshape = ")
-        print(good_shape)
-        print("inters = ")
-        print(inters)
         assert inters == good_shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(9)
     @pytest.mark.dependency(
         depends=[
             "TestAndConnectedShape::test_begin",
@@ -453,7 +451,7 @@ class TestAndConnectedShape:
         pass
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(9)
 @pytest.mark.dependency(
     depends=[
         "TestOrConnectedShape::test_end",

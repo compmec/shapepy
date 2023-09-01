@@ -71,7 +71,7 @@ class FollowPath:
         return True
 
     @staticmethod
-    def midpoints_inside(
+    def midpoints_inclosed(
         jordan: JordanCurve, limiters: Tuple[JordanCurve]
     ) -> Tuple[bool]:
         """
@@ -91,7 +91,7 @@ class FollowPath:
             umin, umax = bezier.knotvector.limits
             mid_node = (umin + umax) / 2
             mid_point = bezier.eval(mid_node)
-            inside = FollowPath.point_inside(mid_point, limiters)
+            inside = Contains.point_in_closed_jordan(mid_point, limiters)
             boolvector.append(inside)
         return tuple(boolvector)
 
@@ -145,6 +145,8 @@ class FollowPath:
         It counts as a Deck, if it switch from last element to first
 
         Example:
+        [F, F] -> []
+        [T, T] -> []
         [F, T] -> [1]
         [F, T, F] -> [1]
         [F, T, F, F] -> [1]
@@ -226,7 +228,7 @@ class FollowPath:
             jordans0 = jordansa if k == 0 else jordansb
             jordans1 = jordansb if k == 0 else jordansa
             for local_index_jordan, jordan in enumerate(jordans0):
-                insiders = FollowPath.midpoints_inside(jordan, jordans1)
+                insiders = FollowPath.midpoints_inclosed(jordan, jordans1)
                 outsiders = [not inside for inside in insiders]
                 start_indexs = FollowPath.switch_boolean(outsiders)
                 global_index_jordan = k * len(jordansa) + local_index_jordan
@@ -245,6 +247,8 @@ class FollowPath:
         """
         Function to find indexs for intersection_path
         """
+        assert isinstance(jordansa, (tuple, list))
+        assert isinstance(jordansb, (tuple, list))
         FollowPath.split_jordans(jordansa, jordansb)
         final_index_matrix = []
         all_jordans = jordansa + jordansb
@@ -252,7 +256,7 @@ class FollowPath:
             jordans0 = jordansa if k == 0 else jordansb
             jordans1 = jordansb if k == 0 else jordansa
             for local_index_jordan, jordan in enumerate(jordans0):
-                insiders = FollowPath.midpoints_inside(jordan, jordans1)
+                insiders = FollowPath.midpoints_inclosed(jordan, jordans1)
                 start_indexs = FollowPath.switch_boolean(insiders)
                 global_index_jordan = k * len(jordansa) + local_index_jordan
                 for index_segment in start_indexs:
@@ -277,6 +281,7 @@ class FollowPath:
         beziers = []
         for index_jordan, index_segment in matrix_indexs:
             new_bezier = jordans[index_jordan].segments[index_segment]
+            new_bezier = new_bezier.deepcopy()
             beziers.append(new_bezier)
         new_jordan = JordanCurve.from_segments(beziers)
         return new_jordan
@@ -289,6 +294,12 @@ class FollowPath:
         Returns a list of jordan curves which is the result
         of the union between 'jordansa' and 'jordansb'
         """
+        assert isinstance(jordansa, (tuple, list))
+        assert isinstance(jordansb, (tuple, list))
+        for jordan in jordansa:
+            assert isinstance(jordan, JordanCurve)
+        for jordan in jordansb:
+            assert isinstance(jordan, JordanCurve)
         all_matrices_indexs = FollowPath.union_indexs(jordansa, jordansb)
         all_jordans = jordansa + jordansb
         new_jordans = []
@@ -305,6 +316,12 @@ class FollowPath:
         Returns a list of jordan curves which is the result
         of the intersection between 'jordansa' and 'jordansb'
         """
+        assert isinstance(jordansa, (tuple, list))
+        assert isinstance(jordansb, (tuple, list))
+        for jordan in jordansa:
+            assert isinstance(jordan, JordanCurve)
+        for jordan in jordansb:
+            assert isinstance(jordan, JordanCurve)
         all_matrices_indexs = FollowPath.intersection_indexs(jordansa, jordansb)
         all_jordans = jordansa + jordansb
         new_jordans = []
@@ -312,6 +329,64 @@ class FollowPath:
             jordan = FollowPath.indexs_to_jordan(all_jordans, matrix_indexs)
             new_jordans.append(jordan)
         return tuple(new_jordans)
+
+
+class Contains:
+    @staticmethod
+    def point_at_jordan(point: Point2D, jordans: Tuple[JordanCurve]) -> bool:
+        assert isinstance(point, Point2D)
+        assert isinstance(jordans, (list, tuple))
+        for jordan in jordans:
+            assert isinstance(jordan, JordanCurve)
+        for jordan in jordans:
+            if point in jordan:
+                return True
+        return False
+
+    @staticmethod
+    def point_in_open_jordan(point: Point2D, jordans: Tuple[JordanCurve]) -> bool:
+        assert isinstance(point, Point2D)
+        assert isinstance(jordans, (list, tuple))
+        for jordan in jordans:
+            assert isinstance(jordan, JordanCurve)
+        for jordan in jordans:
+            wind = FollowPath.winding_number(jordan, point)
+            if float(jordan) > 0 and wind != 1:
+                return False
+            if float(jordan) < 0 and wind != 0:
+                return False
+        return True
+
+    @staticmethod
+    def point_in_closed_jordan(point: Point2D, jordan: JordanCurve) -> bool:
+        return Contains.point_at_jordan(point, jordan) or Contains.point_in_open_jordan(
+            point, jordan
+        )
+
+    @staticmethod
+    def point_in_shape(point: Point2D, shape: BaseShape) -> bool:
+        assert isinstance(point, Point2D)
+        assert isinstance(shape, BaseShape)
+        if isinstance(shape, EmptyShape):
+            return False
+        if isinstance(shape, WholeShape):
+            return True
+        for jordan in shape.jordans:
+            if point in jordan:  # Point in boundary
+                return True
+        if isinstance(shape, SimpleShape):
+            return Contains.point_interior_jordan(point, shape.jordancurve)
+        if isinstance(shape, ConnectedShape):
+            for jordan in shape.jordans:
+                if not Contains.point_interior_jordan(point, jordan):
+                    return False
+            return True
+        if isinstance(shape, DisjointShape):
+            for subshape in shape.subshapes:
+                if Contains.point_in_shape(point, subshape):
+                    return True
+            return False
+        raise NotImplementedError
 
 
 class BaseShape(object):

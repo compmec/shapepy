@@ -15,7 +15,6 @@ from compmec.shape import Primitive
     depends=[
         "tests/test_polygon.py::test_end",
         "tests/test_jordan_polygon.py::test_end",
-        "tests/test_calculus.py::test_end",
     ],
     scope="session",
 )

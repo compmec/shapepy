@@ -123,59 +123,6 @@ class TestJordanPolygon:
                 # assert ~(~neg) == neg
 
     @pytest.mark.order(3)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestJordanPolygon::test_begin",
-            "TestJordanPolygon::test_creation",
-            "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_equal_curves",
-            "TestJordanPolygon::test_invert_curves",
-        ]
-    )
-    def test_contains_boundary_point(self):
-        # Test if the points are in boundary
-        triangle = JordanCurve.from_vertices([(0, 0), (1, 0), (0, 1)])
-        assert (0, 0) in triangle
-        assert (1, 0) in triangle
-        assert (0, 1) in triangle
-        assert (0.5, 0) in triangle
-        assert (0.5, 0.5) in triangle
-        assert (0, 0.5) in triangle
-
-        square = JordanCurve.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
-        assert (0, 0) in square
-        assert (1, 0) in square
-        assert (1, 1) in square
-        assert (0, 1) in square
-        assert (0.5, 0) in square
-        assert (1, 0.5) in square
-        assert (0.5, 1) in square
-        assert (0, 0.5) in square
-
-    @pytest.mark.order(3)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestJordanPolygon::test_begin",
-            "TestJordanPolygon::test_creation",
-            "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_equal_curves",
-            "TestJordanPolygon::test_invert_curves",
-            "TestJordanPolygon::test_contains_boundary_point",
-        ]
-    )
-    def test_notcontains_point(self):
-        # Test if the points are in boundary
-        triangle = JordanCurve.from_vertices([(0, 0), (1, 0), (0, 1)])
-        assert (-1, -1) not in triangle
-        assert (1, 1) not in triangle
-
-        square = JordanCurve.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
-        assert (-1, -1) not in square
-        assert (2, 2) not in square
-
-    @pytest.mark.order(3)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -185,8 +132,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_equal_curves",
             "TestJordanPolygon::test_nonequal_curves",
             "TestJordanPolygon::test_invert_curves",
-            "TestJordanPolygon::test_contains_boundary_point",
-            "TestJordanPolygon::test_notcontains_point",
         ]
     )
     def test_intersection(self):
@@ -237,8 +182,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_equal_curves",
             "TestJordanPolygon::test_nonequal_curves",
             "TestJordanPolygon::test_invert_curves",
-            "TestJordanPolygon::test_contains_boundary_point",
-            "TestJordanPolygon::test_notcontains_point",
             "TestJordanPolygon::test_intersection",
         ]
     )
