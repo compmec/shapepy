@@ -405,11 +405,55 @@ class TestOthers:
         assert bool(inters)
 
     @pytest.mark.order(3)
+    @pytest.mark.dependency(depends=["TestOthers::test_begin"])
+    def test_clean(self):
+        verticesa = [(-1, 0), (0, 0), (1, 0), (0, 1)]
+        jordana = JordanCurve.from_vertices(verticesa)
+        jordana.clean()
+        verticesb = [(-1, 0), (1, 0), (0, 1)]
+        jordanb = JordanCurve.from_vertices(verticesb)
+        assert jordana == jordanb
+
+        verticesa = [(-1.0, 0.0), (0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
+        jordana = JordanCurve.from_vertices(verticesa)
+        jordana.clean()
+        verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
+        jordanb = JordanCurve.from_vertices(verticesb)
+        assert jordana == jordanb
+
+        verticesa = [(0, 0), (1, 0), (0, 1), (-1, 0)]
+        jordana = JordanCurve.from_vertices(verticesa)
+        jordana.clean()
+        verticesb = [(-1, 0), (1, 0), (0, 1)]
+        jordanb = JordanCurve.from_vertices(verticesb)
+        assert jordana == jordanb
+
+        verticesa = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (-1.0, 0.0)]
+        jordana = JordanCurve.from_vertices(verticesa)
+        jordana.clean()
+        verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
+        jordanb = JordanCurve.from_vertices(verticesb)
+        assert jordana == jordanb
+
+    @pytest.mark.order(3)
+    @pytest.mark.dependency(
+        depends=["TestOthers::test_begin", "TestOthers::test_clean"]
+    )
+    def test_equal_divided(self):
+        verticesa = [(-1, 0), (1, 0), (0, 1)]
+        jordana = JordanCurve.from_vertices(verticesa)
+        verticesb = [(-1, 0), (0, 0), (1, 0), (0, 1)]
+        jordanb = JordanCurve.from_vertices(verticesb)
+        assert jordana == jordanb
+
+    @pytest.mark.order(3)
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
             "TestOthers::test_print",
             "TestOthers::test_self_intersection",
+            "TestOthers::test_clean",
+            "TestOthers::test_equal_divided",
         ]
     )
     def test_end(self):

@@ -25,6 +25,7 @@ def unite_beziers(beziers: Tuple[nurbs.Curve]) -> nurbs.Curve:
     for i, bezier in enumerate(beziers):
         degree = bezier.degree
         knotvector = sorted((degree + 1) * (i, i + 1))
+        knotvector = [Fraction(knot) for knot in knotvector]
         new_bezier = bezier.__class__(knotvector)
         new_bezier.ctrlpoints = bezier.ctrlpoints
         new_bezier.weights = bezier.weights
@@ -247,6 +248,21 @@ class JordanCurve:
         return deepcopy(self)
 
     def clean(self) -> None:
+        segments = list(self.segments)
+        while True:
+            nsegments = len(segments)
+            for i in range(nsegments):
+                j = (i + 1) % nsegments
+                seg0 = segments[i]
+                seg1 = segments[j]
+                union = unite_beziers((seg0, seg1))
+                if union.npts == union.degree + 1:  # bezier
+                    segments[i] = union
+                    segments.pop(j)
+                    break
+            else:
+                break
+        self.segments = segments
         full_curve = self.full_curve
         full_curve.clean()
         self.full_curve = full_curve
@@ -450,6 +466,9 @@ class JordanCurve:
 
     def __eq__(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
+        for point in other.points(1):
+            if point not in self:
+                return False
         selcopy = self.copy()
         othcopy = other.copy()
         segms0 = list(selcopy.segments)
