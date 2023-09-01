@@ -35,6 +35,7 @@ class TestPrimitive:
     def test_creation(self):
         Primitive.square()
         Primitive.regular_polygon(3)
+        Primitive.regular_polygon(4)
         Primitive.circle()
 
         with pytest.raises(ValueError):
@@ -65,7 +66,19 @@ class TestPrimitive:
     )
     def test_square(self):
         square = Primitive.square()
+        area = 1
+        assert abs(float(square) - area) < 1e-9
+
+        square = Primitive.square(side=2)
         area = 4
+        assert abs(float(square) - area) < 1e-9
+
+        square = Primitive.square(side=4)
+        area = 16
+        assert abs(float(square) - area) < 1e-9
+
+        square = Primitive.square(side=3, center=(1, 2))
+        area = 9
         assert abs(float(square) - area) < 1e-9
 
     @pytest.mark.order(5)
@@ -83,6 +96,12 @@ class TestPrimitive:
             area = nsides * math.sin(2 * math.pi / nsides) / 2
             assert abs(float(polygon) - area) < 1e-9
 
+        radius = 4
+        for nsides in range(3, 10):
+            polygon = Primitive.regular_polygon(nsides, radius=radius)
+            area = radius**2 * nsides * math.sin(2 * math.pi / nsides) / 2
+            assert abs(float(polygon) - area) < 1e-9
+
     @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
@@ -98,6 +117,7 @@ class TestPrimitive:
         triangle = Primitive.polygon(points)
         area = 0.5
         assert abs(float(triangle) - area) < 1e-9
+
         points = [(0, 0), (0, 1), (1, 0)]
         triangle = Primitive.polygon(points)
         area = -0.5
@@ -118,6 +138,11 @@ class TestPrimitive:
         circle = Primitive.circle()
         area = math.pi
         assert abs(float(circle) - area) < 1e-3
+
+        radius = 5
+        circle = Primitive.circle(radius=radius)
+        area = math.pi * radius**2
+        assert abs(float(circle) - area) < 1e-3 * radius**2
 
     @pytest.mark.order(5)
     @pytest.mark.timeout(10)

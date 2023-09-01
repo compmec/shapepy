@@ -356,8 +356,10 @@ class JordanCurve:
             function = calculus.BezierCurveIntegral.polynomial_scalar_bezier
             segments = self.segments
             self.__lenght = 0
+            area = calculus.JordanCurveIntegral.area(segments)
             for bezier in segments:
                 self.__lenght += function((0, 0), bezier.ctrlpoints)
+            self.__lenght *= 1 if area > 0 else -1
         return self.__lenght
 
     @property
@@ -502,12 +504,14 @@ class JordanCurve:
                 return True
         return False
 
+    def __float__(self) -> float:
+        return self.lenght
+
     def __abs__(self) -> JordanCurve:
         """
         Returns the same curve, but in positive direction
         """
-        internal_area = calculus.JordanCurveIntegral.area(self.segments)
-        return self.copy() if internal_area > 0 else (~self)
+        return self.copy() if float(self) > 0 else (~self)
 
     def intersection(
         self, other: JordanCurve, equal_beziers: bool = True, end_points: bool = True

@@ -36,29 +36,30 @@ class Primitive:
             center = Point2D(center)
         except (ValueError, TypeError, AssertionError):
             raise ValueError("Input invalid")
-        vertices = np.empty((nsides, 2), dtype="float64")
-        theta = np.linspace(0, math.tau, nsides, endpoint=False)
-        vertices[:, 0] = np.cos(theta)
-        vertices[:, 1] = np.sin(theta)
-        vertices = tuple([Point2D(vertex) for vertex in vertices])
+        if nsides == 4:
+            vertices = [(radius, 0), (0, radius), (-radius, 0), (0, -radius)]
+            vertices = tuple([center + Point2D(vertex) for vertex in vertices])
+        else:
+            vertices = np.empty((nsides, 2), dtype="float64")
+            theta = np.linspace(0, math.tau, nsides, endpoint=False)
+            vertices[:, 0] = radius * np.cos(theta)
+            vertices[:, 1] = radius * np.sin(theta)
+            vertices = tuple([center + Point2D(vertex) for vertex in vertices])
         jordan_polygon = JordanCurve.from_vertices(vertices)
         simple_shape = SimpleShape(jordan_polygon)
-        simple_shape.scale(radius, radius)
-        simple_shape.move(center)
         return simple_shape
 
     @staticmethod
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
         vertices = [Point2D(vertex) for vertex in vertices]
         jordan_curve = JordanCurve.from_vertices(vertices)
-        area = JordanCurveIntegral.area(jordan_curve.segments)
-        if area > 0:
+        if float(jordan_curve) > 0:
             return SimpleShape(jordan_curve)
-        simple_shape = SimpleShape(abs(jordan_curve))
-        return ConnectedShape(WholeShape(), [simple_shape])
+        hole = SimpleShape(abs(jordan_curve))
+        return ConnectedShape(WholeShape(), [hole])
 
     @staticmethod
-    def square(side: float = 2, center: Point2D = (0, 0)) -> SimpleShape:
+    def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
         """
         Creates a square of side `side` and center `center`.
         Its edges are aligned with the axes
@@ -70,12 +71,11 @@ class Primitive:
         except (ValueError, TypeError, AssertionError):
             raise ValueError("Input invalid")
 
-        if isinstance(side, int) and (side % 2 == 0):
-            side = Fraction(side, 2)
-        else:
-            side /= 2
-        vertices = [(1, 1), (-1, 1), (-1, -1), (1, -1)]
-        vertices = [center + side * Point2D(vertex) for vertex in vertices]
+        if isinstance(side, int):
+            side = Fraction(side)
+        side /= 2
+        vertices = [(side, side), (-side, side), (-side, -side), (side, -side)]
+        vertices = [center + Point2D(vertex) for vertex in vertices]
         vertices = tuple(vertices)
         jordan = JordanCurve.from_vertices(vertices)
         return SimpleShape(jordan)
@@ -99,8 +99,8 @@ class Primitive:
         angle = math.tau / ndivangle
         height = np.tan(angle / 2)
 
-        start_point = Point2D(1, 0)
-        middle_point = Point2D(1, height)
+        start_point = radius * Point2D(1, 0)
+        middle_point = radius * Point2D(1, height)
         beziers = []
         for i in range(ndivangle - 1):
             end_point = start_point.copy().rotate(angle)
@@ -109,13 +109,12 @@ class Primitive:
             beziers.append(new_bezier)
             start_point = end_point.copy()
             middle_point = middle_point.copy().rotate(angle)
-        end_point = Point2D(1, 0)
+        end_point = radius * Point2D(1, 0)
         new_bezier = nurbs.Curve(knotvector)
         new_bezier.ctrlpoints = [start_point, middle_point, end_point]
         beziers.append(new_bezier)
 
         jordan_curve = JordanCurve.from_segments(beziers)
+        jordan_curve.move(center)
         circle = SimpleShape(jordan_curve)
-        circle.scale(radius, radius)
-        circle.move(center)
         return circle
