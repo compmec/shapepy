@@ -13,6 +13,7 @@ from compmec.shape.jordancurve import JordanCurve
 
 
 @pytest.mark.order(4)
+@pytest.mark.skip(reason="Changed to not include compmec.nurbs package")
 @pytest.mark.dependency(
     depends=[
         "tests/test_polygon.py::test_end",

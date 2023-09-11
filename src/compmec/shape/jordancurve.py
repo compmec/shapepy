@@ -11,30 +11,9 @@ from typing import FrozenSet, Tuple
 
 import numpy as np
 
-from compmec import nurbs
 from compmec.shape import calculus
+from compmec.shape.curve import PlanarCurve
 from compmec.shape.polygon import Point2D, Segment
-
-
-def unite_beziers(beziers: Tuple[nurbs.Curve]) -> nurbs.Curve:
-    """
-    Given a tuple of bezier curves, it returns a unique closed curve
-    """
-    beziers = list(beziers)
-    nbeziers = len(beziers)
-    for i, bezier in enumerate(beziers):
-        degree = bezier.degree
-        knotvector = sorted((degree + 1) * (i, i + 1))
-        knotvector = [Fraction(knot) for knot in knotvector]
-        new_bezier = bezier.__class__(knotvector)
-        new_bezier.ctrlpoints = bezier.ctrlpoints
-        new_bezier.weights = bezier.weights
-        beziers[i] = new_bezier
-    final_curve = beziers[0]
-    for i in range(1, nbeziers):
-        final_curve |= beziers[i]
-    final_curve.clean()
-    return final_curve
 
 
 class IntersectionBeziers:
@@ -204,24 +183,15 @@ class JordanCurve:
     It stores a list of 'segments': Each 'segment' is a lambda function.
     """
 
-    def __init__(self, curve: nurbs.Curve = None):
-        self.__full_curve = None
+    def __init__(self):
         self.__segments = None
-        if curve is not None:
-            self.full_curve = curve
         self.__lenght = None
 
     @classmethod
-    def from_full_curve(cls, curve: nurbs.Curve):
-        instance = cls()
-        instance.full_curve = curve
-        return instance
-
-    @classmethod
-    def from_segments(cls, beziers: Tuple[nurbs.Curve]) -> JordanCurve:
+    def from_segments(cls, beziers: Tuple[PlanarCurve]) -> JordanCurve:
         assert isinstance(beziers, (tuple, list))
         for bezier in beziers:
-            assert isinstance(bezier, nurbs.Curve)
+            assert isinstance(bezier, PlanarCurve)
         instance = cls()
         instance.segments = beziers
         return instance
@@ -235,87 +205,49 @@ class JordanCurve:
             vertices[i] = Point2D(vertex)
         nverts = len(vertices)
         vertices.append(vertices[0])
-        knotvector = (0, 0, 1, 1)
-        knotvector = tuple([Fraction(knot) for knot in knotvector])
         beziers = [0] * nverts
         for i in range(nverts):
             ctrlpoints = vertices[i : i + 2]
-            new_bezier = nurbs.Curve(knotvector, ctrlpoints)
+            new_bezier = PlanarCurve(ctrlpoints)
             beziers[i] = new_bezier
         return cls.from_segments(beziers)
 
     def copy(self) -> JordanCurve:
-        return deepcopy(self)
+        segments = tuple(segment.copy() for segment in self.segments)
+        return self.__class__.from_segments(segments)
 
     def clean(self) -> None:
-        segments = list(self.segments)
-        while True:
-            nsegments = len(segments)
-            for i in range(nsegments):
-                j = (i + 1) % nsegments
-                seg0 = segments[i]
-                seg1 = segments[j]
-                union = unite_beziers((seg0, seg1))
-                if union.npts == union.degree + 1:  # bezier
-                    segments[i] = union
-                    segments.pop(j)
-                    break
-            else:
-                break
-        self.segments = segments
-        full_curve = self.full_curve
-        full_curve.clean()
-        self.full_curve = full_curve
+        for segment in self.segments:
+            segment.clean()
+        # Try to unite curves
 
     def move(self, point: Point2D) -> JordanCurve:
-        segments = self.segments
-        allctrlpoints = [bezier.ctrlpoints for bezier in segments]
-        allctrlpoints = np.array(allctrlpoints)
-        for bezier in segments:
-            ctrlpoints = bezier.ctrlpoints
-            for ctrlpoint in ctrlpoints:
-                ctrlpoint.move(point)
-            bezier.ctrlpoints = ctrlpoints
-        self.segments = segments
-        allctrlpoints = [bezier.ctrlpoints for bezier in self.segments]
-        allctrlpoints = np.array(allctrlpoints)
+        for vertex in self.vertices:
+            vertex.move(point)
         return self
 
     def scale(self, xscale: float, yscale: float) -> JordanCurve:
         float(xscale)
         float(yscale)
-        segments = self.segments
-        for bezier in segments:
-            ctrlpoints = bezier.ctrlpoints
-            for ctrlpoint in ctrlpoints:
-                ctrlpoint.scale(xscale, yscale)
-            bezier.ctrlpoints = ctrlpoints
-        self.segments = segments
+        for vertex in self.vertices:
+            vertex.scale(xscale, yscale)
         return self
 
     def rotate(self, angle: float, degrees: bool = False) -> JordanCurve:
         float(angle)
         if degrees:
             angle *= np.pi / 180
-        segments = self.segments
-        for bezier in segments:
-            ctrlpoints = bezier.ctrlpoints
-            for ctrlpoint in ctrlpoints:
-                ctrlpoint.rotate(angle)
-            bezier.ctrlpoints = ctrlpoints
-        self.segments = segments
+        for vertex in self.vertices:
+            vertex.rotate(angle)
         return self
 
     def invert(self) -> JordanCurve:
-        full_curve = self.full_curve
-        knotvector = full_curve.knotvector
-        ctrlpoints = full_curve.ctrlpoints
-        assert full_curve.weights is None
-        umin, umax = knotvector.limits
-        new_knotvector = [umin + umax - u for u in knotvector[::-1]]
-        new_full_curve = full_curve.__class__(new_knotvector)
-        new_full_curve.ctrlpoints = ctrlpoints[::-1]
-        self.full_curve = new_full_curve
+        segments = self.segments
+        nsegs = len(segments)
+        new_segments = []
+        for i in range(nsegs - 1, -1, -1):
+            new_segments.append(segments[i].invert())
+        self.segments = tuple(new_segments)
         return self
 
     def split(self, indexs: Tuple[int], nodes: Tuple[float]) -> None:
@@ -354,45 +286,26 @@ class JordanCurve:
         Main reason: plot the shape
         You can choose the precision by changing the ```subnpts``` parameter
         """
-        full_curve = self.full_curve
-        knots = full_curve.knotvector.knots
-        usample = list(knots)
-        chebynodes = 2 * np.arange(subnpts) + 1
-        chebynodes = np.cos(chebynodes * np.pi / (2 * subnpts))
-        chebynodes = (1 + chebynodes) / 2
-        for umin, umax in zip(knots[:-1], knots[1:]):
-            usample += list(umin + (umax - umin) * chebynodes)
-        usample = tuple(sorted(usample))
-        all_points = full_curve.eval(usample)
+        all_points = []
+        for segment in self.segments:
+            usample = np.linspace(0, 1, subnpts, endpoint=False)
+            all_points += list(segment.eval(usample))
+        all_points.append(all_points[0])
         return tuple(all_points)
 
     @property
     def lenght(self) -> float:
         if self.__lenght is None:
             function = calculus.BezierCurveIntegral.polynomial_scalar_bezier
-            segments = self.segments
-            self.__lenght = 0
-            area = calculus.JordanCurveIntegral.area(segments)
-            for bezier in segments:
-                self.__lenght += function((0, 0), bezier.ctrlpoints)
-            self.__lenght *= 1 if area > 0 else -1
+            lenght = 0
+            for bezier in self.segments:
+                lenght += function((0, 0), bezier.ctrlpoints)
+            area = calculus.JordanCurveIntegral.area(self.segments)
+            self.__lenght = lenght if area > 0 else -lenght
         return self.__lenght
 
     @property
-    def full_curve(self) -> Tuple[Point2D]:
-        """
-        Returns a tuple of control points
-        """
-        if self.__full_curve is None:
-            self.__full_curve = unite_beziers(self.segments)
-        return self.__full_curve
-
-    @property
-    def segments(self) -> Tuple[nurbs.Curve]:
-        if self.__segments is None:
-            if self.__full_curve is None:
-                raise ValueError
-            self.segments = self.full_curve.split()
+    def segments(self) -> Tuple[PlanarCurve]:
         return tuple(self.__segments)
 
     @property
@@ -400,49 +313,34 @@ class JordanCurve:
         """
         Returns a tuple of non repeted points
         """
-        allpoints = []
-        for point in self.full_curve.ctrlpoints:
-            if point not in allpoints:
-                allpoints.append(point)
-        return tuple(allpoints)
-
-    @full_curve.setter
-    def full_curve(self, other: nurbs.Curve):
-        if not isinstance(other, nurbs.Curve):
-            raise TypeError
-        assert other.ctrlpoints[0] == other.ctrlpoints[-1]
-        self.__segments = None
-        self.__lenght = None
-        degree = other.degree
-        knots = other.knotvector.knots
-        for knot in knots[1:-1]:
-            mult = other.knotvector.mult(knot)
-            assert mult <= degree
-        self.__full_curve = other
+        if self.__vertices is None:
+            vertices = []
+            for segment in self.segments:
+                for point in segment.ctrlpoints:
+                    if point not in vertices:
+                        vertices.append(point)
+            self.__vertices = tuple(vertices)
+        return self.__vertices
 
     @segments.setter
-    def segments(self, other: Tuple[nurbs.Curve]):
+    def segments(self, other: Tuple[PlanarCurve]):
         assert isinstance(other, (tuple, list))
         for segment in other:
-            if not isinstance(segment, nurbs.Curve):
+            if not isinstance(segment, PlanarCurve):
                 raise TypeError
         ncurves = len(other)
         for i in range(ncurves - 1):
             end_point = other[i].ctrlpoints[-1]
             start_point = other[i + 1].ctrlpoints[0]
-            assert np.all(start_point == end_point)
+            assert start_point == end_point
         for segment in other:
-            segment.degree_clean()
-        self.__full_curve = None
+            segment.clean()
         self.__lenght = None
+        self.__vertices = None
         segments = []
         for bezier in other:
-            npts = bezier.knotvector.npts
-            knotvector = tuple(npts * [Fraction(0)] + npts * [Fraction(1)])
-            new_bezier = bezier.__class__(knotvector)
             ctrlpoints = [Point2D(point) for point in bezier.ctrlpoints]
-            new_bezier.ctrlpoints = ctrlpoints
-            new_bezier.weights = bezier.weights
+            new_bezier = PlanarCurve(ctrlpoints)
             segments.append(new_bezier)
         self.__segments = tuple(segments)
 
@@ -455,17 +353,25 @@ class JordanCurve:
         return self.intersection(other, equal_beziers=False, end_points=False)
 
     def __str__(self) -> str:
-        msg = f"Jordan Curve of degree {self.full_curve.degree} and vertices\n"
+        max_degree = max(curve.degree for curve in self.segments)
+        msg = f"Jordan Curve of degree {max_degree} and vertices\n"
         msg += str(self.vertices)
         return msg
 
     def __repr__(self) -> str:
-        msg = "JordanCurve (deg %d, npts %d)"
-        msg %= self.full_curve.degree, self.full_curve.npts
+        max_degree = max(curve.degree for curve in self.segments)
+        msg = "JordanCurve (deg %d, nsegs %d)"
+        msg %= max_degree, len(self.segments)
         return msg
 
     def __eq__(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
+        print("self = ")
+        for point in self.vertices:
+            print(point)
+        print("other = ")
+        for point in other.vertices:
+            print(point)
         for point in other.points(1):
             if point not in self:
                 return False
@@ -514,12 +420,8 @@ class JordanCurve:
         """
         Tells if the point is on the boundary
         """
-        point = Point2D(point)
-        projection = nurbs.advanced.Projection.point_on_bezier
         for bezier in self.segments:
-            tparam = projection(point, bezier)
-            vector = point - bezier(tparam)[0]
-            if vector.norm_square() < 1e-9:
+            if point in bezier:
                 return True
         return False
 

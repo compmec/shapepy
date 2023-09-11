@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import fractions
 import math
-from copy import deepcopy
 from typing import Tuple, Union
 
 import numpy as np
@@ -35,14 +34,22 @@ def pytha_triples(mmax: int):
     return tuple(triplets)
 
 
-class Point2D:
-    def __init__(self, x: float, y: float = None):
+class Point2D(object):
+    def __new__(cls, x: float, y: float = None):
+        if isinstance(x, cls):
+            return x
         if y is None:
             x, y = x
         if isinstance(x, str) or isinstance(y, str):
             raise TypeError
-        float(x)  # entry validation
-        float(y)  # entry validation
+        float(x)
+        float(y)
+        instance = super().__new__(cls)
+        return instance
+
+    def __init__(self, x: float, y: float = None):
+        if y is None:
+            x, y = x
         self._x = x
         self._y = y
         isxfrac = isinstance(x, (int, fractions.Fraction))
@@ -84,7 +91,7 @@ class Point2D:
         return sqrtnum / sqrtden
 
     def copy(self) -> Point2D:
-        return deepcopy(self)
+        return self.__class__(self._x, self._y)
 
     def __iter__(self):
         yield self._x
@@ -541,7 +548,8 @@ class SimplePolygon(BasePolygon):
         super().__init__(vertices)
 
     def copy(self) -> SimplePolygon:
-        return deepcopy(self)
+        new_vertices = tuple(vertex.copy() for vertex in self.vertices)
+        return self.__class__(new_vertices)
 
     def __eq__(self, other: SimplePolygon) -> bool:
         """

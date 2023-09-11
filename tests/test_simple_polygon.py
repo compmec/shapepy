@@ -173,13 +173,9 @@ class TestEmptyWhole:
         pass
 
 
-
-
 class TestOrSimpleShape:
     @pytest.mark.order(8)
-    @pytest.mark.dependency(
-        depends=["TestEmptyWhole::test_end"]
-    )
+    @pytest.mark.dependency(depends=["TestEmptyWhole::test_end"])
     def test_begin(self):
         pass
 

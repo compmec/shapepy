@@ -8,7 +8,8 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from compmec.shape.calculus import BezierCurveIntegral, JordanCurveIntegral
+from compmec.shape.calculus import JordanCurveIntegral
+from compmec.shape.curve import BezierCurve, Integrate, PlanarCurve
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.primitive import Primitive
 
@@ -136,8 +137,12 @@ class TestWindingNumber:
         for nsides in range(3, 10):
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
-            for pair in zip(ctrlpoints[:-1], ctrlpoints[1:]):
-                wind = BezierCurveIntegral.winding_number(pair)
+            curves = tuple(
+                BezierCurve(pair) for pair in zip(ctrlpoints[:-1], ctrlpoints[1:])
+            )
+            curves = tuple(PlanarCurve(curve) for curve in curves)
+            for curve in curves:
+                wind = Integrate.winding_number(curve)
                 assert abs(nsides * wind - 1) < 1e-9
 
     @pytest.mark.order(6)
