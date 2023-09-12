@@ -5,15 +5,13 @@ is in fact, stores a list of spline-curves.
 from __future__ import annotations
 
 import math
-from copy import deepcopy
 from fractions import Fraction
-from typing import FrozenSet, Tuple
+from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from compmec.shape import calculus
-from compmec.shape.curve import PlanarCurve
-from compmec.shape.polygon import Point2D, Segment
+from compmec.shape.curve import IntegratePlanar, PlanarCurve
+from compmec.shape.polygon import Point2D
 
 
 class IntersectionBeziers:
@@ -177,10 +175,105 @@ class IntersectionBeziers:
         return filter_inters
 
 
+class IntegrateJordan:
+    @staticmethod
+    def horizontal(
+        jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
+    ):
+        """
+        Computes the integral I
+
+        I = int x^expx * y^expy * dx
+        """
+        assert isinstance(jordan, JordanCurve)
+        assert isinstance(expx, int)
+        assert isinstance(expy, int)
+        assert nnodes is None or isinstance(nnodes, int)
+        total = 0
+        for bezier in jordan.segments:
+            total += IntegratePlanar.horizontal(bezier, expx, expy, nnodes)
+        return total
+
+    @staticmethod
+    def vertical(
+        jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
+    ):
+        """
+        Computes the integral I
+
+        I = int x^expx * y^expy * dy
+        """
+        assert isinstance(jordan, JordanCurve)
+        assert isinstance(expx, int)
+        assert isinstance(expy, int)
+        assert nnodes is None or isinstance(nnodes, int)
+        total = 0
+        for bezier in jordan.segments:
+            total += IntegratePlanar.vertical(bezier, expx, expy, nnodes)
+        return total
+
+    @staticmethod
+    def polynomial(
+        jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
+    ):
+        """
+        Computes the integral
+
+        I = int x^expx * y^expy * ds
+        """
+        assert isinstance(jordan, JordanCurve)
+        assert nnodes is None or isinstance(nnodes, int)
+        total = 0
+        for bezier in jordan.segments:
+            total += IntegratePlanar.polynomial(bezier, expx, expy, nnodes)
+        return total
+
+    @staticmethod
+    def lenght(jordan: JordanCurve, nnodes: Optional[int] = None) -> float:
+        """
+        Computes the lenght of jordan curve
+        """
+        assert isinstance(jordan, JordanCurve)
+        assert nnodes is None or isinstance(nnodes, int)
+        lenght = 0
+        for bezier in jordan.segments:
+            lenght += IntegratePlanar.lenght(bezier, nnodes)
+        return lenght
+
+    @staticmethod
+    def area(jordan: JordanCurve, nnodes: Optional[int] = None) -> float:
+        """
+        Computes the interior area from jordan curve
+        """
+        assert isinstance(jordan, JordanCurve)
+        assert nnodes is None or isinstance(nnodes, int)
+        area = 0
+        for bezier in jordan.segments:
+            area += IntegratePlanar.area(bezier, nnodes)
+        return area
+
+    @staticmethod
+    def winding_number(
+        jordan: JordanCurve, nnodes: Optional[int] = None
+    ) -> Union[int, float]:
+        """Computes the winding number from jordan curve
+
+        Returns [-1, 0, 0.5 or 1]
+        """
+        wind = 0
+        for bezier in jordan.segments:
+            if (0, 0) in bezier:  # point in boundary
+                return 0.5
+        for bezier in jordan.segments:
+            wind += IntegratePlanar.winding_number(bezier, nnodes)
+        wind = round(wind)
+        return wind
+
+
 class JordanCurve:
     """
     Jordan Curve is an arbitrary closed curve which doesn't intersect itself.
-    It stores a list of 'segments': Each 'segment' is a lambda function.
+    It stores a list of 'segments', each segment is a bezier curve
     """
 
     def __init__(self):
@@ -198,7 +291,7 @@ class JordanCurve:
 
     @classmethod
     def from_vertices(cls, vertices: Tuple[Point2D]) -> JordanCurve:
-        if not isinstance(vertices, (tuple, list)):
+        if isinstance(vertices, str):
             raise TypeError
         vertices = list(vertices)
         for i, vertex in enumerate(vertices):
@@ -216,10 +309,27 @@ class JordanCurve:
         segments = tuple(segment.copy() for segment in self.segments)
         return self.__class__.from_segments(segments)
 
-    def clean(self) -> None:
+    def clean(self) -> JordanCurve:
         for segment in self.segments:
             segment.clean()
-        # Try to unite curves
+        segments = list(self.segments)
+        while True:
+            nsegments = len(segments)
+            for i in range(nsegments):
+                j = (i + 1) % nsegments
+                seg0 = segments[i]
+                seg1 = segments[j]
+                try:
+                    segment = PlanarCurve.unite([seg0, seg1])
+                    segments[i] = segment
+                    segments.pop(j)
+                    break  # Can unite
+                except ValueError:
+                    pass  # Cannot unite
+            else:
+                break
+        self.segments = segments
+        return self
 
     def move(self, point: Point2D) -> JordanCurve:
         for vertex in self.vertices:
@@ -242,6 +352,9 @@ class JordanCurve:
         return self
 
     def invert(self) -> JordanCurve:
+        """
+        Invert the orientation of a jordan curve
+        """
         segments = self.segments
         nsegs = len(segments)
         new_segments = []
@@ -280,12 +393,17 @@ class JordanCurve:
             inserted += 1
         self.segments = tuple(new_segments)
 
-    def points(self, subnpts: int = 2) -> Tuple[Point2D]:
+    def points(self, subnpts: Optional[int] = 2) -> Tuple[Point2D]:
         """
         Returns a list of points on the boundary.
-        Main reason: plot the shape
+        Main reason: plot the jordan
         You can choose the precision by changing the ```subnpts``` parameter
+
+        subnpts = 1 -> midpoint
+        subnpts = 2 -> extremities
+        subnpts = 3 -> extremities + midpoints
         """
+        assert isinstance(subnpts, int)
         all_points = []
         for segment in self.segments:
             usample = np.linspace(0, 1, subnpts, endpoint=False)
@@ -296,11 +414,8 @@ class JordanCurve:
     @property
     def lenght(self) -> float:
         if self.__lenght is None:
-            function = calculus.BezierCurveIntegral.polynomial_scalar_bezier
-            lenght = 0
-            for bezier in self.segments:
-                lenght += function((0, 0), bezier.ctrlpoints)
-            area = calculus.JordanCurveIntegral.area(self.segments)
+            lenght = IntegrateJordan.lenght(self)
+            area = IntegrateJordan.area(self)
             self.__lenght = lenght if area > 0 else -lenght
         return self.__lenght
 
@@ -366,48 +481,24 @@ class JordanCurve:
 
     def __eq__(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
-        print("self = ")
-        for point in self.vertices:
-            print(point)
-        print("other = ")
-        for point in other.vertices:
-            print(point)
         for point in other.points(1):
             if point not in self:
                 return False
-        selcopy = self.copy()
-        othcopy = other.copy()
-        segms0 = list(selcopy.segments)
-        segms1 = list(othcopy.segments)
-        if len(segms0) != len(segms1):
-            selcopy.clean()
-            othcopy.clean()
-            segms0 = list(selcopy.segments)
-            segms1 = list(othcopy.segments)
-            if len(segms0) != len(segms1):
-                return False
-        for i, segi in enumerate(segms0):
-            segi.clean()
-            segms0[i] = segi
-        for i, segi in enumerate(segms1):
-            segi.clean()
-            segms1[i] = segi
-        ctrlpts1 = segms1[0].ctrlpoints
-        for index, segment0 in enumerate(segms0):
-            ctrlpts0 = segment0.ctrlpoints
-            if len(ctrlpts0) != len(ctrlpts1):
-                continue
-            for pt0, pt1 in zip(ctrlpts0, ctrlpts1):
-                if pt0 != pt1:
-                    break
-            else:
+        selcopy = self.copy().clean()
+        othcopy = other.copy().clean()
+        if len(selcopy.segments) != len(othcopy.segments):
+            return False
+        segment1 = othcopy.segments[0]
+        for index, segment0 in enumerate(selcopy.segments):
+            if segment0 == segment1:
                 break
-        nsegments = len(segms0)
-        for i, segment1 in enumerate(segms1):
-            segment0 = segms0[(i + index) % nsegments]
-            for pt0, pt1 in zip(segment0.ctrlpoints, segment1.ctrlpoints):
-                if pt0 != pt1:
-                    return False
+        else:
+            return False
+        nsegments = len(self.segments)
+        for i, segment1 in enumerate(othcopy.segments):
+            segment0 = selcopy.segments[(i + index) % nsegments]
+            if segment0 != segment1:
+                return False
         return True
 
     def __ne__(self, other: JordanCurve) -> bool:

@@ -19,11 +19,10 @@ from compmec.shape.shape import (
 @pytest.mark.order(7)
 @pytest.mark.dependency(
     depends=[
-        # "tests/test_polygon.py::test_end",
-        # "tests/test_jordan_polygon.py::test_end",
-        # "tests/test_jordan_curve.py::test_end",
-        # "tests/test_primitive.py::test_end",
-        # "tests/test_calculus.py::test_end",
+        "tests/test_polygon.py::test_end",
+        "tests/test_jordan_polygon.py::test_end",
+        "tests/test_jordan_curve.py::test_end",
+        "tests/test_primitive.py::test_end",
     ],
     scope="session",
 )
@@ -303,6 +302,11 @@ class TestObjectsInSimple:
         assert big_square.jordancurve not in small_square
         assert big_square.jordancurve in big_square
 
+        assert ~(small_square.jordancurve) in small_square
+        assert ~(small_square.jordancurve) in big_square
+        assert ~(big_square.jordancurve) not in small_square
+        assert ~(big_square.jordancurve) in big_square
+
     @pytest.mark.order(7)
     @pytest.mark.dependency(
         depends=[
@@ -437,7 +441,28 @@ class TestObjectsInConnected:
         ]
     )
     def test_point(self):
-        pass
+        square = ~Primitive.square(side=4)
+
+        # Exterior points
+        assert (0, 0) not in square
+        assert (-1, -1) not in square
+        assert (-1, 1) not in square
+        assert (1, -1) not in square
+        assert (1, 1) not in square
+
+        # Boundary points
+        assert (-2, -2) in square
+        assert (0, -2) in square
+        assert (2, -2) in square
+        assert (2, 0) in square
+        assert (2, 2) in square
+        assert (0, 2) in square
+        assert (-2, 2) in square
+        assert (-2, 0) in square
+
+        # Interior points
+        assert (3, 3) in square
+        assert (-3, -3) in square
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -449,7 +474,20 @@ class TestObjectsInConnected:
         ]
     )
     def test_jordan(self):
-        pass
+        small_square = ~Primitive.square(side=2)
+        small_jordan = small_square.jordans[0]
+        big_square = ~Primitive.square(side=4)
+        big_jordan = big_square.jordans[0]
+
+        assert small_jordan in small_square
+        assert small_jordan not in big_square
+        assert big_jordan in small_square
+        assert big_jordan in big_square
+
+        assert (~small_jordan) in small_square
+        assert (~small_jordan) not in big_square
+        assert (~big_jordan) in small_square
+        assert (~big_jordan) in big_square
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -462,7 +500,13 @@ class TestObjectsInConnected:
         ]
     )
     def test_simple(self):
-        pass
+        small_square = Primitive.square(side=2)
+        big_square = Primitive.square(side=4)
+
+        assert small_square not in (~small_square)
+        assert big_square not in (~small_square)
+        assert small_square not in (~big_square)
+        assert big_square not in (~big_square)
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -476,7 +520,13 @@ class TestObjectsInConnected:
         ]
     )
     def test_connected(self):
-        pass
+        small_square = Primitive.square(side=2)
+        big_square = Primitive.square(side=4)
+
+        assert (~small_square) in (~small_square)
+        assert (~big_square) in (~small_square)
+        assert (~small_square) not in (~big_square)
+        assert (~big_square) in (~big_square)
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -531,12 +581,24 @@ class TestObjectsInDisjoint:
     @pytest.mark.order(7)
     @pytest.mark.dependency(depends=["TestObjectsInDisjoint::test_begin"])
     def test_empty(self):
-        pass
+        empty = EmptyShape()
+        squarea = Primitive.square(center=(-3, 0))
+        squareb = Primitive.square(center=(3, 0))
+        disj_shape = DisjointShape([squarea, squareb])
+
+        assert empty in disj_shape
+        assert disj_shape not in empty
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(depends=["TestObjectsInDisjoint::test_begin"])
     def test_whole(self):
-        pass
+        whole = WholeShape()
+        squarea = Primitive.square(center=(-3, 0))
+        squareb = Primitive.square(center=(3, 0))
+        disj_shape = DisjointShape([squarea, squareb])
+
+        assert whole not in disj_shape
+        assert disj_shape in whole
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -547,7 +609,14 @@ class TestObjectsInDisjoint:
         ]
     )
     def test_point(self):
-        pass
+        squarea = Primitive.square(center=(-3, 0))
+        squareb = Primitive.square(center=(3, 0))
+        disj_shape = DisjointShape([squarea, squareb])
+
+        assert (-3, 0) in squarea
+        assert (3, 0) in squareb
+        assert (-3, 0) in disj_shape
+        assert (3, 0) in disj_shape
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(

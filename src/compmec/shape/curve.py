@@ -77,6 +77,28 @@ class BezierCurve(BaseCurve):
         if self.degree > 2:
             raise NotImplementedError
 
+    @classmethod
+    def unite(
+        cls, beziers: Tuple[BezierCurve], tolerance: Optional[float] = 1e-9
+    ) -> BezierCurve:
+        """
+        Unite a set of bezier curves
+
+        If the error for unite is bigger than tolerance, raises ValueError
+        """
+        nbez = len(beziers)
+        if nbez == 1:
+            return beziers[0]
+        if nbez == 2:
+            beziera, bezierb = beziers
+        if nbez != 2:
+            beziera = cls.unite(beziers[: nbez // 2])
+            bezierb = cls.unite(beziers[nbez // 2 :])
+        final_curve = Operations.unite(beziera.ctrlpoints, bezierb.ctrlpoints)
+        if final_curve.degree + 1 != final_curve.npts:
+            raise ValueError("Union is not a bezier curve!")
+        return cls(final_curve.ctrlpoints)
+
     @property
     def degree(self) -> int:
         return self.npts - 1
@@ -125,7 +147,7 @@ class BezierCurve(BaseCurve):
         new_ctrlpoints = np.dot(matrix, self.ctrlpoints)
         return self.__class__(new_ctrlpoints)
 
-    def clean(self, tolerance: Optional[float] = 1e-9):
+    def clean(self, tolerance: Optional[float] = 1e-9) -> BezierCurve:
         """Reduces at maximum the degree of the bezier curve.
 
         If ``tolerance = None``, then it don't verify the error
@@ -145,6 +167,14 @@ class BezierCurve(BaseCurve):
             return
         mattrans, _ = Operations.degree_decrease(degree, times)
         self.ctrlpoints = tuple(np.dot(mattrans, points))
+        return self
+
+    def split(self, nodes: Tuple[float]) -> Tuple[BezierCurve]:
+        knotvector = nurbs.GeneratorKnotVector.bezier(self.degree)
+        curve = nurbs.Curve(knotvector, self.ctrlpoints)
+        beziers = curve.split(nodes)
+        planars = tuple(BezierCurve(bezier.ctrlpoints) for bezier in beziers)
+        return planars
 
 
 class PlanarCurve(BaseCurve):
@@ -153,6 +183,19 @@ class PlanarCurve(BaseCurve):
         for i, point in enumerate(ctrlpoints):
             ctrlpoints[i] = Point2D(point)
         self.__planar = BezierCurve(ctrlpoints)
+
+    @classmethod
+    def unite(
+        cls, planars: Tuple[PlanarCurve], tolerance: Optional[float] = 1e-9
+    ) -> PlanarCurve:
+        assert isinstance(planars, (tuple, list))
+        for planar in planars:
+            assert isinstance(planar, PlanarCurve)
+        assert tolerance > 0
+        all_points = [planar.ctrlpoints for planar in planars]
+        beziers = [BezierCurve(points) for points in all_points]
+        bezier = BezierCurve.unite(beziers, tolerance)
+        return PlanarCurve(bezier.ctrlpoints)
 
     def __str__(self) -> str:
         msg = f"Planar curve of degree {self.degree} and "
@@ -165,7 +208,7 @@ class PlanarCurve(BaseCurve):
 
     def __eq__(self, other: PlanarCurve) -> bool:
         assert isinstance(other, PlanarCurve)
-        if self.degree != other.degree:
+        if self.npts != other.npts:
             return False
         for pta, ptb in zip(self.ctrlpoints, other.ctrlpoints):
             if pta != ptb:
@@ -192,16 +235,9 @@ class PlanarCurve(BaseCurve):
             return False
         if ptb[0] + dx < point[0] or ptb[1] + dy < point[1]:
             return False
-        self -= point
-        print("After moved : ")
-        print(self)
-        params = Projection.origin_on_curve(self)
-        print("params = ", params)
-        vectors = self.eval(params)
-        self += point
+        params = Projection.point_on_curve(point, self)
+        vectors = tuple(cval - point for cval in self.eval(params))
         distances = tuple(abs(vector) for vector in vectors)
-        print("vectors = ")
-        print(vectors)
         for dist in distances:
             if dist < 1e-6:  # Tolerance
                 return True
@@ -244,7 +280,7 @@ class PlanarCurve(BaseCurve):
         ymax = max(point[1] for point in self.ctrlpoints)
         return Point2D(xmin, ymin), Point2D(xmax, ymax)
 
-    def clean(self, tolerance: Optional[float] = 1e-9):
+    def clean(self, tolerance: Optional[float] = 1e-9) -> PlanarCurve:
         """Reduces at maximum the degree of the bezier curve.
 
         If ``tolerance = None``, then it don't verify the error
@@ -252,6 +288,7 @@ class PlanarCurve(BaseCurve):
 
         """
         self.__planar.clean(tolerance)
+        return self
 
     def copy(self) -> PlanarCurve:
         ctrlpoints = tuple(point.copy() for point in self.ctrlpoints)
@@ -265,9 +302,7 @@ class PlanarCurve(BaseCurve):
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[PlanarCurve]:
-        knotvector = nurbs.GeneratorKnotVector.bezier(self.degree)
-        curve = nurbs.Curve(knotvector, self.ctrlpoints)
-        beziers = curve.split(nodes)
+        beziers = self.__planar.split(nodes)
         planars = tuple(PlanarCurve(bezier.ctrlpoints) for bezier in beziers)
         return planars
 
@@ -334,8 +369,28 @@ class Operations:
         raise NotImplementedError
 
     @staticmethod
-    def unite(degree: int, node: float) -> Tuple[Tuple[Tuple[float]]]:
-        raise NotImplementedError
+    def unite(ptsa: Tuple[Any], ptsb: Tuple[Any]) -> nurbs.Curve:
+        """Unite two bezier curves into a single spline curve"""
+        degreea = len(ptsa) - 1
+        degreeb = len(ptsb) - 1
+        assert degreea == degreeb
+        dapt = ptsa[-1] - ptsa[-2]  # Last point of first derivative
+        dbpt = ptsb[1] - ptsb[0]  # First point of first derivative
+        if abs(dapt.cross(dbpt)) > 1e-6:
+            node = Fraction(1, 2)
+        else:
+            dsumpt = dapt + dbpt
+            denomin = dsumpt.inner(dsumpt)
+            node = dapt.inner(dsumpt) / denomin
+        knotvectora = nurbs.GeneratorKnotVector.bezier(degreea, Fraction)
+        knotvectora.scale(node)
+        knotvectorb = nurbs.GeneratorKnotVector.bezier(degreea, Fraction)
+        knotvectorb.scale(1 - node).shift(node)
+        newknotvector = tuple(knotvectora) + tuple(knotvectorb[degreea + 1 :])
+        finalcurve = nurbs.Curve(newknotvector)
+        finalcurve.ctrlpoints = tuple(ptsa) + tuple(ptsb)
+        finalcurve.knot_clean((node,))
+        return finalcurve
 
 
 class Intersection:
@@ -352,7 +407,7 @@ class Intersection:
 
 class Projection:
     @staticmethod
-    def origin_on_curve(curve: PlanarCurve) -> float:
+    def point_on_curve(point: Point2D, curve: PlanarCurve) -> float:
         """Finds parameter u* such abs(C(u*)) is minimal
 
         Find the parameter by reducing the distance J(u)
@@ -364,11 +419,12 @@ class Projection:
 
 
         """
+        point = Point2D(point)
         assert isinstance(curve, PlanarCurve)
         nsample = 2 + curve.degree
         usample = nurbs.heavy.NodeSample.closed_linspace(nsample)
-        usample = Projection.newton_iteration(curve, usample)
-        curvals = curve(usample)
+        usample = Projection.newton_iteration(point, curve, usample)
+        curvals = tuple(cval - point for cval in curve(usample))
         distans2 = tuple(curval.inner(curval) for curval in curvals)
         mindist2 = min(distans2)
         params = []
@@ -378,17 +434,20 @@ class Projection:
         return tuple(params)
 
     @staticmethod
-    def newton_iteration(curve: PlanarCurve, usample: Tuple[float]) -> Tuple[float]:
+    def newton_iteration(
+        point: Point2D, curve: PlanarCurve, usample: Tuple[float]
+    ) -> Tuple[float]:
         """
         Uses newton iterations to find the parameters ``usample``
-        such <C'(u), C(u)> = 0 stabilizes
+        such <C'(u), C(u) - P> = 0 stabilizes
         """
+        point = Point2D(point)
         dcurve = curve.derivate()
         ddcurve = dcurve.derivate()
         usample = list(usample)
         zero, one = Fraction(0), Fraction(1)
         for _ in range(10):  # Number of iterations
-            curvals = curve(usample)
+            curvals = tuple(cval - point for cval in curve(usample))
             dcurvals = dcurve(usample)
             ddcurvals = ddcurve(usample)
             for k, uk in enumerate(usample):
@@ -457,15 +516,10 @@ class Derivate:
         raise NotImplementedError
 
 
-class Integrate:
+class IntegratePlanar:
     """
     This class compute the integral of a function f(x, y)
     over a bezier curve.
-    It can be used in three forms:
-
-        * int_C f(x, y) abs(ds)
-        * int_C < f(x, y), ds >
-        * int_C f(x, y) x ds
     """
 
     @staticmethod
@@ -477,7 +531,7 @@ class Integrate:
     ):
         """Computes the integral I
 
-        I = int_{0}^{1} x^expx * y^expy * dx
+        I = int_C x^expx * y^expy * dx
 
         """
         assert isinstance(curve, PlanarCurve)
@@ -494,7 +548,7 @@ class Integrate:
         poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
         points = curve(nodes)
         xvals = tuple(point[0] ** expx for point in points)
-        yvals = tuple(point[0] ** expy for point in points)
+        yvals = tuple(point[1] ** expy for point in points)
         dxvals = tuple(point[0] for point in dcurve(nodes))
         funcvals = tuple(map(np.prod, (xvals, yvals, dxvals)))
         return np.inner(poids, funcvals)
@@ -508,7 +562,7 @@ class Integrate:
     ):
         """Computes the integral I
 
-        I = int_{0}^{1} x^expx * y^expy * dy
+        I = int_C x^expx * y^expy * dy
 
         """
         assert isinstance(curve, PlanarCurve)
@@ -525,10 +579,57 @@ class Integrate:
         poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
         points = curve(nodes)
         xvals = tuple(point[0] ** expx for point in points)
-        yvals = tuple(point[0] ** expy for point in points)
-        dxvals = tuple(point[0] for point in dcurve(nodes))
-        funcvals = tuple(map(np.prod, (xvals, yvals, dxvals)))
+        yvals = tuple(point[1] ** expy for point in points)
+        dyvals = tuple(point[1] for point in dcurve(nodes))
+        funcvals = tuple(map(np.prod, zip(xvals, yvals, dyvals)))
         return np.inner(poids, funcvals)
+
+    @staticmethod
+    def polynomial(
+        curve: PlanarCurve, expx: int, expy: int, nnodes: Optional[int] = None
+    ):
+        """
+        Computes the integral
+
+        I = int_C x^expx * y^expy * ds
+        """
+        assert isinstance(curve, PlanarCurve)
+        if nnodes is None:
+            nnodes = 3 + expx + expy + curve.degree
+        assert isinstance(nnodes, int)
+        assert nnodes >= 0
+        assert expx == 0
+        assert expy == 0
+        dcurve = curve.derivate()
+        nodes = nurbs.heavy.NodeSample.open_linspace(nnodes)
+        poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
+        funcvals = tuple(abs(point) for point in dcurve(nodes))
+        return float(np.inner(poids, funcvals))
+
+    @staticmethod
+    def lenght(curve: PlanarCurve, nnodes: int = 5):
+        """Computes the integral I
+
+            I = int_{C} ds
+
+        Given the control points P of a bezier curve C(u) of
+        degree p
+
+            C(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
+
+            I = int_{0}^{1} abs(C'(u)) * du
+
+        """
+        return IntegratePlanar.polynomial(curve, 0, 0, nnodes)
+
+    @staticmethod
+    def area(curve: PlanarCurve, nnodes: Optional[int] = None):
+        """Computes the integral I
+
+        I = int_0^1 x * dy
+
+        """
+        return IntegratePlanar.vertical(curve, 1, 0, nnodes)
 
     @staticmethod
     def winding_number(curve: PlanarCurve, nnodes: Optional[int] = None) -> float:
@@ -543,8 +644,8 @@ class Integrate:
         curvey = BezierCurve(point[1] for point in curve.ctrlpoints)
         dcurvex = curvex.derivate()
         dcurvey = curvey.derivate()
-        nodes = nurbs.heavy.NodeSample.open_linspace(nnodes)
-        poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
+        nodes = nurbs.heavy.NodeSample.chebyshev(nnodes)
+        poids = nurbs.heavy.IntegratorArray.chebyshev(nnodes)
         xvals = np.array(curvex(nodes))
         yvals = np.array(curvey(nodes))
         dxvals = np.array(dcurvex(nodes))
@@ -554,38 +655,3 @@ class Integrate:
         funcvals = tuple(numer / denom)
         integral = np.inner(poids, funcvals)
         return integral / math.tau
-
-    @staticmethod
-    def lenght(curve: PlanarCurve, nnodes: int = 5):
-        """Computes the integral I
-
-            I = int_{C} x^a * y^b * ds
-
-        Given the control points P of a bezier curve C(u) of
-        degree p
-
-            C(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-
-            B_{i,p} = binom(p, i)*(1-u)^{p-i} * u^i
-
-            I = int_{0}^{1} x(u)^a * y(u)^b * abs(C'(u)) * du
-
-        """
-        assert isinstance(curve, PlanarCurve)
-        assert isinstance(nnodes, int)
-        assert nnodes >= 0
-        dcurve = curve.derivate()
-        nodes = nurbs.heavy.NodeSample.open_linspace(nnodes)
-        poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
-        funcvals = tuple(abs(point) for point in dcurve(nodes))
-        val = np.inner(poids, funcvals)
-        return val
-
-    @staticmethod
-    def area(curve: PlanarCurve, nnodes: Optional[int] = None):
-        """Computes the integral I
-
-        I = int_0^1 x * dy
-
-        """
-        return Integrate.vertical(curve, 1, 0, nnodes)

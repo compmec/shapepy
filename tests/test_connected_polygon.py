@@ -17,7 +17,6 @@ from compmec.shape.shape import EmptyShape, SimpleShape, WholeShape
         "tests/test_jordan_polygon.py::test_end",
         "tests/test_primitive.py::test_end",
         "tests/test_simple_polygon.py::test_end",
-        "tests/test_calculus.py::test_end",
         "tests/test_contains.py::test_end",
     ],
     scope="session",

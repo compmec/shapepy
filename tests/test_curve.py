@@ -2,13 +2,13 @@
 This file contains tests functions to test the module polygon.py
 """
 
+import math
 from fractions import Fraction
 
 import numpy as np
 import pytest
 
-from compmec.shape import Point2D
-from compmec.shape.curve import BezierCurve, Integrate, Math, PlanarCurve, Projection
+from compmec.shape.curve import BezierCurve, IntegratePlanar, Math, PlanarCurve
 
 
 @pytest.mark.order(3)
@@ -273,15 +273,37 @@ class TestIntegrate:
     def test_lenght(self):
         points = [(0, 0), (1, 0)]
         curve = PlanarCurve(points)
-        assert Integrate.lenght(curve) == 1
+        assert IntegratePlanar.lenght(curve) == 1
 
         points = [(1, 0), (0, 0)]
         curve = PlanarCurve(points)
-        assert Integrate.lenght(curve) == 1
+        assert IntegratePlanar.lenght(curve) == 1
 
         points = [(0, 1), (1, 0)]
         curve = PlanarCurve(points)
-        assert abs(Integrate.lenght(curve) - np.sqrt(2)) < 1e-9
+        assert abs(IntegratePlanar.lenght(curve) - np.sqrt(2)) < 1e-9
+
+    @pytest.mark.order(3)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
+    def test_winding_regular_polygon(self):
+        for nsides in range(3, 10):
+            angles = np.linspace(0, math.tau, nsides + 1)
+            ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
+            pairs = zip(ctrlpoints[:-1], ctrlpoints[1:])
+            curves = tuple(PlanarCurve(pair) for pair in pairs)
+            for curve in curves:
+                wind = IntegratePlanar.winding_number(curve)
+                assert abs(nsides * wind - 1) < 1e-2
+
+        for nsides in range(3, 10):
+            angles = np.linspace(math.tau, 0, nsides + 1)
+            ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
+            pairs = zip(ctrlpoints[:-1], ctrlpoints[1:])
+            curves = tuple(PlanarCurve(pair) for pair in pairs)
+            for curve in curves:
+                wind = IntegratePlanar.winding_number(curve)
+                assert abs(nsides * wind + 1) < 1e-2
 
     @pytest.mark.order(3)
     @pytest.mark.timeout(10)
@@ -289,6 +311,7 @@ class TestIntegrate:
         depends=[
             "TestIntegrate::test_begin",
             "TestIntegrate::test_lenght",
+            "TestIntegrate::test_winding_regular_polygon",
         ]
     )
     def test_end(self):
@@ -408,6 +431,38 @@ class TestContains:
         pass
 
 
+class TestSplitUnite:
+    @pytest.mark.order(3)
+    @pytest.mark.dependency(depends=["test_begin"])
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(3)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestSplitUnite::test_begin"])
+    def test_middle(self):
+        half = Fraction(1, 2)
+        points = [(0, 0), (1, 0)]
+        curve = PlanarCurve(points)
+        curvea, curveb = curve.split([half])
+        assert curvea == PlanarCurve([(0, 0), (half, 0)])
+        assert curveb == PlanarCurve([(half, 0), (1, 0)])
+
+        test = PlanarCurve.unite([curvea, curveb])
+        assert test == curve
+
+    @pytest.mark.order(3)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestSplitUnite::test_begin",
+            "TestSplitUnite::test_middle",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
 @pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
@@ -418,6 +473,7 @@ class TestContains:
         "TestIntegrate::test_end",
         "TestOperations::test_end",
         "TestContains::test_end",
+        "TestSplitUnite::test_end",
     ]
 )
 def test_end():

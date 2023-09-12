@@ -79,15 +79,20 @@ class Point2D(object):
         """
         The euclidean distance to origin
         """
-        norm2 = self.norm_square()
-        if not isinstance(norm2, fractions.Fraction):
+        norm2 = self.inner(self)
+        if not isinstance(norm2, (int, fractions.Fraction)):
             sqrt = math.sqrt(norm2)
             return int(sqrt) if int(sqrt) == sqrt else sqrt
-        num, den = norm2.numerator, norm2.denominator
+        if isinstance(norm2, int):
+            num, den = norm2, 1
+        else:
+            num, den = norm2.numerator, norm2.denominator
         sqrtnum = math.sqrt(num)
-        sqrtnum = int(sqrtnum) if int(sqrtnum) == sqrtnum else sqrtnum
+        sqrtnum = int(sqrtnum) if int(sqrtnum) ** 2 == num else sqrtnum
         sqrtden = math.sqrt(den)
-        sqrtden = int(sqrtden) if int(sqrtden) == sqrtden else sqrtden
+        sqrtden = int(sqrtden) if int(sqrtden) ** 2 == den else sqrtden
+        if isinstance(norm2, fractions.Fraction):
+            return fractions.Fraction(sqrtnum) / sqrtden
         return sqrtnum / sqrtden
 
     def copy(self) -> Point2D:

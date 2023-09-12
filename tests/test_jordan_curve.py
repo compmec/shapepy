@@ -12,7 +12,7 @@ from compmec.shape import Point2D
 from compmec.shape.jordancurve import JordanCurve
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 @pytest.mark.skip(reason="Changed to not include compmec.nurbs package")
 @pytest.mark.dependency(
     depends=[
@@ -26,12 +26,12 @@ def test_begin():
 
 
 class TestQuadraticJordan:
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestQuadraticJordan::test_begin"])
     def test_creation(self):
@@ -42,7 +42,7 @@ class TestQuadraticJordan:
         curve.ctrlpoints = [Point2D(point) for point in points]
         JordanCurve(curve)
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -54,7 +54,7 @@ class TestQuadraticJordan:
         with pytest.raises(TypeError):
             JordanCurve("asd")
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -82,7 +82,7 @@ class TestQuadraticJordan:
         test = np.array(test, dtype="float64")
         assert np.all(test == good)
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -112,7 +112,7 @@ class TestQuadraticJordan:
         test = np.array(test, dtype="float64")
         np.testing.assert_allclose(test, good)
 
-    @pytest.mark.order(4)
+    @pytest.mark.order(5)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -127,7 +127,7 @@ class TestQuadraticJordan:
         pass
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(5)
 @pytest.mark.dependency(
     depends=[
         "TestQuadraticJordan::test_end",

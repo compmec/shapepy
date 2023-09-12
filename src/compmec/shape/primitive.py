@@ -11,8 +11,7 @@ from typing import Tuple
 
 import numpy as np
 
-from compmec import nurbs
-from compmec.shape.calculus import JordanCurveIntegral
+from compmec.shape.curve import PlanarCurve
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
 from compmec.shape.shape import ConnectedShape, SimpleShape, WholeShape
@@ -94,7 +93,6 @@ class Primitive:
 
         degree = 2
         ndivangle = 16
-        knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
 
         angle = math.tau / ndivangle
         height = np.tan(angle / 2)
@@ -104,14 +102,12 @@ class Primitive:
         beziers = []
         for i in range(ndivangle - 1):
             end_point = start_point.copy().rotate(angle)
-            new_bezier = nurbs.Curve(knotvector)
-            new_bezier.ctrlpoints = [start_point, middle_point, end_point]
+            new_bezier = PlanarCurve([start_point, middle_point, end_point])
             beziers.append(new_bezier)
-            start_point = end_point.copy()
+            start_point = end_point
             middle_point = middle_point.copy().rotate(angle)
-        end_point = radius * Point2D(1, 0)
-        new_bezier = nurbs.Curve(knotvector)
-        new_bezier.ctrlpoints = [start_point, middle_point, end_point]
+        end_point = beziers[0].ctrlpoints[0]
+        new_bezier = PlanarCurve([start_point, middle_point, end_point])
         beziers.append(new_bezier)
 
         jordan_curve = JordanCurve.from_segments(beziers)

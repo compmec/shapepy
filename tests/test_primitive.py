@@ -3,7 +3,6 @@ This file contains tests functions to test the module polygon.py
 """
 
 import math
-from fractions import Fraction
 
 import pytest
 

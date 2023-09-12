@@ -8,15 +8,43 @@ or even unconnected shapes.
 """
 from __future__ import annotations
 
-from copy import deepcopy
 from fractions import Fraction
-from typing import Any, List, Tuple, Union
+from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from compmec.shape.calculus import JordanCurveIntegral
-from compmec.shape.jordancurve import JordanCurve
+from compmec.shape.jordancurve import IntegrateJordan, JordanCurve
 from compmec.shape.polygon import Point2D
+
+
+class IntegrateShape:
+    @staticmethod
+    def polynomial(
+        shape: BaseShape, expx: int, expy: int, nnodes: Optional[int] = None
+    ) -> float:
+        """Computes the integral
+
+        I = int_D x^expx * y^expy * dA
+
+        Which D is the region defined by shape
+
+        We transform this integral into a boundary integral
+
+        I = (1/(1+expx)) * int_C x^(expx + 1) * y^expy * dy
+
+        """
+        assert isinstance(shape, BaseShape)
+        assert isinstance(expx, int)
+        assert isinstance(expy, int)
+        assert nnodes is None or isinstance(nnodes, int)
+        total = 0
+        for jordan in shape.jordans:
+            total += IntegrateJordan.vertical(jordan, expx + 1, expy, nnodes)
+        return total / (1 + expx)
+
+    @staticmethod
+    def area(shape: BaseShape, nnodes: Optional[int] = None) -> float:
+        return IntegrateShape.polynomial(shape, 0, 0, nnodes)
 
 
 class FollowPath:
@@ -58,7 +86,7 @@ class FollowPath:
         It can be -1, 0 or 1
         """
         jordan.move(-point)
-        wind = JordanCurveIntegral.winding_number(jordan.segments)
+        wind = IntegrateJordan.winding_number(jordan)
         jordan.move(point)
         return wind
 
@@ -634,11 +662,6 @@ class SimpleShape(FiniteShape):
         intersect = self.jordancurve.intersection(other.jordancurve)
         if not intersect:
             return EmptyShape()
-        print("Here 2!")
-
-        print("new_jordans = ")
-        for jordan in new_jordans:
-            print(jordan)
         simple_shapes = [SimpleShape(jordan) for jordan in new_jordans]
         assert len(simple_shapes) == 1
         return simple_shapes[0]
@@ -675,7 +698,7 @@ class SimpleShape(FiniteShape):
         if other.lenght < 0:
             raise ValueError("Simple Shape area must be always positive!")
         self.__jordancurve = other.copy()
-        self.__area = JordanCurveIntegral.area(other.segments)
+        self.__area = IntegrateShape.area(self)
 
     def interior_point(self) -> Point2D:
         """Gives an interior point inside the SimpleShape"""
@@ -928,7 +951,6 @@ class ConnectedShape(FiniteShape):
 
     def __sub__(self, other: BaseShape):
         assert isinstance(other, BaseShape)
-        print("Here!!!", type(other))
         if isinstance(other, EmptyShape):
             return self.copy()
         if isinstance(other, WholeShape):
