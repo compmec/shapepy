@@ -255,6 +255,13 @@ class PlanarCurve(BaseCurve):
     def weights(self) -> Tuple[float]:
         raise NotImplementedError
 
+    @ctrlpoints.setter
+    def ctrlpoints(self, points: Tuple[Point2D]):
+        points = list(points)
+        for i, point in enumerate(points):
+            points[i] = Point2D(point)
+        self.__planar.ctrlpoints = points
+
     def eval(self, nodes: Tuple[float]) -> Tuple[Any]:
         return self.__planar.eval(nodes)
 
@@ -628,6 +635,15 @@ class IntegratePlanar:
         return IntegratePlanar.vertical(curve, 1, 0, nnodes)
 
     @staticmethod
+    def winding_number_linear(pointa: Point2D, pointb: Point2D) -> float:
+        anglea = np.arctan2(float(pointa[1]), float(pointa[0]))
+        angleb = np.arctan2(float(pointb[1]), float(pointb[0]))
+        wind = (angleb - anglea) / math.tau
+        if abs(wind) < 0.5:
+            return wind
+        return wind - 1 if wind > 0 else wind + 1
+
+    @staticmethod
     def winding_number(curve: PlanarCurve, nnodes: Optional[int] = None) -> float:
         """
         Computes the integral for a bezier curve of given control points
@@ -636,6 +652,8 @@ class IntegratePlanar:
         if nnodes is None:
             nnodes = 5 + curve.degree
         assert isinstance(nnodes, int)
+        if curve.degree == 1:
+            return IntegratePlanar.winding_number_linear(*curve.ctrlpoints)
         curvex = BezierCurve(point[0] for point in curve.ctrlpoints)
         curvey = BezierCurve(point[1] for point in curve.ctrlpoints)
         dcurvex = curvex.derivate()

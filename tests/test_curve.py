@@ -14,7 +14,7 @@ from compmec.shape.curve import BezierCurve, IntegratePlanar, Math, PlanarCurve
 @pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
-        # "tests/test_polygon.py::test_end",
+        "tests/test_polygon.py::test_end",
     ],
     scope="session",
 )
@@ -286,6 +286,52 @@ class TestIntegrate:
     @pytest.mark.order(3)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
+    def test_winding_triangles(self):
+        curve = PlanarCurve([(1, 0), (2, 0)])
+        wind = IntegratePlanar.winding_number(curve)
+        assert wind == 0
+
+        curve = PlanarCurve([(1, 0), (1, 1)])
+        wind = IntegratePlanar.winding_number(curve)
+        assert abs(wind - 0.125) < 1e-9
+
+        curve = PlanarCurve([(1, 0), (0, 1)])
+        wind = IntegratePlanar.winding_number(curve)
+        assert abs(wind - 0.25) < 1e-9
+
+        curve = PlanarCurve([(1, 0), (-0.5, np.sqrt(3) / 2)])
+        wind = IntegratePlanar.winding_number(curve)
+        assert abs(3 * wind - 1) < 1e-9
+
+    @pytest.mark.order(3)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=["TestIntegrate::test_begin", "TestIntegrate::test_winding_triangles"]
+    )
+    def test_winding_unit_circle(self):
+        ntests = 1000
+        maxim = 0
+        for k in range(ntests):
+            angle0 = np.random.uniform(0, 2 * np.pi)
+            good_wind = np.random.uniform(-0.5, 0.5)
+            angle1 = angle0 + 2 * np.pi * good_wind
+            point0 = (np.cos(angle0), np.sin(angle0))
+            point1 = (np.cos(angle1), np.sin(angle1))
+            curve = PlanarCurve([point0, point1])
+            test_wind = IntegratePlanar.winding_number(curve)
+            diff = abs(good_wind - test_wind)
+            maxim = max(maxim, diff)
+            assert abs(good_wind - test_wind) < 1e-9
+
+    @pytest.mark.order(3)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestIntegrate::test_begin",
+            "TestIntegrate::test_winding_triangles",
+            "TestIntegrate::test_winding_unit_circle",
+        ]
+    )
     def test_winding_regular_polygon(self):
         for nsides in range(3, 10):
             angles = np.linspace(0, math.tau, nsides + 1)
@@ -311,6 +357,8 @@ class TestIntegrate:
         depends=[
             "TestIntegrate::test_begin",
             "TestIntegrate::test_lenght",
+            "TestIntegrate::test_winding_triangles",
+            "TestIntegrate::test_winding_unit_circle",
             "TestIntegrate::test_winding_regular_polygon",
         ]
     )

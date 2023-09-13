@@ -258,16 +258,12 @@ class IntegrateJordan:
     ) -> Union[int, float]:
         """Computes the winding number from jordan curve
 
-        Returns [-1, 0, 0.5 or 1]
+        Returns [-1, 0, or 1]
         """
         wind = 0
         for bezier in jordan.segments:
-            if (0, 0) in bezier:  # point in boundary
-                return 0.5
-        for bezier in jordan.segments:
             wind += IntegratePlanar.winding_number(bezier, nnodes)
-        wind = round(wind)
-        return wind
+        return round(wind)
 
 
 class JordanCurve:
