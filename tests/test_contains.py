@@ -45,6 +45,22 @@ class TestObjectsInEmptyWhole:
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
+    def test_singleton(self):
+        empty0 = EmptyShape()
+        whole0 = WholeShape()
+        empty1 = EmptyShape()
+        whole1 = WholeShape()
+
+        assert empty0 is empty1
+        assert whole0 is whole1
+
+    @pytest.mark.order(7)
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
+        ]
+    )
     def test_empty(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -52,7 +68,12 @@ class TestObjectsInEmptyWhole:
         assert empty in whole
 
     @pytest.mark.order(7)
-    @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
+        ]
+    )
     def test_whole(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -60,7 +81,12 @@ class TestObjectsInEmptyWhole:
         assert whole in whole
 
     @pytest.mark.order(7)
-    @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
+        ]
+    )
     def test_point(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -69,7 +95,12 @@ class TestObjectsInEmptyWhole:
             assert point in whole
 
     @pytest.mark.order(7)
-    @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
+        ]
+    )
     def test_jordan(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -85,7 +116,12 @@ class TestObjectsInEmptyWhole:
         assert jordan in whole
 
     @pytest.mark.order(7)
-    @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
+        ]
+    )
     def test_simple_shape(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -97,7 +133,12 @@ class TestObjectsInEmptyWhole:
         assert shape in whole
 
     @pytest.mark.order(7)
-    @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
+        ]
+    )
     def test_connected_shape(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -110,7 +151,12 @@ class TestObjectsInEmptyWhole:
         assert shape in whole
 
     @pytest.mark.order(7)
-    @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
+        ]
+    )
     def test_disjoint_shape(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -125,6 +171,7 @@ class TestObjectsInEmptyWhole:
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
+            "TestObjectsInEmptyWhole::test_singleton",
             "TestObjectsInEmptyWhole::test_empty",
             "TestObjectsInEmptyWhole::test_whole",
             "TestObjectsInEmptyWhole::test_point",
