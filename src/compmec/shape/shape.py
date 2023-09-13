@@ -55,27 +55,23 @@ class FollowPath:
     """
 
     @staticmethod
-    def split_at_intersections(jordans: Tuple[JordanCurve]) -> Tuple[JordanCurve]:
-        for jordan in jordans:
-            assert isinstance(jordan, JordanCurve)
-        ncurves = len(jordans)
-        all_positions = [set() for i in range(ncurves)]
-        for i in range(ncurves - 1):
-            jordani = jordans[i]
-            for j in range(i + 1, ncurves):
-                jordanj = jordans[j]
-                if not bool(jordani & jordanj):
-                    continue
-                inters = jordani.intersection(jordanj, end_points=False)
-                for ai, bj, ui, vj in inters:
-                    all_positions[i].add((ai, ui))
-                    all_positions[j].add((bj, vj))
+    def split_at_intersections(jordana: JordanCurve, jordanb: JordanCurve):
+        """
+        Find the intersections between two jordan curves and call split on the
+        nodes which intersects
+        """
+        assert isinstance(jordana, JordanCurve)
+        assert isinstance(jordanb, JordanCurve)
+        all_positions = (set(), set())
+        inters = jordana.intersection(jordanb, end_points=False)
+        for ai, bj, ui, vj in inters:
+            all_positions[0].add((ai, ui))
+            all_positions[1].add((bj, vj))
         all_positions = [tuple(sorted(nodes)) for nodes in all_positions]
-        for positions, jordan in zip(all_positions, jordans):
+        for positions, jordan in zip(all_positions, (jordana, jordanb)):
             indexs = [position[0] for position in positions]
             nodes = [position[1] for position in positions]
             jordan.split(indexs, nodes)
-        return jordans
 
     @staticmethod
     def winding_number(jordan: JordanCurve, point: Point2D) -> int:
@@ -241,7 +237,8 @@ class FollowPath:
                 assert isinstance(jordan, JordanCurve)
         for jordana in jordansa:
             for jordanb in jordansb:
-                FollowPath.split_at_intersections((jordana, jordanb))
+                if jordana & jordanb:
+                    FollowPath.split_at_intersections(jordana, jordanb)
 
     @staticmethod
     def union_indexs(
@@ -312,9 +309,7 @@ class FollowPath:
             new_bezier = jordans[index_jordan].segments[index_segment]
             new_bezier = new_bezier.copy()
             beziers.append(new_bezier)
-        print("Cheguei aqui!")
         new_jordan = JordanCurve.from_segments(beziers)
-        print("Não cheguei aqui")
         return new_jordan
 
     @staticmethod
@@ -390,34 +385,9 @@ class Contains:
 
     @staticmethod
     def point_in_closed_jordan(point: Point2D, jordan: JordanCurve) -> bool:
-        return Contains.point_at_jordan(point, jordan) or Contains.point_in_open_jordan(
-            point, jordan
-        )
-
-    @staticmethod
-    def point_in_shape(point: Point2D, shape: BaseShape) -> bool:
-        assert isinstance(point, Point2D)
-        assert isinstance(shape, BaseShape)
-        if isinstance(shape, EmptyShape):
-            return False
-        if isinstance(shape, WholeShape):
+        if Contains.point_at_jordan(point, jordan):
             return True
-        for jordan in shape.jordans:
-            if point in jordan:  # Point in boundary
-                return True
-        if isinstance(shape, SimpleShape):
-            return Contains.point_interior_jordan(point, shape.jordancurve)
-        if isinstance(shape, ConnectedShape):
-            for jordan in shape.jordans:
-                if not Contains.point_interior_jordan(point, jordan):
-                    return False
-            return True
-        if isinstance(shape, DisjointShape):
-            for subshape in shape.subshapes:
-                if Contains.point_in_shape(point, subshape):
-                    return True
-            return False
-        raise NotImplementedError
+        return Contains.point_in_open_jordan(point, jordan)
 
 
 class BaseShape(object):
@@ -453,12 +423,6 @@ class BaseShape(object):
         Else if curve's area is negative
         """
         return float(self) > 0
-
-    def __iter__(self):
-        return self
-
-    def __next__(self):
-        raise StopIteration
 
     def move(self, point: Point2D) -> BaseShape:
         point = Point2D(point)
@@ -615,15 +579,7 @@ class FiniteShape(BaseShape):
             return self.copy()
         jordansa = tuple(self.jordans)
         jordansb = tuple(~jordan for jordan in other.jordans)
-        print("jordansa = ")
-        for jordan in jordansa:
-            print("    " + str(jordan))
-        print("jordansb = ")
-        for jordan in jordansb:
-            print("    " + str(jordan))
         new_jordans = FollowPath.intersection_path(jordansa, jordansb)
-        print("new_jordans = ")
-        print(new_jordans)
         return ShapeFromJordans(new_jordans)
 
 
@@ -702,9 +658,6 @@ class SimpleShape(FiniteShape):
             return self.contains_jordan_curve(object)
         point = Point2D(object)
         return self.contains_point(point)
-
-    def __iter__(self):
-        yield self.jordancurve
 
     @property
     def jordans(self) -> JordanCurve:
@@ -1008,11 +961,11 @@ def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
         return EmptyShape()
     if len(jordans) == 1 and float(jordans[0]) > 0:
         return SimpleShape(jordans[0])
-    lenghts = np.array(map(float, jordans))
-    if np.all(lenghts) < 0:
+    lenghts = np.array(tuple(map(float, jordans)))
+    if np.all(lenghts < 0):
         simples = [SimpleShape(~jordan) for jordan in jordans]
         return ConnectedShape(WholeShape(), simples)
-    if np.all(lenghts) > 0:
+    if np.all(lenghts > 0):
         simples = [SimpleShape(jordan) for jordan in jordans]
         return DisjointShape(simples)
     raise NotImplementedError

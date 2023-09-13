@@ -14,10 +14,13 @@ import numpy as np
 from compmec.shape.curve import PlanarCurve
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
-from compmec.shape.shape import ConnectedShape, SimpleShape, WholeShape
+from compmec.shape.shape import ConnectedShape, EmptyShape, SimpleShape, WholeShape
 
 
 class Primitive:
+    empty = EmptyShape()
+    whole = WholeShape()
+
     @staticmethod
     def regular_polygon(
         nsides: int, radius: float = 1, center: Point2D = (0, 0)
