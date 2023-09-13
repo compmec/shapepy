@@ -277,6 +277,14 @@ class JordanCurve:
 
     @classmethod
     def from_segments(cls, beziers: Tuple[PlanarCurve]) -> JordanCurve:
+        nbezs = len(beziers)
+        for i, bezi in enumerate(beziers):
+            j = (i + 1) % nbezs
+            bezj = beziers[j]
+            prev_end_point = bezi.ctrlpoints[-1]
+            next_start_point = bezj.ctrlpoints[0]
+            assert prev_end_point == next_start_point
+            bezi.ctrlpoints = list(bezi.ctrlpoints[:-1]) + [next_start_point]
         return cls(beziers)
 
     @classmethod
@@ -301,10 +309,6 @@ class JordanCurve:
         if isinstance(all_ctrlpoints, str):
             raise TypeError
         nbezs = len(all_ctrlpoints)
-        all_ctrlpoints = list(list(points) for points in all_ctrlpoints)
-        for i in range(nbezs):
-            j = (i + 1) % nbezs
-            all_ctrlpoints[i][-1] = all_ctrlpoints[j][0]
         beziers = [0] * len(all_ctrlpoints)
         for i, ctrlpoints in enumerate(all_ctrlpoints):
             ctrlpoints = list(ctrlpoints)
@@ -444,17 +448,17 @@ class JordanCurve:
         Main reason: plot the jordan
         You can choose the precision by changing the ```subnpts``` parameter
 
-        subnpts = 1 -> midpoint
-        subnpts = 2 -> extremities
-        subnpts = 3 -> extremities + midpoints
+        subnpts = 0 -> extremities
+        subnpts = 1 -> extremities + midpoint
         """
         assert isinstance(subnpts, int)
-        assert subnpts > 0
+        assert subnpts >= 0
         all_points = []
-        usample = tuple(Fraction(num, subnpts) for num in range(subnpts))
+        usample = tuple(Fraction(num, subnpts + 1) for num in range(subnpts + 1))
         for segment in self.segments:
-            all_points += list(segment.eval(usample))
-        all_points.append(all_points[0])
+            points = segment.eval(usample)
+            all_points += list(points)
+        all_points.append(all_points[0])  # Close the curve
         return tuple(all_points)
 
     def box(self) -> Box:

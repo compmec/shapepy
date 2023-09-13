@@ -705,6 +705,9 @@ class Box:
         self.lowpt = lowpt
         self.toppt = toppt
 
+    def __bool__(self) -> bool:
+        return True
+
     def __contains__(self, point: Point2D) -> bool:
         if point[0] < self.lowpt[0] - self.dx:
             return False
@@ -719,4 +722,13 @@ class Box:
         ymin = min(self.lowpt[1], other.lowpt[1])
         xmax = max(self.toppt[0], other.toppt[0])
         ymax = max(self.toppt[1], other.toppt[1])
+        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
+
+    def __and__(self, other: Box) -> Union[Box, None]:
+        xmin = max(self.lowpt[0], other.lowpt[0])
+        ymin = max(self.lowpt[1], other.lowpt[1])
+        xmax = min(self.toppt[0], other.toppt[0])
+        ymax = min(self.toppt[1], other.toppt[1])
+        if xmax < xmin or ymax < ymin:
+            return None
         return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
