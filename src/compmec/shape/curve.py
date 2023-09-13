@@ -117,7 +117,7 @@ class BezierCurve(BaseCurve):
 
     def __str__(self) -> str:
         msg = f"BezierCurve of degree {self.degree} and "
-        msg += "control points {str(self.ctrlpoints)}"
+        msg += f"control points {str(self.ctrlpoints)}"
         return msg
 
     def __repr__(self) -> str:

@@ -320,6 +320,38 @@ class TestTransformationPolygon:
         assert test_square == good_square
 
     @pytest.mark.order(4)
+    @pytest.mark.timeout(20)
+    @pytest.mark.dependency(
+        depends=[
+            "TestTransformationPolygon::test_begin",
+            "TestTransformationPolygon::test_move",
+            "TestTransformationPolygon::test_scale",
+            "TestTransformationPolygon::test_rotate",
+            "TestTransformationPolygon::test_invert",
+            "TestTransformationPolygon::test_split",
+        ]
+    )
+    def test_keep_ids(self):
+        square_vertices = [(0, 0), (1, 0), (1, 1), (0, 1)]
+        square = JordanCurve.from_vertices(square_vertices)
+        good_ids = tuple(id(vertex) for vertex in square.vertices)
+
+        square.move((2, 3))
+        test_ids = tuple(id(vertex) for vertex in square.vertices)
+        assert len(test_ids) == len(good_ids)
+        assert test_ids == good_ids
+
+        square.rotate(90, degrees=True)
+        test_ids = tuple(id(vertex) for vertex in square.vertices)
+        assert len(test_ids) == len(good_ids)
+        assert test_ids == good_ids
+
+        square.scale(5, 4)
+        test_ids = tuple(id(vertex) for vertex in square.vertices)
+        assert len(test_ids) == len(good_ids)
+        assert test_ids == good_ids
+
+    @pytest.mark.order(4)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -328,6 +360,7 @@ class TestTransformationPolygon:
             "TestTransformationPolygon::test_scale",
             "TestTransformationPolygon::test_invert",
             "TestTransformationPolygon::test_split",
+            "TestTransformationPolygon::test_keep_ids",
         ]
     )
     def test_end(self):

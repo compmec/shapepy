@@ -28,12 +28,12 @@ def test_begin():
 
 
 class TestIntegrate:
-    @pytest.mark.order(6)
+    @pytest.mark.order(8)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(8)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
     def test_centered_rectangular(self):
@@ -53,7 +53,7 @@ class TestIntegrate:
                     good /= 2 ** (expx + expy)
                 assert abs(test - good) < 1e-9
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(8)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -80,7 +80,7 @@ class TestIntegrate:
                 good /= (1 + expx) * (1 + expy)
                 assert abs(test - good) < 1e-9 * abs(good)
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(8)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -106,7 +106,7 @@ class TestIntegrate:
                     good /= (1 + expx + expy) * (2 + expx + expy)
                 assert abs(test - good) < 1e-9
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(8)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[

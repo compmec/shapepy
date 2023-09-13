@@ -272,21 +272,16 @@ class JordanCurve:
     It stores a list of 'segments', each segment is a bezier curve
     """
 
-    def __init__(self):
-        self.__segments = None
-        self.__lenght = None
+    def __init__(self, segments: Tuple[PlanarCurve]):
+        self.segments = segments
 
     @classmethod
     def from_segments(cls, beziers: Tuple[PlanarCurve]) -> JordanCurve:
-        assert isinstance(beziers, (tuple, list))
-        for bezier in beziers:
-            assert isinstance(bezier, PlanarCurve)
-        instance = cls()
-        instance.segments = beziers
-        return instance
+        return cls(beziers)
 
     @classmethod
     def from_vertices(cls, vertices: Tuple[Point2D]) -> JordanCurve:
+        """Returns a polygonal jordan curve"""
         if isinstance(vertices, str):
             raise TypeError
         vertices = list(vertices)
@@ -301,9 +296,48 @@ class JordanCurve:
             beziers[i] = new_bezier
         return cls.from_segments(beziers)
 
+    @classmethod
+    def from_ctrlpoints(cls, all_ctrlpoints: Tuple[Tuple[Point2D]]) -> JordanCurve:
+        if isinstance(all_ctrlpoints, str):
+            raise TypeError
+        nbezs = len(all_ctrlpoints)
+        all_ctrlpoints = list(list(points) for points in all_ctrlpoints)
+        for i in range(nbezs):
+            j = (i + 1) % nbezs
+            all_ctrlpoints[i][-1] = all_ctrlpoints[j][0]
+        beziers = [0] * len(all_ctrlpoints)
+        for i, ctrlpoints in enumerate(all_ctrlpoints):
+            ctrlpoints = list(ctrlpoints)
+            for j, ctrlpoint in enumerate(ctrlpoints):
+                ctrlpoints[j] = Point2D(ctrlpoint)
+            new_bezier = PlanarCurve(ctrlpoints)
+            beziers[i] = new_bezier
+        return cls.from_segments(beziers)
+
+    @classmethod
+    def from_full_curve(cls, full_curve) -> JordanCurve:
+        assert full_curve.ctrlpoints[0] == full_curve.ctrlpoints[-1]
+        beziers = full_curve.split()
+        all_ctrlpoints = [bezier.ctrlpoints for bezier in beziers]
+        return cls.from_ctrlpoints(all_ctrlpoints)
+
     def copy(self) -> JordanCurve:
-        segments = tuple(segment.copy() for segment in self.segments)
-        return self.__class__.from_segments(segments)
+        segments = self.segments
+        nsegments = len(segments)
+        all_points = []
+        for segment in segments:
+            points = list(point.copy() for point in segment.ctrlpoints)
+            all_points.append(points)
+        for i, points in enumerate(all_points):
+            j = (i + 1) % nsegments
+            next_start_point = all_points[j][0]
+            points[-1] = next_start_point
+        new_segments = []
+        for i, segment in enumerate(segments):
+            points = all_points[i]
+            new_segment = segment.__class__(points)
+            new_segments.append(new_segment)
+        return self.__class__.from_segments(new_segments)
 
     def clean(self) -> JordanCurve:
         for segment in self.segments:
@@ -316,7 +350,12 @@ class JordanCurve:
                 seg0 = segments[i]
                 seg1 = segments[j]
                 try:
+                    start_point = seg0.ctrlpoints[0]
+                    end_point = seg1.ctrlpoints[-1]
                     segment = PlanarCurve.unite([seg0, seg1])
+                    segment.ctrlpoints = (
+                        [start_point] + list(segment.ctrlpoints[1:-1]) + [end_point]
+                    )
                     segments[i] = segment
                     segments.pop(j)
                     break  # Can unite
@@ -328,6 +367,7 @@ class JordanCurve:
         return self
 
     def move(self, point: Point2D) -> JordanCurve:
+        point = Point2D(point)
         for vertex in self.vertices:
             vertex.move(point)
         return self
@@ -383,7 +423,16 @@ class JordanCurve:
             if abs(node) < 1e-6 or abs(node - 1) < 1e-6:
                 continue
             segment = new_segments[index + inserted]
+            start_point = segment.ctrlpoints[0]
+            end_point = segment.ctrlpoints[-1]
             bezleft, bezrigh = segment.split([node])
+            mid_point = bezrigh.ctrlpoints[0]
+            bezleft.ctrlpoints = (
+                [start_point] + list(bezleft.ctrlpoints[1:-1]) + [mid_point]
+            )
+            bezrigh.ctrlpoints = (
+                [mid_point] + list(bezrigh.ctrlpoints[1:-1]) + [end_point]
+            )
             new_segments[index + inserted] = bezleft
             new_segments.insert(index + inserted + 1, bezrigh)
             inserted += 1
@@ -400,9 +449,10 @@ class JordanCurve:
         subnpts = 3 -> extremities + midpoints
         """
         assert isinstance(subnpts, int)
+        assert subnpts > 0
         all_points = []
+        usample = tuple(Fraction(num, subnpts) for num in range(subnpts))
         for segment in self.segments:
-            usample = np.linspace(0, 1, subnpts, endpoint=False)
             all_points += list(segment.eval(usample))
         all_points.append(all_points[0])
         return tuple(all_points)
@@ -432,18 +482,17 @@ class JordanCurve:
         """
         Returns a tuple of non repeted points
         """
-        if self.__vertices is None:
-            vertices = []
-            for segment in self.segments:
-                for point in segment.ctrlpoints:
-                    if point not in vertices:
-                        vertices.append(point)
-            self.__vertices = tuple(vertices)
-        return self.__vertices
+        ids = []
+        vertices = []
+        for segment in self.segments:
+            for point in segment.ctrlpoints:
+                if id(point) not in ids:
+                    ids.append(id(point))
+                    vertices.append(point)
+        return tuple(vertices)
 
     @segments.setter
     def segments(self, other: Tuple[PlanarCurve]):
-        assert isinstance(other, (tuple, list))
         for segment in other:
             if not isinstance(segment, PlanarCurve):
                 raise TypeError
@@ -452,10 +501,10 @@ class JordanCurve:
             end_point = other[i].ctrlpoints[-1]
             start_point = other[i + 1].ctrlpoints[0]
             assert start_point == end_point
+            assert id(start_point) == id(end_point)
         for segment in other:
             segment.clean()
         self.__lenght = None
-        self.__vertices = None
         segments = []
         for bezier in other:
             ctrlpoints = [Point2D(point) for point in bezier.ctrlpoints]

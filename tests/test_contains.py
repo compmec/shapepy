@@ -3,6 +3,9 @@ This file contains the code to test the relative position of an object with resp
 to another
 """
 
+from fractions import Fraction
+
+import numpy as np
 import pytest
 
 from compmec.shape.jordancurve import JordanCurve
@@ -261,6 +264,50 @@ class TestObjectsInSimple:
             "TestObjectsInSimple::test_whole",
         ]
     )
+    def test_keep_ids(self):
+        square = Primitive.square(side=4)
+        good_ids = tuple(id(vertex) for vertex in square.jordancurve.vertices)
+
+        for k in range(100):  # number of tests
+            point = np.random.uniform(-4, 4, 2)
+            point in square
+            test_ids = tuple(id(vertex) for vertex in square.jordancurve.vertices)
+            assert len(test_ids) == len(good_ids)
+            assert test_ids == good_ids
+
+    @pytest.mark.order(7)
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInSimple::test_begin",
+            "TestObjectsInSimple::test_empty",
+            "TestObjectsInSimple::test_whole",
+            "TestObjectsInSimple::test_keep_ids",
+        ]
+    )
+    def test_keep_type(self):
+        square = Primitive.square(side=4)
+        good_types = []
+        for vertex in square.jordancurve.vertices:
+            good_types.append((type(vertex[0]), type(vertex[0])))
+        one = Fraction(1)
+        for point in [(0, 0), (1, 2), (one / 2, -one / 2), (1.2, 3.5)]:
+            point in square
+            test_types = []
+            for vertex in square.jordancurve.vertices:
+                test_types.append((type(vertex[0]), type(vertex[0])))
+            assert len(test_types) == len(good_types)
+            assert test_types == good_types
+
+    @pytest.mark.order(7)
+    @pytest.mark.dependency(
+        depends=[
+            "TestObjectsInSimple::test_begin",
+            "TestObjectsInSimple::test_empty",
+            "TestObjectsInSimple::test_whole",
+            "TestObjectsInSimple::test_keep_ids",
+            "TestObjectsInSimple::test_keep_type",
+        ]
+    )
     def test_point(self):
         square = Primitive.square(side=4)
 
@@ -291,6 +338,8 @@ class TestObjectsInSimple:
             "TestObjectsInSimple::test_begin",
             "TestObjectsInSimple::test_empty",
             "TestObjectsInSimple::test_whole",
+            "TestObjectsInSimple::test_keep_ids",
+            "TestObjectsInSimple::test_keep_type",
             "TestObjectsInSimple::test_point",
         ]
     )
@@ -313,6 +362,8 @@ class TestObjectsInSimple:
             "TestObjectsInSimple::test_begin",
             "TestObjectsInSimple::test_empty",
             "TestObjectsInSimple::test_whole",
+            "TestObjectsInSimple::test_keep_ids",
+            "TestObjectsInSimple::test_keep_type",
             "TestObjectsInSimple::test_point",
             "TestObjectsInSimple::test_jordan",
         ]

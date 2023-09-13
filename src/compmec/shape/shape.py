@@ -75,19 +75,15 @@ class FollowPath:
         return jordans
 
     @staticmethod
-    def interior_jordan_contains_point(jordan: JordanCurve, point: Point2D) -> bool:
-        winding = FollowPath.winding_number(jordan, point)
-        return winding == 1 if jordan.lenght > 0 else winding == 0
-
-    @staticmethod
     def winding_number(jordan: JordanCurve, point: Point2D) -> int:
         """
         Computes the winding number of a point,
         It can be -1, 0 or 1
         """
-        jordan.move(-point)
-        wind = IntegrateJordan.winding_number(jordan)
-        jordan.move(point)
+        point = Point2D(point)
+        copy = jordan.copy().move(-point)
+        wind = IntegrateJordan.winding_number(copy)
+        del copy
         return wind
 
     @staticmethod
@@ -573,6 +569,10 @@ class FiniteShape(BaseShape):
     def __invert__(self) -> BaseShape:
         return WholeShape() - self
 
+    def copy(self) -> FiniteShape:
+        jordans = tuple(jordan.copy() for jordan in self.jordans)
+        return ShapeFromOrientedJordans(jordans)
+
     def box(self) -> Box:
         if self.__box is None:
             box = self.jordans[0].box()
@@ -672,20 +672,13 @@ class SimpleShape(FiniteShape):
         assert len(simple_shapes) == 1
         return simple_shapes[0]
 
-    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
-        if isinstance(other, EmptyShape):
-            return True
-        if isinstance(other, WholeShape):
-            return False
-        if isinstance(other, SimpleShape):
-            return self.contains_simple_shape(other)
-        if isinstance(other, ConnectedShape):
-            return self.contains_connected_shape(other)
-        if isinstance(other, DisjointShape):
-            return self.contains_disjoint_shape(other)
-        if isinstance(other, JordanCurve):
-            return self.contains_jordan_curve(other)
-        return self.contains_point(other)
+    def __contains__(self, object: Union[Point2D, JordanCurve, BaseShape]) -> bool:
+        if isinstance(object, BaseShape):
+            return self.contains_shape(object)
+        if isinstance(object, JordanCurve):
+            return self.contains_jordan_curve(object)
+        point = Point2D(object)
+        return self.contains_point(point)
 
     def __iter__(self):
         yield self.jordancurve
@@ -740,20 +733,19 @@ class SimpleShape(FiniteShape):
                 return False
         return True
 
-    def contains_simple_shape(self, other: SimpleShape) -> bool:
-        assert isinstance(other, SimpleShape)
-        if float(self) == float(other) and self == other:
+    def contains_shape(self, other: BaseShape) -> bool:
+        assert isinstance(other, BaseShape)
+        if isinstance(other, EmptyShape):
             return True
-        return other.jordancurve in self and self.jordancurve not in other
-
-    def contains_connected_shape(self, other: ConnectedShape) -> bool:
-        assert isinstance(other, ConnectedShape)
-        return other.positive in self
-
-    def contains_disjoint_shape(self, other: DisjointShape) -> bool:
-        assert isinstance(other, DisjointShape)
+        if isinstance(other, WholeShape):
+            return False
+        if isinstance(other, SimpleShape):
+            return self.contains_jordan_curve(other.jordancurve)
+        if isinstance(other, ConnectedShape):
+            return self.contains_shape(other.positive)
+        # Disjoint shape
         for subshape in other.subshapes:
-            if subshape not in self:
+            if not self.contains_shape(subshape):
                 return False
         return True
 
@@ -834,7 +826,7 @@ class ConnectedShape(FiniteShape):
 
     def contains_jordan_curve(self, jordan: JordanCurve) -> bool:
         assert isinstance(jordan, JordanCurve)
-        for point in jordan.points(0):
+        for point in jordan.points(1):
             if not self.contains_point(point):
                 return False
         return True
@@ -875,10 +867,6 @@ class ConnectedShape(FiniteShape):
     def contains_disjoint_shape(self, disjoint: ConnectedShape) -> bool:
         assert isinstance(disjoint, DisjointShape)
         raise NotImplementedError
-
-    def copy(self) -> ConnectedShape:
-        holes = [hole.copy() for hole in self.holes]
-        return ConnectedShape(self.positive.copy(), holes)
 
     def __or__simple_shape(self, other: SimpleShape) -> ConnectedShape:
         assert isinstance(other, SimpleShape)
@@ -978,12 +966,13 @@ class ConnectedShape(FiniteShape):
         if isinstance(other, DisjointShape):
             return self.__sub__disjoint_shape(other)
 
-    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
-        if isinstance(other, BaseShape):
-            return self.contains_shape(other)
-        if isinstance(other, JordanCurve):
-            return self.contains_jordan_curve(other)
-        return self.contains_point(other)
+    def __contains__(self, object: Union[Point2D, JordanCurve, BaseShape]) -> bool:
+        if isinstance(object, BaseShape):
+            return self.contains_shape(object)
+        if isinstance(object, JordanCurve):
+            return self.contains_jordan_curve(object)
+        point = Point2D(object)
+        return self.contains_point(point)
 
     def __float__(self) -> float:
         soma = 0
@@ -1111,3 +1100,32 @@ class DisjointShape(FiniteShape):
         for subshape in self.subshapes:
             lista += list(subshape.jordans)
         return tuple(lista)
+
+
+def ShapeFromNonOrientedJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
+    """Returns the positive shape delimited by jordan curves
+
+    Example
+    ----------
+    >>> ShapeFromJordans([])
+    EmptyShape
+    """
+    if len(jordans) == 0:
+        return EmptyShape()
+    lenghts = tuple(map(float, jordans))
+    assert np.all(np.array(lenghts) > 0)
+    raise NotImplementedError
+
+
+def ShapeFromOrientedJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
+    """Returns the correspondent shape
+
+    Example
+    ----------
+    >>> ShapeFromJordans([])
+    EmptyShape
+    """
+    if len(jordans) == 0:
+        return EmptyShape()
+    lenghts = tuple(map(float, jordans))
+    raise NotImplementedError
