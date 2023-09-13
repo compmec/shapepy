@@ -6,7 +6,7 @@ Which are in fact positive shapes defined only by one jordan curve
 import pytest
 
 from compmec.shape.primitive import Primitive
-from compmec.shape.shape import EmptyShape
+from compmec.shape.shape import DisjointShape, EmptyShape
 
 
 @pytest.mark.order(9)
@@ -173,13 +173,15 @@ class TestDisjoint:
         square0 = Primitive.square(side=2, center=(-2, 0))
         square1 = Primitive.square(side=2, center=(2, 0))
 
+        union = DisjointShape([square0, square1])
+
         assert float(square0) > 0
         assert float(square1) > 0
 
         assert square0 | square0 == square0
         assert square1 | square1 == square1
-        assert square0 | square1 is EmptyShape()
-        assert square1 | square0 is EmptyShape()
+        assert square0 | square1 == union
+        assert square1 | square0 == union
 
     @pytest.mark.order(9)
     @pytest.mark.timeout(40)

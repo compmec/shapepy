@@ -247,6 +247,9 @@ class FollowPath:
         """
         Function to find indexs for union_path
         """
+        for jordans in (jordansa, jordansb):
+            for jordan in jordans:
+                assert isinstance(jordan, JordanCurve)
         FollowPath.split_jordans(jordansa, jordansb)
         final_index_matrix = []
         all_jordans = jordansa + jordansb
@@ -254,10 +257,16 @@ class FollowPath:
             jordans0 = jordansa if k == 0 else jordansb
             jordans1 = jordansb if k == 0 else jordansa
             for local_index_jordan, jordan in enumerate(jordans0):
-                insiders = FollowPath.midpoints_inclosed(jordan, jordans1)
-                outsiders = [not inside for inside in insiders]
-                start_indexs = FollowPath.switch_boolean(outsiders)
                 global_index_jordan = k * len(jordansa) + local_index_jordan
+                insiders = FollowPath.midpoints_inclosed(jordan, jordans1)
+                if all(insiders):
+                    continue
+                outsiders = tuple(not inside for inside in insiders)
+                if all(outsiders):
+                    bezindexs = [(global_index_jordan, i) for i in range(len(insiders))]
+                    final_index_matrix.append(bezindexs)
+                    continue
+                start_indexs = FollowPath.switch_boolean(outsiders)
                 for index_segment in start_indexs:
                     bezindexs = FollowPath.pursue_path(
                         global_index_jordan, index_segment, all_jordans
@@ -273,8 +282,10 @@ class FollowPath:
         """
         Function to find indexs for intersection_path
         """
-        assert isinstance(jordansa, (tuple, list))
-        assert isinstance(jordansb, (tuple, list))
+        for jordans in (jordansa, jordansb):
+            for jordan in jordans:
+                assert isinstance(jordan, JordanCurve)
+        final_index_matrix = []
         FollowPath.split_jordans(jordansa, jordansb)
         final_index_matrix = []
         all_jordans = jordansa + jordansb
@@ -371,11 +382,16 @@ class Contains:
 
     @staticmethod
     def point_in_open_jordan(point: Point2D, jordans: Tuple[JordanCurve]) -> bool:
+        """
+        If no jordans are given, returns True
+        """
         assert isinstance(point, Point2D)
         assert isinstance(jordans, (list, tuple))
         for jordan in jordans:
             assert isinstance(jordan, JordanCurve)
         for jordan in jordans:
+            if point in jordan:
+                return False
             wind = FollowPath.winding_number(jordan, point)
             if float(jordan) > 0 and wind != 1:
                 return False
@@ -555,6 +571,10 @@ class FiniteShape(BaseShape):
             return WholeShape()
         if isinstance(other, EmptyShape):
             return self.copy()
+        if other in self:
+            return self.copy()
+        if self in other:
+            return other.copy()
         jordansa = tuple(self.jordans)
         jordansb = tuple(other.jordans)
         new_jordans = FollowPath.union_path(jordansa, jordansb)
@@ -566,6 +586,10 @@ class FiniteShape(BaseShape):
             return self.copy()
         if isinstance(other, EmptyShape):
             return EmptyShape()
+        if other in self:
+            return other.copy()
+        if self in other:
+            return self.copy()
         jordansa = tuple(self.jordans)
         jordansb = tuple(other.jordans)
         new_jordans = FollowPath.intersection_path(jordansa, jordansb)
@@ -618,38 +642,9 @@ class SimpleShape(FiniteShape):
             raise ValueError
         if not isinstance(other, SimpleShape):
             return False
+        if float(self) != float(other):
+            return False
         return self.jordancurve == other.jordancurve
-
-    def __or__(self, other: BaseShape) -> BaseShape:
-        assert isinstance(other, BaseShape)
-        if not isinstance(other, SimpleShape):
-            return other | self
-        if self in other:
-            return other.copy()
-        if other in self:
-            return self.copy()
-        new_jordans = FollowPath.union_path([self.jordancurve], [other.jordancurve])
-        simple_shapes = [SimpleShape(jordan) for jordan in new_jordans]
-        return DisjointShape(simple_shapes)
-
-    def __and__(self, other: BaseShape) -> BaseShape:
-        assert isinstance(other, BaseShape)
-        if not isinstance(other, SimpleShape):
-            return other & self
-        if self in other:
-            return self.copy()
-        if other in self:
-            return other.copy()
-        intersect = self.jordancurve.intersection(other.jordancurve, end_points=True)
-        if not intersect:
-            return EmptyShape()
-
-        new_jordans = FollowPath.intersection_path(
-            [self.jordancurve], [other.jordancurve]
-        )
-        simple_shapes = [SimpleShape(jordan) for jordan in new_jordans]
-        assert len(simple_shapes) == 1
-        return simple_shapes[0]
 
     def __contains__(self, object: Union[Point2D, JordanCurve, BaseShape]) -> bool:
         if isinstance(object, BaseShape):
@@ -898,6 +893,12 @@ class DisjointShape(FiniteShape):
     def __init__(self, subshapes: Tuple[ConnectedShape]):
         super().__init__()
 
+    def __float__(self) -> float:
+        total = 0
+        for subshape in self.subshapes:
+            total += float(subshape)
+        return float(total)
+
     def __contains__(self, object: Union[BaseShape, JordanCurve, Point2D]) -> bool:
         if isinstance(object, BaseShape):
             return self.contains_shape(object)
@@ -905,6 +906,25 @@ class DisjointShape(FiniteShape):
             return self.contains_jordan(object)
         point = Point2D(object)
         return self.contains_point(point)
+
+    def __eq__(self, other: BaseShape):
+        assert isinstance(other, BaseShape)
+        if not isinstance(other, DisjointShape):
+            return False
+        if float(self) != float(other):
+            return False
+        self_subshapes = list(self.subshapes)
+        othe_subshapes = list(other.subshapes)
+        # Compare if a curve is inside another
+        while len(self_subshapes) and len(othe_subshapes):
+            for j, osbshape in enumerate(othe_subshapes):
+                if osbshape == self_subshapes[0]:
+                    self_subshapes.pop(0)
+                    othe_subshapes.pop(j)
+                    break
+            else:
+                return False
+        return not (len(self_subshapes) or len(othe_subshapes))
 
     def interior_point(self) -> Point2D:
         """Gives a random interior point inside the Disjoint shape"""
@@ -944,6 +964,21 @@ class DisjointShape(FiniteShape):
         for subshape in self.subshapes:
             lista += list(subshape.jordans)
         return tuple(lista)
+
+    @property
+    def subshapes(self) -> Tuple[BaseShape]:
+        return self.__subshapes
+
+    @subshapes.setter
+    def subshapes(self, values: Tuple[BaseShape]):
+        for value in values:
+            assert isinstance(value, (SimpleShape, ConnectedShape))
+        areas = tuple(map(float, values))
+        # Sort values based on areas
+        sort = lambda pair: pair[0]
+        pairs = zip(areas, values)
+        values = [value for _, value in sorted(pairs, key=sort)]
+        self.__subshapes = tuple(values)
 
 
 def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
