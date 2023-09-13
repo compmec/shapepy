@@ -8,7 +8,7 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 from compmec import nurbs
-from compmec.shape.polygon import Point2D
+from compmec.shape.polygon import Box, Point2D
 
 
 class Math:
@@ -229,11 +229,7 @@ class PlanarCurve(BaseCurve):
 
     def __contains__(self, point: Point2D) -> bool:
         point = Point2D(point)
-        pta, ptb = self.box()
-        dx, dy = 1e-6, 1e-6  # Tolerance
-        if point[0] < pta[0] - dx or point[1] < pta[1] - dy:
-            return False
-        if ptb[0] + dx < point[0] or ptb[1] + dy < point[1]:
+        if point not in self.box():
             return False
         params = Projection.point_on_curve(point, self)
         vectors = tuple(cval - point for cval in self.eval(params))
@@ -269,7 +265,7 @@ class PlanarCurve(BaseCurve):
         new_ctrlpoints = np.dot(matrix, self.ctrlpoints)
         return self.__class__(new_ctrlpoints)
 
-    def box(self) -> Tuple[Point2D]:
+    def box(self) -> Box:
         """Returns two points which defines the minimal exterior rectangle
 
         Returns the pair (A, B) with A[0] <= B[0] and A[1] <= B[1]
@@ -278,7 +274,7 @@ class PlanarCurve(BaseCurve):
         xmax = max(point[0] for point in self.ctrlpoints)
         ymin = min(point[1] for point in self.ctrlpoints)
         ymax = max(point[1] for point in self.ctrlpoints)
-        return Point2D(xmin, ymin), Point2D(xmax, ymax)
+        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
 
     def clean(self, tolerance: Optional[float] = 1e-9) -> PlanarCurve:
         """Reduces at maximum the degree of the bezier curve.

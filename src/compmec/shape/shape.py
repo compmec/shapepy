@@ -14,7 +14,7 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 from compmec.shape.jordancurve import IntegrateJordan, JordanCurve
-from compmec.shape.polygon import Point2D
+from compmec.shape.polygon import Box, Point2D
 
 
 class IntegrateShape:
@@ -568,13 +568,18 @@ class WholeShape(BaseShape):
 
 class FiniteShape(BaseShape):
     def __init__(self, *args, **kwargs):
-        pass
-
-    def copy(self) -> BaseShape:
-        return deepcopy(self)
+        self.__box = None
 
     def __invert__(self) -> BaseShape:
         return WholeShape() - self
+
+    def box(self) -> Box:
+        if self.__box is None:
+            box = self.jordans[0].box()
+            for jordan in self.jordans[1:]:
+                box |= jordan.box()
+            self.__box = box
+        return self.__box
 
 
 class SimpleShape(FiniteShape):
@@ -588,6 +593,7 @@ class SimpleShape(FiniteShape):
 
     def __init__(self, jordancurve: JordanCurve):
         assert isinstance(jordancurve, JordanCurve)
+        super().__init__()
         self.jordancurve = jordancurve
 
     def __str__(self) -> str:
@@ -719,13 +725,17 @@ class SimpleShape(FiniteShape):
         See wikipedia for details.
         """
         point = Point2D(point)
-        if point in self.jordancurve:  # point in boundary
+        if point not in self.box():
+            return False
+        jordan = self.jordancurve
+        if point in jordan:  # point in boundary
             return True
-        return FollowPath.interior_jordan_contains_point(self.jordancurve, point)
+        wind = FollowPath.winding_number(jordan, point)
+        return wind == 1 if float(jordan) > 0 else wind == 0
 
     def contains_jordan_curve(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
-        for point in other.points(0):
+        for point in other.points(1):
             if not self.contains_point(point):
                 return False
         return True
@@ -776,6 +786,11 @@ class ConnectedShape(FiniteShape):
         instance.positive = positive
         instance.holes = holes
         return instance
+
+    def __init__(
+        self, positive: Union[WholeShape, SimpleShape], holes: Tuple[SimpleShape]
+    ):
+        super().__init__()
 
     def interior_point(self) -> Point2D:
         """Gives a random interior point inside the Connected Shape"""
@@ -1036,7 +1051,7 @@ class DisjointShape(FiniteShape):
         return instance
 
     def __init__(self, subshapes: Tuple[ConnectedShape]):
-        pass
+        super().__init__()
 
     def __or__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
@@ -1065,7 +1080,7 @@ class DisjointShape(FiniteShape):
         return self.subshapes[index].interior_point()
 
     def contains_point(self, point: Point2D) -> bool:
-        assert isinstance(point, Point2D)
+        point = Point2D(point)
         for subshape in self.subshapes:
             if point in subshape:
                 return True

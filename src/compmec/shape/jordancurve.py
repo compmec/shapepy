@@ -11,7 +11,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 
 from compmec.shape.curve import IntegratePlanar, PlanarCurve
-from compmec.shape.polygon import Point2D
+from compmec.shape.polygon import Box, Point2D
 
 
 class IntersectionBeziers:
@@ -411,6 +411,14 @@ class JordanCurve:
         all_points.append(all_points[0])
         return tuple(all_points)
 
+    def box(self) -> Box:
+        """Gives two points which encloses the jordan curve"""
+        inf = float("inf")
+        box = Box(Point2D(inf, inf), Point2D(-inf, -inf))
+        for bezier in self.segments:
+            box |= bezier.box()
+        return box
+
     @property
     def lenght(self) -> float:
         if self.__lenght is None:
@@ -511,6 +519,8 @@ class JordanCurve:
         """
         Tells if the point is on the boundary
         """
+        if point not in self.box():
+            return False
         for bezier in self.segments:
             if point in bezier:
                 return True

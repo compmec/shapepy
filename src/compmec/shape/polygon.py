@@ -695,3 +695,28 @@ def Polygon(vertices: Tuple[Point2D]) -> Union[SimplePolygon, ConvexPolygon]:
     if HelperPolygon.is_convex(vertices):
         return ConvexPolygon(vertices)
     return SimplePolygon(vertices)
+
+
+class Box:
+    dx = 1e-6
+    dy = 1e-6
+
+    def __init__(self, lowpt: Point2D, toppt: Point2D):
+        self.lowpt = lowpt
+        self.toppt = toppt
+
+    def __contains__(self, point: Point2D) -> bool:
+        if point[0] < self.lowpt[0] - self.dx:
+            return False
+        if point[1] < self.lowpt[1] - self.dy:
+            return False
+        if self.toppt[0] + self.dx < point[0]:
+            return False
+        return not (self.toppt[1] + self.dy < point[1])
+
+    def __or__(self, other: Box) -> Box:
+        xmin = min(self.lowpt[0], other.lowpt[0])
+        ymin = min(self.lowpt[1], other.lowpt[1])
+        xmax = max(self.toppt[0], other.toppt[0])
+        ymax = max(self.toppt[1], other.toppt[1])
+        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
