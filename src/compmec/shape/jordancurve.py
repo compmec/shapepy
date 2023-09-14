@@ -558,9 +558,6 @@ class JordanCurve:
                 return False
         return True
 
-    def __ne__(self, other: JordanCurve) -> bool:
-        return not self.__eq__(other)
-
     def __invert__(self) -> JordanCurve:
         return self.copy().invert()
 

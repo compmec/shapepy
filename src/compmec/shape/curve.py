@@ -215,9 +215,6 @@ class PlanarCurve(BaseCurve):
                 return False
         return True
 
-    def __ne__(self, other: PlanarCurve) -> bool:
-        return not self.__eq__(other)
-
     def __iadd__(self, point: Point2D) -> PlanarCurve:
         point = Point2D(point)
         for ctrlpoint in self.ctrlpoints:

@@ -136,9 +136,6 @@ class Point2D(object):
             return False
         return True
 
-    def __ne__(self, other: Point2D) -> bool:
-        return not self.__eq__(other)
-
     def __neg__(self) -> Point2D:
         return self.copy().scale(-1, -1)
 
@@ -582,9 +579,6 @@ class SimplePolygon(BasePolygon):
                 return False
         return True
 
-    def __ne__(self, other: SimplePolygon) -> bool:
-        return not self.__eq__(other)
-
     def __point_on_boundary(self, other: Point2D) -> bool:
         """
         Tells if the point is on the boundary.
@@ -707,6 +701,10 @@ class Box:
 
     def __bool__(self) -> bool:
         return True
+
+    def __float__(self) -> float:
+        """Returns the area of the box"""
+        return (self.toppt[0] - self.lowpt[0]) * (self.toppt[1] - self.lowpt[1])
 
     def __contains__(self, point: Point2D) -> bool:
         if point[0] < self.lowpt[0] - self.dx:

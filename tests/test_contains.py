@@ -10,13 +10,7 @@ import pytest
 
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.primitive import Primitive
-from compmec.shape.shape import (
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    SimpleShape,
-    WholeShape,
-)
+from compmec.shape.shape import DisjointShape, EmptyShape, WholeShape
 
 
 @pytest.mark.order(7)
@@ -127,8 +121,7 @@ class TestObjectsInEmptyWhole:
         whole = WholeShape()
 
         vertices = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanCurve.from_vertices(vertices)
-        shape = SimpleShape(jordan)
+        shape = Primitive.polygon(vertices)
         assert shape not in empty
         assert shape in whole
 
@@ -143,10 +136,8 @@ class TestObjectsInEmptyWhole:
         empty = EmptyShape()
         whole = WholeShape()
 
-        vertices = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanCurve.from_vertices(vertices)
-        simple = SimpleShape(jordan)
-        shape = ConnectedShape(whole, [simple])
+        vertices = [(0, 0), (0, 1), (1, 0)]
+        shape = Primitive.polygon(vertices)
         assert shape not in empty
         assert shape in whole
 
@@ -313,12 +304,14 @@ class TestObjectsInSimple:
     )
     def test_keep_ids(self):
         square = Primitive.square(side=4)
-        good_ids = tuple(id(vertex) for vertex in square.jordancurve.vertices)
+        jordan = square.jordans[0]
+        good_ids = tuple(id(vertex) for vertex in jordan.vertices)
 
         for k in range(100):  # number of tests
             point = np.random.uniform(-4, 4, 2)
             point in square
-            test_ids = tuple(id(vertex) for vertex in square.jordancurve.vertices)
+            jordan = square.jordans[0]
+            test_ids = tuple(id(vertex) for vertex in jordan.vertices)
             assert len(test_ids) == len(good_ids)
             assert test_ids == good_ids
 
@@ -334,13 +327,15 @@ class TestObjectsInSimple:
     def test_keep_type(self):
         square = Primitive.square(side=4)
         good_types = []
-        for vertex in square.jordancurve.vertices:
+        jordan = square.jordans[0]
+        for vertex in jordan.vertices:
             good_types.append((type(vertex[0]), type(vertex[0])))
         one = Fraction(1)
         for point in [(0, 0), (1, 2), (one / 2, -one / 2), (1.2, 3.5)]:
             point in square
             test_types = []
-            for vertex in square.jordancurve.vertices:
+            jordan = square.jordans[0]
+            for vertex in jordan.vertices:
                 test_types.append((type(vertex[0]), type(vertex[0])))
             assert len(test_types) == len(good_types)
             assert test_types == good_types
@@ -393,15 +388,15 @@ class TestObjectsInSimple:
     def test_jordan(self):
         small_square = Primitive.square(side=2)
         big_square = Primitive.square(side=4)
-        assert small_square.jordancurve in small_square
-        assert small_square.jordancurve in big_square
-        assert big_square.jordancurve not in small_square
-        assert big_square.jordancurve in big_square
+        assert small_square.jordans[0] in small_square
+        assert small_square.jordans[0] in big_square
+        assert big_square.jordans[0] not in small_square
+        assert big_square.jordans[0] in big_square
 
-        assert ~(small_square.jordancurve) in small_square
-        assert ~(small_square.jordancurve) in big_square
-        assert ~(big_square.jordancurve) not in small_square
-        assert ~(big_square.jordancurve) in big_square
+        assert ~(small_square.jordans[0]) in small_square
+        assert ~(small_square.jordans[0]) in big_square
+        assert ~(big_square.jordans[0]) not in small_square
+        assert ~(big_square.jordans[0]) in big_square
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -436,13 +431,13 @@ class TestObjectsInSimple:
         square = Primitive.square(side=4)
         inv_square = ~square
         assert inv_square not in square
-        # assert square not in inv_square
+        assert square not in inv_square
 
         big_square = Primitive.square(side=4)
         small_square = Primitive.square(side=2)
         invsmall_square = ~small_square
         assert invsmall_square not in big_square
-        # assert big_square not in invsmall_square
+        assert big_square not in invsmall_square
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(

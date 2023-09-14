@@ -55,10 +55,7 @@ class Primitive:
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
         vertices = [Point2D(vertex) for vertex in vertices]
         jordan_curve = JordanCurve.from_vertices(vertices)
-        if float(jordan_curve) > 0:
-            return SimpleShape(jordan_curve)
-        hole = SimpleShape(abs(jordan_curve))
-        return ConnectedShape(WholeShape(), [hole])
+        return SimpleShape(jordan_curve)
 
     @staticmethod
     def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
