@@ -724,9 +724,11 @@ class Box:
 
     def __and__(self, other: Box) -> Union[Box, None]:
         xmin = max(self.lowpt[0], other.lowpt[0])
-        ymin = max(self.lowpt[1], other.lowpt[1])
         xmax = min(self.toppt[0], other.toppt[0])
+        if xmax < xmin:
+            return None
+        ymin = max(self.lowpt[1], other.lowpt[1])
         ymax = min(self.toppt[1], other.toppt[1])
-        if xmax < xmin or ymax < ymin:
+        if ymax < ymin:
             return None
         return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
