@@ -118,6 +118,30 @@ class FollowPath:
         return tuple(boolvector)
 
     @staticmethod
+    def midpoints_inopened(
+        jordan: JordanCurve, limiters: Tuple[JordanCurve]
+    ) -> Tuple[bool]:
+        """
+        Given two list of jordan curves, named as As and Bs, this function returns a
+        matrix of booleans which tells if the midpoint of each bezier is inside a region
+        defined by Bs
+
+        len(matrix) = len(As)
+        len(matrix[i]) = len(As[i].segments)
+        """
+        assert isinstance(jordan, JordanCurve)
+        assert isinstance(limiters, (tuple, list))
+        for limit in limiters:
+            assert isinstance(limit, JordanCurve)
+        boolvector = []
+        for bezier in jordan.segments:
+            mid_node = Fraction(1, 2)
+            mid_point = bezier(mid_node)
+            inside = Contains.point_in_open_jordan(mid_point, limiters)
+            boolvector.append(inside)
+        return tuple(boolvector)
+
+    @staticmethod
     def pursue_path(
         index_jordan: int, index_segment: int, jordans: Tuple[JordanCurve]
     ) -> Tuple[Tuple[int]]:
@@ -294,7 +318,15 @@ class FollowPath:
             jordans1 = jordansb if k == 0 else jordansa
             for local_index_jordan, jordan in enumerate(jordans0):
                 global_index_jordan = k * len(jordansa) + local_index_jordan
-                insiders = FollowPath.midpoints_inclosed(jordan, jordans1)
+                insiders = FollowPath.midpoints_inopened(jordan, jordans1)
+                if not any(insiders):
+                    continue
+                if all(insiders):
+                    bezindexs = tuple(
+                        (global_index_jordan, i) for i in range(len(insiders))
+                    )
+                    final_index_matrix.append(bezindexs)
+                    continue
                 start_indexs = FollowPath.switch_boolean(insiders)
                 for index_segment in start_indexs:
                     bezindexs = FollowPath.pursue_path(
@@ -927,6 +959,48 @@ class DisjointShape(FiniteShape):
         self.__subshapes = tuple(values)
 
 
+def DivideConnecteds(
+    simples: Tuple[SimpleShape],
+) -> Tuple[Union[SimpleShape, ConnectedShape]]:
+    """
+    Divides the simples in groups of connected shapes
+
+    The idea is get the simple shape with maximum abs area,
+    this is the biggest shape of all we start from it.
+
+    We them separate all shapes in inside and outside
+    """
+    if len(simples) == 0:
+        return tuple()
+    externals = []
+    connected = []
+    simples = list(simples)
+    while len(simples):
+        areas = map(float, simples)
+        absareas = tuple(map(abs, areas))
+        index = absareas.index(max(absareas))
+        connected.append(simples.pop(index))
+        internal = []
+        while len(simples):  # Divide in two groups
+            simple = simples.pop(0)
+            jordan = simple.jordans[0]
+            for subsimple in connected:
+                subjordan = subsimple.jordans[0]
+                if jordan not in subsimple or subjordan not in simple:
+                    externals.append(simple)
+                    break
+            else:
+                internal.append(simple)
+        simples = internal
+    if len(connected) == 1:
+        connected = connected[0]
+    else:
+        connected = ConnectedShape(connected)
+    return (connected,) + DivideConnecteds(externals)
+
+    return result + DivideConnecteds(external)
+
+
 def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
     """Returns the correspondent shape
 
@@ -942,13 +1016,7 @@ def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
     simples = tuple(map(SimpleShape, jordans))
     if len(simples) == 1:
         return simples[0]
-    areas = tuple(map(float, simples))
-    algori = lambda pair: pair[0]
-    simples = sorted(zip(areas, simples), key=algori, reverse=True)
-    simples = tuple(val[1] for val in simples)
-    positives = tuple(float(simple) for simple in simples)
-    if not positives[1]:
-        return ConnectedShape(simples)
-    if all(positives):
-        return DisjointShape(simples)
-    raise NotImplementedError
+    connecteds = DivideConnecteds(simples)
+    if len(connecteds) == 1:
+        return connecteds[0]
+    return DisjointShape(connecteds)
