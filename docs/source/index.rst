@@ -22,6 +22,7 @@ Documentation
 
    rst/installation
    rst/create_shape
+   rst/contains
    rst/theory
 
 
