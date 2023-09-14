@@ -692,7 +692,7 @@ class SimpleShape(FiniteShape):
         if isinstance(other, SimpleShape):
             return self.__contains_simple(other)
         if isinstance(other, ConnectedShape):
-            return self.__contains_connected(other)
+            assert (~self) in (~other)
         # Disjoint shape
         for subshape in other.subshapes:
             if not self.contains_shape(subshape):
@@ -717,10 +717,6 @@ class SimpleShape(FiniteShape):
             return True
         # Maybe an error happens here
         return True
-
-    def __contains_connected(self, other: ConnectedShape) -> bool:
-        assert isinstance(other, ConnectedShape)
-        raise NotImplementedError
 
 
 class ConnectedShape(FiniteShape):
@@ -762,7 +758,7 @@ class ConnectedShape(FiniteShape):
         if isinstance(object, WholeShape):
             return False
         for shape in self.subshapes:
-            if not shape.contains_shape(object):
+            if object not in shape:
                 return False
         return True
 
@@ -875,12 +871,6 @@ class DisjointShape(FiniteShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def interior_point(self) -> Point2D:
-        """Gives a random interior point inside the Disjoint shape"""
-        nsubshapes = len(self.subshapes)
-        index = np.random.randint(nsubshapes)
-        return self.subshapes[index].interior_point()
-
     def contains_point(self, point: Point2D) -> bool:
         point = Point2D(point)
         for subshape in self.subshapes:
@@ -895,17 +885,24 @@ class DisjointShape(FiniteShape):
                 return True
         return False
 
-    def contains_shape(self, shape: BaseShape) -> bool:
-        assert isinstance(shape, BaseShape)
-        if isinstance(shape, EmptyShape):
+    def contains_shape(self, other: BaseShape) -> bool:
+        assert isinstance(other, BaseShape)
+        if isinstance(other, EmptyShape):
             return True
-        if isinstance(shape, WholeShape):
+        if isinstance(other, WholeShape):
             return False
-        assert not isinstance(shape, DisjointShape)
-        for subshape in self.subshapes:
-            if shape in subshape:
-                return True
-        return False
+        if isinstance(other, SimpleShape):
+            for subshape in self.subshapes:
+                if other in subshape:
+                    return True
+            return False
+        if isinstance(other, DisjointShape):
+            for subshape in other.subshapes:
+                if subshape not in self:
+                    return False
+            return True
+        # Connected shape
+        return (~self) in (~other)
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
