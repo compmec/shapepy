@@ -6,7 +6,7 @@ Which are in fact positive shapes defined only by one jordan curve
 import pytest
 
 from compmec.shape.primitive import Primitive
-from compmec.shape.shape import DisjointShape, EmptyShape
+from compmec.shape.shape import ConnectedShape, DisjointShape, EmptyShape
 
 
 @pytest.mark.order(9)
@@ -120,6 +120,21 @@ class TestCompleteInside:
         assert big_square | small_square == big_square
         assert big_square | big_square == big_square
 
+        assert (~small_square) | small_square is Primitive.whole
+        assert small_square | (~small_square) is Primitive.whole
+        assert (~small_square) | big_square is Primitive.whole
+        assert big_square | (~small_square) is Primitive.whole
+        assert (~big_square) | big_square is Primitive.whole
+        assert big_square | (~big_square) is Primitive.whole
+        good = DisjointShape([small_square, ~big_square])
+        assert small_square | (~big_square) == good
+        assert (~big_square) | small_square == good
+
+        assert (~small_square) | (~small_square) == ~small_square
+        assert (~small_square) | (~big_square) == ~small_square
+        assert (~big_square) | (~small_square) == ~small_square
+        assert (~big_square) | (~big_square) == ~big_square
+
     @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestCompleteInside::test_begin"])
@@ -134,6 +149,21 @@ class TestCompleteInside:
         assert small_square & big_square == small_square
         assert big_square & small_square == small_square
         assert big_square & big_square == big_square
+
+        assert (~small_square) & small_square is Primitive.empty
+        assert small_square & (~small_square) is Primitive.empty
+        good = ConnectedShape([big_square, ~small_square])
+        assert (~small_square) & big_square == good
+        assert big_square & (~small_square) == good
+        assert (~big_square) & big_square is Primitive.empty
+        assert big_square & (~big_square) is Primitive.empty
+        assert small_square & (~big_square) is Primitive.empty
+        assert (~big_square) & small_square is Primitive.empty
+
+        assert (~small_square) & (~small_square) == ~small_square
+        assert (~small_square) & (~big_square) == ~big_square
+        assert (~big_square) & (~small_square) == ~big_square
+        assert (~big_square) & (~big_square) == ~big_square
 
     @pytest.mark.order(9)
     @pytest.mark.dependency(
