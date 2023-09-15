@@ -462,6 +462,9 @@ class BaseShape(object):
     def __mul__(self, value: BaseShape):
         return self & value
 
+    def __sub__(self, value: BaseShape):
+        return self & (~value)
+
     def __xor__(self, other: BaseShape):
         return (self - other) | (other - self)
 
@@ -614,19 +617,6 @@ class FiniteShape(BaseShape):
             return self.copy()
         jordansa = tuple(self.jordans)
         jordansb = tuple(other.jordans)
-        new_jordans = FollowPath.intersection_path(jordansa, jordansb)
-        if len(new_jordans) == 0:
-            return EmptyShape()
-        return ShapeFromJordans(new_jordans)
-
-    def __sub__(self, other: BaseShape) -> BaseShape:
-        assert isinstance(other, BaseShape)
-        if isinstance(other, WholeShape):
-            return EmptyShape()
-        if isinstance(other, EmptyShape):
-            return self.copy()
-        jordansa = tuple(self.jordans)
-        jordansb = tuple(~jordan for jordan in other.jordans)
         new_jordans = FollowPath.intersection_path(jordansa, jordansb)
         if len(new_jordans) == 0:
             return EmptyShape()
