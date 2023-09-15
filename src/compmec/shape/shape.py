@@ -63,7 +63,7 @@ class FollowPath:
         assert isinstance(jordana, JordanCurve)
         assert isinstance(jordanb, JordanCurve)
         all_positions = (set(), set())
-        inters = jordana.intersection(jordanb, end_points=False)
+        inters = jordana.intersection(jordanb, end_points=False, equal_beziers=False)
         for ai, bj, ui, vj in inters:
             all_positions[0].add((ai, ui))
             all_positions[1].add((bj, vj))
@@ -804,6 +804,10 @@ class ConnectedShape(FiniteShape):
         if abs(float(self) - float(other)) > 1e-6:
             return False
         return True
+
+    def __invert__(self) -> DisjointShape:
+        simples = [~simple for simple in self.subshapes]
+        return DisjointShape(simples)
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:

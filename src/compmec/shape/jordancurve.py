@@ -14,167 +14,6 @@ from compmec.shape.curve import IntegratePlanar, PlanarCurve
 from compmec.shape.polygon import Box, Point2D
 
 
-class IntersectionBeziers:
-    tol_du = 1e-9  # tolerance convergence
-    tol_norm = 1e-9  # tolerance convergence
-    max_denom = math.ceil(1 / tol_du)
-
-    @staticmethod
-    def is_equal_controlpoints(cptsa: Tuple[Point2D], cptsb: Tuple[Point2D]) -> bool:
-        if len(cptsa) != len(cptsb):
-            return False
-        for pta, ptb in zip(cptsa, cptsb):
-            if pta != ptb:
-                return False
-        return True
-
-    @staticmethod
-    def eval_bezier(degree: int, node: float) -> Tuple[float]:
-        """
-        Returns [B_p(u)] = [B_{0p}(u) ... B_{pp}(u)]
-        With
-            B_{ip} = binom(p, i) * (1-u)^{p-i} * u^i
-        """
-        comp = 1 - node
-        result = [0] * (degree + 1)
-        for i in range(degree + 1):
-            result[i] = math.comb(degree, i) * comp ** (degree - i) * node**i
-        return tuple(result)
-
-    @staticmethod
-    def matrix_derivate(degree: int) -> Tuple[Tuple[int]]:
-        """
-        Let A(u) be a nonrational-bezier curve defined by
-            A(u) = sum_{i=0}^{p} B_{ip}(u) * P_{i}
-        We want to compute the derivative A'(u)
-
-        This function returns a matrix [M] such
-            A'(u) = sum_{i=0}^{p} B_{ip}(u) * Q_{i}
-            Q_{i} = sum_{j=0}^{p} M_{i,j} * P_j
-
-        Where
-            B_{ip}(u) = binom(p, i) * (1-u)^{p-i} * u^i
-        """
-        matrix = np.zeros((degree + 1, degree + 1), dtype="int16")
-        for i in range(degree):
-            matrix[i, i + 1] = degree - i
-            matrix[i + 1, i] = -(i + 1)
-        for i in range(degree + 1):
-            matrix[i, i] = 2 * i - degree
-        return tuple([tuple(line) for line in matrix])
-
-    @staticmethod
-    def intersection_bezier(
-        cptsa: Tuple[Point2D], cptsb: Tuple[Point2D]
-    ) -> Tuple[Tuple[float]]:
-        """
-        Returns the intersection parameters of the intersection of two bezier curves.
-
-        Given two bezier curves A(u) and B(v), this function returns the pairs (u*, t*)
-        such A(u*) = B(v*). As there can be many intersections, returns
-            [(u0*, t0*), ..., (un*, tn*)]
-
-        If one curve is equal to another, returns a empty tuple
-        if there's no intersection, returns a empty tuple
-        """
-        tol_du = IntersectionBeziers.tol_du
-        if IntersectionBeziers.is_equal_controlpoints(cptsa, cptsb):
-            return ((None, None),)
-        dega = len(cptsa) - 1
-        degb = len(cptsb) - 1
-        dmata = np.array(IntersectionBeziers.matrix_derivate(dega))
-        dmatb = np.array(IntersectionBeziers.matrix_derivate(degb))
-
-        cptsa = np.array(cptsa)
-        cptsb = np.array(cptsb)
-        dcptsa = dmata @ cptsa
-        ddcptsa = dmata @ dcptsa
-        dcptsb = dmatb @ cptsb
-        ddcptsb = dmatb @ dcptsb
-
-        pts_ada = np.tensordot(cptsa, dcptsa, axes=0)
-        pts_adb = np.tensordot(cptsa, dcptsb, axes=0)
-        pts_bda = np.tensordot(cptsb, dcptsa, axes=0)
-        pts_bdb = np.tensordot(cptsb, dcptsb, axes=0)
-        pts_adda = np.tensordot(cptsa, ddcptsa, axes=0)
-        pts_addb = np.tensordot(cptsa, ddcptsb, axes=0)
-        pts_bdda = np.tensordot(cptsb, ddcptsa, axes=0)
-        pts_bddb = np.tensordot(cptsb, ddcptsb, axes=0)
-        pts_dada = np.tensordot(dcptsa, dcptsa, axes=0)
-        pts_dadb = np.tensordot(dcptsa, dcptsb, axes=0)
-        pts_dbdb = np.tensordot(dcptsb, dcptsb, axes=0)
-
-        nptas, nptbs = dega + 3, degb + 3
-        usample = [Fraction(i) / nptbs for i in range(nptas + 1)]
-        vsample = [Fraction(i) / nptbs for i in range(nptbs + 1)]
-
-        intersections = set()
-        for i in range(nptas + 1):
-            for j in range(nptbs + 1):
-                ui = usample[i]
-                vj = vsample[j]
-                # Starts newton iteration
-                for k in range(10):  # Number of newton iterations
-                    aui = IntersectionBeziers.eval_bezier(dega, ui)
-                    bvj = IntersectionBeziers.eval_bezier(degb, vj)
-                    ada = aui @ pts_ada @ aui
-                    adb = aui @ pts_adb @ bvj
-                    bda = bvj @ pts_bda @ aui
-                    bdb = bvj @ pts_bdb @ bvj
-                    adda = aui @ pts_adda @ aui
-                    addb = aui @ pts_addb @ bvj
-                    bdda = bvj @ pts_bdda @ aui
-                    bddb = bvj @ pts_bddb @ bvj
-                    dada = aui @ pts_dada @ aui
-                    dadb = aui @ pts_dadb @ bvj
-                    dbdb = bvj @ pts_dbdb @ bvj
-
-                    mat00 = dbdb + bddb - addb
-                    mat11 = dada + adda - bdda
-                    vec0 = ada - bda
-                    vec1 = bdb - adb
-                    denom = mat00 * mat11 - dadb**2
-                    if denom == 0:
-                        ui, vj = float("inf"), float("inf")
-                        break
-                    oldui = ui
-                    oldvj = vj
-                    ui -= (mat00 * vec0 + dadb * vec1) / denom
-                    vj -= (dadb * vec0 + mat11 * vec1) / denom
-                    if isinstance(ui, Fraction):
-                        ui = ui.limit_denominator(IntersectionBeziers.max_denom)
-                    if isinstance(vj, Fraction):
-                        vj = vj.limit_denominator(IntersectionBeziers.max_denom)
-                    ui = min(1, max(0, ui))
-                    vj = min(1, max(0, vj))
-
-                    if abs(oldui - ui) > tol_du:
-                        continue
-                    if abs(oldvj - vj) > tol_du:
-                        continue
-                    break
-                if ui < 0 or 1 < ui or vj < 0 or 1 < vj:
-                    continue
-                intersections.add((ui, vj))
-        filter_inters = set()
-        for ui, vj in intersections:
-            for uk, vl in filter_inters:
-                if abs(ui - uk) < tol_du and abs(vj - vl) < tol_du:
-                    break
-            else:
-                filter_inters.add((ui, vj))
-        for ui, vj in tuple(filter_inters):
-            aui = IntersectionBeziers.eval_bezier(dega, ui)
-            bvj = IntersectionBeziers.eval_bezier(degb, vj)
-            pta = aui @ cptsa
-            ptb = bvj @ cptsb
-            norm = abs(pta - ptb)
-            if norm > IntersectionBeziers.tol_norm:
-                filter_inters.remove((ui, vj))
-        filter_inters = tuple(filter_inters)
-        return filter_inters
-
-
 class IntegrateJordan:
     @staticmethod
     def horizontal(
@@ -356,7 +195,7 @@ class JordanCurve:
                 try:
                     start_point = seg0.ctrlpoints[0]
                     end_point = seg1.ctrlpoints[-1]
-                    segment = PlanarCurve.unite([seg0, seg1])
+                    segment = seg0 | seg1
                     segment.ctrlpoints = (
                         [start_point] + list(segment.ctrlpoints[1:-1]) + [end_point]
                     )
@@ -365,7 +204,7 @@ class JordanCurve:
                     break  # Can unite
                 except ValueError:
                     pass  # Cannot unite
-            else:
+            else:  # Cannot unite more segments
                 break
         self.segments = segments
         return self
@@ -581,6 +420,21 @@ class JordanCurve:
         """
         return self.copy() if float(self) > 0 else (~self)
 
+    def __intersection(
+        self, other: JordanCurve
+    ) -> Tuple[Tuple[int, int, float, float]]:
+        intersections = set()
+        for ai, sbezier in enumerate(self.segments):
+            for bj, obezier in enumerate(other.segments):
+                inters = sbezier & obezier
+                if inters is None:
+                    continue
+                if len(inters) == 0:  # Equal curves
+                    intersections.add((ai, bj, None, None))
+                for ui, vj in inters:
+                    intersections.add((ai, bj, ui, vj))
+        return list(intersections)
+
     def intersection(
         self, other: JordanCurve, equal_beziers: bool = True, end_points: bool = True
     ) -> Tuple[Tuple[int, int, float, float]]:
@@ -595,14 +449,8 @@ class JordanCurve:
         0 <= v0 <= 1
         """
         assert isinstance(other, JordanCurve)
-        bandb = IntersectionBeziers.intersection_bezier
-        intersections = set()
-        for ai, sbezier in enumerate(self.segments):
-            for bj, obezier in enumerate(other.segments):
-                inters = bandb(sbezier.ctrlpoints, obezier.ctrlpoints)
-                for item in inters:
-                    ui, vj = item
-                    intersections.add((ai, bj, ui, vj))
+        intersections = self.__intersection(other)
+        # Filter the values
         if not equal_beziers:
             for ai, bi, ui, vi in tuple(intersections):
                 if ui is None:

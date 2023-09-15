@@ -77,27 +77,17 @@ class BezierCurve(BaseCurve):
         if self.degree > 2:
             raise NotImplementedError
 
-    @classmethod
-    def unite(
-        cls, beziers: Tuple[BezierCurve], tolerance: Optional[float] = 1e-9
-    ) -> BezierCurve:
+    def __or__(self, other: BezierCurve) -> BezierCurve:
         """
         Unite a set of bezier curves
 
         If the error for unite is bigger than tolerance, raises ValueError
         """
-        nbez = len(beziers)
-        if nbez == 1:
-            return beziers[0]
-        if nbez == 2:
-            beziera, bezierb = beziers
-        if nbez != 2:
-            beziera = cls.unite(beziers[: nbez // 2])
-            bezierb = cls.unite(beziers[nbez // 2 :])
-        final_curve = Operations.unite(beziera.ctrlpoints, bezierb.ctrlpoints)
+        assert isinstance(other, BezierCurve)
+        final_curve = Operations.unite(self.ctrlpoints, other.ctrlpoints)
         if final_curve.degree + 1 != final_curve.npts:
             raise ValueError("Union is not a bezier curve!")
-        return cls(final_curve.ctrlpoints)
+        return self.__class__(final_curve.ctrlpoints)
 
     @property
     def degree(self) -> int:
@@ -184,18 +174,64 @@ class PlanarCurve(BaseCurve):
             ctrlpoints[i] = Point2D(point)
         self.__planar = BezierCurve(ctrlpoints)
 
-    @classmethod
-    def unite(
-        cls, planars: Tuple[PlanarCurve], tolerance: Optional[float] = 1e-9
-    ) -> PlanarCurve:
-        assert isinstance(planars, (tuple, list))
-        for planar in planars:
-            assert isinstance(planar, PlanarCurve)
-        assert tolerance > 0
-        all_points = [planar.ctrlpoints for planar in planars]
-        beziers = [BezierCurve(points) for points in all_points]
-        bezier = BezierCurve.unite(beziers, tolerance)
-        return PlanarCurve(bezier.ctrlpoints)
+    def __or__(self, other: PlanarCurve) -> PlanarCurve:
+        """Computes the union of two bezier curves"""
+        assert isinstance(other, PlanarCurve)
+        assert self.degree == other.degree
+        assert self.ctrlpoints[-1] == other.ctrlpoints[0]
+        # Last point of first derivative
+        dapt = self.ctrlpoints[-1] - self.ctrlpoints[-2]
+        # First point of first derivative
+        dbpt = other.ctrlpoints[1] - other.ctrlpoints[0]
+        if abs(dapt.cross(dbpt)) > 1e-6:
+            node = Fraction(1, 2)
+        else:
+            dsumpt = dapt + dbpt
+            denomin = dsumpt.inner(dsumpt)
+            node = dapt.inner(dsumpt) / denomin
+        knotvectora = nurbs.GeneratorKnotVector.bezier(self.degree, Fraction)
+        knotvectora.scale(node)
+        knotvectorb = nurbs.GeneratorKnotVector.bezier(other.degree, Fraction)
+        knotvectorb.scale(1 - node).shift(node)
+        newknotvector = tuple(knotvectora) + tuple(knotvectorb[self.degree + 1 :])
+        finalcurve = nurbs.Curve(newknotvector)
+        finalcurve.ctrlpoints = tuple(self.ctrlpoints) + tuple(other.ctrlpoints)
+        finalcurve.knot_clean((node,))
+        if finalcurve.degree + 1 != finalcurve.npts:
+            raise ValueError("Union is not a bezier curve!")
+        return self.__class__(finalcurve.ctrlpoints)
+
+    def __and__(self, other: PlanarCurve) -> Union[None, Tuple[Tuple[int]]]:
+        """Computes the intersection between two Planar Curves
+
+        Returns None if there's no intersection
+
+        Returns tuple() if curves are equal
+
+        Returns [(a0, b0), (a1, b1), ...]
+        Which self(ai) == other(bi)
+        """
+        if self.box() & other.box() is None:
+            return None
+        if self == other:
+            return tuple()
+        usample = list(nurbs.heavy.NodeSample.closed_linspace(self.npts + 3))
+        vsample = list(nurbs.heavy.NodeSample.closed_linspace(other.npts + 3))
+        pairs = []
+        for i, ui in enumerate(usample):
+            pairs += [(ui, vj) for vj in vsample]
+        pairs = Intersection.bezier_and_bezier(self, other, pairs)
+        pairs.append((0, 0))
+        pairs.append((0, 1))
+        pairs.append((1, 0))
+        pairs.append((1, 1))
+        # Filter values by distance of points
+        tol_norm = 1e-6
+        pairs = Intersection.filter_distance(self, other, pairs, tol_norm)
+        # Filter values by distance abs(ui-uj, vi-vj)
+        tol_du = 1e-6
+        pairs = Intersection.filter_parameters(pairs, tol_du)
+        return tuple(pairs)
 
     def __str__(self) -> str:
         msg = f"Planar curve of degree {self.degree} and "
@@ -353,56 +389,94 @@ class Operations:
         error = tuple(tuple(line) for line in error)
         return matrix, error
 
-    @staticmethod
-    def split(degree: int, node: float) -> Tuple[Tuple[Tuple[float]]]:
-        """Returns two matrices [T1], [T2] to split the curve at node
-
-        A(u) -> C(u) and D(u)
-        A(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-        C(u) = sum_{i=0}^{p} B_{i,p}(u) * Q_i
-        D(u) = sum_{i=0}^{p} B_{i,p}(u) * R_i
-
-        [Q] = [T1] * [P]
-        [R] = [T2] * [P]
-
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    def unite(ptsa: Tuple[Any], ptsb: Tuple[Any]) -> nurbs.Curve:
-        """Unite two bezier curves into a single spline curve"""
-        degreea = len(ptsa) - 1
-        degreeb = len(ptsb) - 1
-        assert degreea == degreeb
-        dapt = ptsa[-1] - ptsa[-2]  # Last point of first derivative
-        dbpt = ptsb[1] - ptsb[0]  # First point of first derivative
-        if abs(dapt.cross(dbpt)) > 1e-6:
-            node = Fraction(1, 2)
-        else:
-            dsumpt = dapt + dbpt
-            denomin = dsumpt.inner(dsumpt)
-            node = dapt.inner(dsumpt) / denomin
-        knotvectora = nurbs.GeneratorKnotVector.bezier(degreea, Fraction)
-        knotvectora.scale(node)
-        knotvectorb = nurbs.GeneratorKnotVector.bezier(degreea, Fraction)
-        knotvectorb.scale(1 - node).shift(node)
-        newknotvector = tuple(knotvectora) + tuple(knotvectorb[degreea + 1 :])
-        finalcurve = nurbs.Curve(newknotvector)
-        finalcurve.ctrlpoints = tuple(ptsa) + tuple(ptsb)
-        finalcurve.knot_clean((node,))
-        return finalcurve
-
 
 class Intersection:
+    tol_du = 1e-9  # tolerance convergence
+    tol_norm = 1e-9  # tolerance convergence
+    max_denom = math.ceil(1 / tol_du)
+
     @staticmethod
     def bezier_and_bezier(
-        curvea: PlanarCurve, curveb: PlanarCurve
+        curvea: PlanarCurve, curveb: PlanarCurve, pairs: Tuple[Tuple[float]]
     ) -> Tuple[Tuple[float]]:
-        """Finds the pairs (u*, v*) such A(u*) = B(v*)
+        """Finds all the pairs (u*, v*) such A(u*) = B(v*)
 
         Uses newton's method
         """
-        raise NotImplementedError
+        dcurvea = curvea.derivate()
+        ddcurvea = dcurvea.derivate()
+        dcurveb = curveb.derivate()
+        ddcurveb = dcurveb.derivate()
+
+        # Start newton iteration
+        for k in range(10):  # Number of newton iteration
+            new_pairs = set()
+            for u, v in pairs:
+                ssu = curvea(u)
+                dsu = dcurvea(u)
+                ddu = ddcurvea(u)
+                oov = curveb(v)
+                dov = dcurveb(v)
+                ddv = ddcurveb(v)
+
+                dif = ssu - oov
+                vect0 = dsu.inner(dif)
+                vect1 = -dov.inner(dif)
+                mat00 = dsu.inner(dsu) + ddu.inner(dif)
+                mat01 = -dsu.inner(dov)
+                mat11 = dov.inner(dov) - ddv.inner(dif)
+                deter = mat00 * mat11 - mat01**2
+                if abs(deter) < 1e-6:
+                    continue
+                newu = u - (mat11 * vect0 - mat01 * vect1) / deter
+                newv = v - (mat00 * vect1 - mat01 * vect0) / deter
+                pair = (min(1, max(0, newu)), min(1, max(0, newv)))
+                new_pairs.add(pair)
+            pairs = list(new_pairs)
+            for i, (ui, vi) in enumerate(pairs):
+                if isinstance(ui, Fraction):
+                    ui = ui.limit_denominator(10000)
+                if isinstance(vi, Fraction):
+                    vi = vi.limit_denominator(10000)
+                pairs[i] = (ui, vi)
+        return pairs
+
+    @staticmethod
+    def filter_distance(
+        curvea: PlanarCurve,
+        curveb: PlanarCurve,
+        pairs: Tuple[Tuple[float]],
+        max_dist: float,
+    ) -> Tuple[Tuple[float]]:
+        pairs = list(pairs)
+        index = 0
+        while index < len(pairs):
+            ui, vi = pairs[index]
+            diff = curvea(ui) - curveb(vi)
+            if abs(diff) < max_dist:
+                index += 1
+            else:
+                pairs.pop(index)
+        return tuple(pairs)
+
+    @staticmethod
+    def filter_parameters(
+        pairs: Tuple[Tuple[float]], max_dist: float
+    ) -> Tuple[Tuple[float]]:
+        pairs = list(pairs)
+        index = 0
+        while index < len(pairs):
+            ui, vi = pairs[index]
+            j = index + 1
+            while j < len(pairs):
+                uj, vj = pairs[j]
+                dist2 = (ui - uj) ** 2 + (vi - vj) ** 2
+                if dist2 < max_dist**2:
+                    pairs.pop(j)
+                else:
+                    j += 1
+            index += 1
+        return tuple(pairs)
 
 
 class Projection:
