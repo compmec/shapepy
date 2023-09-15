@@ -5,6 +5,7 @@ For the moment, it only uses polygon shapes:
     retangular is a 4-side shape while a circle is a polygon with many sides
 """
 from compmec.shape.jordancurve import JordanCurve
+from compmec.shape.curve import PlanarCurve
 from compmec.shape.polygon import Point2D
 from compmec.shape.primitive import Primitive
 from compmec.shape.shape import SimpleShape

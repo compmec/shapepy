@@ -4,7 +4,6 @@ is in fact, stores a list of spline-curves.
 """
 from __future__ import annotations
 
-import math
 from fractions import Fraction
 from typing import Optional, Tuple, Union
 
@@ -15,24 +14,6 @@ from compmec.shape.polygon import Box, Point2D
 
 
 class IntegrateJordan:
-    @staticmethod
-    def horizontal(
-        jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
-    ):
-        """
-        Computes the integral I
-
-        I = int x^expx * y^expy * dx
-        """
-        assert isinstance(jordan, JordanCurve)
-        assert isinstance(expx, int)
-        assert isinstance(expy, int)
-        assert nnodes is None or isinstance(nnodes, int)
-        total = 0
-        for bezier in jordan.segments:
-            total += IntegratePlanar.horizontal(bezier, expx, expy, nnodes)
-        return total
-
     @staticmethod
     def vertical(
         jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
@@ -94,9 +75,8 @@ class IntegrateJordan:
     @staticmethod
     def winding_number(
         jordan: JordanCurve,
+        center: Optional[Point2D] = (0.0, 0.0),
         nnodes: Optional[int] = None,
-        *,
-        center: Optional[Point2D] = None,
     ) -> Union[int, float]:
         """Computes the winding number from jordan curve
 
@@ -104,7 +84,7 @@ class IntegrateJordan:
         """
         wind = 0
         for bezier in jordan.segments:
-            wind += IntegratePlanar.winding_number(bezier, nnodes, center=center)
+            wind += IntegratePlanar.winding_number(bezier, center, nnodes)
         return round(wind)
 
 

@@ -597,37 +597,6 @@ class IntegratePlanar:
     """
 
     @staticmethod
-    def horizontal(
-        curve: PlanarCurve,
-        expx: Optional[int] = 0,
-        expy: Optional[int] = 0,
-        nnodes: Optional[int] = None,
-    ):
-        """Computes the integral I
-
-        I = int_C x^expx * y^expy * dx
-
-        """
-        assert isinstance(curve, PlanarCurve)
-        assert isinstance(expx, int)
-        assert isinstance(expy, int)
-        if nnodes is None:
-            nnodes = 3 + expx + expy + curve.degree
-        assert isinstance(nnodes, int)
-        assert nnodes >= 0
-        assert expx >= 0
-        assert expy >= 0
-        dcurve = curve.derivate()
-        nodes = nurbs.heavy.NodeSample.open_linspace(nnodes)
-        poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
-        points = curve(nodes)
-        xvals = tuple(point[0] ** expx for point in points)
-        yvals = tuple(point[1] ** expy for point in points)
-        dxvals = tuple(point[0] for point in dcurve(nodes))
-        funcvals = tuple(map(np.prod, (xvals, yvals, dxvals)))
-        return np.inner(poids, funcvals)
-
-    @staticmethod
     def vertical(
         curve: PlanarCurve,
         expx: Optional[int] = 0,
@@ -707,13 +676,10 @@ class IntegratePlanar:
 
     @staticmethod
     def winding_number_linear(
-        pointa: Point2D, pointb: Point2D, *, center: Optional[Point2D] = None
+        pointa: Point2D, pointb: Point2D, center: Point2D
     ) -> float:
-        if center is not None:
-            pointa = pointa - center
-            pointb = pointb - center
-        anglea = np.arctan2(float(pointa[1]), float(pointa[0]))
-        angleb = np.arctan2(float(pointb[1]), float(pointb[0]))
+        anglea = np.arctan2(float(pointa[1] - center[1]), float(pointa[0] - center[0]))
+        angleb = np.arctan2(float(pointb[1] - center[1]), float(pointb[0] - center[0]))
         wind = (angleb - anglea) / math.tau
         if abs(wind) < 0.5:
             return wind
@@ -722,33 +688,17 @@ class IntegratePlanar:
     @staticmethod
     def winding_number(
         curve: PlanarCurve,
+        center: Optional[Point2D] = (0.0, 0.0),
         nnodes: Optional[int] = None,
-        *,
-        center: Optional[Point2D] = None,
     ) -> float:
         """
         Computes the integral for a bezier curve of given control points
         """
         assert isinstance(curve, PlanarCurve)
-        if nnodes is None:
-            nnodes = 5 + curve.degree
-        assert isinstance(nnodes, int)
-        if curve.degree == 1:
-            return IntegratePlanar.winding_number_linear(
-                *curve.ctrlpoints, center=center
-            )
-        curvex = BezierCurve(point[0] for point in curve.ctrlpoints)
-        curvey = BezierCurve(point[1] for point in curve.ctrlpoints)
-        dcurvex = curvex.derivate()
-        dcurvey = curvey.derivate()
-        nodes = nurbs.heavy.NodeSample.chebyshev(nnodes)
-        poids = nurbs.heavy.IntegratorArray.chebyshev(nnodes)
-        xvals = np.array(curvex(nodes))
-        yvals = np.array(curvey(nodes))
-        dxvals = np.array(dcurvex(nodes))
-        dyvals = np.array(dcurvey(nodes))
-        numer = xvals * dyvals - yvals * dxvals
-        denom = xvals**2 + yvals**2
-        funcvals = tuple(numer / denom)
-        integral = np.inner(poids, funcvals)
-        return integral / math.tau
+        nnodes = curve.npts if nnodes is None else nnodes
+        nodes = nurbs.heavy.NodeSample.closed_linspace(nnodes)
+        total = 0
+        for pair_node in zip(nodes[:-1], nodes[1:]):
+            pointa, pointb = curve.eval(pair_node)
+            total += IntegratePlanar.winding_number_linear(pointa, pointb, center)
+        return total
