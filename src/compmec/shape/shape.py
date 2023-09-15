@@ -588,6 +588,9 @@ class FiniteShape(BaseShape):
             self.__box = box
         return self.__box
 
+    def __invert__(self) -> BaseShape:
+        return ShapeFromJordans(tuple(~jordan for jordan in self.jordans))
+
     def __or__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
         if isinstance(other, WholeShape):
@@ -662,16 +665,16 @@ class SimpleShape(FiniteShape):
             return False
         return self.jordans[0] == other.jordans[0]
 
-    def __contains__(self, object: Union[Point2D, JordanCurve, BaseShape]) -> bool:
-        if isinstance(object, BaseShape):
-            return self.contains_shape(object)
-        if isinstance(object, JordanCurve):
-            return self.contains_jordan(object)
-        point = Point2D(object)
+    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
+        if isinstance(other, BaseShape):
+            return self.contains_shape(other)
+        if isinstance(other, JordanCurve):
+            return self.contains_jordan(other)
+        point = Point2D(other)
         return self.contains_point(point)
 
     def __invert__(self) -> SimpleShape:
-        return self.__class__(~self.jordans[0])
+        return self.__class__(self.__inversejordan)
 
     @property
     def jordans(self) -> JordanCurve:
@@ -680,7 +683,14 @@ class SimpleShape(FiniteShape):
     def __set_jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
         self.__jordancurve = other.copy()
+        self.__inversejordan = ~other
         self.__area = IntegrateShape.area(self)
+
+    def invert(self) -> SimpleShape:
+        jordan = self.__jordancurve
+        self.__jordancurve = self.__inversejordan
+        self.__inversejordan = jordan
+        return self
 
     def contains_point(self, point: Point2D) -> bool:
         """
@@ -714,10 +724,21 @@ class SimpleShape(FiniteShape):
         if isinstance(other, SimpleShape):
             return self.__contains_simple(other)
         if isinstance(other, ConnectedShape):
-            assert (~self) in (~other)
+            # cap S_i in S_j = any_i (bar S_j in bar S_i)
+            contains = False
+            self.invert()
+            for subshape in other.subshapes:
+                subshape.invert()
+                if subshape in self:
+                    contains = True
+                subshape.invert()
+                if contains:
+                    break
+            self.invert()
+            return contains
         # Disjoint shape
         for subshape in other.subshapes:
-            if not self.contains_shape(subshape):
+            if subshape not in self:
                 return False
         return True
 
@@ -737,7 +758,8 @@ class SimpleShape(FiniteShape):
             return False
         if areaA > 0:
             return True
-        # Maybe an error happens here
+        # If simple shape is not a square
+        # may happens error here
         return True
 
 
@@ -759,38 +781,11 @@ class ConnectedShape(FiniteShape):
         super().__init__()
         self.subshapes = subshapes
 
-    def contains_point(self, point: Point2D) -> bool:
-        point = Point2D(point)
+    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
         for shape in self.subshapes:
-            if not shape.contains_point(point):
+            if other not in shape:
                 return False
         return True
-
-    def contains_jordan(self, jordan: JordanCurve) -> bool:
-        assert isinstance(jordan, JordanCurve)
-        for point in jordan.points(1):
-            if not self.contains_point(point):
-                return False
-        return True
-
-    def contains_shape(self, object: BaseShape) -> bool:
-        assert isinstance(object, BaseShape)
-        if isinstance(object, EmptyShape):
-            return True
-        if isinstance(object, WholeShape):
-            return False
-        for shape in self.subshapes:
-            if object not in shape:
-                return False
-        return True
-
-    def __contains__(self, object: Union[Point2D, JordanCurve, BaseShape]) -> bool:
-        if isinstance(object, BaseShape):
-            return self.contains_shape(object)
-        if isinstance(object, JordanCurve):
-            return self.contains_jordan(object)
-        point = Point2D(object)
-        return self.contains_point(point)
 
     def __float__(self) -> float:
         return sum(map(float, self.subshapes))
@@ -809,11 +804,6 @@ class ConnectedShape(FiniteShape):
         if abs(float(self) - float(other)) > 1e-6:
             return False
         return True
-
-    def __invert__(self) -> SimpleShape:
-        jordans = tuple(~jordan for jordan in self.jordans)
-        simples = map(SimpleShape, jordans)
-        return DisjointShape(simples)
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
@@ -858,13 +848,13 @@ class DisjointShape(FiniteShape):
             total += float(subshape)
         return float(total)
 
-    def __contains__(self, object: Union[BaseShape, JordanCurve, Point2D]) -> bool:
-        if isinstance(object, BaseShape):
-            return self.contains_shape(object)
-        if isinstance(object, JordanCurve):
-            return self.contains_jordan(object)
-        point = Point2D(object)
-        return self.contains_point(point)
+    def __contains__(self, other: Union[BaseShape, JordanCurve, Point2D]) -> bool:
+        if isinstance(other, BaseShape):
+            return self.contains_shape(other)
+        for subshape in self.subshapes:
+            if other in subshape:
+                return True
+        return False
 
     def __eq__(self, other: BaseShape):
         assert isinstance(other, BaseShape)
@@ -893,27 +883,13 @@ class DisjointShape(FiniteShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def contains_point(self, point: Point2D) -> bool:
-        point = Point2D(point)
-        for subshape in self.subshapes:
-            if point in subshape:
-                return True
-        return False
-
-    def contains_jordan(self, jordan: JordanCurve) -> bool:
-        assert isinstance(jordan, JordanCurve)
-        for subshape in self.subshapes:
-            if jordan in subshape:
-                return True
-        return False
-
-    def contains_shape(self, other: BaseShape) -> bool:
-        assert isinstance(other, BaseShape)
+    def contains_shape(self, other: FiniteShape) -> bool:
+        """Checks if 'other' is inside the disjoint shape"""
         if isinstance(other, EmptyShape):
             return True
         if isinstance(other, WholeShape):
             return False
-        if isinstance(other, SimpleShape):
+        if isinstance(other, (SimpleShape, ConnectedShape)):
             for subshape in self.subshapes:
                 if other in subshape:
                     return True
@@ -923,8 +899,6 @@ class DisjointShape(FiniteShape):
                 if subshape not in self:
                     return False
             return True
-        # Connected shape
-        return (~self) in (~other)
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
@@ -987,8 +961,6 @@ def DivideConnecteds(
     else:
         connected = ConnectedShape(connected)
     return (connected,) + DivideConnecteds(externals)
-
-    return result + DivideConnecteds(external)
 
 
 def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
