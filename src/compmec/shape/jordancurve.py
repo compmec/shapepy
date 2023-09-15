@@ -93,7 +93,10 @@ class IntegrateJordan:
 
     @staticmethod
     def winding_number(
-        jordan: JordanCurve, nnodes: Optional[int] = None
+        jordan: JordanCurve,
+        nnodes: Optional[int] = None,
+        *,
+        center: Optional[Point2D] = None,
     ) -> Union[int, float]:
         """Computes the winding number from jordan curve
 
@@ -101,7 +104,7 @@ class IntegrateJordan:
         """
         wind = 0
         for bezier in jordan.segments:
-            wind += IntegratePlanar.winding_number(bezier, nnodes)
+            wind += IntegratePlanar.winding_number(bezier, nnodes, center=center)
         return round(wind)
 
 

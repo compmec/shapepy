@@ -706,7 +706,12 @@ class IntegratePlanar:
         return IntegratePlanar.vertical(curve, 1, 0, nnodes)
 
     @staticmethod
-    def winding_number_linear(pointa: Point2D, pointb: Point2D) -> float:
+    def winding_number_linear(
+        pointa: Point2D, pointb: Point2D, *, center: Optional[Point2D] = None
+    ) -> float:
+        if center is not None:
+            pointa = pointa - center
+            pointb = pointb - center
         anglea = np.arctan2(float(pointa[1]), float(pointa[0]))
         angleb = np.arctan2(float(pointb[1]), float(pointb[0]))
         wind = (angleb - anglea) / math.tau
@@ -715,7 +720,12 @@ class IntegratePlanar:
         return wind - 1 if wind > 0 else wind + 1
 
     @staticmethod
-    def winding_number(curve: PlanarCurve, nnodes: Optional[int] = None) -> float:
+    def winding_number(
+        curve: PlanarCurve,
+        nnodes: Optional[int] = None,
+        *,
+        center: Optional[Point2D] = None,
+    ) -> float:
         """
         Computes the integral for a bezier curve of given control points
         """
@@ -724,7 +734,9 @@ class IntegratePlanar:
             nnodes = 5 + curve.degree
         assert isinstance(nnodes, int)
         if curve.degree == 1:
-            return IntegratePlanar.winding_number_linear(*curve.ctrlpoints)
+            return IntegratePlanar.winding_number_linear(
+                *curve.ctrlpoints, center=center
+            )
         curvex = BezierCurve(point[0] for point in curve.ctrlpoints)
         curvey = BezierCurve(point[1] for point in curve.ctrlpoints)
         dcurvex = curvex.derivate()

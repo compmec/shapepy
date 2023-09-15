@@ -496,7 +496,7 @@ class TestSplitUnite:
         assert curvea == PlanarCurve([(0, 0), (half, 0)])
         assert curveb == PlanarCurve([(half, 0), (1, 0)])
 
-        test = PlanarCurve.unite([curvea, curveb])
+        test = curvea | curveb
         assert test == curve
 
     @pytest.mark.order(3)
