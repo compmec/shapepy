@@ -447,9 +447,12 @@ class TestTwoDisjHollowSquares:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_and(self):
-        square = Primitive.square
-        left = square(2, (-2, 0)) - square(1, (-2, 0))
-        right = square(2, (2, 0)) - square(1, (2, 0))
+        left_big = Primitive.square(side=2, center=(-2, 0))
+        left_sma = Primitive.square(side=1, center=(-2, 0))
+        right_big = Primitive.square(side=2, center=(2, 0))
+        right_sma = Primitive.square(side=1, center=(2, 0))
+        left = left_big - left_sma
+        right = right_big - right_sma
         assert float(left) > 0
         assert float(right) > 0
 
@@ -459,16 +462,21 @@ class TestTwoDisjHollowSquares:
         assert right & (~left) == right
         assert (~left) & right == right
         assert (~right) & left == left
-        assert (~left) & (~right) == ConnectedShape([~left, ~right])
-        assert (~right) & (~left) == ConnectedShape([~left, ~right])
+        external = ConnectedShape([~left_big, ~right_big])
+        good = DisjointShape([left_sma, right_sma, external])
+        assert (~left) & (~right) == good
+        assert (~right) & (~left) == good
 
     @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_sub(self):
-        square = Primitive.square
-        left = square(2, (-2, 0)) - square(1, (-2, 0))
-        right = square(2, (2, 0)) - square(1, (2, 0))
+        left_big = Primitive.square(side=2, center=(-2, 0))
+        left_sma = Primitive.square(side=1, center=(-2, 0))
+        right_big = Primitive.square(side=2, center=(2, 0))
+        right_sma = Primitive.square(side=1, center=(2, 0))
+        left = left_big - left_sma
+        right = right_big - right_sma
         assert float(left) > 0
         assert float(right) > 0
 
@@ -476,8 +484,10 @@ class TestTwoDisjHollowSquares:
         assert right - left == right
         assert left - (~right) is EmptyShape()
         assert right - (~left) is EmptyShape()
-        assert (~left) - right == ConnectedShape([~left, ~right])
-        assert (~right) - left == ConnectedShape([~left, ~right])
+        external = ConnectedShape([~left_big, ~right_big])
+        good = DisjointShape([left_sma, right_sma, external])
+        assert (~left) & (~right) == good
+        assert (~right) & (~left) == good
         assert (~left) - (~right) == right
         assert (~right) - (~left) == left
 
@@ -485,18 +495,23 @@ class TestTwoDisjHollowSquares:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_xor(self):
-        square = Primitive.square
-        left = square(2, (-2, 0)) - square(1, (-2, 0))
-        right = square(2, (2, 0)) - square(1, (2, 0))
+        left_big = Primitive.square(side=2, center=(-2, 0))
+        left_sma = Primitive.square(side=1, center=(-2, 0))
+        right_big = Primitive.square(side=2, center=(2, 0))
+        right_sma = Primitive.square(side=1, center=(2, 0))
+        left = left_big - left_sma
+        right = right_big - right_sma
         assert float(left) > 0
         assert float(right) > 0
 
         assert left ^ right == DisjointShape([left, right])
         assert right ^ left == DisjointShape([left, right])
-        assert left ^ (~right) == ConnectedShape([~left, ~right])
-        assert right ^ (~left) == ConnectedShape([~left, ~right])
-        assert (~left) ^ right == ConnectedShape([~left, ~right])
-        assert (~right) ^ left == ConnectedShape([~left, ~right])
+        external = ConnectedShape([~left_big, ~right_big])
+        good = DisjointShape([left_sma, right_sma, external])
+        assert left ^ (~right) == good
+        assert right ^ (~left) == good
+        assert (~left) ^ right == good
+        assert (~right) ^ left == good
         assert (~left) ^ (~right) == DisjointShape([left, right])
         assert (~right) ^ (~left) == DisjointShape([left, right])
 
