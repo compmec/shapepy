@@ -6,6 +6,7 @@ For the moment, it only uses polygon shapes:
 """
 from compmec.shape.curve import IntegratePlanar, PlanarCurve
 from compmec.shape.jordancurve import IntegrateJordan, JordanCurve
+from compmec.shape.plot import ShapePloter
 from compmec.shape.polygon import Point2D, Segment
 from compmec.shape.primitive import Primitive
 from compmec.shape.shape import (
