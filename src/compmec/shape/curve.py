@@ -239,7 +239,7 @@ class PlanarCurve(BaseCurve):
         return msg
 
     def __repr__(self) -> str:
-        msg = f"PlanarCurve (deg {self.degree}, npts {self.npts})"
+        msg = f"PlanarCurve (deg {self.degree})"
         return msg
 
     def __eq__(self, other: PlanarCurve) -> bool:

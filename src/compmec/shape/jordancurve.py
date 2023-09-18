@@ -80,7 +80,7 @@ class IntegrateJordan:
     ) -> Union[int, float]:
         """Computes the winding number from jordan curve
 
-        Returns [-1, 0, or 1]
+        Returns [-1, -0.5, 0, 0.5 or 1]
         """
         wind = 0
         for bezier in jordan.segments:
@@ -99,6 +99,25 @@ class JordanCurve:
 
     @classmethod
     def from_segments(cls, beziers: Tuple[PlanarCurve]) -> JordanCurve:
+        """Initialize a JordanCurve from a list of beziers,
+
+        :param beziers: The list connected planar curves
+        :type beziers: Tuple[PlanarCurve]
+        :return: The created jordan curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import PlanarCurve, JordanCurve
+        >>> segment0 = PlanarCurve([(0, 0), (4, 0)])
+        >>> segment1 = PlanarCurve([(4, 0), (4, 3), (0, 3)])
+        >>> segment2 = PlanarCurve([(0, 3), (0, 0)])
+        >>> JordanCurve.from_segments([segment0, segment1, segment2])
+        Jordan Curve of degree 2 and vertices
+        ((0, 0), (4, 0), (4, 3), (0, 3))
+
+        """
         nbezs = len(beziers)
         for i, bezi in enumerate(beziers):
             j = (i + 1) % nbezs
@@ -111,7 +130,23 @@ class JordanCurve:
 
     @classmethod
     def from_vertices(cls, vertices: Tuple[Point2D]) -> JordanCurve:
-        """Returns a polygonal jordan curve"""
+        """Initialize a polygonal JordanCurve from a list of vertices,
+
+        :param vertices: The list vertices
+        :type vertices: Tuple[Point2D]
+        :return: The created jordan curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> all_ctrlpoints = [(0, 0), (4, 0), (0, 3)]
+        >>> JordanCurve.from_vertices(all_ctrlpoints)
+        Jordan Curve of degree 1 and vertices
+        ((0, 0), (4, 0), (0, 3))
+
+        """
         if isinstance(vertices, str):
             raise TypeError
         vertices = list(vertices)
@@ -128,9 +163,27 @@ class JordanCurve:
 
     @classmethod
     def from_ctrlpoints(cls, all_ctrlpoints: Tuple[Tuple[Point2D]]) -> JordanCurve:
+        """Initialize a JordanCurve from a list of control points,
+
+        :param all_ctrlpoints: The list of bezier control points
+        :type all_ctrlpoints: Tuple[Tuple[Point2D]]
+        :return: The created jordan curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> all_ctrlpoints = [[(0, 0), (4, 0)],
+                              [(4, 0), (4, 3), (0, 3)],
+                              [(0, 3), (0, 0)]]
+        >>> JordanCurve.from_ctrlpoints(all_ctrlpoints)
+        Jordan Curve of degree 2 and vertices
+        ((0, 0), (4, 0), (4, 3), (0, 3))
+
+        """
         if isinstance(all_ctrlpoints, str):
             raise TypeError
-        nbezs = len(all_ctrlpoints)
         beziers = [0] * len(all_ctrlpoints)
         for i, ctrlpoints in enumerate(all_ctrlpoints):
             ctrlpoints = list(ctrlpoints)
@@ -142,12 +195,53 @@ class JordanCurve:
 
     @classmethod
     def from_full_curve(cls, full_curve) -> JordanCurve:
+        """Initialize a JordanCurve from a full curve,
+
+        :param full_curve: The full curve to split. Ideally ``compmec.nurbs.Curve`` instance
+        :type full_curve: Point2D
+        :return: The created jordan curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec import nurbs
+        >>> from compmec.shape import Point2D, JordanCurve
+        >>> knotvector = (0, 0, 0, 0.5, 1, 1, 1)
+        >>> ctrlpoints = [(0, 0), (4, 0), (0, 3), (0, 0)]
+        >>> ctrlpoints = [Point2D(point) for point in ctrlpoints]
+        >>> curve = nurbs.Curve(knotvector, ctrlpoints)
+        >>> jordan = JordanCurve.from_full_curve(curve)
+        >>> print(jordan)
+        Jordan Curve of degree 2 and vertices
+        ((0.0, 0.0), (4.0, 0.0), (2.0, 1.5), (0.0, 3.0))
+
+        """
         assert full_curve.ctrlpoints[0] == full_curve.ctrlpoints[-1]
         beziers = full_curve.split()
+        for bezier in beziers:
+            bezier.clean()
         all_ctrlpoints = [bezier.ctrlpoints for bezier in beziers]
         return cls.from_ctrlpoints(all_ctrlpoints)
 
     def copy(self) -> JordanCurve:
+        """Returns a copy of the jordan curve.
+        Also copies each point
+
+        :return: The copied jordan curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.copy()
+        Jordan Curve of degree 1 and vertices
+        ((0, 0), (4, 0), (0, 3))
+
+        """
         segments = self.segments
         nsegments = len(segments)
         all_points = []
@@ -166,6 +260,25 @@ class JordanCurve:
         return self.__class__.from_segments(new_segments)
 
     def clean(self) -> JordanCurve:
+        """Clean the jordan curve
+
+        Removes the uncessary nodes from jordan curve,
+        for example, after calling ``split`` function
+
+        :return: The same curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (1, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.clean()
+        Jordan Curve of degree 1 and vertices
+        ((0, 0), (4, 0), (0, 3))
+
+        """
         for segment in self.segments:
             segment.clean()
         segments = list(self.segments)
@@ -193,12 +306,53 @@ class JordanCurve:
         return self
 
     def move(self, point: Point2D) -> JordanCurve:
+        """Translate the entire curve by ``point``
+
+        :param point: The translation amount
+        :type point: Point2D
+        :return: The same curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.move((2, 3))
+        Jordan Curve of degree 1 and vertices
+        ((2, 3), (6, 3), (2, 6))
+
+        """
         point = Point2D(point)
         for vertex in self.vertices:
             vertex.move(point)
         return self
 
     def scale(self, xscale: float, yscale: float) -> JordanCurve:
+        """Scale the entire curve in horizontal and vertical direction
+
+        :param xscale: The scale in horizontal direction
+        :type xscale: float
+        :param yscale: The scale in vertical direction
+        :type yscale: float
+        :return: The same curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.scale(2, 3)
+        Jordan Curve of degree 1 and vertices
+        ((0, 0), (8, 0), (0, 9))
+        >>> jordan.scale(1/2, 1/3)
+        Jordan Curve of degree 1 and vertices
+        ((0.0, 0.0), (4.0, 0.0), (0.0, 3.0))
+
+        """
         float(xscale)
         float(yscale)
         for vertex in self.vertices:
@@ -206,6 +360,30 @@ class JordanCurve:
         return self
 
     def rotate(self, angle: float, degrees: bool = False) -> JordanCurve:
+        """Rotate the entire curve around the origin
+
+        :param angle: The amount to rotate
+        :type angle: float
+        :param degrees: If the angle is in radians (``degrees=False``)
+        :type degrees: bool(, optional)
+        :return: The same curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> import math
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.rotate(math.pi)
+        Jordan Curve of degree 1 and vertices
+        ((-0.0, 0.0), (-4.0, 4.899e-16), (-3.674e-16, -3.0))
+        >>> jordan.rotate(180, degrees=True)
+        Jordan Curve of degree 1 and vertices
+        ((0.0, -0.0), (4.0, -9.797e-16), (7.348e-16, 3.0))
+
+        """
         float(angle)
         if degrees:
             angle *= np.pi / 180
@@ -214,8 +392,25 @@ class JordanCurve:
         return self
 
     def invert(self) -> JordanCurve:
-        """
-        Invert the orientation of a jordan curve
+        """Invert the current curve's orientation, doesn't create a copy
+
+        :return: The same curve
+        :rtype: JordanCurve
+
+        Example use
+        -----------
+
+        >>> from matplotlib import pyplot as plt
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.invert([0, 2], [1/2, 2/3])
+        Jordan Curve of degree 1 and vertices
+        ((0, 0), (0, 3), (4, 0))
+        >>> print(jordan)
+        Jordan Curve of degree 1 and vertices
+        ((0, 0), (0, 3), (4, 0))
+
         """
         segments = self.segments
         nsegs = len(segments)
@@ -226,13 +421,31 @@ class JordanCurve:
         return self
 
     def split(self, indexs: Tuple[int], nodes: Tuple[float]) -> None:
+        """Divides the jordan curve in some nodes
+
+        Given ``indexs = [a0, a1, ..., an]`` and ``nodes = [u0, u1, ..., un]``
+        then for each pair ``(ai, ui)``, split the ``self.segments[ai]`` at ``ui``
+
+        .. note: ``node = 0`` or ``node = 1`` are ignored
+
+        :param indexs: The number of interior points, ``0 <= index < len(segments)``
+        :type indexs: tuple[int]
+        :param nodes: The nodes to split, ``0 <= node <= 1``
+        :type nodes: tuple[float]
+
+        Example use
+        -----------
+
+        >>> from matplotlib import pyplot as plt
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.split([0, 2], [1/2, 2/3])
+        >>> print(jordan)
+        Jordan Curve of degree 1 and vertices
+        ((0, 0), (2.0, 0.0), (4, 0), (0, 3), (0.0, 1.0))
+
         """
-        Divides a list of segments in the respective nodes
-        If node == 0 or node == 1 (extremities), only ignores
-        the given node
-        """
-        assert isinstance(indexs, (tuple, list))
-        assert isinstance(nodes, (tuple, list))
         for index in indexs:
             assert isinstance(index, int)
             assert 0 <= index
@@ -265,13 +478,32 @@ class JordanCurve:
         self.segments = tuple(new_segments)
 
     def points(self, subnpts: Optional[int] = 2) -> Tuple[Point2D]:
-        """
-        Returns a list of points on the boundary.
-        Main reason: plot the jordan
+        """Return sample points in jordan curve for plotting curve
+
         You can choose the precision by changing the ```subnpts``` parameter
 
-        subnpts = 0 -> extremities
-        subnpts = 1 -> extremities + midpoint
+        * subnpts = 0 -> extremities
+
+        * subnpts = 1 -> extremities and midpoint
+
+        :param subnpts: The number of interior points
+        :type subnpts: int(, optional)
+        :return: Sampled points in jordan curve
+        :rtype: tuple[Point2D]
+
+        Example use
+        -----------
+
+        >>> from matplotlib import pyplot as plt
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> points = jordan.points(3)
+        >>> xvals = [point[0] for point in points]
+        >>> yvals = [point[1] for point in points]
+        >>> plt.plot(xvals, yvals, marker="o")
+        >>> plt.show()
+
         """
         assert isinstance(subnpts, int)
         assert subnpts >= 0
@@ -284,15 +516,49 @@ class JordanCurve:
         return tuple(all_points)
 
     def box(self) -> Box:
-        """Gives two points which encloses the jordan curve"""
-        inf = float("inf")
-        box = Box(Point2D(inf, inf), Point2D(-inf, -inf))
+        """The box which encloses the jordan curve
+
+        :return: The box which encloses the jordan curve
+        :rtype: Box
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan.box()
+        Box with vertices (0, 0) and (4, 3)
+
+        """
+        box = None
         for bezier in self.segments:
             box |= bezier.box()
         return box
 
     @property
     def lenght(self) -> float:
+        """Lenght
+
+        If jordan curve is clockwise, then lenght < 0
+
+        :getter: Returns the total lenght of the jordan curve
+        :type: float
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> print(jordan.lenght)
+        12.0
+        >>> vertices = [(0, 0), (0, 3), (4, 0)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> print(jordan.lenght)
+        -12.0
+
+        """
         if self.__lenght is None:
             lenght = IntegrateJordan.lenght(self)
             area = IntegrateJordan.area(self)
@@ -301,12 +567,48 @@ class JordanCurve:
 
     @property
     def segments(self) -> Tuple[PlanarCurve]:
+        """Segments
+
+        When setting, it checks if the points are the same between
+        the junction of two segments to ensure a closed curve
+
+        :getter: Returns the tuple of connected planar beziers, not copy
+        :setter: Sets the segments of the jordan curve
+        :type: tuple[PlanarCurve]
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> print(jordan.segments)
+        (PlanarCurve (deg 1), PlanarCurve (deg 1), PlanarCurve (deg 1))
+        >>> print(jordan.segments[0])
+        Planar curve of degree 1 and control points ((0, 0), (4, 0))
+
+        """
         return tuple(self.__segments)
 
     @property
     def vertices(self) -> Tuple[Point2D]:
-        """
-        Returns a tuple of non repeted points
+        """Vertices
+
+        Returns in order, all the non-repeted control points from
+        jordan curve's segments
+
+        :getter: Returns a tuple of
+        :type: Tuple[Point2D]
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> print(jordan.vertices)
+        ((0, 0), (4, 0), (0, 3))
+
         """
         ids = []
         vertices = []
@@ -339,11 +641,7 @@ class JordanCurve:
         self.__segments = tuple(segments)
 
     def __and__(self, other: JordanCurve) -> Tuple[Tuple[int, int, float, float]]:
-        """
-        Given two jordan curves, this functions returns the intersection
-        between these two jordan curves
-        Returns empty tuple if the curves don't intersect each other
-        """
+        """Computes the intersection of two jordan curves"""
         return self.intersection(other, equal_beziers=False, end_points=False)
 
     def __str__(self) -> str:
@@ -384,9 +682,7 @@ class JordanCurve:
         return self.copy().invert()
 
     def __contains__(self, point: Point2D) -> bool:
-        """
-        Tells if the point is on the boundary
-        """
+        """Tells if the point is on the boundary"""
         if point not in self.box():
             return False
         for bezier in self.segments:
@@ -398,14 +694,22 @@ class JordanCurve:
         return self.lenght
 
     def __abs__(self) -> JordanCurve:
-        """
-        Returns the same curve, but in positive direction
-        """
+        """Returns the same curve, but in positive direction"""
         return self.copy() if float(self) > 0 else (~self)
 
     def __intersection(
         self, other: JordanCurve
     ) -> Tuple[Tuple[int, int, float, float]]:
+        """Private method of ``intersection``
+
+        Computes the intersection between ``self`` and ``other``
+        returning a list of [(a0, b0, u0, v0), ...]
+        such self.segments[a0](u0) == other.segments[b0](v0)
+
+        If (ui, vi) == (None, None), it means
+        self.segments[a0] == other.segments[b0]
+
+        """
         intersections = set()
         for ai, sbezier in enumerate(self.segments):
             for bj, obezier in enumerate(other.segments):
@@ -421,15 +725,47 @@ class JordanCurve:
     def intersection(
         self, other: JordanCurve, equal_beziers: bool = True, end_points: bool = True
     ) -> Tuple[Tuple[int, int, float, float]]:
-        """
-        Returns the intersection between two curves A and B
-        result = ((a0, b0, u0, v0), (a1, b1, u1, v1), ...)
-        Which
-            A.segments[ai].eval(ui) == B.segments[bi].eval(vi)
-        0 <= ai < len(A.segments)
-        0 <= bi < len(B.segments)
-        0 <= u0 <= 1
-        0 <= v0 <= 1
+        """Computes the intersection between two jordan curves
+
+        Finds the values of (a*, b*, u*, v*) such
+
+            self.segments[a*].eval(u*) == other.segments[b*].eval(v*)
+
+        It computes the intersection between each pair of segments
+        from ``self`` and ``other`` and returns the matrix of coefficients
+
+        [(a0, b0, u0, v0), (a1, b1, u1, v1), ...]
+
+        * 0 <= ai < len(self.segments)
+        * 0 <= bi < len(other.segments)
+        * 0 <= u0 <= 1
+        * 0 <= v0 <= 1
+
+        If the flat ``equal_beziers`` are active, then when ``self.segments[ai] == other.segments[bi]``, then ``ui = None`` and ``vi = None``.
+        If the flag is ``False``, then these cases will not be returned
+
+        If the flat ``end_points`` are inactive, then will remove when ``(ui, vi)`` are ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
+
+        :param other: The jordan curve which intersects ``self``
+        :type other: JordanCurve
+        :param equal_beziers: Flag to return (or not) when two segments are equal, defaults to ``True``
+        :type equal_beziers: bool(, optional)
+        :param end_points: Flag to return (or not) when jordans intersect at end points, defaults to ``True``
+        :type end_points: bool(, optional)
+        :return: The matrix of coefficients [(ai, bi, ui, vi)] or an empty tuple in case of non-intersection
+        :rtype: tuple[(int, int, float, float)]
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
+        >>> jordan_a = JordanCurve.from_vertices(vertices_a)
+        >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]
+        >>> jordan_b = JordanCurve.from_vertices(vertices_b)
+        >>> jordan_a.intersection(jordan_b)
+        ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
+
         """
         assert isinstance(other, JordanCurve)
         intersections = self.__intersection(other)

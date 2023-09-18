@@ -44,6 +44,7 @@ class IntegrateShape:
 
     @staticmethod
     def area(shape: BaseShape, nnodes: Optional[int] = None) -> float:
+        """Computes the internal area of given shape"""
         return IntegrateShape.polynomial(shape, 0, 0, nnodes)
 
 
@@ -354,7 +355,7 @@ class EmptyShape(BaseShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def copy(self) -> BaseShape:
+    def copy(self) -> EmptyShape:
         return self
 
 
@@ -449,8 +450,10 @@ class FiniteShape(BaseShape):
 
 
 class SimpleShape(FiniteShape):
-    """
-    Simple class shape which is defined by only one jordan curve
+    """Simple shape class
+
+    Defined by only one jordan curve
+
     Example:
         - Interior of a circle, which jordan is in fact a circle
         - Interior of a polygon, which jordan are the edges

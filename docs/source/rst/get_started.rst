@@ -49,9 +49,9 @@ We can plot both shapes by using ``matplotlib``
     plt = PlotShape()
     
     # Plot the left shape
-    plt.plot(left_shape, fill="cyan")
+    plt.plot(left_shape, fill_color = "cyan")
     # Plot the right shape
-    plt.plot(right_shape, fill="yellow")
+    plt.plot(right_shape, fill_color = "yellow")
     
     # Show images on screen
     plt.show()
@@ -77,7 +77,7 @@ We finally plot the figure
 
     # Plot the intersection shape
     plt = PlotShape()
-    plt.plot(union_shape)
+    plt.plot(intersection_shape)
 
     # Show images on screen
     plt.show()

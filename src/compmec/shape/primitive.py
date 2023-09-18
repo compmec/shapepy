@@ -81,8 +81,21 @@ class Primitive:
 
     @staticmethod
     def circle(radius: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
-        """
-        Creates a circle with given radius and center.
+        """Creates a circle with given radius and center.
+
+        Parameters
+        ----------
+
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> print(jordan.vertices)
+        ((0, 0), (4, 0), (0, 3))
+
         """
         try:
             float(radius)
