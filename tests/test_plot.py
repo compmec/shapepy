@@ -11,7 +11,6 @@ from compmec.shape.primitive import Primitive
 
 
 @pytest.mark.order(13)
-@pytest.mark.skip()
 @pytest.mark.dependency(
     depends=[
         "tests/test_shape.py::test_end",
@@ -47,27 +46,18 @@ class TestPlot:
             "TestPlot::test_create",
         ]
     )
-    def test_get_started(self):
+    def test_simple(self):
         circle = Primitive.circle(radius=1, center=(0, 0))
-        square = Primitive.square(side=2, center=(-1, 0))
-        left_shape = square + circle  # Unite shapes
-
-        right_shape = left_shape.copy()
-        right_shape.rotate(180, degrees=True)
-        right_shape.move((0, -1))
-
-        union_shape = left_shape | right_shape
-        intersection_shape = left_shape & right_shape
+        square = Primitive.square(side=1, center=(0, 0))
 
         plt = ShapePloter()
-        plt.plot(left_shape, fill_color="cyan")
-        plt.plot(right_shape, fill_color="yellow")
+        plt.plot(circle, fill_color="cyan")
+        plt.plot(square, fill_color="yellow")
 
-        plt = ShapePloter()
-        plt.plot(union_shape)
-
-        plt = ShapePloter()
-        plt.plot(intersection_shape)
+        circle.invert()
+        fig, ax = pyplot.subplots()
+        plt = ShapePloter(fig=fig, ax=ax)
+        plt.plot(circle)
 
         # plt.show()
 
@@ -77,7 +67,51 @@ class TestPlot:
         depends=[
             "TestPlot::test_begin",
             "TestPlot::test_create",
-            "TestPlot::test_get_started",
+            "TestPlot::test_simple",
+        ]
+    )
+    def test_connected(self):
+        circle = Primitive.circle(radius=1, center=(0, 0))
+        square = Primitive.square(side=0.3, center=(0, 0))
+        hollow = circle - square
+
+        plt = ShapePloter()
+        plt.plot(hollow, fill_color="cyan")
+
+        left = ~Primitive.circle(radius=1, center=(-2, 0))
+        right = ~Primitive.square(side=1, center=(2, 0))
+        shape = left & right
+
+        plt = ShapePloter()
+        plt.plot(shape)
+
+    @pytest.mark.order(13)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestPlot::test_begin",
+            "TestPlot::test_create",
+            "TestPlot::test_simple",
+            "TestPlot::test_connected",
+        ]
+    )
+    def test_disjoint(self):
+        left = Primitive.circle(radius=1, center=(-1, 0))
+        right = Primitive.square(side=2, center=(4, 0))
+        shape = left + right  # Unite shapes
+
+        plt = ShapePloter()
+        plt.plot(shape, fill_color="cyan")
+
+    @pytest.mark.order(13)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestPlot::test_begin",
+            "TestPlot::test_create",
+            "TestPlot::test_simple",
+            "TestPlot::test_connected",
+            "TestPlot::test_disjoint",
         ]
     )
     def test_end(self):
