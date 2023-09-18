@@ -6,6 +6,9 @@ import matplotlib
 import numpy as np
 from matplotlib import pyplot
 
+from compmec import nurbs
+from compmec.shape.curve import PlanarCurve
+from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.shape import (
     BaseShape,
     ConnectedShape,
@@ -19,42 +22,43 @@ Path = matplotlib.path.Path
 PathPatch = matplotlib.patches.PathPatch
 
 
-def patchify(polys, color, alpha):
-    """
-    https://stackoverflow.com/questions/8919719/how-to-plot-a-complex-polygon
-    """
+def patch_segment(segment: PlanarCurve):
+    vertices = []
+    commands = []
+    if segment.degree == 1:
+        vertices.append(segment.ctrlpoints[1])
+        commands.append(Path.LINETO)
+    elif segment.degree == 2:
+        vertices += list(segment.ctrlpoints[1:])
+        commands += [Path.CURVE3] * 2
+    return vertices, commands
 
-    def reorder(poly, cw=True):
-        """Reorders the polygon to run clockwise or counter-clockwise
-        according to the value of cw. It calculates whether a polygon is
-        cw or ccw by summing (x2-x1)*(y2+y1) for all edges of the polygon,
-        see https://stackoverflow.com/a/1165943/898213.
-        """
-        # Close polygon if not closed
-        if not np.allclose(poly[:, 0], poly[:, -1]):
-            poly = np.c_[poly, poly[:, 0]]
-        direction = (
-            (poly[0] - np.roll(poly[0], 1)) * (poly[1] + np.roll(poly[1], 1))
-        ).sum() < 0
-        if direction == cw:
-            return poly
-        else:
-            return poly[::-1]
 
-    def ring_coding(n):
-        """Returns a list of len(n) of this format:
-        [MOVETO, LINETO, LINETO, ..., LINETO, LINETO CLOSEPOLY]
-        """
-        codes = [Path.LINETO] * n
-        codes[0] = Path.MOVETO
-        codes[-1] = Path.CLOSEPOLY
-        return codes
+def path_shape(connected: ConnectedShape) -> Path:
+    vertices = []
+    commands = []
+    for jordan in connected.jordans:
+        vertices.append(jordan.segments[0].ctrlpoints[0])
+        commands.append(Path.MOVETO)
+        for segment in jordan.segments:
+            verts, comms = patch_segment(segment)
+            vertices += verts
+            commands += comms
+        commands[-1] = Path.CLOSEPOLY
+    vertices = tuple(tuple(map(float, point)) for point in vertices)
+    return Path(vertices, commands)
 
-    ccw = [True] + ([False] * (len(polys) - 1))
-    polys = [reorder(poly, c) for poly, c in zip(polys, ccw)]
-    codes = np.concatenate([ring_coding(p.shape[1]) for p in polys])
-    vertices = np.concatenate(polys, axis=1)
-    return PathPatch(Path(vertices.T, codes), color=color, alpha=alpha)
+
+def path_jordan(jordan: JordanCurve) -> Path:
+    vertices = [jordan.segments[0].ctrlpoints[0]]
+    commands = [Path.MOVETO]
+    for segment in jordan.segments:
+        verts, comms = patch_segment(segment)
+        vertices += verts
+        commands += comms
+    commands[-1] = Path.CLOSEPOLY
+    vertices = tuple(tuple(map(float, point)) for point in vertices)
+    return Path(vertices, commands)
 
 
 class ShapePloter:
@@ -103,7 +107,7 @@ class ShapePloter:
         if isinstance(shape, EmptyShape):
             return
         attrs = ["pos_color", "neg_color", "fill_color", "alpha", "marker"]
-        defas = ["red", "blue", "lime", 0.3, "o"]
+        defas = ["red", "blue", "lime", 0.25, "o"]
         for key, default in zip(attrs, defas):
             kwargs[key] = default if key not in kwargs else kwargs[key]
         pos_color = kwargs.pop("pos_color")
@@ -113,21 +117,17 @@ class ShapePloter:
         marker = kwargs.pop("marker")
         connecteds = shape.subshapes if isinstance(shape, DisjointShape) else [shape]
         for connected in connecteds:
-            pos_points = []
-            neg_points = []
-            for jordan in connected.jordans:
-                points = np.array(jordan.points(), dtype="float64").T
-                if float(jordan) > 0:
-                    pos_points.append(points)
-                else:
-                    neg_points.append(points)
-            patch = patchify(pos_points + neg_points, fill_color, alpha)
+            path = path_shape(connected)
+            if float(connected) > 0:
+                patch = PathPatch(path, color=fill_color, alpha=alpha)
+            else:
+                self.gca().set_facecolor("#BFFFBF")
+                patch = PathPatch(path, color="white", alpha=1)
             self.gca().add_patch(patch)
-            for xvals, yvals in pos_points:
-                self.plot(xvals, yvals, color=pos_color, **kwargs)
-            for xvals, yvals in neg_points:
-                self.plot(xvals, yvals, color=neg_color, **kwargs)
             for jordan in connected.jordans:
-                xvals, yvals = np.array(jordan.points(0), dtype="float64").T
+                path = path_jordan(jordan)
                 color = pos_color if float(jordan) > 0 else neg_color
-                self.scatter(xvals, yvals, color=color, marker=marker, **kwargs)
+                patch = PathPatch(path, edgecolor=color, facecolor="none", lw=2)
+                self.gca().add_patch(patch)
+                xvals, yvals = np.array(jordan.points(0), dtype="float64").T
+                self.gca().scatter(xvals, yvals, color=color, marker=marker)
