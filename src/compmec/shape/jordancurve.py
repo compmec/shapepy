@@ -83,6 +83,10 @@ class IntegrateJordan:
         Returns [-1, -0.5, 0, 0.5 or 1]
         """
         wind = 0
+        if center in jordan.box():
+            for bezier in jordan.segments:
+                if center in bezier:
+                    return 0.5 if float(jordan) > 0 else -0.5
         for bezier in jordan.segments:
             wind += IntegratePlanar.winding_number(bezier, center, nnodes)
         return round(wind)
@@ -477,7 +481,7 @@ class JordanCurve:
             inserted += 1
         self.segments = tuple(new_segments)
 
-    def points(self, subnpts: Optional[int] = 2) -> Tuple[Point2D]:
+    def points(self, subnpts: Optional[int] = None) -> Tuple[Tuple[float]]:
         """Return sample points in jordan curve for plotting curve
 
         You can choose the precision by changing the ```subnpts``` parameter
@@ -489,7 +493,7 @@ class JordanCurve:
         :param subnpts: The number of interior points
         :type subnpts: int(, optional)
         :return: Sampled points in jordan curve
-        :rtype: tuple[Point2D]
+        :rtype: tuple[tuple[float]]
 
         Example use
         -----------
@@ -505,13 +509,13 @@ class JordanCurve:
         >>> plt.show()
 
         """
-        assert isinstance(subnpts, int)
-        assert subnpts >= 0
+        assert subnpts is None or (isinstance(subnpts, int) and subnpts >= 0)
         all_points = []
-        usample = tuple(Fraction(num, subnpts + 1) for num in range(subnpts + 1))
         for segment in self.segments:
+            npts = subnpts if subnpts is not None else 10 * (segment.degree - 1)
+            usample = tuple(Fraction(num, npts + 1) for num in range(npts + 1))
             points = segment.eval(usample)
-            all_points += list(points)
+            all_points += list(tuple(point) for point in points)
         all_points.append(all_points[0])  # Close the curve
         return tuple(all_points)
 

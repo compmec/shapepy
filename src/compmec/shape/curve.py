@@ -221,10 +221,10 @@ class PlanarCurve(BaseCurve):
         for i, ui in enumerate(usample):
             pairs += [(ui, vj) for vj in vsample]
         pairs = Intersection.bezier_and_bezier(self, other, pairs)
-        pairs.append((0, 0))
-        pairs.append((0, 1))
-        pairs.append((1, 0))
-        pairs.append((1, 1))
+        pairs.insert(0, (0, 0))
+        pairs.insert(0, (0, 1))
+        pairs.insert(0, (1, 0))
+        pairs.insert(0, (1, 1))
         # Filter values by distance of points
         tol_norm = 1e-6
         pairs = Intersection.filter_distance(self, other, pairs, tol_norm)

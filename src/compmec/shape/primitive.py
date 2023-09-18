@@ -47,15 +47,18 @@ class Primitive:
             vertices[:, 0] = radius * np.cos(theta)
             vertices[:, 1] = radius * np.sin(theta)
             vertices = tuple([center + Point2D(vertex) for vertex in vertices])
-        jordan_polygon = JordanCurve.from_vertices(vertices)
-        simple_shape = SimpleShape(jordan_polygon)
-        return simple_shape
+        return Primitive.polygon(vertices)
 
     @staticmethod
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
         vertices = [Point2D(vertex) for vertex in vertices]
         jordan_curve = JordanCurve.from_vertices(vertices)
         return SimpleShape(jordan_curve)
+
+    @staticmethod
+    def triangle(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
+        vertices = [(0, 0), (side, 0), (0, side)]
+        return Primitive.polygon(vertices)
 
     @staticmethod
     def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
@@ -75,9 +78,7 @@ class Primitive:
         side /= 2
         vertices = [(side, side), (-side, side), (-side, -side), (side, -side)]
         vertices = [center + Point2D(vertex) for vertex in vertices]
-        vertices = tuple(vertices)
-        jordan = JordanCurve.from_vertices(vertices)
-        return SimpleShape(jordan)
+        return Primitive.polygon(vertices)
 
     @staticmethod
     def circle(radius: float = 1, center: Point2D = (0, 0)) -> SimpleShape:

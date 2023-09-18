@@ -556,7 +556,7 @@ class SimpleShape(FiniteShape):
             self.invert()
             for subshape in other.subshapes:
                 subshape.invert()
-                if subshape in self:
+                if self in subshape:
                     contains = True
                 subshape.invert()
                 if contains:

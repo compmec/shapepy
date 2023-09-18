@@ -10,7 +10,12 @@ import pytest
 
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.primitive import Primitive
-from compmec.shape.shape import DisjointShape, EmptyShape, WholeShape
+from compmec.shape.shape import (
+    ConnectedShape,
+    DisjointShape,
+    EmptyShape,
+    WholeShape,
+)
 
 
 @pytest.mark.order(7)
@@ -120,8 +125,7 @@ class TestObjectsInEmptyWhole:
         empty = EmptyShape()
         whole = WholeShape()
 
-        vertices = [(0, 0), (1, 0), (0, 1)]
-        shape = Primitive.polygon(vertices)
+        shape = Primitive.triangle()
         assert shape not in empty
         assert shape in whole
 
@@ -136,8 +140,9 @@ class TestObjectsInEmptyWhole:
         empty = EmptyShape()
         whole = WholeShape()
 
-        vertices = [(0, 0), (0, 1), (1, 0)]
-        shape = Primitive.polygon(vertices)
+        big_square = Primitive.square(side=2)
+        small_square = Primitive.square(side=1)
+        shape = ConnectedShape([big_square, ~small_square])
         assert shape not in empty
         assert shape in whole
 
@@ -223,7 +228,7 @@ class TestObjectsInJordan:
         ]
     )
     def test_interior_point(self):
-        # Test if the points are in boundary
+        # Test if the interior points are not in boundary
         vertices = [(0, 0), (3, 0), (0, 3)]
         triangle = JordanCurve.from_vertices(vertices)
         assert (1, 1) not in triangle
@@ -240,6 +245,7 @@ class TestObjectsInJordan:
         ]
     )
     def test_exterior_point(self):
+        # Test if the exterior points are not in boundary
         triangle = JordanCurve.from_vertices([(0, 0), (1, 0), (0, 1)])
         assert (-1, -1) not in triangle
         assert (1, 1) not in triangle
@@ -388,6 +394,7 @@ class TestObjectsInSimple:
     def test_jordan(self):
         small_square = Primitive.square(side=2)
         big_square = Primitive.square(side=4)
+
         assert small_square.jordans[0] in small_square
         assert small_square.jordans[0] in big_square
         assert big_square.jordans[0] not in small_square
@@ -397,6 +404,16 @@ class TestObjectsInSimple:
         assert ~(small_square.jordans[0]) in big_square
         assert ~(big_square.jordans[0]) not in small_square
         assert ~(big_square.jordans[0]) in big_square
+
+        assert small_square.jordans[0] in (~small_square)
+        assert small_square.jordans[0] not in (~big_square)
+        assert big_square.jordans[0] in (~small_square)
+        assert big_square.jordans[0] in (~big_square)
+
+        assert ~(small_square.jordans[0]) in (~small_square)
+        assert ~(small_square.jordans[0]) not in (~big_square)
+        assert ~(big_square.jordans[0]) in (~small_square)
+        assert ~(big_square.jordans[0]) in (~big_square)
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -411,10 +428,29 @@ class TestObjectsInSimple:
         ]
     )
     def test_simple(self):
+        # Centered squares
         big_square = Primitive.square(side=4)
         small_square = Primitive.square(side=2)
         assert small_square in big_square
         assert big_square not in small_square
+        assert (~small_square) not in big_square
+        assert (~big_square) not in small_square
+        assert small_square not in (~big_square)
+        assert big_square not in (~small_square)
+        assert (~small_square) not in (~big_square)
+        assert (~big_square) in (~small_square)
+
+        # Disjoint squares
+        left = Primitive.square(side=2, center=(-3, 0))
+        right = Primitive.square(side=2, center=(3, 0))
+        assert left not in right
+        assert right not in left
+        assert (~left) not in right
+        assert (~right) not in left
+        assert left in (~right)
+        assert right in (~left)
+        assert (~left) not in (~right)
+        assert (~right) not in (~left)
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -428,16 +464,15 @@ class TestObjectsInSimple:
         ]
     )
     def test_connected(self):
-        square = Primitive.square(side=4)
-        inv_square = ~square
-        assert inv_square not in square
-        assert square not in inv_square
-
+        # centered squares
         big_square = Primitive.square(side=4)
         small_square = Primitive.square(side=2)
-        invsmall_square = ~small_square
-        assert invsmall_square not in big_square
-        assert big_square not in invsmall_square
+        connected = ConnectedShape([big_square, ~small_square])
+
+        assert connected not in small_square
+        assert connected in big_square
+        assert connected in (~small_square)
+        assert connected not in (~big_square)
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
