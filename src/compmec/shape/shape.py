@@ -517,9 +517,7 @@ class SimpleShape(FiniteShape):
         self.__inversejordan = jordan
         return self
 
-    def contains_point(
-        self, point: Point2D, bound_point: Optional[bool] = True
-    ) -> bool:
+    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
         """
         We compute the winding number to determine if
         the point is inside the region.
@@ -528,12 +526,10 @@ class SimpleShape(FiniteShape):
         """
         point = Point2D(point)
         jordan = self.jordans[0]
-        if float(jordan) > 0 and point not in self.box():
-            return False
-        if point in jordan:
-            return bound_point
         wind = IntegrateJordan.winding_number(jordan, center=point)
-        return wind == 1 if float(jordan) > 0 else wind == 0
+        if float(jordan) > 0:
+            return wind > 0 if boundary else wind == 1
+        return wind > -1 if boundary else wind == 0
 
     def contains_jordan(self, other: JordanCurve) -> bool:
         assert isinstance(other, JordanCurve)
@@ -654,11 +650,9 @@ class ConnectedShape(FiniteShape):
         values = tuple(val[1] for val in values)
         self.__subshapes = tuple(values)
 
-    def contains_point(
-        self, point: Point2D, bound_point: Optional[bool] = True
-    ) -> bool:
+    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
         for subshape in self.subshapes:
-            if not subshape.contains_point(point, bound_point):
+            if not subshape.contains_point(point, boundary):
                 return False
         return True
 
@@ -722,11 +716,9 @@ class DisjointShape(FiniteShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def contains_point(
-        self, point: Point2D, bound_point: Optional[bool] = True
-    ) -> bool:
+    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
         for subshape in self.subshapes:
-            if subshape.contains_point(point, bound_point):
+            if subshape.contains_point(point, boundary):
                 return True
         return False
 
