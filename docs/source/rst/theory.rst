@@ -1,47 +1,263 @@
-Theoretical Background
-======================
 
-Introduction
+======
+Curves
+======
+
+
+
+
+Bezier curve
 ------------
 
-Shape Generation
-----------------
+A Bezier curve :math:`\mathbf{C}(u)` is defined by the basis functions :math:`B_{i,p}(u)` and control points :math:`\mathbf{P}_{i}`
 
-Jordan Curve
-^^^^^^^^^^^^
+.. math::
+    \mathbf{C}(u) = \sum_{i=0}^{p} B_{i,p}(u) \cdot \mathbf{P}_i
 
-`Jordan Curve <https://mathworld.wolfram.com/JordanCurve.html>`_ is a continuous closed curve which doesn't intersect itself.
-
-.. figure:: ../img/theory/jordan_curve.svg
-   :width: 70%
-   :alt: Example of jordan curves 
-   :align: center
-
-For our purpose, we use oriented jordan curve by setting a **positive** direction: **counter-clockwise**.
-
-A jordan curve defines a `simply connected <https://mathworld.wolfram.com/SimplyConnected.html>`_ regions. By adding and subtracting regions, it's possible to more complex shapes as **not simply connected**.
-
-.. figure:: ../img/theory/simple_connected.svg
-   :width: 90%
-   :alt: Simple connected curves
-   :align: center
-
-Although a jordan curve is more general, we discretize it to get a polygon.
-More points used in discretization, more realiable the final results will be, by also increasing the computational cost.
-
-.. figure:: ../img/shape/sum_red_blue_mesh.svg
-   :width: 70%
-   :alt: Desired subtraction of original curves
-   :align: center
-.. figure:: ../img/shape/sum_red_blue_disc_border.svg
-   :width: 70%
-   :alt: Discretized subtraction with original border
-   :align: center
-.. figure:: ../img/shape/sum_red_blue_disc_noborder.svg
-   :width: 70%
-   :alt: Discretized subtraction
-   :align: center
+.. math::
+    B_{i,p}(u) = \binom{p}{i} \left(1-u\right)^{p-i} \cdot u^i
 
 
-.. note::
-   Even if your original jordan curve is already a polygon, maybe it's needed to discretize the edges due to the boundary elements, which we will see further. 
+
+======
+Shapes
+======
+
+
+
+
+
+========
+Integral
+========
+
+In this library we use integral for many things.
+
+
+========
+Contains
+========
+
+
+-------------------
+Table simple shapes
+-------------------
+
+.. list-table:: List of geometric cases
+    :widths: 20 20 20 20 20
+    :header-rows: 1
+    :align: center
+
+    * - Case 1
+      - Case 2
+      - Case 3
+      - Case 4
+      - Case 5
+    * - .. image:: ../img/contains/case-1.svg
+            :width: 100%
+      - .. image:: ../img/contains/case-2.svg
+            :width: 100%
+      - .. image:: ../img/contains/case-3.svg
+            :width: 100%
+      - .. image:: ../img/contains/case-4.svg
+            :width: 100%
+      - .. image:: ../img/contains/case-5.svg
+            :width: 100%
+
+.. table::
+    :align: center
+
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|        Case       | :math:`A`  | :math:`B` | :math:`A` in :math:`B` | :math:`J_A` in :math:`B` | :math:`J_B` in :math:`A` | :math:`a_A ? a_B` |
++===================+============+===========+========================+==========================+==========================+===================+
+|                   |            | :math:`+` | .. centered:: F        | .. centered:: F          |                          | .. centered:: ?   |
+|                   | :math:`+`  +-----------+------------------------+--------------------------+ .. centered:: F          +-------------------+
+|                   |            | :math:`-` | .. centered:: T        | .. centered:: T          |                          | .. centered:: >   |
+| .. centered::  1  +------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|                   |            | :math:`+` |                        | .. centered:: F          |                          | .. centered:: <   |
+|                   | :math:`-`  +-----------+ .. centered:: F        +--------------------------+ .. centered:: T          +-------------------+
+|                   |            | :math:`-` |                        | .. centered:: T          |                          | .. centered:: ?   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|                   |            | :math:`+` | .. centered:: T        | .. centered:: T          |                          | .. centered:: <   |
+|                   | :math:`+`  +-----------+------------------------+--------------------------+ .. centered:: F          +-------------------+
+|                   |            | :math:`-` |                        | .. centered:: F          |                          | .. centered:: >   |
+| .. centered::  2  +------------+-----------+                        +--------------------------+--------------------------+-------------------+
+|                   |            | :math:`+` | .. centered:: F        | .. centered:: T          |                          | .. centered:: <   |
+|                   | :math:`-`  +-----------+                        +--------------------------+ .. centered:: T          +-------------------+
+|                   |            | :math:`-` |                        | .. centered:: F          |                          | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|                   |            | :math:`+` |                        | .. centered:: F          |                          |                   |
+|                   | :math:`+`  +-----------+                        +--------------------------+ .. centered:: T          | .. centered:: <   |
+|                   |            | :math:`-` | .. centered:: F        | .. centered:: T          |                          |                   |
+| .. centered::  3  +------------+-----------+                        +--------------------------+--------------------------+-------------------+
+|                   |            | :math:`+` |                        | .. centered:: F          |                          |                   |
+|                   | :math:`-`  +-----------+------------------------+--------------------------+ .. centered:: F          | .. centered:: >   |
+|                   |            | :math:`-` | .. centered:: T        | .. centered:: T          |                          |                   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|                   |            | :math:`+` | .. centered:: T        |                          |                          | .. centered:: =   |
+|                   | :math:`+`  +-----------+------------------------+                          |                          +-------------------+
+|                   |            | :math:`-` |                        |                          |                          | .. centered:: >   |
+| .. centered::  4  +------------+-----------+ .. centered:: F        | .. centered:: T          | .. centered:: T          +-------------------+
+|                   |            | :math:`+` |                        |                          |                          | .. centered:: <   |
+|                   | :math:`-`  +-----------+------------------------+                          |                          +-------------------+
+|                   |            | :math:`-` | .. centered:: T        |                          |                          | .. centered:: =   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|                   |            | :math:`+` |                        |                          |                          | .. centered:: ?   |
+|                   | :math:`+`  +-----------+                        |                          |                          +-------------------+
+|                   |            | :math:`-` |                        |                          |                          | .. centered:: <   |
+| .. centered::  5  +------------+-----------+ .. centered:: F        | .. centered:: F          | .. centered:: F          +-------------------+
+|                   |            | :math:`+` |                        |                          |                          | .. centered:: >   |
+|                   | :math:`-`  +-----------+                        |                          |                          +-------------------+
+|                   |            | :math:`-` |                        |                          |                          | .. centered:: ?   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+
+
+
+
+This table is translated to an algorithm.
+Unfortunatelly we don't know which case the simples shapes are,
+so we will test by using some caracteristics.
+
+For example, the first good information from the table is given by: 
+
+
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|        Case       | :math:`A`  | :math:`B` | :math:`A` in :math:`B` | :math:`J_A` in :math:`B` | :math:`J_B` in :math:`A` | :math:`a_A ? a_B` |
++===================+============+===========+========================+==========================+==========================+===================+
+| .. centered::  1  | :math:`-`  | :math:`+` | .. centered:: F        |  .. centered:: F         |   .. centered:: T        | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  2  | :math:`-`  | :math:`+` | .. centered:: F        |  .. centered:: T         |   .. centered:: T        | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  3  | :math:`-`  | :math:`+` | .. centered:: F        |  .. centered:: F         |   .. centered:: F        | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  4  | :math:`-`  | :math:`+` | .. centered:: F        |  .. centered:: T         |   .. centered:: T        | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  5  | :math:`-`  | :math:`+` | .. centered:: F        |  .. centered:: F         |   .. centered:: F        | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+
+
+
+.. code-block:: python
+
+    # ...
+    shapea = SimpleShape(jordana)
+    shapeb = SimpleShape(jordanb) 
+    # Decide if shapea in shapeb
+    if float(shapea) < 0 and float(shapeb) > 0:
+        # For any presented cases it happens
+        return False
+    # continue ...
+
+
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+|        Case       | :math:`A`  | :math:`B` | :math:`A` in :math:`B` | :math:`J_A` in :math:`B` | :math:`J_B` in :math:`A` | :math:`a_A ? a_B` |
++===================+============+===========+========================+==========================+==========================+===================+
+| .. centered::  1  | :math:`+`  | :math:`-` | .. centered:: T        |  .. centered:: T         |   .. centered:: F        | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  2  | :math:`+`  | :math:`-` | .. centered:: F        |  .. centered:: F         |   .. centered:: F        | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  3  | :math:`+`  | :math:`-` | .. centered:: F        |  .. centered:: T         |   .. centered:: T        | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  4  | :math:`+`  | :math:`-` | .. centered:: F        |  .. centered:: T         |   .. centered:: T        | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+| .. centered::  5  | :math:`+`  | :math:`-` | .. centered:: F        |  .. centered:: F         |   .. centered:: F        | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+--------------------------+-------------------+
+
+
+
+
+.. code-block:: python
+
+    # ... continue
+    if float(shapea) > 0 and float(shapeb) < 0:
+        # Only for case 1
+        return (jordana in shapeb) and (jordanb not in shapea)
+    # continue ...
+
+Taking out the already extracted values, and separating by when ``areaA > areaB``:
+
+
+
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|        Case       | :math:`A`  | :math:`B` | :math:`A` in :math:`B` | :math:`J_A` in :math:`B` | :math:`a_A ? a_B` |
++===================+============+===========+========================+==========================+===================+
+|                   | :math:`+`  | :math:`+` |                        |  .. centered:: F         |                   |
+| .. centered::  1  +------------+-----------+ .. centered:: F        +--------------------------+ .. centered:: >   |
+|                   | :math:`-`  | :math:`-` |                        |  .. centered:: T         |                   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  2  | :math:`-`  | :math:`-` | .. centered:: F        |  .. centered:: F         | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  3  | :math:`+`  | :math:`+` | .. centered:: F        |  .. centered:: F         | .. centered:: >   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|                   | :math:`+`  | :math:`+` |                        |                          |                   |
+| .. centered::  5  +------------+-----------+ .. centered:: F        |  .. centered:: F         | .. centered:: >   |
+|                   | :math:`-`  | :math:`-` |                        |                          |                   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+
+
+
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|        Case       | :math:`A`  | :math:`B` | :math:`A` in :math:`B` | :math:`J_A` in :math:`B` | :math:`a_A ? a_B` |
++===================+============+===========+========================+==========================+===================+
+|                   | :math:`+`  | :math:`+` |                        |  .. centered:: F         |                   |
+| .. centered::  1  +------------+-----------+ .. centered:: F        +--------------------------+ .. centered:: <=  |
+|                   | :math:`-`  | :math:`-` |                        |  .. centered:: T         |                   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  2  | :math:`+`  | :math:`+` | .. centered:: T        |  .. centered:: T         | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  3  | :math:`-`  | :math:`-` | .. centered:: T        |  .. centered:: T         | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|                   | :math:`+`  | :math:`+` |                        |                          |                   |
+| .. centered::  4  +------------+-----------+ .. centered:: T        |  .. centered:: T         | .. centered:: =   |
+|                   | :math:`-`  | :math:`-` |                        |                          |                   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|                   | :math:`+`  | :math:`+` |                        |                          |                   |
+| .. centered::  5  +------------+-----------+ .. centered:: F        |  .. centered:: F         | .. centered:: <=  |
+|                   | :math:`-`  | :math:`-` |                        |                          |                   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+
+.. code-block:: python
+
+    # ... continue
+    if float(shapea) > float(shapeb):
+        return False
+    # continue ...
+
+
+We see that when :math:`J_A \ \text{in} \ B` gives :math:`F`, the :math:`A \ \text{in} \ B` is also :math:`F`
+
+.. code-block:: python
+
+    # ... continue
+    if jordana not in shapeb:
+        return False
+    # continue ...
+
+Rewriting the table we get
+
+
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|        Case       | :math:`A`  | :math:`B` | :math:`A` in :math:`B` | :math:`J_A` in :math:`B` | :math:`a_A ? a_B` |
++===================+============+===========+========================+==========================+===================+
+| .. centered::  1  | :math:`-`  | :math:`-` | .. centered:: F        |  .. centered:: T         | .. centered:: <=  |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  2  | :math:`+`  | :math:`+` | .. centered:: T        |  .. centered:: T         | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  3  | :math:`-`  | :math:`-` | .. centered:: T        |  .. centered:: T         | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|                   | :math:`+`  | :math:`+` |                        |                          |                   |
+| .. centered::  4  +------------+-----------+ .. centered:: T        |  .. centered:: T         | .. centered:: =   |
+|                   | :math:`-`  | :math:`-` |                        |                          |                   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+
+Taking out when ``areaA > 0`` we get
+
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+|        Case       | :math:`A`  | :math:`B` | :math:`A` in :math:`B` | :math:`J_A` in :math:`B` | :math:`a_A ? a_B` |
++===================+============+===========+========================+==========================+===================+
+| .. centered::  1  | :math:`-`  | :math:`-` | .. centered:: F        |  .. centered:: T         | .. centered:: <=  |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  3  | :math:`-`  | :math:`-` | .. centered:: T        |  .. centered:: T         | .. centered:: <   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+
+| .. centered::  4  | :math:`-`  | :math:`-` | .. centered:: T        |  .. centered:: T         | .. centered:: =   |
++-------------------+------------+-----------+------------------------+--------------------------+-------------------+

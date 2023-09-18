@@ -18,11 +18,25 @@ Documentation
 
 .. toctree::
    :maxdepth: 1
-   :caption: Contents:
+   :caption: Using the library:
 
    rst/installation
-   rst/create_shape
-   rst/contains
+   rst/get_started
+   rst/primitive
+   rst/jordan_curve
+   rst/shape
+   rst/integral
+
+.. toctree::
+   :maxdepth: 2
+   :caption: References
+
+   rst/references
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Theory
+
    rst/theory
 
 
