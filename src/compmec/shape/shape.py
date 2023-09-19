@@ -8,6 +8,8 @@ or even unconnected shapes.
 """
 from __future__ import annotations
 
+import abc
+import copy
 from fractions import Fraction
 from typing import Any, Optional, Tuple, Union
 
@@ -17,20 +19,64 @@ from compmec.shape.jordancurve import IntegrateJordan, JordanCurve
 from compmec.shape.polygon import Box, Point2D
 
 
+class SuperclassMeta(type):
+    def __new__(mcls, classname, bases, cls_dict):
+        cls = super().__new__(mcls, classname, bases, cls_dict)
+        for name, member in cls_dict.items():
+            if not getattr(member, "__doc__"):
+                try:
+                    member.__doc__ = getattr(bases[-1], name).__doc__
+                except AttributeError:
+                    pass
+        return cls
+
+
 class IntegrateShape:
+    """
+    Class that contains static functions to evaluate integrals over a shape
+    """
+
     @staticmethod
     def polynomial(
         shape: BaseShape, expx: int, expy: int, nnodes: Optional[int] = None
     ) -> float:
-        """Computes the integral
+        """
+        Computes the integral
 
-        I = int_D x^expx * y^expy * dA
+        .. math::
+            I = \\int_D x^a \\cdot y^b \\cdot dA
 
-        Which D is the region defined by shape
+        Which :math:`D` is the region defined by shape
 
         We transform this integral into a boundary integral
 
-        I = (1/(1+expx)) * int_C x^(expx + 1) * y^expy * dy
+        .. math::
+            I = \dfrac{1}{a+1} \\cdot \\int_C x^{a+ 1} \\cdot y^b \\cdot dy
+
+        Parameters
+        ----------
+        shape : BaseShape
+            The shape to integrate
+        expx : int
+            The expoent :math:`a`
+        expy : int
+            The expoent :math:`b`
+        nnodes : int, default = None
+            The number of integration nodes
+
+            If ``None``, then it computes based on the
+            the sum of the expoents and the curve's degree
+
+        :return: The value of the integral :math:`I`
+        :rtype: float
+
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive, IntegrateShape
+        >>> circle = Primitive.circle(radius = 1)
+        >>> IntegrateShape.polynomial(circle, 2, 0)
+
 
         """
         assert isinstance(shape, BaseShape)
@@ -44,7 +90,39 @@ class IntegrateShape:
 
     @staticmethod
     def area(shape: BaseShape, nnodes: Optional[int] = None) -> float:
-        """Computes the internal area of given shape"""
+        """
+        Computes the area of the given shape
+
+        .. math::
+            I = \\int_D dA
+
+        Which :math:`D` is the region defined by shape
+
+        If the shape is unbounded (example, inverse of a circle), then
+        it returns the negative value of the area of the bounded shape
+
+        Parameters
+        ----------
+
+        shape : BaseShape
+            The shape to integrate
+        nnodes : int, default = None
+            The number of integration nodes
+
+            If ``None``, then it computes based on the curve's degree
+
+        :return: The value of the area :math:`I`
+        :rtype: float
+
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive, IntegrateShape
+        >>> circle = Primitive.circle(radius = 1)
+        >>> inertia_xx = IntegrateShape.area(circle, 2, 0)
+        >>> print(inertia_xx)
+
+        """
         return IntegrateShape.polynomial(shape, 0, 0, nnodes)
 
 
@@ -265,7 +343,7 @@ class FollowPath:
         return new_jordans
 
 
-class BaseShape(object):
+class BaseShape(object, metaclass=SuperclassMeta):
     """
     Class which allows operations like:
      - move
@@ -277,59 +355,158 @@ class BaseShape(object):
      - XOR
     """
 
+    __copy__ = copy
+    __deepcopy__ = copy
+
     def __init__(self):
         pass
 
+    @abc.abstractmethod
+    def __invert__(self) -> BaseShape:
+        """Invert shape"""
+        pass
+
+    @abc.abstractmethod
+    def __or__(self) -> BaseShape:
+        """Union shapes"""
+        pass
+
+    @abc.abstractmethod
+    def __and__(self) -> BaseShape:
+        """Intersection shapes"""
+        pass
+
     def __neg__(self) -> BaseShape:
+        """Invert the BaseShape"""
         return ~self
 
     def __add__(self, other: BaseShape):
+        """Union of BaseShape"""
         return self | other
 
     def __mul__(self, value: BaseShape):
+        """Intersection of BaseShape"""
         return self & value
 
     def __sub__(self, value: BaseShape):
+        """Subtraction of BaseShape"""
         return self & (~value)
 
     def __xor__(self, other: BaseShape):
+        """XOR of BaseShape"""
         return (self - other) | (other - self)
 
     def __bool__(self) -> bool:
-        """
-        Returns True if the curve's is positive
-        Else if curve's area is negative
-        """
+        """Are is positive ?"""
         return float(self) > 0
 
     def move(self, point: Point2D) -> BaseShape:
+        """
+        Moves/translate entire shape by an amount
+
+        Parameters
+        ----------
+
+        point : Point2D
+            The amount to move
+
+        :return: The same instance
+        :rtype: BaseShape
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.move((1, 2))
+
+        """
         point = Point2D(point)
         for jordan in self.jordans:
             jordan.move(point)
         return self
 
     def scale(self, xscale: float, yscale: float) -> BaseShape:
+        """
+        Scales entire shape by an amount
+
+        Parameters
+        ----------
+
+        xscale : float
+            The amount to scale in horizontal direction
+        yscale : float
+            The amount to scale in vertical direction
+
+        :return: The same instance
+        :rtype: BaseShape
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.scale(2, 3)
+
+        """
         for jordan in self.jordans:
             jordan.scale(xscale, yscale)
         return self
 
     def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
+        """
+        Rotates entire shape around the origin by an amount
+
+        Parameters
+        ----------
+
+        angle : float
+            The amount to rotate around origin
+        degrees : bool, default = False
+            Flag to indicate if ``angle`` is in radians or degrees
+
+        :return: The same instance
+        :rtype: BaseShape
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.rotate(angle = 90, degrees = True)
+
+        """
         for jordan in self.jordans:
             jordan.rotate(angle, degrees)
         return self
 
+    def copy(self) -> BaseShape:
+        """Creates a deep copy"""
+        return copy.copy(self)
 
-class EmptyShape(BaseShape):
-    """
-    A class to represent a empty shape, the zero element
-    """
+
+class SingletonShape(BaseShape):
+    """SingletonShape"""
 
     __instance = None
 
     def __new__(cls):
         if cls.__instance is None:
-            cls.__instance = super(EmptyShape, cls).__new__(cls)
+            cls.__instance = super(SingletonShape, cls).__new__(cls)
         return cls.__instance
+
+    def __copy__(self) -> SingletonShape:
+        return self
+
+    @property
+    def jordans(self) -> Tuple[JordanCurve]:
+        """Jordan curves that defines the shape
+
+        :getter: Returns a set of jordan curves
+        :type: tuple[JordanCurve]
+        """
+        return tuple()
+
+
+class EmptyShape(SingletonShape):
+    """EmptyShape is a singleton class to represent an empty shape"""
 
     def __or__(self, other: BaseShape) -> BaseShape:
         return other.copy()
@@ -355,23 +532,11 @@ class EmptyShape(BaseShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def copy(self) -> EmptyShape:
-        return self
 
+class WholeShape(SingletonShape):
+    """WholeShape is a singleton class to represent all plane"""
 
-class WholeShape(BaseShape):
-    """
-    A class to represent a empty shape, the zero element
-    """
-
-    __instance = None
-
-    def __new__(cls):
-        if cls.__instance is None:
-            cls.__instance = super(WholeShape, cls).__new__(cls)
-        return cls.__instance
-
-    def __or__(self, other: BaseShape) -> BaseShape:
+    def __or__(self, other: BaseShape) -> WholeShape:
         return self
 
     def __and__(self, other: BaseShape) -> BaseShape:
@@ -395,22 +560,43 @@ class WholeShape(BaseShape):
     def __sub__(self, other: BaseShape) -> BaseShape:
         return ~other
 
-    def copy(self) -> BaseShape:
-        return self
 
+class DefinedShape(BaseShape):
+    """
+    DefinedShape is the base class for SimpleShape, ConnectedShape and DisjointShape
 
-class FiniteShape(BaseShape):
+    """
+
     def __init__(self, *args, **kwargs):
         self.__box = None
 
-    def copy(self) -> FiniteShape:
+    def __copy__(self) -> DefinedShape:
         jordans = tuple(jordan.copy() for jordan in self.jordans)
         return ShapeFromJordans(jordans)
 
     def box(self) -> Box:
+        """
+        Box that encloses all jordan curves
+
+        Parameters
+        ----------
+
+        :return: The box that encloses all
+        :rtype: Box
+
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive, IntegrateShape
+        >>> circle = Primitive.circle(radius = 1)
+        >>> circle.box()
+        Box with vertices (-1.0, -1.0) and (1., 1.0)
+
+        """
+
         if self.__box is None:
-            box = self.jordans[0].box()
-            for jordan in self.jordans[1:]:
+            box = None
+            for jordan in self.jordans:
                 box |= jordan.box()
             self.__box = box
         return self.__box
@@ -448,16 +634,130 @@ class FiniteShape(BaseShape):
             return EmptyShape()
         return ShapeFromJordans(new_jordans)
 
+    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
+        if isinstance(other, BaseShape):
+            return self.contains_shape(other)
+        if isinstance(other, JordanCurve):
+            return self.contains_jordan(other)
+        point = Point2D(other)
+        return self.contains_point(point)
 
-class SimpleShape(FiniteShape):
-    """Simple shape class
+    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
+        """
+        Checks if given point is inside the shape
 
-    Defined by only one jordan curve
+        Parameters
+        ----------
 
-    Example:
-        - Interior of a circle, which jordan is in fact a circle
-        - Interior of a polygon, which jordan are the edges
-        - Exterior of a circle, when the jordan is a negative circle
+        point : Point2D
+            The point to verify if is inside
+        boundary : bool, default = True
+            The flag to decide if a boundary point is considered inside or outside.
+            If ``True``, then a boundary point is considered inside.
+
+        :return: Whether the point is inside or not
+        :rtype: bool
+
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> square = Primitive.square()
+        >>> square.contains_point((0, 0))
+        True
+        >>> square.contains_point((0.5, 0), True)
+        True
+        >>> square.contains_point((0.5, 0), False)
+        False
+
+        """
+        point = Point2D(point)
+        assert isinstance(boundary, bool)
+        return self._contains_point(point, boundary)
+
+    def contains_jordan(
+        self, jordan: JordanCurve, boundary: Optional[bool] = True
+    ) -> bool:
+        """
+        Checks if the all points of jordan are inside the shape
+
+        Parameters
+        ----------
+
+        jordan : JordanCurve
+            The jordan curve to verify
+        boundary : bool, default = True
+            The flag to check if jordan is inside a closed (True) or open (False) set
+
+        :return: Whether the jordan is inside or not
+        :rtype: bool
+
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> square = Primitive.square()
+        >>> jordan = small_square.jordans[0]
+        >>> square.contains_jordan(jordan)
+        True
+
+        """
+        assert isinstance(jordan, JordanCurve)
+        assert isinstance(boundary, bool)
+        return self._contains_jordan(jordan, boundary)
+
+    def contains_shape(self, other: BaseShape) -> bool:
+        """
+        Checks if the all points of given shape are inside the shape
+
+        Mathematically speaking, checks if ``other`` is a subset of ``self``
+
+        Parameters
+        ----------
+
+        other : BaseShape
+            The shape to be verified if is inside
+
+        :return: Whether the ``other`` shape is inside or not
+        :rtype: bool
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> square = Primitive.regular_polygon(4)
+        >>> circle = Primitive.circle()
+        >>> circle.contains_shape(square)
+        True
+
+        """
+        assert isinstance(other, BaseShape)
+        if isinstance(other, EmptyShape):
+            return True
+        if isinstance(other, WholeShape):
+            return False
+        return self._contains_shape(other)
+
+    @abc.abstractmethod
+    def _contains_point(point: Point2D, boundary: Optional[bool] = True):
+        pass
+
+    @abc.abstractmethod
+    def _contains_jordan(jordan: JordanCurve, boundary: Optional[bool] = True):
+        pass
+
+    @abc.abstractmethod
+    def _contains_shape(other: BaseShape):
+        pass
+
+
+class SimpleShape(DefinedShape):
+    """
+    SimpleShape class
+
+    Is a shape which is defined by only one jordan curve.
+    It represents the interior/exterior region of the jordan curve
+    if the jordan curve is counter-clockwise/clockwise
+
     """
 
     def __init__(self, jordancurve: JordanCurve):
@@ -482,6 +782,15 @@ class SimpleShape(FiniteShape):
         return float(self.__area)
 
     def __eq__(self, other: BaseShape) -> bool:
+        """Compare two shapes
+
+        Parameters
+        ----------
+        other: BaseShape
+            The shape to compare
+
+        :raises ValueError: If ``other`` is not a BaseShape instance
+        """
         if not isinstance(other, BaseShape):
             raise ValueError
         if not isinstance(other, SimpleShape):
@@ -490,19 +799,11 @@ class SimpleShape(FiniteShape):
             return False
         return self.jordans[0] == other.jordans[0]
 
-    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
-        if isinstance(other, BaseShape):
-            return self.contains_shape(other)
-        if isinstance(other, JordanCurve):
-            return self.contains_jordan(other)
-        point = Point2D(other)
-        return self.contains_point(point)
-
     def __invert__(self) -> SimpleShape:
         return self.__class__(self.__inversejordan)
 
     @property
-    def jordans(self) -> JordanCurve:
+    def jordans(self) -> Tuple[JordanCurve]:
         return (self.__jordancurve,)
 
     def __set_jordancurve(self, other: JordanCurve):
@@ -512,38 +813,56 @@ class SimpleShape(FiniteShape):
         self.__area = IntegrateShape.area(self)
 
     def invert(self) -> SimpleShape:
+        """
+        Inverts the region of simple shape.
+
+        Parameters
+        ----------
+
+        :return: The same instance
+        :rtype: SimpleShape
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> square = Primitive.square()
+        >>> print(square)
+        Simple Shape of area 1.00 with vertices:
+        [[ 0.5  0.5]
+        [-0.5  0.5]
+        [-0.5 -0.5]
+        [ 0.5 -0.5]]
+        >>> square.invert()
+        Simple Shape of area -1.00 with vertices:
+        [[ 0.5  0.5]
+        [ 0.5 -0.5]
+        [-0.5 -0.5]
+        [-0.5  0.5]]
+
+        """
         jordan = self.__jordancurve
         self.__jordancurve = self.__inversejordan
         self.__inversejordan = jordan
+        self.__area *= -1
         return self
 
-    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
-        """
-        We compute the winding number to determine if
-        the point is inside the region.
-        Uses numerical integration
-        See wikipedia for details.
-        """
-        point = Point2D(point)
+    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
         jordan = self.jordans[0]
         wind = IntegrateJordan.winding_number(jordan, center=point)
         if float(jordan) > 0:
             return wind > 0 if boundary else wind == 1
         return wind > -1 if boundary else wind == 0
 
-    def contains_jordan(self, other: JordanCurve) -> bool:
-        assert isinstance(other, JordanCurve)
-        for point in other.points(1):
-            if not self.contains_point(point):
+    def _contains_jordan(
+        self, jordan: JordanCurve, boundary: Optional[bool] = True
+    ) -> bool:
+        for point in jordan.points(1):
+            if not self.contains_point(point, boundary):
                 return False
         return True
 
-    def contains_shape(self, other: BaseShape) -> bool:
-        assert isinstance(other, BaseShape)
-        if isinstance(other, EmptyShape):
-            return True
-        if isinstance(other, WholeShape):
-            return False
+    def _contains_shape(self, other: DefinedShape) -> bool:
+        assert isinstance(other, DefinedShape)
         if isinstance(other, SimpleShape):
             return self.__contains_simple(other)
         if isinstance(other, ConnectedShape):
@@ -586,17 +905,11 @@ class SimpleShape(FiniteShape):
         return True
 
 
-class ConnectedShape(FiniteShape):
+class ConnectedShape(DefinedShape):
     """
-    Class of connected shape
-    This class stores, for example
+    ConnectedShape Class
 
-        circle(radius = 2) - circle(radius = 1)
-
-    Also stores the inversion of a simple shape
-
-    This class can be interpreted as the intersection
-    of many simple shapes
+    A shape defined by intersection of two or more SimpleShapes
 
     """
 
@@ -634,10 +947,42 @@ class ConnectedShape(FiniteShape):
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
+        """Jordan curves that defines the shape
+
+        :getter: Returns a set of jordan curves
+        :type: tuple[JordanCurve]
+        """
         return tuple(shape.jordans[0] for shape in self.subshapes)
 
     @property
     def subshapes(self) -> Tuple[SimpleShape]:
+        """
+        Subshapes that defines the connected shape
+
+        :getter: Subshapes that defines connected shape
+        :setter: Subshapes that defines connected shape
+        :type: tuple[SimpleShape]
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> big_square = Primitive.square(side = 2)
+        >>> small_square = Primitive.square(side = 1)
+        >>> shape = big_square - small_square
+        >>> for subshape in shape.subshapes:
+                print(subshape)
+        Simple Shape of area 4.00 with vertices:
+        [[ 1.  1.]
+        [-1.  1.]
+        [-1. -1.]
+        [ 1. -1.]]
+        Simple Shape of area -1.00 with vertices:
+        [[ 0.5  0.5]
+        [ 0.5 -0.5]
+        [-0.5 -0.5]
+        [-0.5  0.5]]
+
+        """
         return self.__subshapes
 
     @subshapes.setter
@@ -650,14 +995,35 @@ class ConnectedShape(FiniteShape):
         values = tuple(val[1] for val in values)
         self.__subshapes = tuple(values)
 
-    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
+    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
         for subshape in self.subshapes:
             if not subshape.contains_point(point, boundary):
                 return False
         return True
 
+    def _contains_jordan(
+        self, jordan: JordanCurve, boundary: Optional[bool] = True
+    ) -> bool:
+        for subshape in self.subshapes:
+            if not subshape.contains_jordan(jordan, boundary):
+                return False
+        return True
 
-class DisjointShape(FiniteShape):
+    def _contains_shape(self, other: DefinedShape) -> bool:
+        for subshape in self.subshapes:
+            if not subshape.contains_shape(other):
+                return False
+        return True
+
+
+class DisjointShape(DefinedShape):
+    """
+    DisjointShape Class
+
+    A shape defined by the union of some SimpleShape instances and
+    ConnectedShape instances
+    """
+
     def __new__(cls, subshapes: Tuple[ConnectedShape]):
         subshapes = list(subshapes)
         while EmptyShape() in subshapes:
@@ -716,19 +1082,22 @@ class DisjointShape(FiniteShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
+    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
         for subshape in self.subshapes:
             if subshape.contains_point(point, boundary):
                 return True
         return False
 
-    def contains_shape(self, other: FiniteShape) -> bool:
-        """Checks if 'other' is inside the disjoint shape"""
-        assert isinstance(other, BaseShape)
-        if isinstance(other, EmptyShape):
-            return True
-        if isinstance(other, WholeShape):
-            return False
+    def _contains_jordan(
+        self, jordan: JordanCurve, boundary: Optional[bool] = True
+    ) -> bool:
+        for subshape in self.subshapes:
+            if subshape.contains_jordan(jordan, boundary):
+                return True
+        return False
+
+    def _contains_shape(self, other: DefinedShape) -> bool:
+        assert isinstance(other, DefinedShape)
         if isinstance(other, (SimpleShape, ConnectedShape)):
             for subshape in self.subshapes:
                 if other in subshape:
@@ -742,13 +1111,45 @@ class DisjointShape(FiniteShape):
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
+        """Jordan curves that defines the shape
+
+        :getter: Returns a set of jordan curves
+        :type: tuple[JordanCurve]
+        """
         lista = []
         for subshape in self.subshapes:
             lista += list(subshape.jordans)
         return tuple(lista)
 
     @property
-    def subshapes(self) -> Tuple[BaseShape]:
+    def subshapes(self) -> Tuple[Union[SimpleShape, ConnectedShape]]:
+        """
+        Subshapes that defines the disjoint shape
+
+        :getter: Subshapes that defines disjoint shape
+        :setter: Subshapes that defines disjoint shape
+        :type: tuple[SimpleShape | ConnectedShape]
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> left = Primitive.square(center=(-2, 0))
+        >>> right = Primitive.square(center = (2, 0))
+        >>> shape = left | right
+        >>> for subshape in shape.subshapes:
+                print(subshape)
+        Simple Shape of area 1.00 with vertices:
+        [[-1.5  0.5]
+        [-2.5  0.5]
+        [-2.5 -0.5]
+        [-1.5 -0.5]]
+        Simple Shape of area 1.00 with vertices:
+        [[ 2.5  0.5]
+        [ 1.5  0.5]
+        [ 1.5 -0.5]
+        [ 2.5 -0.5]]
+
+        """
         return self.__subshapes
 
     @subshapes.setter

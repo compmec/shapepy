@@ -51,7 +51,9 @@ class TestObjectsInEmptyWhole:
         whole1 = WholeShape()
 
         assert empty0 is empty1
+        assert empty0 != whole0
         assert whole0 is whole1
+        assert empty1 != whole1
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(

@@ -3,6 +3,7 @@ This file contains functions to create primitive shapes such as:
 - Regular polygons
 - Circle
 - Square
+
 """
 
 import math
@@ -18,6 +19,13 @@ from compmec.shape.shape import ConnectedShape, EmptyShape, SimpleShape, WholeSh
 
 
 class Primitive:
+    """
+    Primitive class with functions to create classical shapes such as `circle`, `triangle`, `square`, `regular_polygon` and a generic `polygon`.
+
+    .. note:: This class also contains ``empty`` and ``whole`` instances to easy access
+
+    """
+
     empty = EmptyShape()
     whole = WholeShape()
 
@@ -26,9 +34,34 @@ class Primitive:
         nsides: int, radius: float = 1, center: Point2D = (0, 0)
     ) -> SimpleShape:
         """
-        Creates a regular polygon of n-sides inscribed in a circle of radius 1.
-            if nsides = 3, it's a triangle
-            if nsides = 4, it's a square, of side square(2)
+        Creates a regular polygon
+
+        Parameters
+        ----------
+
+        nsides : int
+            Number of sides of regular polygon, >= 3
+        radius : float, default: 1
+            Radius of the external circle that contains the polygon.
+        center : Point2D, default: (0, 0)
+            The geometric center of the regular polygon
+
+        -------------------------------------------
+
+        return : SimpleShape
+            The simple shape that represents the regular polygon
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> triangle = Primitive.regular_polygon(nsides = 3)
+
+        .. image:: ../img/primitive/regular3.svg
+
+        .. image:: ../img/primitive/regular4.svg
+
+        .. image:: ../img/primitive/regular5.svg
+
         """
         try:
             assert isinstance(nsides, int)
@@ -51,20 +84,85 @@ class Primitive:
 
     @staticmethod
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
-        vertices = [Point2D(vertex) for vertex in vertices]
+        """
+        Creates a generic polygon
+
+        vertices: tuple[Point2D]
+            Vertices of the polygon
+
+        -------------------------------------------
+
+        return : SimpleShape
+            The simple shape that represents the polygon
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> vertices = [(1, 0), (0, 1), (-1, 1), (0, -1)]
+        >>> shape = Primitive.polygon(vertices)
+
+        .. image:: ../img/primitive/diamond.svg
+
+        """
+        vertices = tuple(Point2D(vertex) for vertex in vertices)
         jordan_curve = JordanCurve.from_vertices(vertices)
         return SimpleShape(jordan_curve)
 
     @staticmethod
     def triangle(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
+        """
+        Create a right triangle
+
+        Parameters
+        ----------
+        side : float, default: 1
+            Width and height of the triangle
+        center : Point2D, default: (0, 0)
+            Position of the vertex of right angle
+
+        -------------------------------------------
+
+        return : SimpleShape
+            The simple shape that represents the triangle
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> triangle = Primitive.triangle()
+
+        .. image:: ../img/primitive/triangle.svg
+
+        """
+        center = Point2D(center)
         vertices = [(0, 0), (side, 0), (0, side)]
+        vertices = tuple(center + Point2D(vertex) for vertex in vertices)
         return Primitive.polygon(vertices)
 
     @staticmethod
     def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
         """
-        Creates a square of side `side` and center `center`.
-        Its edges are aligned with the axes
+        Creates a square with sides aligned with axis
+
+        Parameters
+        ----------
+
+        side : float, default: 1
+            Side of the square.
+        center : Point2D, default: (0, 0)
+            The geometric center of the square
+
+        -------------------------------------------
+
+        return : SimpleShape
+            The simple shape that represents the square
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> square = Primitive.square()
+
+        .. image:: ../img/primitive/square.svg
+
         """
         try:
             float(side)
@@ -82,20 +180,28 @@ class Primitive:
 
     @staticmethod
     def circle(radius: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
-        """Creates a circle with given radius and center.
+        """
+        Creates a circle
 
         Parameters
         ----------
 
+        radius : float, default: 1
+            Radius of the circle
+        center : Point2D, default: (0, 0)
+            Center of the circle
+
+        -------------------------------------------
+
+        return : SimpleShape
+            The simple shape that represents the circle
 
         Example use
         -----------
+        >>> from compmec.shape import Primitive
+        >>> circle = Primitive.circle()
 
-        >>> from compmec.shape import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
-        >>> print(jordan.vertices)
-        ((0, 0), (4, 0), (0, 3))
+        .. image:: ../img/primitive/positive_circle.svg
 
         """
         try:

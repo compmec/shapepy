@@ -106,6 +106,9 @@ class ShapePloter:
         assert isinstance(shape, BaseShape)
         if isinstance(shape, EmptyShape):
             return
+        if isinstance(shape, WholeShape):
+            self.gca().set_facecolor("#BFFFBF")
+            return
         attrs = ["pos_color", "neg_color", "fill_color", "alpha", "marker"]
         defas = ["red", "blue", "lime", 0.25, "o"]
         for key, default in zip(attrs, defas):

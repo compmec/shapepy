@@ -731,37 +731,45 @@ class JordanCurve:
     ) -> Tuple[Tuple[int, int, float, float]]:
         """Computes the intersection between two jordan curves
 
-        Finds the values of (a*, b*, u*, v*) such
+        Finds the values of (:math:`a^{\\star}`, :math:`b^{\\star}`, :math:`u^{\\star}`, :math:`v^{\\star}`) such
 
-            self.segments[a*].eval(u*) == other.segments[b*].eval(v*)
+        .. math::
+            S_{a^{\\star}}(u^{\\star}) == O_{b^{\\star}}(v^{\\star})
 
         It computes the intersection between each pair of segments
         from ``self`` and ``other`` and returns the matrix of coefficients
 
-        [(a0, b0, u0, v0), (a1, b1, u1, v1), ...]
+        .. math::
 
-        * 0 <= ai < len(self.segments)
-        * 0 <= bi < len(other.segments)
-        * 0 <= u0 <= 1
-        * 0 <= v0 <= 1
+            \\begin{bmatrix} a_0 & b_0 & u_0 & v_0 \\\\ a_1 & b_1 & u_1 & v_1 \\\\  \\vdots & \\vdots & \\vdots & \\vdots \\\\ a_{n} & b_{n} & u_{n} & v_{n} \\end{bmatrix}
 
-        If the flat ``equal_beziers`` are active, then when ``self.segments[ai] == other.segments[bi]``, then ``ui = None`` and ``vi = None``.
-        If the flag is ``False``, then these cases will not be returned
+        If two bezier curves are equal, then ``u_i = v_i = None``
 
-        If the flat ``end_points`` are inactive, then will remove when ``(ui, vi)`` are ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
+        * ``0 <= a_i < len(self.segments)``
+        * ``0 <= b_i < len(other.segments)``
+        * ``0 <= u_i <= 1`` or ``None``
+        * ``0 <= v_i <= 1`` or ``None``
 
-        :param other: The jordan curve which intersects ``self``
-        :type other: JordanCurve
-        :param equal_beziers: Flag to return (or not) when two segments are equal, defaults to ``True``
-        :type equal_beziers: bool(, optional)
-        :param end_points: Flag to return (or not) when jordans intersect at end points, defaults to ``True``
-        :type end_points: bool(, optional)
-        :return: The matrix of coefficients [(ai, bi, ui, vi)] or an empty tuple in case of non-intersection
+        Parameters
+        ----------
+        other : JordanCurve
+            The jordan curve which intersects ``self``
+        equal_beziers : bool, default = True
+            Flag to return (or not) when two segments are equal
+
+            If the flag ``equal_beziers`` are inactive, then will remove when ``(ui, vi) == (None, None)``.
+
+        end_points : bool, default = True
+            Flag to return (or not) when jordans intersect at end points, defaults to ``True``
+
+            If the flag ``end_points`` are inactive, then will remove when ``(ui, vi)`` are ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
+
+        :return: The matrix of coefficients ``[(ai, bi, ui, vi)]`` or an empty tuple in case of non-intersection
         :rtype: tuple[(int, int, float, float)]
+
 
         Example use
         -----------
-
         >>> from compmec.shape import JordanCurve
         >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
         >>> jordan_a = JordanCurve.from_vertices(vertices_a)
