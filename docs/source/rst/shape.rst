@@ -1,5 +1,8 @@
+.. _shapes:
+
+======
 Shapes
-=========
+======
 
 ------------
 Introduction

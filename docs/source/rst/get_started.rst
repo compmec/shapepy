@@ -1,3 +1,5 @@
+.. _get_started:
+
 ===========
 Get started
 ===========
@@ -37,7 +39,7 @@ Then we create the right shape by moving and rotating the left shape
     # Create the right shape
     right_shape = left_shape.copy()
     right_shape.rotate(180, degrees = True)
-    right_shape.move((0, -1))
+    right_shape.move(0, -1)
 
 We can plot both shapes by using ``matplotlib``
 
@@ -82,4 +84,20 @@ We finally plot the figure
     # Show images on screen
     plt.show()
     
-    
+It's also possible to get properties of the shape, such as **area**, **momentum of area** and **inertia of area**:
+
+.. code-block:: python
+
+    from compmec.shape import IntegrateShape
+
+    area = IntegrateShape.area(union)  # 9.571110535844964
+
+    moment_x = IntegrateShape.polynomial(union, 1, 0)  # -7.502679e-16
+    moment_y = IntegrateShape.polynomial(union, 0, 1)  # -4.785555267922482
+
+    inertia_xx = IntegrateShape.polynomial(union, 2, 0)  # 11.059522875398848
+    inertia_xy = IntegrateShape.polynomial(union, 1, 1)  # -3.416464745608603
+    inertia_yy = IntegrateShape.polynomial(union, 0, 2)  # 8.511945596141624
+
+Once you got the main idea, you can create your own shape.
+We recomend now see the next topic :ref:`primitive`

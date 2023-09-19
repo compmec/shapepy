@@ -1,3 +1,6 @@
+.. _theory:
+
+.. _theory_curves:
 
 ======
 Curves
