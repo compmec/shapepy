@@ -51,7 +51,7 @@ class Math:
         assert isinstance(degree, int)
         assert degree >= 0
         if degree not in Math.__caract_matrix:
-            matrix = np.zeros((degree+1, degree+1), dtype="object")
+            matrix = np.zeros((degree + 1, degree + 1), dtype="object")
             for i in range(degree + 1):
                 for j in range(degree - i + 1):
                     val = Math.comb(degree, i) * Math.comb(degree - i, j)
@@ -349,8 +349,8 @@ class PlanarCurve(BaseCurve):
 
 
 class Operations:
-    
     __degree_decre = {}
+
     @staticmethod
     def degree_decrease(degree: int, times: int) -> Tuple[Tuple[Tuple[float]]]:
         """Returns the transformation and error matrix such
