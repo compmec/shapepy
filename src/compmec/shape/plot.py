@@ -44,7 +44,8 @@ def path_shape(connected: ConnectedShape) -> Path:
             verts, comms = patch_segment(segment)
             vertices += verts
             commands += comms
-        commands[-1] = Path.CLOSEPOLY
+        vertices.append(vertices[0])
+        commands.append(Path.CLOSEPOLY)
     vertices = tuple(tuple(map(float, point)) for point in vertices)
     return Path(vertices, commands)
 
@@ -56,8 +57,12 @@ def path_jordan(jordan: JordanCurve) -> Path:
         verts, comms = patch_segment(segment)
         vertices += verts
         commands += comms
-    commands[-1] = Path.CLOSEPOLY
+    vertices.append(vertices[0])
+    commands.append(Path.CLOSEPOLY)
     vertices = tuple(tuple(map(float, point)) for point in vertices)
+    vertices = tuple(
+        tuple(1e-6 * round(1e6 * val) for val in point) for point in vertices
+    )
     return Path(vertices, commands)
 
 

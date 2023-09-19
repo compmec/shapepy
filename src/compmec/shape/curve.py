@@ -320,7 +320,7 @@ class PlanarCurve(BaseCurve):
         """Reduces at maximum the degree of the bezier curve.
 
         If ``tolerance = None``, then it don't verify the error
-        and stops with a bezier curve of degree ``1`` (segment)
+        and stops with a bezier curve of degree ``1`` (linear segment)
 
         """
         self.__planar.clean(tolerance)
