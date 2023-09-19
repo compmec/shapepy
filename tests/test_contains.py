@@ -10,12 +10,7 @@ import pytest
 
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.primitive import Primitive
-from compmec.shape.shape import (
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    WholeShape,
-)
+from compmec.shape.shape import ConnectedShape, DisjointShape, EmptyShape, WholeShape
 
 
 @pytest.mark.order(7)

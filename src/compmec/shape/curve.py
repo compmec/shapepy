@@ -59,6 +59,18 @@ class Math:
                 matrix[i, j] = -val if (degree + i + j) % 2 else val
         return tuple(tuple(line) for line in matrix)
 
+    @staticmethod
+    def closed_linspace(npts: int) -> Tuple[Fraction]:
+        assert isinstance(npts, int)
+        assert npts >= 2
+        return tuple(Fraction(num, npts - 1) for num in range(npts))
+
+    @staticmethod
+    def open_linspace(npts: int) -> Tuple[Fraction]:
+        assert isinstance(npts, int)
+        assert npts >= 1
+        return tuple(Fraction(num) / (2 * npts) for num in range(1, 2 * npts, 2))
+
 
 class BaseCurve(object):
     def __call__(self, nodes: Union[float, Tuple[float]]) -> Union[Any, Tuple[Any]]:
@@ -215,8 +227,8 @@ class PlanarCurve(BaseCurve):
             return None
         if self == other:
             return tuple()
-        usample = list(nurbs.heavy.NodeSample.closed_linspace(self.npts + 3))
-        vsample = list(nurbs.heavy.NodeSample.closed_linspace(other.npts + 3))
+        usample = list(Math.closed_linspace(self.npts + 3))
+        vsample = list(Math.closed_linspace(other.npts + 3))
         pairs = []
         for i, ui in enumerate(usample):
             pairs += [(ui, vj) for vj in vsample]
@@ -250,15 +262,6 @@ class PlanarCurve(BaseCurve):
             if pta != ptb:
                 return False
         return True
-
-    def __iadd__(self, point: Point2D) -> PlanarCurve:
-        point = Point2D(point)
-        for ctrlpoint in self.ctrlpoints:
-            ctrlpoint += point
-        return self
-
-    def __isub__(self, point: Point2D) -> PlanarCurve:
-        return self.__iadd__(-Point2D(point))
 
     def __contains__(self, point: Point2D) -> bool:
         point = Point2D(point)
@@ -496,7 +499,7 @@ class Projection:
         point = Point2D(point)
         assert isinstance(curve, PlanarCurve)
         nsample = 2 + curve.degree
-        usample = nurbs.heavy.NodeSample.closed_linspace(nsample)
+        usample = Math.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
         curvals = tuple(cval - point for cval in curve(usample))
         distans2 = tuple(curval.inner(curval) for curval in curvals)
@@ -618,7 +621,7 @@ class IntegratePlanar:
         assert expx >= 0
         assert expy >= 0
         dcurve = curve.derivate()
-        nodes = nurbs.heavy.NodeSample.open_linspace(nnodes)
+        nodes = Math.open_linspace(nnodes)
         poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
         points = curve(nodes)
         xvals = tuple(point[0] ** expx for point in points)
@@ -644,7 +647,7 @@ class IntegratePlanar:
         assert expx == 0
         assert expy == 0
         dcurve = curve.derivate()
-        nodes = nurbs.heavy.NodeSample.open_linspace(nnodes)
+        nodes = Math.open_linspace(nnodes)
         poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
         funcvals = tuple(abs(point) for point in dcurve(nodes))
         return float(np.inner(poids, funcvals))
@@ -696,7 +699,7 @@ class IntegratePlanar:
         """
         assert isinstance(curve, PlanarCurve)
         nnodes = curve.npts if nnodes is None else nnodes
-        nodes = nurbs.heavy.NodeSample.closed_linspace(nnodes)
+        nodes = Math.closed_linspace(nnodes)
         total = 0
         for pair_node in zip(nodes[:-1], nodes[1:]):
             pointa, pointb = curve.eval(pair_node)

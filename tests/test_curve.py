@@ -167,15 +167,11 @@ class TestScalarBezier:
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestScalarBezier::test_begin"])
     def test_degree_2(self):
-        points = np.random.uniform(-1, 1, 2)
-        import sympy as sp
-
-        points = sp.symbols("a b c")
+        points = np.random.uniform(-1, 1, 3)
         bezier = BezierCurve(points)
         assert bezier(0) == points[0]
-        # assert bezier(0.25) == 0
-        assert bezier(0.5) == 0.25 * (points[0] + 2 * points[1] + points[2])
-        # assert bezier(0.75) == 0
+        good = 0.25 * (points[0] + 2 * points[1] + points[2])
+        assert abs(bezier(0.5) - good) < 1e-6
         assert bezier(1) == points[2]
 
     @pytest.mark.order(3)
