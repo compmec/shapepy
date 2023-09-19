@@ -227,12 +227,13 @@ class TestTransformationPolygon:
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestTransformationPolygon::test_begin"])
     def test_move(self):
-        good_square_pts = [(1, 2), (2, 2), (2, 3), (1, 3)]
+        good_square_pts = [(2, 4), (3, 4), (3, 5), (2, 5)]
         good_square = JordanCurve.from_vertices(good_square_pts)
 
         test_square_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_square = JordanCurve.from_vertices(test_square_pts)
         test_square.move((1, 2))
+        test_square.move(1, 2)
 
         assert test_square == good_square
 

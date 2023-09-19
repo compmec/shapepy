@@ -400,7 +400,7 @@ class BaseShape(object, metaclass=SuperclassMeta):
         """Are is positive ?"""
         return float(self) > 0
 
-    def move(self, point: Point2D) -> BaseShape:
+    def move(self, *point: Point2D) -> BaseShape:
         """
         Moves/translate entire shape by an amount
 
@@ -417,10 +417,10 @@ class BaseShape(object, metaclass=SuperclassMeta):
         -----------
         >>> from compmec.shape import Primitive
         >>> circle = Primitive.circle()
-        >>> circle.move((1, 2))
+        >>> circle.move(1, 2)
 
         """
-        point = Point2D(point)
+        point = Point2D(*point)
         for jordan in self.jordans:
             jordan.move(point)
         return self
@@ -916,12 +916,6 @@ class ConnectedShape(DefinedShape):
     def __init__(self, subshapes: Tuple[SimpleShape]):
         super().__init__()
         self.subshapes = subshapes
-
-    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
-        for shape in self.subshapes:
-            if other not in shape:
-                return False
-        return True
 
     def __float__(self) -> float:
         return sum(map(float, self.subshapes))

@@ -309,7 +309,7 @@ class JordanCurve:
         self.segments = segments
         return self
 
-    def move(self, point: Point2D) -> JordanCurve:
+    def move(self, *point: Point2D) -> JordanCurve:
         """Translate the entire curve by ``point``
 
         :param point: The translation amount
@@ -328,7 +328,7 @@ class JordanCurve:
         ((2, 3), (6, 3), (2, 6))
 
         """
-        point = Point2D(point)
+        point = Point2D(*point)
         for vertex in self.vertices:
             vertex.move(point)
         return self
