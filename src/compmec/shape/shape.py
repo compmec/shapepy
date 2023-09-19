@@ -593,13 +593,10 @@ class DefinedShape(BaseShape):
         Box with vertices (-1.0, -1.0) and (1., 1.0)
 
         """
-
-        if self.__box is None:
-            box = None
-            for jordan in self.jordans:
-                box |= jordan.box()
-            self.__box = box
-        return self.__box
+        box = None
+        for jordan in self.jordans:
+            box |= jordan.box()
+        return box
 
     def __invert__(self) -> BaseShape:
         return ShapeFromJordans(tuple(~jordan for jordan in self.jordans))

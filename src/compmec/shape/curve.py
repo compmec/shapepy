@@ -227,6 +227,9 @@ class PlanarCurve(BaseCurve):
             return None
         if self == other:
             return tuple()
+        if self.degree == 1 and other.degree == 1:
+            params = Intersection.lines(self, other)
+            return (params,) if len(params) else tuple()
         usample = list(Math.closed_linspace(self.npts + 3))
         vsample = list(Math.closed_linspace(other.npts + 3))
         pairs = []
@@ -397,6 +400,30 @@ class Intersection:
     tol_du = 1e-9  # tolerance convergence
     tol_norm = 1e-9  # tolerance convergence
     max_denom = math.ceil(1 / tol_du)
+
+    @staticmethod
+    def lines(curvea: PlanarCurve, curveb: PlanarCurve) -> Tuple[float]:
+        """Finds the intersection of two line segments"""
+        assert curvea.degree == 1
+        assert curveb.degree == 1
+        pta0, pta1 = curvea.ctrlpoints
+        ptb0, ptb1 = curveb.ctrlpoints
+        vector0 = pta1 - pta0
+        vector1 = ptb1 - ptb0
+        diff0 = ptb0 - pta0
+        denom = vector0.cross(vector1)
+        if denom != 0:  # Lines are not parallel
+            param0 = diff0.cross(vector1) / denom
+            param1 = diff0.cross(vector0) / denom
+            if param0 < 0 or 1 < param0:
+                return tuple()
+            if param1 < 0 or 1 < param1:
+                return tuple()
+            return param0, param1
+        # Lines are parallel
+        if vector0.cross(diff0):
+            return tuple()  # Parallel, but not colinear
+        return tuple()
 
     @staticmethod
     def bezier_and_bezier(
