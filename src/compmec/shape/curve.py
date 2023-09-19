@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from functools import lru_cache
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
@@ -12,8 +11,9 @@ from compmec.shape.polygon import Box, Point2D
 
 
 class Math:
+    __caract_matrix = {}
+
     @staticmethod
-    @lru_cache(maxsize=None)
     def comb(n: int, i: int) -> int:
         """Computes binom(n, i)"""
         value = 1
@@ -37,7 +37,6 @@ class Math:
         return value
 
     @staticmethod
-    @lru_cache(maxsize=None)
     def bezier_caract_matrix(degree: int) -> Tuple[Tuple[int]]:
         """Returns the matrix [M] with the polynomial coefficients
 
@@ -51,13 +50,15 @@ class Math:
         """
         assert isinstance(degree, int)
         assert degree >= 0
-        npts = degree + 1
-        matrix = np.zeros((npts, npts), dtype="object")
-        for i in range(npts):
-            for j in range(degree - i + 1):
-                val = Math.comb(degree, i) * Math.comb(degree - i, j)
-                matrix[i, j] = -val if (degree + i + j) % 2 else val
-        return tuple(tuple(line) for line in matrix)
+        if degree not in Math.__caract_matrix:
+            matrix = np.zeros((degree+1, degree+1), dtype="object")
+            for i in range(degree + 1):
+                for j in range(degree - i + 1):
+                    val = Math.comb(degree, i) * Math.comb(degree - i, j)
+                    matrix[i, j] = -val if (degree + i + j) % 2 else val
+            matrix = tuple(tuple(line) for line in matrix)
+            Math.__caract_matrix[degree] = matrix
+        return Math.__caract_matrix[degree]
 
     @staticmethod
     def closed_linspace(npts: int) -> Tuple[Fraction]:
@@ -348,27 +349,9 @@ class PlanarCurve(BaseCurve):
 
 
 class Operations:
+    
+    __degree_decre = {}
     @staticmethod
-    @lru_cache(maxsize=None)
-    def degree_increase(degree: int, times: int) -> Tuple[Tuple[float]]:
-        """Returns the transformation matrix [T] such
-
-        A(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-        C(u) = sum_{i=0}^{p+t} B_{i,p+t}(u) * Q_i
-        [Q] = [T] * [P]
-
-        [T].shape = (p+t+1, p+1)
-
-        """
-        assert isinstance(degree, int)
-        assert degree >= 0
-        assert isinstance(times, int)
-        assert times > 0
-        matrix = nurbs.heavy.Operations.degree_increase_bezier(degree, times)
-        return tuple(tuple(line) for line in matrix)
-
-    @staticmethod
-    @lru_cache(maxsize=None)
     def degree_decrease(degree: int, times: int) -> Tuple[Tuple[Tuple[float]]]:
         """Returns the transformation and error matrix such
 
@@ -384,14 +367,16 @@ class Operations:
         assert isinstance(times, int)
         assert times > 0
         assert degree - times >= 0
-        old_knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
-        new_knotvector = nurbs.GeneratorKnotVector.bezier(degree - times, Fraction)
-        matrix, error = nurbs.heavy.LeastSquare.spline2spline(
-            old_knotvector, new_knotvector
-        )
-        matrix = tuple(tuple(line) for line in matrix)
-        error = tuple(tuple(line) for line in error)
-        return matrix, error
+        if (degree, times) not in Operations.__degree_decre:
+            old_knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
+            new_knotvector = nurbs.GeneratorKnotVector.bezier(degree - times, Fraction)
+            matrix, error = nurbs.heavy.LeastSquare.spline2spline(
+                old_knotvector, new_knotvector
+            )
+            matrix = tuple(tuple(line) for line in matrix)
+            error = tuple(tuple(line) for line in error)
+            Operations.__degree_decre[(degree, times)] = matrix, error
+        return Operations.__degree_decre[(degree, times)]
 
 
 class Intersection:
@@ -567,7 +552,8 @@ class Projection:
 
 
 class Derivate:
-    @lru_cache(maxsize=None)
+    __non_rat_bezier_once = {}
+
     @staticmethod
     def non_rational_bezier_once(degree: int) -> Tuple[Tuple[float]]:
         """Derivate a bezier curve of given degree
@@ -583,9 +569,11 @@ class Derivate:
         [T].shape = (q+1, p+1)
         q = p - 1
         """
-        knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
-        matrix = nurbs.heavy.Calculus.derivate_nonrational_bezier(knotvector)
-        return matrix
+        if degree not in Derivate.__non_rat_bezier_once:
+            knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
+            matrix = nurbs.heavy.Calculus.derivate_nonrational_bezier(knotvector)
+            Derivate.__non_rat_bezier_once[degree] = tuple(matrix)
+        return Derivate.__non_rat_bezier_once[degree]
 
     @staticmethod
     def non_rational_bezier(degree: int, times: int) -> Tuple[Tuple[float]]:

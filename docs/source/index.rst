@@ -39,8 +39,7 @@ Documentation
 Support
 -------
 
-This package is slowly increase its number of tests.
-Since the library is very visual, many tests still need to be made.
+This package is slowly increase its number of tests, if you find a bug, please notify to be inserted in the tests.
 
 Raise an issue on the `GitHub issue tracker
 <https://github.com/compmec/shape/issues>`_ or contact me at
