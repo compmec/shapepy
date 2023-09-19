@@ -169,10 +169,10 @@ class TestScalarBezier:
     def test_degree_2(self):
         points = np.random.uniform(-1, 1, 3)
         bezier = BezierCurve(points)
-        assert bezier(0) == points[0]
+        assert abs(bezier(0) - points[0]) < 1e-6
         good = 0.25 * (points[0] + 2 * points[1] + points[2])
         assert abs(bezier(0.5) - good) < 1e-6
-        assert bezier(1) == points[2]
+        assert abs(bezier(1) - points[2]) < 1e-6
 
     @pytest.mark.order(3)
     @pytest.mark.timeout(10)

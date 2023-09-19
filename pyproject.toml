@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "compmec-shape"
-version = "0.1.0"
+version = "1.0.0"
 description = "Geometric 2D library"
 authors = ["Carlos Adir <carlos.adir.leite@gmail.com>"]
 readme = "README.md"
@@ -8,7 +8,8 @@ packages = [{ include = "compmec/shape", from = "src" }]
 
 [tool.poetry.dependencies]
 numpy = "^1.0.0"
-compmec-nurbs = "^1.0.0"
+matplotlib = "^3.4.0"
+compmec-nurbs = "^1.0.7"
 python = "^3.7"
 
 [tool.poetry.dev-dependencies]

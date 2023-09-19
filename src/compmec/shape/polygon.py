@@ -7,7 +7,6 @@ from typing import Tuple, Union
 import numpy as np
 
 
-
 class Point2D(object):
     def __new__(cls, *point: Tuple[float]):
         if isinstance(point[0], cls):

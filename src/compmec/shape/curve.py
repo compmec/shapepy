@@ -86,8 +86,6 @@ class BezierCurve(BaseCurve):
 
     def __init__(self, ctrlpoints: Tuple[Any]):
         self.ctrlpoints = ctrlpoints
-        if self.degree > 2:
-            raise NotImplementedError
 
     def __or__(self, other: BezierCurve) -> BezierCurve:
         """
@@ -614,10 +612,6 @@ class Derivate:
             derive = Derivate.non_rational_bezier_once(degree - i)
             matrix = np.dot(derive, matrix)
         return tuple(tuple(line) for line in matrix)
-
-    @staticmethod
-    def rational_bezier(degree: int, times: int):
-        raise NotImplementedError
 
 
 class IntegratePlanar:

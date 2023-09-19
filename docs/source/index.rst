@@ -1,9 +1,5 @@
-.. sectionproperties documentation master file, created by
-   sphinx-quickstart on Wed Jul 11 20:01:55 2018.
-   You can adapt this file completely to your liking, but it should at least
-   contain the root `toctree` directive.
 
-.. image:: img/logo.png
+.. image:: img/shape/base.svg
   :width: 70 %
   :alt: compmec-shape
   :align: center
@@ -43,9 +39,13 @@ Documentation
 Support
 -------
 
+This package is slowly increase its number of tests.
+Since the library is very visual, many tests still need to be made.
+
 Raise an issue on the `GitHub issue tracker
 <https://github.com/compmec/shape/issues>`_ or contact me at
 `compmecgit@gmail.com <mailto:compmecgit@gmail.com>`_.
+
 If you have a request for a feature to be added to the *compmec-shape* package, please don't hesitate to get in touch
 
 License
