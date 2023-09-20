@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "compmec-shape"
-version = "1.0.0"
+version = "1.0.1"
 description = "Geometric 2D library"
 authors = ["Carlos Adir <carlos.adir.leite@gmail.com>"]
 readme = "README.md"

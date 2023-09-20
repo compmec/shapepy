@@ -179,7 +179,9 @@ class Primitive:
         return Primitive.polygon(vertices)
 
     @staticmethod
-    def circle(radius: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
+    def circle(
+        radius: float = 1, center: Point2D = (0, 0), ndivangle: int = 16
+    ) -> SimpleShape:
         """
         Creates a circle
 
@@ -190,6 +192,8 @@ class Primitive:
             Radius of the circle
         center : Point2D, default: (0, 0)
             Center of the circle
+        ndivangle : int, 16
+            Number of divisions of the circle, minimum 4
 
         -------------------------------------------
 
@@ -203,16 +207,21 @@ class Primitive:
 
         .. image:: ../img/primitive/positive_circle.svg
 
+        .. note::
+
+            We represent the circle by many quadratic segments.
+            NURBS are not implemented in this code to represent exactly circles.
+            You can choose the number of quadratic terms by changing ``ndivangle``.
+
         """
         try:
             float(radius)
             assert radius > 0
             center = Point2D(center)
+            assert isinstance(ndivangle, int)
+            assert ndivangle >= 4
         except (ValueError, TypeError, AssertionError):
             raise ValueError("Input invalid")
-
-        degree = 2
-        ndivangle = 16
 
         angle = math.tau / ndivangle
         height = np.tan(angle / 2)

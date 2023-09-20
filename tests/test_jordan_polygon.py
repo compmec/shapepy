@@ -404,13 +404,13 @@ class TestIntegrateJordan:
     def test_lenght_triangle(self):
         vertices = [(0, 0), (3, 0), (0, 4)]
         jordan_curve = JordanCurve.from_vertices(vertices)
-        test = jordan_curve.lenght
+        test = float(jordan_curve)
         good = 12
         assert abs(test - good) < 1e-3
 
         vertices = [(0, 0), (0, 4), (3, 0)]
         jordan_curve = JordanCurve.from_vertices(vertices)
-        test = jordan_curve.lenght
+        test = float(jordan_curve)
         good = -12
         assert abs(test - good) < 1e-3
 
@@ -431,7 +431,7 @@ class TestIntegrateJordan:
             (-side / 2, side / 2),
         ]
         jordan_curve = JordanCurve.from_vertices(square_vertices)
-        lenght = jordan_curve.lenght
+        lenght = float(jordan_curve)
         assert lenght > 0
         assert abs(lenght - 4 * side) < 1e-9
 
@@ -443,7 +443,7 @@ class TestIntegrateJordan:
             (side / 2, -side / 2),
         ]
         jordan_curve = JordanCurve.from_vertices(square_vertices)
-        lenght = jordan_curve.lenght
+        lenght = float(jordan_curve)
         assert lenght < 0
         assert abs(lenght + 4 * side) < 1e-9
 
@@ -461,8 +461,8 @@ class TestIntegrateJordan:
             lenght = 2 * nsides * np.sin(math.pi / nsides)
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
-            jordancurve = JordanCurve.from_vertices(ctrlpoints)
-            assert (jordancurve.lenght - lenght) < 1e-9
+            jordan_curve = JordanCurve.from_vertices(ctrlpoints)
+            assert (float(jordan_curve) - lenght) < 1e-9
 
     @pytest.mark.order(4)
     @pytest.mark.timeout(10)
