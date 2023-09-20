@@ -45,7 +45,7 @@ class Point2D(object):
         assert isinstance(other, self.__class__)
         return self[0] * other[1] - self[1] * other[0]
 
-    def norm_square(self) -> float:
+    def norm2(self) -> float:
         return self.inner(self)
 
     def __abs__(self) -> float:
@@ -136,6 +136,11 @@ class Point2D(object):
         self._y *= other
         return self
 
+    def __itruediv__(self, other: float) -> Point2D:
+        self._x /= other
+        self._y /= other
+        return self
+
     def __add__(self, other: Point2D) -> Point2D:
         new = self.copy()
         new += other
@@ -153,6 +158,11 @@ class Point2D(object):
 
     def __rmul__(self, other: float) -> Point2D:
         return self.__mul__(other)
+
+    def __truediv__(self, other: float) -> Point2D:
+        new = self.copy()
+        new /= other
+        return new
 
     def __or__(self, other: Point2D) -> float:
         return self.inner(other)
