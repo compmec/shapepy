@@ -424,6 +424,28 @@ class JordanCurve:
         self.segments = tuple(new_segments)
         return self
 
+    def __split_segment(self, index: int, nodes: Tuple[float]) -> None:
+        nodes = tuple(sorted(nodes))
+        segment = self.segments[index]
+        new_segments = segment.split(nodes)
+        for new_segment in new_segments:
+            new_segment.clean()
+        points = list(new_segments[0].ctrlpoints)
+        points[0] = segment.ctrlpoints[0]
+        new_segments[0].ctrlpoints = points
+        points = list(new_segments[-1].ctrlpoints)
+        points[-1] = segment.ctrlpoints[-1]
+        new_segments[-1].ctrlpoints = points
+        for i, node in enumerate(nodes):
+            points = list(new_segments[i + 1].ctrlpoints)
+            points[0] = new_segments[i].ctrlpoints[-1]
+            new_segments[i + 1].ctrlpoints = points
+        total_segments = list(self.segments)
+        total_segments.pop(index)
+        for i, segment in enumerate(new_segments):
+            total_segments.insert(index + i, segment)
+        self.segments = total_segments
+
     def split(self, indexs: Tuple[int], nodes: Tuple[float]) -> None:
         """Divides the jordan curve in some nodes
 
@@ -459,27 +481,22 @@ class JordanCurve:
             assert 0 <= node
             assert node <= 1
         assert len(indexs) == len(nodes)
-        indexs = list(indexs)
-        new_segments = list(self.segments)
-        inserted = 0
-        for index, node in zip(indexs, nodes):
+        # Clean boundary nodes, when node = 0 or 1
+        pairs = sorted(zip(indexs, nodes))
+        i = 0
+        while i < len(pairs):
+            node = pairs[i][1]
             if abs(node) < 1e-6 or abs(node - 1) < 1e-6:
+                pairs.pop(i)
+            else:
+                i += 1
+        shift = 0
+        for ind in range(len(self.segments)):
+            new_nodes = tuple(node for index, node in pairs if index == ind)
+            if len(new_nodes) == 0:
                 continue
-            segment = new_segments[index + inserted]
-            start_point = segment.ctrlpoints[0]
-            end_point = segment.ctrlpoints[-1]
-            bezleft, bezrigh = segment.split([node])
-            mid_point = bezrigh.ctrlpoints[0]
-            bezleft.ctrlpoints = (
-                [start_point] + list(bezleft.ctrlpoints[1:-1]) + [mid_point]
-            )
-            bezrigh.ctrlpoints = (
-                [mid_point] + list(bezrigh.ctrlpoints[1:-1]) + [end_point]
-            )
-            new_segments[index + inserted] = bezleft
-            new_segments.insert(index + inserted + 1, bezrigh)
-            inserted += 1
-        self.segments = tuple(new_segments)
+            self.__split_segment(ind + shift, new_nodes)
+            shift += len(new_nodes)
 
     def points(self, subnpts: Optional[int] = None) -> Tuple[Tuple[float]]:
         """Return sample points in jordan curve for plotting curve
