@@ -541,35 +541,6 @@ class JordanCurve:
         return box
 
     @property
-    def lenght(self) -> float:
-        """Lenght
-
-        If jordan curve is clockwise, then lenght < 0
-
-        :getter: Returns the total lenght of the jordan curve
-        :type: float
-
-        Example use
-        -----------
-
-        >>> from compmec.shape import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
-        >>> print(jordan.lenght)
-        12.0
-        >>> vertices = [(0, 0), (0, 3), (4, 0)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
-        >>> print(jordan.lenght)
-        -12.0
-
-        """
-        if self.__lenght is None:
-            lenght = IntegrateJordan.lenght(self)
-            area = IntegrateJordan.area(self)
-            self.__lenght = lenght if area > 0 else -lenght
-        return self.__lenght
-
-    @property
     def segments(self) -> Tuple[PlanarCurve]:
         """Segments
 
@@ -695,7 +666,32 @@ class JordanCurve:
         return False
 
     def __float__(self) -> float:
-        return self.lenght
+        """Returns the lenght of the curve
+
+        If jordan curve is clockwise, then lenght < 0
+
+        :getter: Returns the total lenght of the jordan curve
+        :type: float
+
+        Example use
+        -----------
+
+        >>> from compmec.shape import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> print(float(jordan))
+        12.0
+        >>> vertices = [(0, 0), (0, 3), (4, 0)]
+        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> print(float(jordan))
+        -12.0
+
+        """
+        if self.__lenght is None:
+            lenght = IntegrateJordan.lenght(self)
+            area = IntegrateJordan.area(self)
+            self.__lenght = lenght if area > 0 else -lenght
+        return self.__lenght
 
     def __abs__(self) -> JordanCurve:
         """Returns the same curve, but in positive direction"""

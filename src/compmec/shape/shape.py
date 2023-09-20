@@ -806,7 +806,6 @@ class SimpleShape(DefinedShape):
     def __set_jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
         self.__jordancurve = other.copy()
-        self.__inversejordan = ~other
         self.__area = IntegrateShape.area(self)
 
     def invert(self) -> SimpleShape:
@@ -837,9 +836,7 @@ class SimpleShape(DefinedShape):
         [-0.5  0.5]]
 
         """
-        jordan = self.__jordancurve
-        self.__jordancurve = self.__inversejordan
-        self.__inversejordan = jordan
+        self.__jordancurve.invert()
         self.__area *= -1
         return self
 
@@ -1037,14 +1034,6 @@ class DisjointShape(DefinedShape):
         for subshape in self.subshapes:
             total += float(subshape)
         return float(total)
-
-    def __contains__(self, other: Union[BaseShape, JordanCurve, Point2D]) -> bool:
-        if isinstance(other, BaseShape):
-            return self.contains_shape(other)
-        for subshape in self.subshapes:
-            if other in subshape:
-                return True
-        return False
 
     def __eq__(self, other: BaseShape):
         assert isinstance(other, BaseShape)
