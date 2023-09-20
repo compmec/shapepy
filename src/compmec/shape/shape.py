@@ -848,9 +848,22 @@ class SimpleShape(DefinedShape):
     def _contains_jordan(
         self, jordan: JordanCurve, boundary: Optional[bool] = True
     ) -> bool:
-        for point in jordan.points(1):
+        for point in jordan.points(0):
             if not self.contains_point(point, boundary):
                 return False
+        inters = jordan & self.jordans[0]
+        uvals = {}
+        for a, _, u, _ in inters:
+            if a not in uvals:
+                uvals[a] = set()
+            uvals[a].add(u)
+        for a, us in uvals.items():
+            us = sorted(us)
+            umids = tuple((u0 + u1) / 2 for u0, u1 in zip(us[:-1], us[1:]))
+            points = jordan.segments[a].eval(umids)
+            for point in points:
+                if not self.contains_point(point, boundary):
+                    return False
         return True
 
     def _contains_shape(self, other: DefinedShape) -> bool:
