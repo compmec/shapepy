@@ -566,28 +566,30 @@ class TestObjectsInConnected:
         ]
     )
     def test_point(self):
-        square = ~Primitive.square(side=4)
+        big_square = Primitive.square(side=4)
+        small_square = Primitive.square(side=2)
+        connected = ConnectedShape([big_square, ~small_square])
 
         # Exterior points
-        assert (0, 0) not in square
-        assert (-1, -1) not in square
-        assert (-1, 1) not in square
-        assert (1, -1) not in square
-        assert (1, 1) not in square
+        assert (0, 0) not in connected
 
         # Boundary points
-        assert (-2, -2) in square
-        assert (0, -2) in square
-        assert (2, -2) in square
-        assert (2, 0) in square
-        assert (2, 2) in square
-        assert (0, 2) in square
-        assert (-2, 2) in square
-        assert (-2, 0) in square
+        assert (-1, -1) in connected
+        assert (-1, 1) in connected
+        assert (1, -1) in connected
+        assert (1, 1) in connected
+        assert (-2, -2) in connected
+        assert (0, -2) in connected
+        assert (2, -2) in connected
+        assert (2, 0) in connected
+        assert (2, 2) in connected
+        assert (0, 2) in connected
+        assert (-2, 2) in connected
+        assert (-2, 0) in connected
 
         # Interior points
-        assert (3, 3) in square
-        assert (-3, -3) in square
+        assert (1.5, 1.5) in connected
+        assert (1.5, -1.5) in connected
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -599,20 +601,21 @@ class TestObjectsInConnected:
         ]
     )
     def test_jordan(self):
-        small_square = ~Primitive.square(side=2)
+        small_square = Primitive.square(side=2)
         small_jordan = small_square.jordans[0]
-        big_square = ~Primitive.square(side=4)
+        big_square = Primitive.square(side=4)
         big_jordan = big_square.jordans[0]
+        connected = ConnectedShape([big_square, ~small_square])
 
-        assert small_jordan in small_square
-        assert small_jordan not in big_square
-        assert big_jordan in small_square
-        assert big_jordan in big_square
+        assert small_jordan in connected
+        assert small_jordan in connected
+        assert big_jordan in connected
+        assert big_jordan in connected
 
-        assert (~small_jordan) in small_square
-        assert (~small_jordan) not in big_square
-        assert (~big_jordan) in small_square
-        assert (~big_jordan) in big_square
+        assert (~small_jordan) in connected
+        assert (~small_jordan) in connected
+        assert (~big_jordan) in connected
+        assert (~big_jordan) in connected
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -627,11 +630,12 @@ class TestObjectsInConnected:
     def test_simple(self):
         small_square = Primitive.square(side=2)
         big_square = Primitive.square(side=4)
+        connected = ConnectedShape([big_square, ~small_square])
 
-        assert small_square not in (~small_square)
-        assert big_square not in (~small_square)
-        assert small_square not in (~big_square)
-        assert big_square not in (~big_square)
+        assert small_square not in connected
+        assert big_square not in connected
+        assert (~small_square) not in connected
+        assert (~big_square) not in connected
 
     @pytest.mark.order(7)
     @pytest.mark.dependency(
@@ -647,6 +651,7 @@ class TestObjectsInConnected:
     def test_connected(self):
         small_square = Primitive.square(side=2)
         big_square = Primitive.square(side=4)
+        connected = ConnectedShape([big_square, ~small_square])
 
         assert (~small_square) in (~small_square)
         assert (~big_square) in (~small_square)
