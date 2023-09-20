@@ -400,83 +400,6 @@ class BaseShape(object, metaclass=SuperclassMeta):
         """Are is positive ?"""
         return float(self) > 0
 
-    def move(self, *point: Point2D) -> BaseShape:
-        """
-        Moves/translate entire shape by an amount
-
-        Parameters
-        ----------
-
-        point : Point2D
-            The amount to move
-
-        :return: The same instance
-        :rtype: BaseShape
-
-        Example use
-        -----------
-        >>> from compmec.shape import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.move(1, 2)
-
-        """
-        point = Point2D(*point)
-        for jordan in self.jordans:
-            jordan.move(point)
-        return self
-
-    def scale(self, xscale: float, yscale: float) -> BaseShape:
-        """
-        Scales entire shape by an amount
-
-        Parameters
-        ----------
-
-        xscale : float
-            The amount to scale in horizontal direction
-        yscale : float
-            The amount to scale in vertical direction
-
-        :return: The same instance
-        :rtype: BaseShape
-
-        Example use
-        -----------
-        >>> from compmec.shape import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.scale(2, 3)
-
-        """
-        for jordan in self.jordans:
-            jordan.scale(xscale, yscale)
-        return self
-
-    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
-        """
-        Rotates entire shape around the origin by an amount
-
-        Parameters
-        ----------
-
-        angle : float
-            The amount to rotate around origin
-        degrees : bool, default = False
-            Flag to indicate if ``angle`` is in radians or degrees
-
-        :return: The same instance
-        :rtype: BaseShape
-
-        Example use
-        -----------
-        >>> from compmec.shape import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.rotate(angle = 90, degrees = True)
-
-        """
-        for jordan in self.jordans:
-            jordan.rotate(angle, degrees)
-        return self
-
     def copy(self) -> BaseShape:
         """Creates a deep copy"""
         return copy.copy(self)
@@ -639,6 +562,86 @@ class DefinedShape(BaseShape):
         point = Point2D(other)
         return self.contains_point(point)
 
+    def __float__(self) -> float:
+        return float(IntegrateShape.area(self))
+
+    def move(self, *point: Point2D) -> BaseShape:
+        """
+        Moves/translate entire shape by an amount
+
+        Parameters
+        ----------
+
+        point : Point2D
+            The amount to move
+
+        :return: The same instance
+        :rtype: BaseShape
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.move(1, 2)
+
+        """
+        point = Point2D(*point)
+        for jordan in self.jordans:
+            jordan.move(point)
+        return self
+
+    def scale(self, xscale: float, yscale: float) -> BaseShape:
+        """
+        Scales entire shape by an amount
+
+        Parameters
+        ----------
+
+        xscale : float
+            The amount to scale in horizontal direction
+        yscale : float
+            The amount to scale in vertical direction
+
+        :return: The same instance
+        :rtype: BaseShape
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.scale(2, 3)
+
+        """
+        for jordan in self.jordans:
+            jordan.scale(xscale, yscale)
+        return self
+
+    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
+        """
+        Rotates entire shape around the origin by an amount
+
+        Parameters
+        ----------
+
+        angle : float
+            The amount to rotate around origin
+        degrees : bool, default = False
+            Flag to indicate if ``angle`` is in radians or degrees
+
+        :return: The same instance
+        :rtype: BaseShape
+
+        Example use
+        -----------
+        >>> from compmec.shape import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.rotate(angle = 90, degrees = True)
+
+        """
+        for jordan in self.jordans:
+            jordan.rotate(angle, degrees)
+        return self
+
     def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
         """
         Checks if given point is inside the shape
@@ -775,9 +778,6 @@ class SimpleShape(DefinedShape):
         msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
         return msg
 
-    def __float__(self) -> float:
-        return float(self.__area)
-
     def __eq__(self, other: BaseShape) -> bool:
         """Compare two shapes
 
@@ -797,7 +797,7 @@ class SimpleShape(DefinedShape):
         return self.jordans[0] == other.jordans[0]
 
     def __invert__(self) -> SimpleShape:
-        return self.__class__(self.__inversejordan)
+        return self.__class__(~self.jordans[0])
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
@@ -806,7 +806,6 @@ class SimpleShape(DefinedShape):
     def __set_jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
         self.__jordancurve = other.copy()
-        self.__area = IntegrateShape.area(self)
 
     def invert(self) -> SimpleShape:
         """
@@ -837,7 +836,6 @@ class SimpleShape(DefinedShape):
 
         """
         self.__jordancurve.invert()
-        self.__area *= -1
         return self
 
     def _contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
