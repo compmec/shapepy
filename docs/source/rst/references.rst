@@ -35,7 +35,6 @@
     :members:
     :inherited-members:
     :undoc-members:
-    :show-inheritance:
 
 ----------------------------------------------------
 
@@ -43,7 +42,6 @@
     :members:
     :inherited-members:
     :undoc-members:
-    :show-inheritance:
 
 ----------------------------------------------------
 

@@ -165,7 +165,7 @@ class FollowPath:
             Start point of jordans[a_{i+1}].segments[b_{i+1}]
         are equal
 
-        The first point (a1, b1) = (0, index)
+        The first point (a1, b1) = (index_jordan, index_segment)
 
         The end point of jordans[an].segments[bn] is equal to
         the start point of jordans[a1].segments[b1]
@@ -456,7 +456,19 @@ class EmptyShape(SingletonShape):
 
 
 class WholeShape(SingletonShape):
-    """WholeShape is a singleton class to represent all plane"""
+    """WholeShape is a singleton class to represent all plane
+
+    Example use
+    -----------
+    >>> from compmec.shape import WholeShape
+    >>> whole = WholeShape()
+    >>> print(whole)
+    WholeShape
+    >>> print(float(whole))  # Area
+    inf
+    >>> (0, 0) in whole
+    True
+    """
 
     def __or__(self, other: BaseShape) -> WholeShape:
         return self

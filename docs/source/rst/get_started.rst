@@ -36,8 +36,9 @@ Then we create the right shape by moving and rotating the left shape
 
 .. code-block:: python
 
+    from copy import deepcopy
     # Create the right shape
-    right_shape = left_shape.copy()
+    right_shape = deepcopy(left_shape)
     right_shape.rotate(180, degrees = True)
     right_shape.move(0, -1)
 

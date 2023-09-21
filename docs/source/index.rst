@@ -1,6 +1,6 @@
 
-.. image:: img/shape/base.svg
-  :width: 70 %
+.. image:: img/logo.svg
+  :width: 100 %
   :alt: compmec-shape
   :align: center
 

@@ -7,8 +7,9 @@
 [![Python Versions][pyversions-img]][pyversions-url]
 [![License: MIT][license-img]][license-url]
 
+![compmec-shape logo](docs/source/img/logo.svg)
 
-A python package for bidimensional geometric shapes manipulation.
+A python package for bidimensional geometric shapes boolean manipulation.
 
 
 ### Installation:
