@@ -7,6 +7,7 @@ This file contains functions to create primitive shapes such as:
 """
 
 import math
+from copy import copy
 from fractions import Fraction
 from typing import Tuple
 
@@ -230,11 +231,11 @@ class Primitive:
         middle_point = radius * Point2D(1, height)
         beziers = []
         for i in range(ndivangle - 1):
-            end_point = start_point.copy().rotate(angle)
+            end_point = copy(start_point).rotate(angle)
             new_bezier = PlanarCurve([start_point, middle_point, end_point])
             beziers.append(new_bezier)
             start_point = end_point
-            middle_point = middle_point.copy().rotate(angle)
+            middle_point = copy(middle_point).rotate(angle)
         end_point = beziers[0].ctrlpoints[0]
         new_bezier = PlanarCurve([start_point, middle_point, end_point])
         beziers.append(new_bezier)

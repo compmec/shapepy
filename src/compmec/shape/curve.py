@@ -235,17 +235,18 @@ class PlanarCurve(BaseCurve):
         pairs = []
         for i, ui in enumerate(usample):
             pairs += [(ui, vj) for vj in vsample]
-        pairs = Intersection.bezier_and_bezier(self, other, pairs)
-        pairs.insert(0, (0, 0))
-        pairs.insert(0, (0, 1))
-        pairs.insert(0, (1, 0))
-        pairs.insert(0, (1, 1))
-        # Filter values by distance of points
-        tol_norm = 1e-6
-        pairs = Intersection.filter_distance(self, other, pairs, tol_norm)
-        # Filter values by distance abs(ui-uj, vi-vj)
-        tol_du = 1e-6
-        pairs = Intersection.filter_parameters(pairs, tol_du)
+        for k in range(3):
+            pairs = Intersection.bezier_and_bezier(self, other, pairs)
+            pairs.insert(0, (0, 0))
+            pairs.insert(0, (0, 1))
+            pairs.insert(0, (1, 0))
+            pairs.insert(0, (1, 1))
+            # Filter values by distance of points
+            tol_norm = 1e-6
+            pairs = Intersection.filter_distance(self, other, pairs, tol_norm)
+            # Filter values by distance abs(ui-uj, vi-vj)
+            tol_du = 1e-6
+            pairs = Intersection.filter_parameters(pairs, tol_du)
         return tuple(pairs)
 
     def __str__(self) -> str:
@@ -426,7 +427,7 @@ class Intersection:
         ddcurveb = dcurveb.derivate()
 
         # Start newton iteration
-        for k in range(10):  # Number of newton iteration
+        for k in range(20):  # Number of newton iteration
             new_pairs = set()
             for u, v in pairs:
                 ssu = curvea(u)
@@ -547,6 +548,7 @@ class Projection:
                 fuk = deriva.inner(curval)
                 dfuk = ddcurvals[k].inner(curval)
                 dfuk += deriva.inner(deriva)
+                dfuk = dfuk if abs(dfuk) > 1e-6 else 1e-6
                 newu = uk - fuk / dfuk
                 usample[k] = min(one, max(newu, zero))
             usample = list(set(usample))

@@ -181,15 +181,16 @@ class FollowPath:
                 break
             matrix.append((index_jordan, index_segment))
             last_point = segment.ctrlpoints[-1]
+            possibles = []
             for i, jordan in enumerate(jordans):
                 if i == index_jordan:
                     continue
                 if last_point in jordan:
-                    break
-            else:
+                    possibles.append(i)
+            if len(possibles) == 0:
                 index_segment += 1
                 continue
-            index_jordan = i
+            index_jordan = possibles[0]
             for j, segj in enumerate(all_segments[index_jordan]):
                 if segj.ctrlpoints[0] == last_point:
                     index_segment = j
