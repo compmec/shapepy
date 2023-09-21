@@ -9,9 +9,6 @@ Documentation
 
 *compmec-shape* is a python package for bidimensional geometry manipulation.
 
-.. note::
-   Smooth curves are not yet implemented, futher will be. For now, it uses polygons.
-
 .. toctree::
    :maxdepth: 1
    :caption: Using the library:
