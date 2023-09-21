@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from copy import copy
 from fractions import Fraction
 from typing import Any, Optional, Tuple, Union
 
@@ -331,8 +332,11 @@ class PlanarCurve(BaseCurve):
         self.__planar.clean(tolerance)
         return self
 
-    def copy(self) -> PlanarCurve:
-        ctrlpoints = tuple(point.copy() for point in self.ctrlpoints)
+    def __copy__(self) -> PlanarCurve:
+        return self.__deepcopy__(None)
+
+    def __deepcopy__(self, memo) -> PlanarCurve:
+        ctrlpoints = tuple(copy(point) for point in self.ctrlpoints)
         return self.__class__(ctrlpoints)
 
     def invert(self) -> PlanarCurve:

@@ -4,6 +4,7 @@ is in fact, stores a list of spline-curves.
 """
 from __future__ import annotations
 
+from copy import copy
 from fractions import Fraction
 from typing import Optional, Tuple, Union
 
@@ -228,29 +229,16 @@ class JordanCurve:
         all_ctrlpoints = [bezier.ctrlpoints for bezier in beziers]
         return cls.from_ctrlpoints(all_ctrlpoints)
 
-    def copy(self) -> JordanCurve:
-        """Returns a copy of the jordan curve.
-        Also copies each point
+    def __copy__(self) -> JordanCurve:
+        return self.__deepcopy__(None)
 
-        :return: The copied jordan curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from compmec.shape import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
-        >>> jordan.copy()
-        Jordan Curve of degree 1 and vertices
-        ((0, 0), (4, 0), (0, 3))
-
-        """
+    def __deepcopy__(self, memo) -> JordanCurve:
+        """Returns a deep copy of the jordan curve"""
         segments = self.segments
         nsegments = len(segments)
         all_points = []
         for segment in segments:
-            points = list(point.copy() for point in segment.ctrlpoints)
+            points = list(copy(point) for point in segment.ctrlpoints)
             all_points.append(points)
         for i, points in enumerate(all_points):
             j = (i + 1) % nsegments
@@ -653,8 +641,8 @@ class JordanCurve:
         for point in other.points(1):
             if point not in self:
                 return False
-        selcopy = self.copy().clean()
-        othcopy = other.copy().clean()
+        selcopy = self.__copy__().clean()
+        othcopy = other.__copy__().clean()
         if len(selcopy.segments) != len(othcopy.segments):
             return False
         segment1 = othcopy.segments[0]
@@ -671,7 +659,7 @@ class JordanCurve:
         return True
 
     def __invert__(self) -> JordanCurve:
-        return self.copy().invert()
+        return self.__copy__().invert()
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
@@ -712,7 +700,8 @@ class JordanCurve:
 
     def __abs__(self) -> JordanCurve:
         """Returns the same curve, but in positive direction"""
-        return self.copy() if float(self) > 0 else (~self)
+        copy = self.__copy__()
+        return copy if float(self) > 0 else copy.invert()
 
     def __intersection(
         self, other: JordanCurve

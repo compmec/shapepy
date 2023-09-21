@@ -9,7 +9,7 @@ or even unconnected shapes.
 from __future__ import annotations
 
 import abc
-import copy
+from copy import copy
 from fractions import Fraction
 from typing import Any, Optional, Tuple, Union
 
@@ -253,7 +253,7 @@ class FollowPath:
         beziers = []
         for index_jordan, index_segment in matrix_indexs:
             new_bezier = jordans[index_jordan].segments[index_segment]
-            new_bezier = new_bezier.copy()
+            new_bezier = copy(new_bezier)
             beziers.append(new_bezier)
         new_jordan = JordanCurve.from_segments(beziers)
         return new_jordan
@@ -355,9 +355,6 @@ class BaseShape(object, metaclass=SuperclassMeta):
      - XOR
     """
 
-    __copy__ = copy
-    __deepcopy__ = copy
-
     def __init__(self):
         pass
 
@@ -400,10 +397,6 @@ class BaseShape(object, metaclass=SuperclassMeta):
         """Are is positive ?"""
         return float(self) > 0
 
-    def copy(self) -> BaseShape:
-        """Creates a deep copy"""
-        return copy.copy(self)
-
 
 class SingletonShape(BaseShape):
     """SingletonShape"""
@@ -418,21 +411,27 @@ class SingletonShape(BaseShape):
     def __copy__(self) -> SingletonShape:
         return self
 
-    @property
-    def jordans(self) -> Tuple[JordanCurve]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
-        """
-        return tuple()
+    def __deepcopy__(self, memo) -> SingletonShape:
+        return self
 
 
 class EmptyShape(SingletonShape):
-    """EmptyShape is a singleton class to represent an empty shape"""
+    """EmptyShape is a singleton class to represent an empty shape
+
+    Example use
+    -----------
+    >>> from compmec.shape import EmptyShape
+    >>> empty = EmptyShape()
+    >>> print(empty)
+    EmptyShape
+    >>> print(float(empty))  # Area
+    0.0
+    >>> (0, 0) in empty
+    False
+    """
 
     def __or__(self, other: BaseShape) -> BaseShape:
-        return other.copy()
+        return copy(other)
 
     def __and__(self, other: BaseShape) -> BaseShape:
         return self
@@ -463,7 +462,7 @@ class WholeShape(SingletonShape):
         return self
 
     def __and__(self, other: BaseShape) -> BaseShape:
-        return other.copy()
+        return copy(other)
 
     def __float__(self) -> float:
         return float("inf")
@@ -494,7 +493,10 @@ class DefinedShape(BaseShape):
         self.__box = None
 
     def __copy__(self) -> DefinedShape:
-        jordans = tuple(jordan.copy() for jordan in self.jordans)
+        return self.__deepcopy__(None)
+
+    def __deepcopy__(self, memo) -> DefinedShape:
+        jordans = tuple(copy(jordan) for jordan in self.jordans)
         return ShapeFromJordans(jordans)
 
     def box(self) -> Box:
@@ -529,11 +531,11 @@ class DefinedShape(BaseShape):
         if isinstance(other, WholeShape):
             return WholeShape()
         if isinstance(other, EmptyShape):
-            return self.copy()
+            return copy(self)
         if other in self:
-            return self.copy()
+            return copy(self)
         if self in other:
-            return other.copy()
+            return copy(other)
         new_jordans = FollowPath.or_shapes(self, other)
         if len(new_jordans) == 0:
             return WholeShape()
@@ -542,13 +544,13 @@ class DefinedShape(BaseShape):
     def __and__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
         if isinstance(other, WholeShape):
-            return self.copy()
+            return copy(self)
         if isinstance(other, EmptyShape):
             return EmptyShape()
         if other in self:
-            return other.copy()
+            return copy(other)
         if self in other:
-            return self.copy()
+            return copy(self)
         new_jordans = FollowPath.and_shapes(self, other)
         if len(new_jordans) == 0:
             return EmptyShape()
@@ -805,7 +807,7 @@ class SimpleShape(DefinedShape):
 
     def __set_jordancurve(self, other: JordanCurve):
         assert isinstance(other, JordanCurve)
-        self.__jordancurve = other.copy()
+        self.__jordancurve = copy(other)
 
     def invert(self) -> SimpleShape:
         """
@@ -1032,7 +1034,7 @@ class DisjointShape(DefinedShape):
         for subshape in subshapes:
             assert isinstance(subshape, (SimpleShape, ConnectedShape))
         if len(subshapes) == 1:
-            return subshapes[0].copy()
+            return copy(subshapes[0])
         instance = super(DisjointShape, cls).__new__(cls)
         instance.subshapes = subshapes
         return instance

@@ -69,12 +69,9 @@ class Point2D(object):
         return sqrtnum / sqrtden
 
     def __copy__(self) -> Point2D:
-        return self.copy()
+        return self.__deepcopy__(None)
 
-    def __deepcopy__(self, memo):
-        return self.copy()
-
-    def copy(self) -> Point2D:
+    def __deepcopy__(self, memo) -> Point2D:
         """Creates a deepcopy of the object"""
         return self.__class__(self._x, self._y)
 
@@ -117,7 +114,7 @@ class Point2D(object):
         return True
 
     def __neg__(self) -> Point2D:
-        return self.copy().scale(-1, -1)
+        return self.__copy__().scale(-1, -1)
 
     def __iadd__(self, other: Point2D) -> Point2D:
         if not isinstance(other, Point2D):
@@ -142,17 +139,17 @@ class Point2D(object):
         return self
 
     def __add__(self, other: Point2D) -> Point2D:
-        new = self.copy()
+        new = self.__copy__()
         new += other
         return new
 
     def __sub__(self, other: Point2D) -> Point2D:
-        new = self.copy()
+        new = self.__copy__()
         new -= other
         return new
 
     def __mul__(self, other: float) -> Point2D:
-        new = self.copy()
+        new = self.__copy__()
         new *= other
         return new
 
@@ -160,7 +157,7 @@ class Point2D(object):
         return self.__mul__(other)
 
     def __truediv__(self, other: float) -> Point2D:
-        new = self.copy()
+        new = self.__copy__()
         new /= other
         return new
 

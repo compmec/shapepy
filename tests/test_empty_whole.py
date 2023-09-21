@@ -3,6 +3,8 @@ Tests related to 'EmptyShape' and 'WholeShape' which describes a empty set
 and the whole domain
 """
 
+from copy import copy
+
 import pytest
 
 from compmec.shape.primitive import Primitive
@@ -115,8 +117,8 @@ class TestBoolean:
     def test_copy(self):
         empty = EmptyShape()
         whole = WholeShape()
-        assert empty.copy() is empty
-        assert whole.copy() is whole
+        assert copy(empty) is empty
+        assert copy(whole) is whole
 
     @pytest.mark.order(8)
     @pytest.mark.dependency(
