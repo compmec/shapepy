@@ -37,12 +37,13 @@ Then we create the right shape by moving and rotating the left shape
 .. code-block:: python
 
     from copy import deepcopy
+
     # Create the right shape
     right_shape = deepcopy(left_shape)
     right_shape.rotate(180, degrees = True)
     right_shape.move(0, -1)
 
-We can plot both shapes by using ``matplotlib``
+We plot both shapes by using ``matplotlib``
 
 .. code-block:: python
 
@@ -102,3 +103,53 @@ It's also possible to get properties of the shape, such as **area**, **momentum 
 
 Once you got the main idea, you can create your own shape.
 We recomend now see the next topic :ref:`primitive`
+
+
+.. dropdown:: Code to generate the logo
+
+    .. code-block:: python
+
+        from matplotlib import pyplot
+        from compmec.shape import Primitive, ShapePloter
+
+        S = Primitive.circle(ndivangle=4).scale(1, 1.5)
+        S -= Primitive.square(center = (0.3, 1.25)).scale(2, 0.5)
+        S -= Primitive.square(center = (-0.3, -1.25)).scale(2, 0.5)
+
+        H = Primitive.square().scale(2, 3)
+        H -= Primitive.square().scale(0.5, 3).move(0, 2)
+        H -= Primitive.square().scale(0.5, 3).move(0, -2)
+        H.move(3, 0)
+
+        A = Primitive.regular_polygon(3).rotate(90, True).scale(1, 2)
+        A -= Primitive.regular_polygon(3).rotate(90, True).scale(0.3, 2*0.3)
+        A.move(6-0.14, -0.5)
+
+        P = Primitive.square().scale(1, 3)
+        P += Primitive.circle(ndivangle=4).scale(1.5, 0.75).move(0.5, 0.75)
+        P -= Primitive.square().scale(1, 3).move(7.8-8.5, 0)
+        P -= Primitive.circle(ndivangle=4).scale(0.5, 0.25).move(1, 0.75)
+        P -= Primitive.square().scale(0.5, 0.5).move(9.25-8.5, 0.75)
+        P.move(8.5-0.6, 0)
+
+        E = Primitive.square().scale(2, 3)
+        E -= Primitive.square(center = (0.3, 1.25)).scale(2, 0.5)
+        E -= Primitive.square(center = (0.3, -1.25)).scale(2, 0.5)
+        E.move(13-1.1, 0)
+
+        SHAPE = S + H + A + P + E
+
+        fig = pyplot.figure(figsize=(15, 5))
+        plt = ShapePloter(fig = fig)
+        plt.plot(SHAPE)
+        ax = plt.gca()
+        ax.set_aspect("equal")
+        ax.spines['top'].set_visible(False)
+        ax.spines['right'].set_visible(False)
+        ax.spines['bottom'].set_visible(False)
+        ax.spines['left'].set_visible(False)
+        ax.get_xaxis().set_ticks([])
+        ax.get_yaxis().set_ticks([])
+        fig.tight_layout()
+        plt.savefig("logo.svg")
+        # plt.show()

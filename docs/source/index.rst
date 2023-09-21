@@ -1,8 +1,8 @@
 
 .. image:: img/logo.svg
-  :width: 100 %
-  :alt: compmec-shape
-  :align: center
+    :width: 100 %
+    :alt: compmec-shape
+    :align: center
 
 Documentation
 =============
@@ -39,7 +39,7 @@ Documentation
 Support
 -------
 
-This package is slowly increase its number of tests, if you find a bug, please notify to be inserted in the tests.
+This package is slowly increasing its number of tests, if you find a bug, please notify to be corrected and be inserted in the tests.
 
 Raise an issue on the `GitHub issue tracker
 <https://github.com/compmec/shape/issues>`_ or contact me at
