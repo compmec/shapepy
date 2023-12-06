@@ -35,3 +35,10 @@ repos:
     - id: pylint
       additional_dependencies: [numpy]
       exclude: "(tests|docs)/.*"  # Prevent files in tests/ and /docs to be passed in to pylint.
+
+  - repo: https://github.com/python/mypy
+    rev: v1.7.1
+    hooks:
+    - id: mypy
+      additional_dependencies: [numpy]
+      exclude: "(tests|docs)/.*"  # Prevent files in tests/ and /docs to be passed in to pylint.

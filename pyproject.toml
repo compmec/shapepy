@@ -14,10 +14,19 @@ python = "^3.7"
 
 [tool.poetry.dev-dependencies]
 pytest = "^5.2"
+black = "^23.0.0"
+isort = "^5.12.0"
+flake8 = "^5.0.0"
+pylint = "^3.0.0"
+pre-commit = "^3.0.0"
+mypy = "^1.0.0"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"
 scriv = {extras = ["toml"], version = "^1.3.1"}
+
+[tool.poetry.extras]
+mesh = ["pygmsh"]
 
 [build-system]
 requires = ["poetry-core"]
