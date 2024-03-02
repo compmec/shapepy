@@ -17,7 +17,6 @@ from compmec.shape.curve import PlanarCurve
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
 from compmec.shape.shape import (
-    ConnectedShape,
     EmptyShape,
     SimpleShape,
     WholeShape,
