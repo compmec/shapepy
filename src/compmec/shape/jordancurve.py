@@ -167,7 +167,9 @@ class JordanCurve:
         return cls.from_segments(beziers)
 
     @classmethod
-    def from_ctrlpoints(cls, all_ctrlpoints: Tuple[Tuple[Point2D]]) -> JordanCurve:
+    def from_ctrlpoints(
+        cls, all_ctrlpoints: Tuple[Tuple[Point2D]]
+    ) -> JordanCurve:
         """Initialize a JordanCurve from a list of control points,
 
         :param all_ctrlpoints: The list of bezier control points
@@ -285,7 +287,9 @@ class JordanCurve:
                     end_point = seg1.ctrlpoints[-1]
                     segment = seg0 | seg1
                     segment.ctrlpoints = (
-                        [start_point] + list(segment.ctrlpoints[1:-1]) + [end_point]
+                        [start_point]
+                        + list(segment.ctrlpoints[1:-1])
+                        + [end_point]
                     )
                     segments[i] = segment
                     segments.pop(j)
@@ -517,7 +521,9 @@ class JordanCurve:
         assert subnpts is None or (isinstance(subnpts, int) and subnpts >= 0)
         all_points = []
         for segment in self.segments:
-            npts = subnpts if subnpts is not None else 10 * (segment.degree - 1)
+            npts = (
+                subnpts if subnpts is not None else 10 * (segment.degree - 1)
+            )
             usample = tuple(Fraction(num, npts + 1) for num in range(npts + 1))
             points = segment.eval(usample)
             all_points += list(tuple(point) for point in points)
@@ -620,7 +626,9 @@ class JordanCurve:
             segments.append(new_bezier)
         self.__segments = tuple(segments)
 
-    def __and__(self, other: JordanCurve) -> Tuple[Tuple[int, int, float, float]]:
+    def __and__(
+        self, other: JordanCurve
+    ) -> Tuple[Tuple[int, int, float, float]]:
         """Computes the intersection of two jordan curves"""
         return self.intersection(other, equal_beziers=False, end_points=False)
 
@@ -729,7 +737,10 @@ class JordanCurve:
         return list(intersections)
 
     def intersection(
-        self, other: JordanCurve, equal_beziers: bool = True, end_points: bool = True
+        self,
+        other: JordanCurve,
+        equal_beziers: bool = True,
+        end_points: bool = True,
     ) -> Tuple[Tuple[int, int, float, float]]:
         """Computes the intersection between two jordan curves
 

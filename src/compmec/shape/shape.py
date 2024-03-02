@@ -311,8 +311,12 @@ class FollowPath:
     def midpoints_shapes(
         shapea: BaseShape, shapeb: BaseShape, closed: bool, inside: bool
     ) -> Tuple[Tuple[int]]:
-        indexsa = FollowPath.midpoints_one_shape(shapea, shapeb, closed, inside)
-        indexsb = FollowPath.midpoints_one_shape(shapeb, shapea, closed, inside)
+        indexsa = FollowPath.midpoints_one_shape(
+            shapea, shapeb, closed, inside
+        )
+        indexsb = FollowPath.midpoints_one_shape(
+            shapeb, shapea, closed, inside
+        )
         indexsa = list(indexsa)
         njordansa = len(shapea.jordans)
         for indjorb, indsegb in indexsb:
@@ -326,7 +330,9 @@ class FollowPath:
         for jordana in shapea.jordans:
             for jordanb in shapeb.jordans:
                 FollowPath.split_two_jordans(jordana, jordanb)
-        indexs = FollowPath.midpoints_shapes(shapea, shapeb, closed=True, inside=False)
+        indexs = FollowPath.midpoints_shapes(
+            shapea, shapeb, closed=True, inside=False
+        )
         all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
         new_jordans = FollowPath.follow_path(all_jordans, indexs)
         return new_jordans
@@ -338,7 +344,9 @@ class FollowPath:
         for jordana in shapea.jordans:
             for jordanb in shapeb.jordans:
                 FollowPath.split_two_jordans(jordana, jordanb)
-        indexs = FollowPath.midpoints_shapes(shapea, shapeb, closed=False, inside=True)
+        indexs = FollowPath.midpoints_shapes(
+            shapea, shapeb, closed=False, inside=True
+        )
         all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
         new_jordans = FollowPath.follow_path(all_jordans, indexs)
         return new_jordans
@@ -569,7 +577,9 @@ class DefinedShape(BaseShape):
             return EmptyShape()
         return ShapeFromJordans(new_jordans)
 
-    def __contains__(self, other: Union[Point2D, JordanCurve, BaseShape]) -> bool:
+    def __contains__(
+        self, other: Union[Point2D, JordanCurve, BaseShape]
+    ) -> bool:
         if isinstance(other, BaseShape):
             return self.contains_shape(other)
         if isinstance(other, JordanCurve):
@@ -657,7 +667,9 @@ class DefinedShape(BaseShape):
             jordan.rotate(angle, degrees)
         return self
 
-    def contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
+    def contains_point(
+        self, point: Point2D, boundary: Optional[bool] = True
+    ) -> bool:
         """
         Checks if given point is inside the shape
 
@@ -853,7 +865,9 @@ class SimpleShape(DefinedShape):
         self.__jordancurve.invert()
         return self
 
-    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
+    def _contains_point(
+        self, point: Point2D, boundary: Optional[bool] = True
+    ) -> bool:
         jordan = self.jordans[0]
         wind = IntegrateJordan.winding_number(jordan, center=point)
         if float(jordan) > 0:
@@ -1009,7 +1023,9 @@ class ConnectedShape(DefinedShape):
         values = tuple(val[1] for val in values)
         self.__subshapes = tuple(values)
 
-    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
+    def _contains_point(
+        self, point: Point2D, boundary: Optional[bool] = True
+    ) -> bool:
         for subshape in self.subshapes:
             if not subshape.contains_point(point, boundary):
                 return False
@@ -1088,7 +1104,9 @@ class DisjointShape(DefinedShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True) -> bool:
+    def _contains_point(
+        self, point: Point2D, boundary: Optional[bool] = True
+    ) -> bool:
         for subshape in self.subshapes:
             if subshape.contains_point(point, boundary):
                 return True

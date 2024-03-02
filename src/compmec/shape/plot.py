@@ -123,7 +123,9 @@ class ShapePloter:
         fill_color = kwargs.pop("fill_color")
         alpha = kwargs.pop("alpha")
         marker = kwargs.pop("marker")
-        connecteds = shape.subshapes if isinstance(shape, DisjointShape) else [shape]
+        connecteds = (
+            shape.subshapes if isinstance(shape, DisjointShape) else [shape]
+        )
         for connected in connecteds:
             path = path_shape(connected)
             if float(connected) > 0:
@@ -135,7 +137,9 @@ class ShapePloter:
             for jordan in connected.jordans:
                 path = path_jordan(jordan)
                 color = pos_color if float(jordan) > 0 else neg_color
-                patch = PathPatch(path, edgecolor=color, facecolor="none", lw=2)
+                patch = PathPatch(
+                    path, edgecolor=color, facecolor="none", lw=2
+                )
                 self.gca().add_patch(patch)
                 xvals, yvals = np.array(jordan.points(0), dtype="float64").T
                 self.gca().scatter(xvals, yvals, color=color, marker=marker)

@@ -88,14 +88,18 @@ class Point2D(object):
         if isinstance(self._x, fractions.Fraction):
             xmsg = str(self._x.numerator)
             xmsg += (
-                "" if (self._x.denominator == 1) else ("/" + str(self._x.denominator))
+                ""
+                if (self._x.denominator == 1)
+                else ("/" + str(self._x.denominator))
             )
         else:
             xmsg = str(self._x)
         if isinstance(self._y, fractions.Fraction):
             ymsg = str(self._y.numerator)
             ymsg += (
-                "" if (self._y.denominator == 1) else ("/" + str(self._y.denominator))
+                ""
+                if (self._y.denominator == 1)
+                else ("/" + str(self._y.denominator))
             )
         else:
             ymsg = str(self._y)
@@ -223,7 +227,9 @@ class Box:
 
     def __float__(self) -> float:
         """Returns the area of the box"""
-        return (self.toppt[0] - self.lowpt[0]) * (self.toppt[1] - self.lowpt[1])
+        return (self.toppt[0] - self.lowpt[0]) * (
+            self.toppt[1] - self.lowpt[1]
+        )
 
     def __contains__(self, point: Point2D) -> bool:
         if point[0] < self.lowpt[0] - self.dx:

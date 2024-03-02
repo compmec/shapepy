@@ -71,11 +71,15 @@ class Math:
     def open_linspace(npts: int) -> Tuple[Fraction]:
         assert isinstance(npts, int)
         assert npts >= 1
-        return tuple(Fraction(num) / (2 * npts) for num in range(1, 2 * npts, 2))
+        return tuple(
+            Fraction(num) / (2 * npts) for num in range(1, 2 * npts, 2)
+        )
 
 
 class BaseCurve(object):
-    def __call__(self, nodes: Union[float, Tuple[float]]) -> Union[Any, Tuple[Any]]:
+    def __call__(
+        self, nodes: Union[float, Tuple[float]]
+    ) -> Union[Any, Tuple[Any]]:
         try:
             iter(nodes)
             return self.eval(nodes)
@@ -205,9 +209,13 @@ class PlanarCurve(BaseCurve):
         knotvectora.scale(node)
         knotvectorb = nurbs.GeneratorKnotVector.bezier(other.degree, Fraction)
         knotvectorb.scale(1 - node).shift(node)
-        newknotvector = tuple(knotvectora) + tuple(knotvectorb[self.degree + 1 :])
+        newknotvector = tuple(knotvectora) + tuple(
+            knotvectorb[self.degree + 1 :]
+        )
         finalcurve = nurbs.Curve(newknotvector)
-        finalcurve.ctrlpoints = tuple(self.ctrlpoints) + tuple(other.ctrlpoints)
+        finalcurve.ctrlpoints = tuple(self.ctrlpoints) + tuple(
+            other.ctrlpoints
+        )
         finalcurve.knot_clean((node,))
         if finalcurve.degree + 1 != finalcurve.npts:
             raise ValueError("Union is not a bezier curve!")
@@ -374,7 +382,9 @@ class Operations:
         assert degree - times >= 0
         if (degree, times) not in Operations.__degree_decre:
             old_knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
-            new_knotvector = nurbs.GeneratorKnotVector.bezier(degree - times, Fraction)
+            new_knotvector = nurbs.GeneratorKnotVector.bezier(
+                degree - times, Fraction
+            )
             matrix, error = nurbs.heavy.LeastSquare.spline2spline(
                 old_knotvector, new_knotvector
             )
@@ -577,7 +587,9 @@ class Derivate:
         """
         if degree not in Derivate.__non_rat_bezier_once:
             knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
-            matrix = nurbs.heavy.Calculus.derivate_nonrational_bezier(knotvector)
+            matrix = nurbs.heavy.Calculus.derivate_nonrational_bezier(
+                knotvector
+            )
             Derivate.__non_rat_bezier_once[degree] = tuple(matrix)
         return Derivate.__non_rat_bezier_once[degree]
 
@@ -696,8 +708,12 @@ class IntegratePlanar:
     def winding_number_linear(
         pointa: Point2D, pointb: Point2D, center: Point2D
     ) -> float:
-        anglea = np.arctan2(float(pointa[1] - center[1]), float(pointa[0] - center[0]))
-        angleb = np.arctan2(float(pointb[1] - center[1]), float(pointb[0] - center[0]))
+        anglea = np.arctan2(
+            float(pointa[1] - center[1]), float(pointa[0] - center[0])
+        )
+        angleb = np.arctan2(
+            float(pointb[1] - center[1]), float(pointb[0] - center[0])
+        )
         wind = (angleb - anglea) / math.tau
         if abs(wind) < 0.5:
             return wind
@@ -718,5 +734,7 @@ class IntegratePlanar:
         total = 0
         for pair_node in zip(nodes[:-1], nodes[1:]):
             pointa, pointb = curve.eval(pair_node)
-            total += IntegratePlanar.winding_number_linear(pointa, pointb, center)
+            total += IntegratePlanar.winding_number_linear(
+                pointa, pointb, center
+            )
         return total

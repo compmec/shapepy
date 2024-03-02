@@ -16,12 +16,18 @@ import numpy as np
 from compmec.shape.curve import PlanarCurve
 from compmec.shape.jordancurve import JordanCurve
 from compmec.shape.polygon import Point2D
-from compmec.shape.shape import ConnectedShape, EmptyShape, SimpleShape, WholeShape
+from compmec.shape.shape import (
+    ConnectedShape,
+    EmptyShape,
+    SimpleShape,
+    WholeShape,
+)
 
 
 class Primitive:
     """
-    Primitive class with functions to create classical shapes such as `circle`, `triangle`, `square`, `regular_polygon` and a generic `polygon`.
+    Primitive class with functions to create classical shapes such as
+    `circle`, `triangle`, `square`, `regular_polygon` and a generic `polygon`
 
     .. note:: This class also contains ``empty`` and ``whole`` instances to easy access
 
