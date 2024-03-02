@@ -9,7 +9,9 @@
 
 ![compmec-shape logo](docs/source/img/logo.svg)
 
-A python package for bidimensional geometric shapes boolean manipulation.
+# Shape
+
+A python package for bidimensional geometric shapes boolean manipulation
 
 
 ### Installation:
@@ -20,7 +22,7 @@ This library is available in [PyPI][pypi-url]. To install it
 $ pip install compmec-shape
 ```
 
-For more details, refer to the [documentation][docs-url].
+For more details, refer to the [documentation][docs-url]
 
 ### Documentation
 
