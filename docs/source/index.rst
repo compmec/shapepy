@@ -1,5 +1,5 @@
 
-.. image:: img/logo.svg
+.. image:: img/logo.png
     :width: 100 %
     :alt: compmec-shape
     :align: center

@@ -7,7 +7,7 @@
 [![Python Versions][pyversions-img]][pyversions-url]
 [![License: MIT][license-img]][license-url]
 
-![compmec-shape logo](docs/source/img/logo.svg)
+![compmec-shape logo](docs/source/img/logo.png)
 
 # Shape
 
