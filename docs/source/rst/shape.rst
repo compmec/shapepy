@@ -36,7 +36,7 @@ For example, there are some sta
 
 .. code-block:: python
    
-   from compmec.shape import EmptyShape, WholeShape
+   from shapepy import EmptyShape, WholeShape
    
    empty = EmptyShape()
    whole = WholeShape()
@@ -93,7 +93,7 @@ which allows creating many simple shapes, like ``square`` and ``circle``
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    my_square = Primitive.square()
    my_circle = Primitive.circle()
 
@@ -101,7 +101,7 @@ You can also create your custom ``SimpleShape`` by using a passing a ``JordanCur
 
 .. code-block:: python
    
-   from compmec.shape import JordanCurve, SimpleShape
+   from shapepy import JordanCurve, SimpleShape
    vertices = [(0, 0), (4, 0), (0, 3)]
    jordan = JordanCurve.from_vertices(vertices)
    simple = SimpleShape(jordan)
@@ -110,7 +110,7 @@ It's possible to operate between two simple shapes:
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    my_square = Primitive.square()
    my_circle = Primitive.circle()
 
@@ -155,7 +155,7 @@ The easiest way to create them is by operating between shapes. For example:
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    
    big_circle = Primitive.circle(radius = 2)
    small_circle = Primitive.circle(radius = 1)
@@ -165,7 +165,7 @@ It's also possible to create directly the ``ConnectedShape`` instance, but it ma
 
 .. code-block:: python
    
-   from compmec.shape import Primitive, ConnectedShape
+   from shapepy import Primitive, ConnectedShape
    
    big_circle = Primitive.circle(radius = 2)
    small_circle = Primitive.circle(radius = 1)
@@ -198,7 +198,7 @@ The easiest way to create them is by operating shapes. For example, the code bel
 
 .. code-block:: python
    
-   from compmec.shape import Primitive, ConnectedShape
+   from shapepy import Primitive, ConnectedShape
    
    left = Primitive.circle(radius = 1, center = (-1.5, 0))
    right = Primitive.circle(radius = 1, center = (1.5, 0))
@@ -213,7 +213,7 @@ You can also create directly
 
 .. code-block:: python
    
-   from compmec.shape import Primitive, DisjointShape
+   from shapepy import Primitive, DisjointShape
    
    left = Primitive.circle(radius = 2)
    right = Primitive.circle(radius = 1)

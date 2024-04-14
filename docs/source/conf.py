@@ -19,14 +19,14 @@ from sphinx_gallery.scrapers import matplotlib_scraper
 import os
 import sys
 
-sys.path.insert(0, os.path.abspath("../../src/compmec/"))
-from shape import __version__ as ver
+sys.path.insert(0, os.path.abspath("../../src/"))
+from shapepy import __version__ as ver
 
 autodoc_mock_imports = []
 
 # -- Project information -----------------------------------------------------
 
-project = "compmec-shape"
+project = "shapepy"
 copyright = "2023, Carlos Adir"
 author = "Carlos Adir"
 
@@ -115,7 +115,7 @@ html_static_path = []
 # -- Options for HTMLHelp output ---------------------------------------------
 
 # Output file base name for HTML help builder.
-htmlhelp_basename = "compmec-shape-doc"
+htmlhelp_basename = "shapepy-doc"
 
 
 # -- Options for LaTeX output ------------------------------------------------
@@ -141,8 +141,8 @@ latex_elements = {
 latex_documents = [
     (
         master_doc,
-        "compmec-shape.tex",
-        "compmec-shape Documentation",
+        "shapepy.tex",
+        "shapepy Documentation",
         "Carlos Adir",
         "manual",
     ),
@@ -153,7 +153,7 @@ latex_documents = [
 
 # One entry per manual page. List of tuples
 # (source start file, name, description, authors, manual shape).
-man_pages = [(master_doc, "compmec-shape", "compmec-shape Documentation", [author], 1)]
+man_pages = [(master_doc, "shapepy", "shapepy Documentation", [author], 1)]
 
 
 # -- Options for Texinfo output ----------------------------------------------
@@ -164,10 +164,10 @@ man_pages = [(master_doc, "compmec-shape", "compmec-shape Documentation", [autho
 texinfo_documents = [
     (
         master_doc,
-        "compmec-shape",
-        "compmec-shape Documentation",
+        "shapepy",
+        "shapepy Documentation",
         author,
-        "compmec-shape",
+        "shapepy",
         "Geometry 2D library",
         "Miscellaneous",
     ),
@@ -192,7 +192,7 @@ sphinx_gallery_conf = {
     # directory where function granular galleries are stored
     "backreferences_dir": None,
     # Modules for which function level galleries are created.  In
-    "doc_module": "compmec-section",
+    "doc_module": "shapepy",
     "image_scrapers": ("matplotlib",),
     "first_notebook_cell": ("%matplotlib inline\n"),
 }

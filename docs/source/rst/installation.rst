@@ -4,10 +4,10 @@
 Installation
 ============
 
-These instructions will get you a copy of ``compmec-shape`` up and running on your local machine. 
+These instructions will get you a copy of ``shapepy`` up and running on your local machine. 
 You will need a working copy of python on your machine, the valid versions are:
 
-.. figure:: https://img.shields.io/pypi/pyversions/compmec-shape.svg?style=flat-square
+.. figure:: https://img.shields.io/pypi/pyversions/shapepy.svg?style=flat-square
    :width: 35%
    :alt: Available versions of python
    :align: center
@@ -15,11 +15,11 @@ You will need a working copy of python on your machine, the valid versions are:
 How to install
 ------------------------------
 
-Install the package and all of its dependencies can be done through the `python package index <https://pypi.org/project/compmec-shape/>`_:
+Install the package and all of its dependencies can be done through the `python package index <https://pypi.org/project/shapepy/>`_:
 
 .. code-block:: console
 
-  $ pip install compmec-shape
+  $ pip install shapepy
 
 
 Testing the Installation

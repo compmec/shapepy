@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from compmec.shape import Primitive
+from shapepy import Primitive
 
 
 @pytest.mark.order(5)

@@ -6,9 +6,9 @@ from fractions import Fraction
 from typing import Any, Optional, Tuple, Union
 
 import numpy as np
+import pynurbs
 
-from compmec import nurbs
-from compmec.shape.polygon import Box, Point2D
+from shapepy.polygon import Box, Point2D
 
 
 class Math:
@@ -176,8 +176,8 @@ class BezierCurve(BaseCurve):
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[BezierCurve]:
-        knotvector = nurbs.GeneratorKnotVector.bezier(self.degree)
-        curve = nurbs.Curve(knotvector, self.ctrlpoints)
+        knotvector = pynurbs.GeneratorKnotVector.bezier(self.degree)
+        curve = pynurbs.Curve(knotvector, self.ctrlpoints)
         beziers = curve.split(nodes)
         planars = tuple(BezierCurve(bezier.ctrlpoints) for bezier in beziers)
         return planars
@@ -205,14 +205,16 @@ class PlanarCurve(BaseCurve):
             dsumpt = dapt + dbpt
             denomin = dsumpt.inner(dsumpt)
             node = dapt.inner(dsumpt) / denomin
-        knotvectora = nurbs.GeneratorKnotVector.bezier(self.degree, Fraction)
+        knotvectora = pynurbs.GeneratorKnotVector.bezier(self.degree, Fraction)
         knotvectora.scale(node)
-        knotvectorb = nurbs.GeneratorKnotVector.bezier(other.degree, Fraction)
+        knotvectorb = pynurbs.GeneratorKnotVector.bezier(
+            other.degree, Fraction
+        )
         knotvectorb.scale(1 - node).shift(node)
         newknotvector = tuple(knotvectora) + tuple(
             knotvectorb[self.degree + 1 :]
         )
-        finalcurve = nurbs.Curve(newknotvector)
+        finalcurve = pynurbs.Curve(newknotvector)
         finalcurve.ctrlpoints = tuple(self.ctrlpoints) + tuple(
             other.ctrlpoints
         )
@@ -381,11 +383,13 @@ class Operations:
         assert times > 0
         assert degree - times >= 0
         if (degree, times) not in Operations.__degree_decre:
-            old_knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
-            new_knotvector = nurbs.GeneratorKnotVector.bezier(
+            old_knotvector = pynurbs.GeneratorKnotVector.bezier(
+                degree, Fraction
+            )
+            new_knotvector = pynurbs.GeneratorKnotVector.bezier(
                 degree - times, Fraction
             )
-            matrix, error = nurbs.heavy.LeastSquare.spline2spline(
+            matrix, error = pynurbs.heavy.LeastSquare.spline2spline(
                 old_knotvector, new_knotvector
             )
             matrix = tuple(tuple(line) for line in matrix)
@@ -586,8 +590,8 @@ class Derivate:
         q = p - 1
         """
         if degree not in Derivate.__non_rat_bezier_once:
-            knotvector = nurbs.GeneratorKnotVector.bezier(degree, Fraction)
-            matrix = nurbs.heavy.Calculus.derivate_nonrational_bezier(
+            knotvector = pynurbs.GeneratorKnotVector.bezier(degree, Fraction)
+            matrix = pynurbs.heavy.Calculus.derivate_nonrational_bezier(
                 knotvector
             )
             Derivate.__non_rat_bezier_once[degree] = tuple(matrix)
@@ -649,7 +653,7 @@ class IntegratePlanar:
         assert expy >= 0
         dcurve = curve.derivate()
         nodes = Math.open_linspace(nnodes)
-        poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
+        poids = pynurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
         points = curve(nodes)
         xvals = tuple(point[0] ** expx for point in points)
         yvals = tuple(point[1] ** expy for point in points)
@@ -675,7 +679,7 @@ class IntegratePlanar:
         assert expy == 0
         dcurve = curve.derivate()
         nodes = Math.open_linspace(nnodes)
-        poids = nurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
+        poids = pynurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
         funcvals = tuple(abs(point) for point in dcurve(nodes))
         return float(np.inner(poids, funcvals))
 

@@ -5,8 +5,8 @@ Which are in fact positive shapes defined only by one jordan curve
 
 import pytest
 
-from compmec.shape.primitive import Primitive
-from compmec.shape.shape import ConnectedShape, DisjointShape, EmptyShape, WholeShape
+from shapepy.primitive import Primitive
+from shapepy.shape import ConnectedShape, DisjointShape, EmptyShape, WholeShape
 
 
 @pytest.mark.order(9)

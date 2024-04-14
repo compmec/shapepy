@@ -33,7 +33,7 @@ A ``segment`` is a ``PlanarBezier`` instance. You create a new instance by passi
 
 .. code-block:: python
    
-   from compmec.shape import PlanarBezier
+   from shapepy import PlanarBezier
    # Creates a liner segment between (1, 2) and (4, 0)
    linear_segment = PlanarBezier([(1, 2),
                                   (4, 0)])
@@ -68,7 +68,7 @@ This method creates polygonal shapes only
 
 .. code-block:: python
    
-   from compmec.shape import JordanCurve
+   from shapepy import JordanCurve
    
    # Create a list of vertices
    vertices = [(1, 2), (4, 0), (-1, -1), (-3, 1)]
@@ -89,7 +89,7 @@ This method can create shape of any degree
 
 .. code-block:: python
    
-   from compmec.shape import PlanarBezier, JordanCurve
+   from shapepy import PlanarBezier, JordanCurve
    segment0 = PlanarBezier([(0, 0), (4, 0)])
    segment1 = PlanarBezier([(4, 0), (4, 3), (0, 3)])
    segment2 = PlanarBezier([(0, 3), (0, 0)])
@@ -110,7 +110,7 @@ This is similar to creating ``from_segments``, but we pass directly the control 
 
 .. code-block:: python
    
-   from compmec.shape import JordanCurve
+   from shapepy import JordanCurve
    all_ctrlpoints = [[(0, 0), (4, 0)],
                      [(4, 0), (4, 3), (0, 3)],
                      [(0, 3), (0, 0)]]
@@ -126,18 +126,18 @@ This is similar to creating ``from_segments``, but we pass directly the control 
 From full curve
 ---------------
 
-For this case, we will use the package ``compmec.nurbs``
+For this case, we will use the package ``pynurbs``
 
 
 .. code-block:: python
    
-   from compmec import nurbs
-   from compmec.shape import Point2D, JordanCurve
+   import pynurbs
+   from shapepy import Point2D, JordanCurve
    knotvector = (0, 0, 0, 1/3, 1/3, 2/3, 2/3, 1, 1, 1)
    ctrlpoints = [(0, 0), (2, 0), (4, 0), (4, 3),
                  (0, 3), (0, 3/2), (0, 0)]
    ctrlpoints = [Point2D(point) for point in ctrlpoints]
-   curve = nurbs.Curve(knotvector, ctrlpoints)
+   curve = pynurbs.Curve(knotvector, ctrlpoints)
    jordan = JordanCurve.from_full_curve(curve)
 
 .. image:: ../img/jordan_curve/from_segments.svg

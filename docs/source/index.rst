@@ -1,13 +1,13 @@
 
 .. image:: img/logo.png
     :width: 100 %
-    :alt: compmec-shape
+    :alt: shapepy
     :align: center
 
 Documentation
 =============
 
-*compmec-shape* is a python package for bidimensional geometry manipulation.
+*shapepy* is a python package for bidimensional geometry manipulation.
 
 .. toctree::
    :maxdepth: 1
@@ -39,10 +39,10 @@ Support
 This package is slowly increasing its number of tests, if you find a bug, please notify to be corrected and be inserted in the tests.
 
 Raise an issue on the `GitHub issue tracker
-<https://github.com/compmec/shape/issues>`_ or contact me at
+<https://github.com/shapepy/issues>`_ or contact me at
 `compmecgit@gmail.com <mailto:compmecgit@gmail.com>`_.
 
-If you have a request for a feature to be added to the *compmec-shape* package, please don't hesitate to get in touch
+If you have a request for a feature to be added to the *shapepy* package, please don't hesitate to get in touch
 
 License
 -------

@@ -1,15 +1,15 @@
 [tool.poetry]
-name = "compmec-shape"
+name = "shapepy"
 version = "1.0.2"
 description = "Geometric 2D library"
 authors = ["Carlos Adir <carlos.adir.leite@gmail.com>"]
 readme = "README.md"
-packages = [{ include = "compmec/shape", from = "src" }]
+packages = [{ include = "shapepy", from = "src" }]
 
 [tool.poetry.dependencies]
 numpy = "^1.0.0"
 matplotlib = "^3.4.0"
-compmec-nurbs = "^1.0.7"
+pynurbs = "^1.0.7"
 python = "^3.7"
 
 [tool.poetry.dev-dependencies]
@@ -33,7 +33,7 @@ requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
 
 [tool.scriv]
-version = "literal: src/compmec/shape/__init__.py: __version__"
+version = "literal: src/shapepy/__init__.py: __version__"
 
 [tool.black]
 line-length = 79

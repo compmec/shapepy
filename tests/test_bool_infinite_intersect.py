@@ -4,7 +4,7 @@ This module tests when two shapes have common edges/segments
 
 import pytest
 
-from compmec.shape.primitive import Primitive
+from shapepy.primitive import Primitive
 
 
 @pytest.mark.order(9)

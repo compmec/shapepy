@@ -8,9 +8,9 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from compmec.shape.jordancurve import JordanCurve
-from compmec.shape.primitive import Primitive
-from compmec.shape.shape import ConnectedShape, DisjointShape, EmptyShape, WholeShape
+from shapepy.jordancurve import JordanCurve
+from shapepy.primitive import Primitive
+from shapepy.shape import ConnectedShape, DisjointShape, EmptyShape, WholeShape
 
 
 @pytest.mark.order(7)

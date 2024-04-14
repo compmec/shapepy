@@ -15,8 +15,8 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from compmec.shape.jordancurve import IntegrateJordan, JordanCurve
-from compmec.shape.polygon import Box, Point2D
+from shapepy.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.polygon import Box, Point2D
 
 
 class SuperclassMeta(type):
@@ -73,7 +73,7 @@ class IntegrateShape:
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive, IntegrateShape
+        >>> from shapepy import Primitive, IntegrateShape
         >>> circle = Primitive.circle(radius = 1)
         >>> IntegrateShape.polynomial(circle, 2, 0)
 
@@ -117,7 +117,7 @@ class IntegrateShape:
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive, IntegrateShape
+        >>> from shapepy import Primitive, IntegrateShape
         >>> circle = Primitive.circle(radius = 1)
         >>> inertia_xx = IntegrateShape.area(circle, 2, 0)
         >>> print(inertia_xx)
@@ -429,7 +429,7 @@ class EmptyShape(SingletonShape):
 
     Example use
     -----------
-    >>> from compmec.shape import EmptyShape
+    >>> from shapepy import EmptyShape
     >>> empty = EmptyShape()
     >>> print(empty)
     EmptyShape
@@ -469,7 +469,7 @@ class WholeShape(SingletonShape):
 
     Example use
     -----------
-    >>> from compmec.shape import WholeShape
+    >>> from shapepy import WholeShape
     >>> whole = WholeShape()
     >>> print(whole)
     WholeShape
@@ -533,7 +533,7 @@ class DefinedShape(BaseShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive, IntegrateShape
+        >>> from shapepy import Primitive, IntegrateShape
         >>> circle = Primitive.circle(radius = 1)
         >>> circle.box()
         Box with vertices (-1.0, -1.0) and (1., 1.0)
@@ -605,7 +605,7 @@ class DefinedShape(BaseShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> circle = Primitive.circle()
         >>> circle.move(1, 2)
 
@@ -632,7 +632,7 @@ class DefinedShape(BaseShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> circle = Primitive.circle()
         >>> circle.scale(2, 3)
 
@@ -658,7 +658,7 @@ class DefinedShape(BaseShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> circle = Primitive.circle()
         >>> circle.rotate(angle = 90, degrees = True)
 
@@ -688,7 +688,7 @@ class DefinedShape(BaseShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> square = Primitive.square()
         >>> square.contains_point((0, 0))
         True
@@ -722,7 +722,7 @@ class DefinedShape(BaseShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> square = Primitive.square()
         >>> jordan = small_square.jordans[0]
         >>> square.contains_jordan(jordan)
@@ -750,7 +750,7 @@ class DefinedShape(BaseShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> square = Primitive.regular_polygon(4)
         >>> circle = Primitive.circle()
         >>> circle.contains_shape(square)
@@ -846,7 +846,7 @@ class SimpleShape(DefinedShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> square = Primitive.square()
         >>> print(square)
         Simple Shape of area 1.00 with vertices:
@@ -993,7 +993,7 @@ class ConnectedShape(DefinedShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> big_square = Primitive.square(side = 2)
         >>> small_square = Primitive.square(side = 1)
         >>> shape = big_square - small_square
@@ -1156,7 +1156,7 @@ class DisjointShape(DefinedShape):
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> left = Primitive.square(center=(-2, 0))
         >>> right = Primitive.square(center = (2, 0))
         >>> shape = left | right

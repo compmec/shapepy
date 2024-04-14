@@ -25,7 +25,7 @@ The initial step is creating shapes. There's the class ``Primitive`` which have 
 
 .. code-block:: python
 
-    from compmec.shape import Primitive
+    from shapepy import Primitive
 
     # Create the left shape
     circle = Primitive.circle(radius = 1, center = (0, 0))
@@ -47,7 +47,7 @@ We plot both shapes by using ``matplotlib``
 
 .. code-block:: python
 
-    from compmec.shape import PlotShape
+    from shapepy import PlotShape
 
     # Create ploter
     plt = PlotShape()
@@ -90,7 +90,7 @@ It's also possible to get properties of the shape, such as **area**, **momentum 
 
 .. code-block:: python
 
-    from compmec.shape import IntegrateShape
+    from shapepy import IntegrateShape
 
     area = IntegrateShape.area(union)  # 9.571110535844964
 
@@ -110,7 +110,7 @@ We recomend now see the next topic :ref:`primitive`
     .. code-block:: python
 
         from matplotlib import pyplot
-        from compmec.shape import Primitive, ShapePloter
+        from shapepy import Primitive, ShapePloter
 
         S = Primitive.circle(ndivangle=4).scale(1, 1.5)
         S -= Primitive.square(center = (0.3, 1.25)).scale(2, 0.5)

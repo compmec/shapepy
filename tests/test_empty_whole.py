@@ -7,8 +7,8 @@ from copy import copy
 
 import pytest
 
-from compmec.shape.primitive import Primitive
-from compmec.shape.shape import EmptyShape, WholeShape
+from shapepy.primitive import Primitive
+from shapepy.shape import EmptyShape, WholeShape
 
 
 @pytest.mark.order(8)

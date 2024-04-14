@@ -7,9 +7,9 @@ import math
 
 import pytest
 
-from compmec.shape.jordancurve import JordanCurve
-from compmec.shape.primitive import Primitive
-from compmec.shape.shape import EmptyShape, IntegrateShape, SimpleShape, WholeShape
+from shapepy.jordancurve import JordanCurve
+from shapepy.primitive import Primitive
+from shapepy.shape import EmptyShape, IntegrateShape, SimpleShape, WholeShape
 
 
 @pytest.mark.order(8)

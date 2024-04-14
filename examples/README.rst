@@ -3,4 +3,4 @@
 Examples Gallery
 ================
 
-Here is a gallery of examples demonstrating what *compmec-section* can do!
+Here is a gallery of examples demonstrating what *pyshape* can do!

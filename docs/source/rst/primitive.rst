@@ -30,7 +30,7 @@ Creates a circle, a positive ``SimpleShape`` instance from given ``radius`` and 
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    circle = Primitive.circle(radius = 1, center = (0, 0))
 
 .. figure:: ../img/primitive/positive_circle.svg
@@ -45,7 +45,7 @@ Creates a square, a positive ``SimpleShape`` instance from given ``side`` and ``
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    square = Primitive.square(side = 1, center = (0, 0))
 
 .. figure:: ../img/primitive/square.svg
@@ -61,7 +61,7 @@ Creates a triangle, a positive ``SimpleShape`` instance from given ``side`` and 
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    triangle = Primitive.triangle(side = 1, center = (0, 0))
 
 .. figure:: ../img/primitive/triangle.svg
@@ -77,7 +77,7 @@ Creates a polygon for given ``vertices``, a positive ``SimpleShape`` instance
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    vertices = [(1, 0),(0, 1), (-1, 1), (0, -1)]
    simple = Primitive.polygon(vertices)
 
@@ -93,7 +93,7 @@ Creates a regular polygon, a positive ``SimpleShape`` instance
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    triangle = Primitive.regular_polygon(nsides = 3, radius = 1, center = (0, 0))
    square = Primitive.regular_polygon(nsides = 4, radius = 1, center = (0, 0))
    pentagon = Primitive.regular_polygon(nsides = 5, radius = 1, center = (0, 0))
@@ -122,7 +122,7 @@ Translate the entire shape by an amount ``(x, y)``
 
 .. code-block:: python
    
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    # Creates a circle of radius 1 and centered at origin (0, 0)
    circle = Primitive.circle()
    # Now the circle has radius 1 and center at (1, 2)
@@ -144,7 +144,7 @@ Rotate counter-clockwise the entire shape
 .. code-block:: python
 
    import math
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    # Create square of side 2
    square = Primitive.square(side = 2)
    # Rotate the square in pi/6 radians
@@ -167,7 +167,7 @@ Scale the entire shape in horizontal and vertical directions
 
 .. code-block:: python
 
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    # Create square of side 2
    square = Primitive.square(side = 2)
    # Scales a square into a rectangle of width 2 and height 0.5
@@ -188,7 +188,7 @@ It's possible to invert the orientation of a shape.
 
 .. code-block:: python
 
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    # Create any shape, positive at counter-clockwise
    circle = Primitive.circle()
    # Change orientation to clockwise, negative
@@ -223,7 +223,7 @@ The sum between two shapes is mathematically a union of two sets
 
 .. code-block:: python
 
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    # Create two simple shapes
    circle = Primitive.circle()
    square = Primitive.square()
@@ -250,7 +250,7 @@ The subtraction between two positive shapes means take out all part of :math:`A`
 
 .. code-block:: python
 
-   from compmec.shape import Primitive
+   from shapepy import Primitive
    # Create two positive shapes
    circle = Primitive.circle()
    square = Primitive.square()

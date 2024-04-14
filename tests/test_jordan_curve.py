@@ -7,9 +7,9 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from compmec import nurbs
-from compmec.shape import Point2D
-from compmec.shape.jordancurve import JordanCurve
+import pynurbs
+from shapepy import Point2D
+from shapepy.jordancurve import JordanCurve
 
 
 @pytest.mark.order(6)
@@ -38,7 +38,7 @@ class TestQuadraticJordan:
         knotvector = [0, 0, 0, 1, 1, 2, 2, 2]
         knotvector = [Fraction(knot) for knot in knotvector]
         points = [(0, -1), (2, 0), (0, 1), (0, 1), (0, -1)]
-        curve = nurbs.Curve(knotvector)
+        curve = pynurbs.Curve(knotvector)
         curve.ctrlpoints = [Point2D(point) for point in points]
         JordanCurve.from_full_curve(curve)
 
@@ -68,12 +68,12 @@ class TestQuadraticJordan:
         knotvector = [Fraction(knot) for knot in knotvector]
 
         pointsa = [(0, -2), (4, 0), (0, 2), (0, 0), (0, -2)]
-        curvea = nurbs.Curve(knotvector)
+        curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [Point2D(pt) for pt in pointsa]
         jordana = JordanCurve.from_full_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
-        curveb = nurbs.Curve(knotvector)
+        curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [Point2D(pt) for pt in pointsb]
         jordanb = JordanCurve.from_full_curve(curveb)
 
@@ -97,13 +97,13 @@ class TestQuadraticJordan:
 
         pointsa = [(0, -2), (4, 0), (0, 2), (0, 0), (0, -2)]
         # pointsa = np.array(pointsa, dtype="float64")
-        curvea = nurbs.Curve(knotvector)
+        curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [Point2D(pt) for pt in pointsa]
         jordana = JordanCurve.from_full_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         # pointsb = np.array(pointsb, dtype="float64")
-        curveb = nurbs.Curve(knotvector)
+        curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [Point2D(pt) for pt in pointsb]
         jordanb = JordanCurve.from_full_curve(curveb)
 

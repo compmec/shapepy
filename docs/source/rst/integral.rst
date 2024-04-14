@@ -13,7 +13,7 @@ If you want to know more, check out the Integral Theory.
 
 .. code-block:: python
    
-   from compmec.shape import Primitive, IntegrateShape
+   from shapepy import Primitive, IntegrateShape
    
    # Creates a square of side 2 and centered at origin (0, 0)
    square = Primitive.square(side = 2)
@@ -28,7 +28,7 @@ For any polynomial
 
 .. code-block:: python
    
-    from compmec.shape import Primitive, IntegrateShape
+    from shapepy import Primitive, IntegrateShape
    
     square = Primitive.square(side = 2, center = (3, 4))
     area = IntegrateShape.polynomial(square, 0, 0)  # 4

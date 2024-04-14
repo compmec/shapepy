@@ -6,9 +6,9 @@ import matplotlib
 import numpy as np
 from matplotlib import pyplot
 
-from compmec.shape.curve import PlanarCurve
-from compmec.shape.jordancurve import JordanCurve
-from compmec.shape.shape import (
+from shapepy.curve import PlanarCurve
+from shapepy.jordancurve import JordanCurve
+from shapepy.shape import (
     BaseShape,
     ConnectedShape,
     DisjointShape,

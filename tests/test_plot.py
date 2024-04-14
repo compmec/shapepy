@@ -6,8 +6,8 @@ Which are in fact positive shapes defined only by one jordan curve
 import pytest
 from matplotlib import pyplot
 
-from compmec.shape import ShapePloter
-from compmec.shape.primitive import Primitive
+from shapepy import ShapePloter
+from shapepy.primitive import Primitive
 
 
 @pytest.mark.order(13)

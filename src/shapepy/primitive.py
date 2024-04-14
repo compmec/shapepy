@@ -13,14 +13,10 @@ from typing import Tuple
 
 import numpy as np
 
-from compmec.shape.curve import PlanarCurve
-from compmec.shape.jordancurve import JordanCurve
-from compmec.shape.polygon import Point2D
-from compmec.shape.shape import (
-    EmptyShape,
-    SimpleShape,
-    WholeShape,
-)
+from shapepy.curve import PlanarCurve
+from shapepy.jordancurve import JordanCurve
+from shapepy.polygon import Point2D
+from shapepy.shape import EmptyShape, SimpleShape, WholeShape
 
 
 class Primitive:
@@ -59,7 +55,7 @@ class Primitive:
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> triangle = Primitive.regular_polygon(nsides = 3)
 
         .. image:: ../img/primitive/regular3.svg
@@ -103,7 +99,7 @@ class Primitive:
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> vertices = [(1, 0), (0, 1), (-1, 1), (0, -1)]
         >>> shape = Primitive.polygon(vertices)
 
@@ -133,7 +129,7 @@ class Primitive:
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> triangle = Primitive.triangle()
 
         .. image:: ../img/primitive/triangle.svg
@@ -164,7 +160,7 @@ class Primitive:
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> square = Primitive.square()
 
         .. image:: ../img/primitive/square.svg
@@ -208,7 +204,7 @@ class Primitive:
 
         Example use
         -----------
-        >>> from compmec.shape import Primitive
+        >>> from shapepy import Primitive
         >>> circle = Primitive.circle()
 
         .. image:: ../img/primitive/positive_circle.svg

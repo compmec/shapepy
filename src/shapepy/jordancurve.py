@@ -10,8 +10,8 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from compmec.shape.curve import IntegratePlanar, PlanarCurve
-from compmec.shape.polygon import Box, Point2D
+from shapepy.curve import IntegratePlanar, PlanarCurve
+from shapepy.polygon import Box, Point2D
 
 
 class IntegrateJordan:
@@ -114,7 +114,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import PlanarCurve, JordanCurve
+        >>> from shapepy import PlanarCurve, JordanCurve
         >>> segment0 = PlanarCurve([(0, 0), (4, 0)])
         >>> segment1 = PlanarCurve([(4, 0), (4, 3), (0, 3)])
         >>> segment2 = PlanarCurve([(0, 3), (0, 0)])
@@ -145,7 +145,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> all_ctrlpoints = [(0, 0), (4, 0), (0, 3)]
         >>> JordanCurve.from_vertices(all_ctrlpoints)
         Jordan Curve of degree 1 and vertices
@@ -180,7 +180,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> all_ctrlpoints = [[(0, 0), (4, 0)],
                               [(4, 0), (4, 3), (0, 3)],
                               [(0, 3), (0, 0)]]
@@ -204,7 +204,7 @@ class JordanCurve:
     def from_full_curve(cls, full_curve) -> JordanCurve:
         """Initialize a JordanCurve from a full curve,
 
-        :param full_curve: The full curve to split. Ideally ``compmec.nurbs.Curve`` instance
+        :param full_curve: The full curve to split. Ideally ``pynurbs.Curve`` instance
         :type full_curve: Point2D
         :return: The created jordan curve
         :rtype: JordanCurve
@@ -212,12 +212,12 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec import nurbs
-        >>> from compmec.shape import Point2D, JordanCurve
+        >>> import pynurbs
+        >>> from shapepy import Point2D, JordanCurve
         >>> knotvector = (0, 0, 0, 0.5, 1, 1, 1)
         >>> ctrlpoints = [(0, 0), (4, 0), (0, 3), (0, 0)]
         >>> ctrlpoints = [Point2D(point) for point in ctrlpoints]
-        >>> curve = nurbs.Curve(knotvector, ctrlpoints)
+        >>> curve = pynurbs.Curve(knotvector, ctrlpoints)
         >>> jordan = JordanCurve.from_full_curve(curve)
         >>> print(jordan)
         Jordan Curve of degree 2 and vertices
@@ -265,7 +265,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (1, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.clean()
@@ -312,7 +312,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.move((2, 3))
@@ -338,7 +338,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.scale(2, 3)
@@ -369,7 +369,7 @@ class JordanCurve:
         -----------
 
         >>> import math
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.rotate(math.pi)
@@ -397,7 +397,7 @@ class JordanCurve:
         -----------
 
         >>> from matplotlib import pyplot as plt
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.invert([0, 2], [1/2, 2/3])
@@ -455,7 +455,7 @@ class JordanCurve:
         -----------
 
         >>> from matplotlib import pyplot as plt
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.split([0, 2], [1/2, 2/3])
@@ -508,7 +508,7 @@ class JordanCurve:
         -----------
 
         >>> from matplotlib import pyplot as plt
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> points = jordan.points(3)
@@ -539,7 +539,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.box()
@@ -565,7 +565,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> print(jordan.segments)
@@ -589,7 +589,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> print(jordan.vertices)
@@ -689,7 +689,7 @@ class JordanCurve:
         Example use
         -----------
 
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> print(float(jordan))
@@ -783,7 +783,7 @@ class JordanCurve:
 
         Example use
         -----------
-        >>> from compmec.shape import JordanCurve
+        >>> from shapepy import JordanCurve
         >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
         >>> jordan_a = JordanCurve.from_vertices(vertices_a)
         >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]

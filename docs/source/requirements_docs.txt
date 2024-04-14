@@ -1,5 +1,5 @@
 numpy
-compmec-shape>=1.0.0
+shapepy>=1.0.0
 matplotlib>=3.4
 sphinx
 sphinx-rtd-theme
