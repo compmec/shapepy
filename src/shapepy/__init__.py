@@ -6,8 +6,8 @@ For the moment, it only uses polygon shapes:
 """
 
 from shapepy.core import Empty, Whole
-from shapepy.curve import IntegratePlanar, PlanarCurve
-from shapepy.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.curve.nurbs.curve import IntegratePlanar, PlanarCurve
+from shapepy.curve.nurbs.jordan import IntegrateJordan, JordanCurve
 from shapepy.plot import ShapePloter
 from shapepy.point import Point2D
 from shapepy.primitive import Primitive

@@ -12,7 +12,7 @@ from typing import Optional, Tuple, Union
 import numpy as np
 
 from shapepy.bounding import BoundRectangle
-from shapepy.curve import IntegratePlanar, PlanarCurve
+from shapepy.curve.nurbs.curve import IntegratePlanar, PlanarCurve
 from shapepy.point import Point2D
 
 

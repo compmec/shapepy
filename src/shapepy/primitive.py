@@ -14,8 +14,8 @@ from typing import Tuple
 import numpy as np
 
 from shapepy.core import Empty, Whole
-from shapepy.curve import PlanarCurve
-from shapepy.jordancurve import JordanCurve
+from shapepy.curve.nurbs.curve import PlanarCurve
+from shapepy.curve.nurbs.jordan import JordanCurve
 from shapepy.point import Point2D
 from shapepy.shape import SimpleShape
 

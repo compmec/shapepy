@@ -188,7 +188,8 @@ class PlanarCurve(BaseCurve):
     def __init__(self, ctrlpoints: Tuple[Point2D]):
         ctrlpoints = list(ctrlpoints)
         for i, point in enumerate(ctrlpoints):
-            ctrlpoints[i] = Point2D(point)
+            if not isinstance(point, Point2D):
+                ctrlpoints[i] = Point2D(point)
         self.__planar = BezierCurve(ctrlpoints)
 
     def __or__(self, other: PlanarCurve) -> PlanarCurve:

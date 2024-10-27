@@ -9,7 +9,7 @@ import numpy as np
 import pytest
 
 from shapepy.core import Empty, Whole
-from shapepy.jordancurve import JordanCurve
+from shapepy.curve.nurbs.jordan import JordanCurve
 from shapepy.primitive import Primitive
 from shapepy.shape import ConnectedShape, DisjointShape
 

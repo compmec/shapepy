@@ -9,7 +9,7 @@ import pynurbs
 import pytest
 
 from shapepy import Point2D
-from shapepy.jordancurve import JordanCurve
+from shapepy.curve.nurbs.jordan import JordanCurve
 
 
 @pytest.mark.order(6)

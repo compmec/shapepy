@@ -17,7 +17,7 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 from shapepy.core import Empty, IBoolean2D, IObject2D, Whole
-from shapepy.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.curve.nurbs.jordan import IntegrateJordan, JordanCurve
 from shapepy.point import Point2D
 
 

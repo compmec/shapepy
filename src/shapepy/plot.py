@@ -7,8 +7,8 @@ import numpy as np
 from matplotlib import pyplot
 
 from shapepy.core import Empty, Whole
-from shapepy.curve import PlanarCurve
-from shapepy.jordancurve import JordanCurve
+from shapepy.curve.nurbs.curve import PlanarCurve
+from shapepy.curve.nurbs.jordan import JordanCurve
 from shapepy.shape import BaseShape, ConnectedShape, DisjointShape
 
 Path = matplotlib.path.Path

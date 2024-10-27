@@ -8,7 +8,7 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from shapepy.curve import BezierCurve, IntegratePlanar, Math, PlanarCurve
+from shapepy.curve.nurbs.curve import BezierCurve, IntegratePlanar, Math, PlanarCurve
 
 
 @pytest.mark.order(3)

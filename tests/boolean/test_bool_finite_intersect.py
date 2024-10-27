@@ -7,7 +7,7 @@ import math
 
 import pytest
 
-from shapepy.jordancurve import JordanCurve
+from shapepy.curve.nurbs.jordan import JordanCurve
 from shapepy.primitive import Primitive
 from shapepy.shape import SimpleShape
 
