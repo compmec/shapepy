@@ -330,6 +330,8 @@ class TestEqualHollowSquare:
         big = Primitive.square(side=2, center=(0, 0))
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
+        print("square = ")
+        print(square)
         assert float(square) > 0
         assert square | square == square
         assert square | (~square) is Whole()
