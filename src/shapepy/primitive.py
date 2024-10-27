@@ -7,16 +7,13 @@ This file contains functions to create primitive shapes such as:
 """
 
 import math
-from copy import copy
-from fractions import Fraction
 from typing import Tuple
 
 import numpy as np
 
-from shapepy.core import Empty, Whole
-from shapepy.curve.nurbs.curve import PlanarCurve
-from shapepy.curve.nurbs.jordan import JordanCurve
-from shapepy.point import Point2D
+from shapepy.core import Empty, Scalar, Whole
+from shapepy.curve.polygon import JordanPolygon
+from shapepy.point import GeneralPoint, Point2D
 from shapepy.shape import SimpleShape
 
 
@@ -34,7 +31,7 @@ class Primitive:
 
     @staticmethod
     def regular_polygon(
-        nsides: int, radius: float = 1, center: Point2D = (0, 0)
+        nsides: int, radius: Scalar = 1, center: GeneralPoint = (0, 0)
     ) -> SimpleShape:
         """
         Creates a regular polygon
@@ -66,27 +63,31 @@ class Primitive:
         .. image:: ../img/primitive/regular5.svg
 
         """
-        try:
-            assert isinstance(nsides, int)
-            assert nsides >= 3
-            float(radius)
-            assert radius > 0
+        nsides = int(nsides)
+        if nsides < 3:
+            raise ValueError
+        if radius <= 0:
+            raise ValueError
+        if not isinstance(center, Point2D):
             center = Point2D(center)
-        except (ValueError, TypeError, AssertionError):
-            raise ValueError("Input invalid")
+
         if nsides == 4:
-            vertices = [(radius, 0), (0, radius), (-radius, 0), (0, -radius)]
-            vertices = tuple([center + Point2D(vertex) for vertex in vertices])
+            vertices = [
+                (radius, 0 * radius),
+                (0 * radius, radius),
+                (-radius, 0 * radius),
+                (0 * radius, -radius),
+            ]
         else:
             vertices = np.empty((nsides, 2), dtype="float64")
             theta = np.linspace(0, math.tau, nsides, endpoint=False)
             vertices[:, 0] = radius * np.cos(theta)
             vertices[:, 1] = radius * np.sin(theta)
-            vertices = tuple([center + Point2D(vertex) for vertex in vertices])
-        return Primitive.polygon(vertices)
+        simple = Primitive.polygon(vertices)
+        return simple.move(center)
 
     @staticmethod
-    def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
+    def polygon(vertices: Tuple[GeneralPoint]) -> SimpleShape:
         """
         Creates a generic polygon
 
@@ -107,12 +108,13 @@ class Primitive:
         .. image:: ../img/primitive/diamond.svg
 
         """
-        vertices = tuple(Point2D(vertex) for vertex in vertices)
-        jordan_curve = JordanCurve.from_vertices(vertices)
-        return SimpleShape(jordan_curve)
+        jordan = JordanPolygon(vertices)
+        return SimpleShape(jordan)
 
     @staticmethod
-    def triangle(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
+    def triangle(
+        side: Scalar = 1, center: GeneralPoint = (0, 0)
+    ) -> SimpleShape:
         """
         Create a right triangle
 
@@ -136,13 +138,14 @@ class Primitive:
         .. image:: ../img/primitive/triangle.svg
 
         """
-        center = Point2D(center)
-        vertices = [(0, 0), (side, 0), (0, side)]
-        vertices = tuple(center + Point2D(vertex) for vertex in vertices)
-        return Primitive.polygon(vertices)
+        if side <= 0:
+            raise ValueError
+        vertices = [(0 * side, 0 * side), (side, 0 * side), (0 * side, side)]
+        simple = Primitive.polygon(vertices)
+        return simple.move(center)
 
     @staticmethod
-    def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
+    def square(side: Scalar = 1, center: GeneralPoint = (0, 0)) -> SimpleShape:
         """
         Creates a square with sides aligned with axis
 
@@ -167,23 +170,20 @@ class Primitive:
         .. image:: ../img/primitive/square.svg
 
         """
-        try:
-            float(side)
-            assert side > 0
-            center = Point2D(center)
-        except (ValueError, TypeError, AssertionError):
-            raise ValueError("Input invalid")
-
-        if isinstance(side, int):
-            side = Fraction(side)
-        side /= 2
-        vertices = [(side, side), (-side, side), (-side, -side), (side, -side)]
-        vertices = [center + Point2D(vertex) for vertex in vertices]
-        return Primitive.polygon(vertices)
+        if side <= 0:
+            raise ValueError
+        vertices = [
+            (side / 2, side / 2),
+            (-side / 2, side / 2),
+            (-side / 2, -side / 2),
+            (side / 2, -side / 2),
+        ]
+        simple = Primitive.polygon(vertices)
+        return simple.move(center)
 
     @staticmethod
     def circle(
-        radius: float = 1, center: Point2D = (0, 0), ndivangle: int = 16
+        radius: Scalar = 1, center: GeneralPoint = (0, 0)
     ) -> SimpleShape:
         """
         Creates a circle
@@ -195,8 +195,6 @@ class Primitive:
             Radius of the circle
         center : Point2D, default: (0, 0)
             Center of the circle
-        ndivangle : int, 16
-            Number of divisions of the circle, minimum 4
 
         -------------------------------------------
 
@@ -210,39 +208,5 @@ class Primitive:
 
         .. image:: ../img/primitive/positive_circle.svg
 
-        .. note::
-
-            We represent the circle by many quadratic segments.
-            NURBS are not implemented in this code to represent exactly circles.
-            You can choose the number of quadratic terms by changing ``ndivangle``.
-
         """
-        try:
-            float(radius)
-            assert radius > 0
-            center = Point2D(center)
-            assert isinstance(ndivangle, int)
-            assert ndivangle >= 4
-        except (ValueError, TypeError, AssertionError):
-            raise ValueError("Input invalid")
-
-        angle = math.tau / ndivangle
-        height = np.tan(angle / 2)
-
-        start_point = radius * Point2D(1, 0)
-        middle_point = radius * Point2D(1, height)
-        beziers = []
-        for i in range(ndivangle - 1):
-            end_point = copy(start_point).rotate(angle)
-            new_bezier = PlanarCurve([start_point, middle_point, end_point])
-            beziers.append(new_bezier)
-            start_point = end_point
-            middle_point = copy(middle_point).rotate(angle)
-        end_point = beziers[0].ctrlpoints[0]
-        new_bezier = PlanarCurve([start_point, middle_point, end_point])
-        beziers.append(new_bezier)
-
-        jordan_curve = JordanCurve.from_segments(beziers)
-        jordan_curve.move(center)
-        circle = SimpleShape(jordan_curve)
-        return circle
+        raise NotImplementedError
