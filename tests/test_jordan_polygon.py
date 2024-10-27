@@ -65,8 +65,8 @@ class TestJordanPolygon:
         segments = jordan.segments
         for i, segi in enumerate(segments):
             segj = segments[(i + 1) % len(segments)]
-            last_point = segi.ctrlpoints[-1]
-            first_point = segj.ctrlpoints[0]
+            last_point = segi.vertices[-1]
+            first_point = segj.vertices[0]
             assert last_point == first_point
             assert id(last_point) == id(first_point)
 
@@ -287,15 +287,15 @@ class TestIntegrateJordan:
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             jordancurve = JordanPolygon(ctrlpoints)
-            wind = IntegrateJordan.winding_number(jordancurve)
+            wind = jordancurve.winding((0, 0))
             assert abs(wind - 1) < 1e-9
 
         for nsides in range(3, 10):
             angles = np.linspace(math.tau, 0, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             jordancurve = JordanPolygon(ctrlpoints)
-            wind = IntegrateJordan.winding_number(jordancurve)
-            assert abs(wind + 1) < 1e-9
+            wind = jordancurve.winding((0, 0))
+            assert abs(wind) < 1e-9
 
     @pytest.mark.order(4)
     @pytest.mark.timeout(10)

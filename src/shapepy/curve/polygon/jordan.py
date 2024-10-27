@@ -3,59 +3,50 @@ from __future__ import annotations
 import math
 from typing import Tuple
 
-from ...core import IObject2D, Scalar
+from ...bounding import BoundRectangle
+from ...core import Scalar
 from ...point import GeneralPoint, Point2D
-from .curve import LinearSegment
+from ..abc import IJordanCurve
+from .curve import PolygonClosedCurve, PolygonOpenCurve
 
 
-class JordanPolygon(IObject2D):
+class JordanPolygon(IJordanCurve):
 
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         self.vertices = vertices
 
     @property
+    def param_curve(self) -> PolygonClosedCurve:
+        return self.__param_curve
+
+    @property
     def vertices(self) -> Tuple[Point2D, ...]:
-        return self.__vertices
+        return self.param_curve.vertices
 
     @property
     def vectors(self) -> Tuple[Point2D, ...]:
-        return self.__vectors
+        return self.param_curve.vectors
 
     @property
     def lenght(self) -> Scalar:
-        return self.__lenght
+        return self.param_curve.lenght
 
     @property
     def area(self) -> Scalar:
-        return self.__area
+        return self.param_curve.area
 
     @property
-    def segments(self) -> Tuple[LinearSegment, ...]:
-        segs = []
+    def segments(self) -> Tuple[PolygonOpenCurve, ...]:
+        segments = []
         for i, verti in enumerate(self.vertices):
-            verj = self.vertices[(i + 1) % len(self.__vertices)]
-            segs.append(LinearSegment(verti, verj))
-        return tuple(segs)
+            verj = self.vertices[(i + 1) % len(self.vertices)]
+            segment = PolygonOpenCurve([verti, verj])
+            segments.append(segment)
+        return tuple(segments)
 
     @vertices.setter
     def vertices(self, vertices: Tuple[GeneralPoint, ...]):
-        vertices = list(vertices)
-        for i, vertex in enumerate(vertices):
-            if not isinstance(vertex, Point2D):
-                vertices[i] = Point2D(vertex)
-        area = 0
-        vectors = []
-        for i, vertexi in enumerate(vertices):
-            j = (i + 1) % len(vertices)
-            vertexj = vertices[j]
-            vector = vertexj - vertexi
-            vectors.append(vector)
-            area += vertexi.cross(vertexj) / 2
-        lenght = sum(map(abs, vectors))
-        self.__vertices = tuple(vertices)
-        self.__vectors = tuple(vectors)
-        self.__lenght = lenght
-        self.__area = area
+        self.__param_curve = PolygonClosedCurve(vertices)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, JordanPolygon):
@@ -110,3 +101,15 @@ class JordanPolygon(IObject2D):
                 vertex.rotate(angle) for vertex in self.vertices
             )
         return self
+
+    def winding(self, point: GeneralPoint) -> Scalar:
+        if not isinstance(point, Point2D):
+            point = Point2D(point)
+        return self.param_curve.winding(point)
+
+    def boundbox(self) -> BoundRectangle:
+        minx = min(vertex[0] for vertex in self.vertices)
+        miny = min(vertex[1] for vertex in self.vertices)
+        maxx = max(vertex[0] for vertex in self.vertices)
+        maxy = max(vertex[1] for vertex in self.vertices)
+        return BoundRectangle((minx, miny), (maxx, maxy))
