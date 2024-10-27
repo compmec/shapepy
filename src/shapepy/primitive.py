@@ -16,7 +16,7 @@ import numpy as np
 from shapepy.core import Empty, Whole
 from shapepy.curve import PlanarCurve
 from shapepy.jordancurve import JordanCurve
-from shapepy.polygon import Point2D
+from shapepy.point import Point2D
 from shapepy.shape import SimpleShape
 
 

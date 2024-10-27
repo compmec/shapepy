@@ -8,7 +8,8 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 import pynurbs
 
-from shapepy.polygon import Box, Point2D
+from shapepy.bounding import BoundRectangle
+from shapepy.point import Point2D
 
 
 class Math:
@@ -322,7 +323,7 @@ class PlanarCurve(BaseCurve):
         new_ctrlpoints = np.dot(matrix, self.ctrlpoints)
         return self.__class__(new_ctrlpoints)
 
-    def box(self) -> Box:
+    def box(self) -> BoundRectangle:
         """Returns two points which defines the minimal exterior rectangle
 
         Returns the pair (A, B) with A[0] <= B[0] and A[1] <= B[1]
@@ -331,7 +332,7 @@ class PlanarCurve(BaseCurve):
         xmax = max(point[0] for point in self.ctrlpoints)
         ymin = min(point[1] for point in self.ctrlpoints)
         ymax = max(point[1] for point in self.ctrlpoints)
-        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
+        return BoundRectangle(Point2D(xmin, ymin), Point2D(xmax, ymax))
 
     def clean(self, tolerance: Optional[float] = 1e-9) -> PlanarCurve:
         """Reduces at maximum the degree of the bezier curve.

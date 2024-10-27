@@ -18,7 +18,7 @@ import numpy as np
 
 from shapepy.core import Empty, IBoolean2D, IObject2D, Whole
 from shapepy.jordancurve import IntegrateJordan, JordanCurve
-from shapepy.polygon import Box, Point2D
+from shapepy.point import Point2D
 
 
 class IntegrateShape:
@@ -361,30 +361,6 @@ class DefinedShape(BaseShape):
     def __deepcopy__(self, memo) -> DefinedShape:
         jordans = tuple(copy(jordan) for jordan in self.jordans)
         return ShapeFromJordans(jordans)
-
-    def box(self) -> Box:
-        """
-        Box that encloses all jordan curves
-
-        Parameters
-        ----------
-
-        :return: The box that encloses all
-        :rtype: Box
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive, IntegrateShape
-        >>> circle = Primitive.circle(radius = 1)
-        >>> circle.box()
-        Box with vertices (-1.0, -1.0) and (1., 1.0)
-
-        """
-        box = None
-        for jordan in self.jordans:
-            box |= jordan.box()
-        return box
 
     def __invert__(self) -> BaseShape:
         return ShapeFromJordans(tuple(~jordan for jordan in self.jordans))

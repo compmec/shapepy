@@ -15,6 +15,7 @@ from shapepy.curve import BezierCurve, IntegratePlanar, Math, PlanarCurve
 @pytest.mark.dependency(
     depends=[
         "tests/test_point.py::test_end",
+        "tests/test_bounding.py::test_end",
     ],
     scope="session",
 )

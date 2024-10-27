@@ -11,8 +11,9 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
+from shapepy.bounding import BoundRectangle
 from shapepy.curve import IntegratePlanar, PlanarCurve
-from shapepy.polygon import Box, Point2D
+from shapepy.point import Point2D
 
 
 class IntegrateJordan:
@@ -531,7 +532,7 @@ class JordanCurve:
         all_points.append(all_points[0])  # Close the curve
         return tuple(all_points)
 
-    def box(self) -> Box:
+    def box(self) -> BoundRectangle:
         """The box which encloses the jordan curve
 
         :return: The box which encloses the jordan curve

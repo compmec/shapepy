@@ -9,7 +9,7 @@ from shapepy.core import Empty, Whole
 from shapepy.curve import IntegratePlanar, PlanarCurve
 from shapepy.jordancurve import IntegrateJordan, JordanCurve
 from shapepy.plot import ShapePloter
-from shapepy.polygon import Point2D
+from shapepy.point import Point2D
 from shapepy.primitive import Primitive
 from shapepy.shape import (
     ConnectedShape,
