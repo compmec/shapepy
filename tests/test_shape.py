@@ -139,7 +139,7 @@ class TestOthers:
     )
     def test_print(self):
         points = [(0, 0), (1, 0), (0, 1)]
-        jordancurve = JordanCurve.from_vertices(points)
+        jordancurve = JordanPolygon(points)
         shape = SimpleShape(jordancurve)
         str(shape)
         repr(shape)

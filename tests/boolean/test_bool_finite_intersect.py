@@ -79,10 +79,10 @@ class TestIntersectionSimple:
         square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
         left_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2), (0, -1), (-1, 0)]
-        left_jordanpoly = JordanCurve.from_vertices(left_points)
+        left_jordanpoly = JordanPolygon(left_points)
         left_shape = SimpleShape(left_jordanpoly)
         right_points = [(0, 1), (1, 0), (0, -1), (1, -2), (3, 0), (1, 2)]
-        right_jordanpoly = JordanCurve.from_vertices(right_points)
+        right_jordanpoly = JordanPolygon(right_points)
         right_shape = SimpleShape(right_jordanpoly)
 
         assert square0 - square1 == left_shape
