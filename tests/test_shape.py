@@ -9,7 +9,7 @@ import pytest
 
 from shapepy.jordancurve import JordanCurve
 from shapepy.primitive import Primitive
-from shapepy.shape import EmptyShape, IntegrateShape, SimpleShape, WholeShape
+from shapepy.shape import IntegrateShape, SimpleShape
 
 
 @pytest.mark.order(8)

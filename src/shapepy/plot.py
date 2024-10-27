@@ -6,15 +6,10 @@ import matplotlib
 import numpy as np
 from matplotlib import pyplot
 
+from shapepy.core import Empty, Whole
 from shapepy.curve import PlanarCurve
 from shapepy.jordancurve import JordanCurve
-from shapepy.shape import (
-    BaseShape,
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    WholeShape,
-)
+from shapepy.shape import BaseShape, ConnectedShape, DisjointShape
 
 Path = matplotlib.path.Path
 PathPatch = matplotlib.patches.PathPatch
@@ -107,9 +102,9 @@ class ShapePloter:
 
     def plot_shape(self, shape: BaseShape, *, kwargs={}):
         assert isinstance(shape, BaseShape)
-        if isinstance(shape, EmptyShape):
+        if isinstance(shape, Empty):
             return
-        if isinstance(shape, WholeShape):
+        if isinstance(shape, Whole):
             self.gca().set_facecolor("#BFFFBF")
             return
         attrs = ["pos_color", "neg_color", "fill_color", "alpha", "marker"]

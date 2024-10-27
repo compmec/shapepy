@@ -2,6 +2,7 @@
 This modules contains a powerful class called JordanCurve which
 is in fact, stores a list of spline-curves.
 """
+
 from __future__ import annotations
 
 from copy import copy

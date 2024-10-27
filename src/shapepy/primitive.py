@@ -13,10 +13,11 @@ from typing import Tuple
 
 import numpy as np
 
+from shapepy.core import Empty, Whole
 from shapepy.curve import PlanarCurve
 from shapepy.jordancurve import JordanCurve
 from shapepy.polygon import Point2D
-from shapepy.shape import EmptyShape, SimpleShape, WholeShape
+from shapepy.shape import SimpleShape
 
 
 class Primitive:
@@ -28,8 +29,8 @@ class Primitive:
 
     """
 
-    empty = EmptyShape()
-    whole = WholeShape()
+    empty = Empty()
+    whole = Whole()
 
     @staticmethod
     def regular_polygon(

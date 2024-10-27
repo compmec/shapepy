@@ -41,7 +41,10 @@ class TestJordanPolygon:
     @pytest.mark.order(4)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
-        depends=["TestJordanPolygon::test_begin", "TestJordanPolygon::test_creation"]
+        depends=[
+            "TestJordanPolygon::test_begin",
+            "TestJordanPolygon::test_creation",
+        ]
     )
     def test_error_creation(self):
         with pytest.raises(TypeError):
@@ -482,7 +485,10 @@ class TestIntegrateJordan:
 class TestOthers:
     @pytest.mark.order(4)
     @pytest.mark.dependency(
-        depends=["TestJordanPolygon::test_end", "TestTransformationPolygon::test_end"]
+        depends=[
+            "TestJordanPolygon::test_end",
+            "TestTransformationPolygon::test_end",
+        ]
     )
     def test_begin(self):
         pass
@@ -511,13 +517,21 @@ class TestOthers:
         assert id(jordana) != id(jordanb)
         inters = jordana & jordanb
         assert not bool(inters)
-        inters = jordana.intersection(jordanb, equal_beziers=False, end_points=False)
+        inters = jordana.intersection(
+            jordanb, equal_beziers=False, end_points=False
+        )
         assert not bool(inters)
-        inters = jordana.intersection(jordanb, equal_beziers=False, end_points=True)
+        inters = jordana.intersection(
+            jordanb, equal_beziers=False, end_points=True
+        )
         assert bool(inters)
-        inters = jordana.intersection(jordanb, equal_beziers=True, end_points=False)
+        inters = jordana.intersection(
+            jordanb, equal_beziers=True, end_points=False
+        )
         assert bool(inters)
-        inters = jordana.intersection(jordanb, equal_beziers=True, end_points=True)
+        inters = jordana.intersection(
+            jordanb, equal_beziers=True, end_points=True
+        )
         assert bool(inters)
 
     @pytest.mark.order(4)

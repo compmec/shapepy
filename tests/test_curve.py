@@ -302,7 +302,10 @@ class TestIntegrate:
     @pytest.mark.order(3)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
-        depends=["TestIntegrate::test_begin", "TestIntegrate::test_winding_triangles"]
+        depends=[
+            "TestIntegrate::test_begin",
+            "TestIntegrate::test_winding_triangles",
+        ]
     )
     def test_winding_unit_circle(self):
         ntests = 1000

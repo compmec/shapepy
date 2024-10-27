@@ -6,6 +6,7 @@ like ```move```, ```rotate``` and ```scale``` to model your desired curve.
 You can assemble JordanCurves to create shapes with holes,
 or even unconnected shapes.
 """
+
 from __future__ import annotations
 
 import abc
@@ -15,20 +16,9 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
+from shapepy.core import Empty, IBoolean2D, IObject2D, Whole
 from shapepy.jordancurve import IntegrateJordan, JordanCurve
 from shapepy.polygon import Box, Point2D
-
-
-class SuperclassMeta(type):
-    def __new__(mcls, classname, bases, cls_dict):
-        cls = super().__new__(mcls, classname, bases, cls_dict)
-        for name, member in cls_dict.items():
-            if not getattr(member, "__doc__"):
-                try:
-                    member.__doc__ = getattr(bases[-1], name).__doc__
-                except AttributeError:
-                    pass
-        return cls
 
 
 class IntegrateShape:
@@ -352,156 +342,8 @@ class FollowPath:
         return new_jordans
 
 
-class BaseShape(object, metaclass=SuperclassMeta):
-    """
-    Class which allows operations like:
-     - move
-     - scale
-     - rotation
-     - invert
-     - union
-     - intersection
-     - XOR
-    """
-
-    def __init__(self):
-        pass
-
-    @abc.abstractmethod
-    def __invert__(self) -> BaseShape:
-        """Invert shape"""
-        pass
-
-    @abc.abstractmethod
-    def __or__(self) -> BaseShape:
-        """Union shapes"""
-        pass
-
-    @abc.abstractmethod
-    def __and__(self) -> BaseShape:
-        """Intersection shapes"""
-        pass
-
-    def __neg__(self) -> BaseShape:
-        """Invert the BaseShape"""
-        return ~self
-
-    def __add__(self, other: BaseShape):
-        """Union of BaseShape"""
-        return self | other
-
-    def __mul__(self, value: BaseShape):
-        """Intersection of BaseShape"""
-        return self & value
-
-    def __sub__(self, value: BaseShape):
-        """Subtraction of BaseShape"""
-        return self & (~value)
-
-    def __xor__(self, other: BaseShape):
-        """XOR of BaseShape"""
-        return (self - other) | (other - self)
-
-    def __bool__(self) -> bool:
-        """Are is positive ?"""
-        return float(self) > 0
-
-
-class SingletonShape(BaseShape):
-    """SingletonShape"""
-
-    __instance = None
-
-    def __new__(cls):
-        if cls.__instance is None:
-            cls.__instance = super(SingletonShape, cls).__new__(cls)
-        return cls.__instance
-
-    def __copy__(self) -> SingletonShape:
-        return self
-
-    def __deepcopy__(self, memo) -> SingletonShape:
-        return self
-
-
-class EmptyShape(SingletonShape):
-    """EmptyShape is a singleton class to represent an empty shape
-
-    Example use
-    -----------
-    >>> from shapepy import EmptyShape
-    >>> empty = EmptyShape()
-    >>> print(empty)
-    EmptyShape
-    >>> print(float(empty))  # Area
-    0.0
-    >>> (0, 0) in empty
-    False
-    """
-
-    def __or__(self, other: BaseShape) -> BaseShape:
-        return copy(other)
-
-    def __and__(self, other: BaseShape) -> BaseShape:
-        return self
-
-    def __sub__(self, other: BaseShape) -> BaseShape:
-        return self
-
-    def __float__(self) -> float:
-        return float(0)
-
-    def __invert__(self) -> BaseShape:
-        return WholeShape()
-
-    def __contains__(self, other: BaseShape) -> bool:
-        return self is other
-
-    def __str__(self) -> str:
-        return "EmptyShape"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-
-class WholeShape(SingletonShape):
-    """WholeShape is a singleton class to represent all plane
-
-    Example use
-    -----------
-    >>> from shapepy import WholeShape
-    >>> whole = WholeShape()
-    >>> print(whole)
-    WholeShape
-    >>> print(float(whole))  # Area
-    inf
-    >>> (0, 0) in whole
-    True
-    """
-
-    def __or__(self, other: BaseShape) -> WholeShape:
-        return self
-
-    def __and__(self, other: BaseShape) -> BaseShape:
-        return copy(other)
-
-    def __float__(self) -> float:
-        return float("inf")
-
-    def __invert__(self) -> BaseShape:
-        return EmptyShape()
-
-    def __contains__(self, other: BaseShape) -> bool:
-        return True
-
-    def __str__(self) -> str:
-        return "WholeShape"
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def __sub__(self, other: BaseShape) -> BaseShape:
-        return ~other
+class BaseShape(IBoolean2D):
+    pass
 
 
 class DefinedShape(BaseShape):
@@ -547,11 +389,11 @@ class DefinedShape(BaseShape):
     def __invert__(self) -> BaseShape:
         return ShapeFromJordans(tuple(~jordan for jordan in self.jordans))
 
-    def __or__(self, other: BaseShape) -> BaseShape:
+    def __ror__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
-        if isinstance(other, WholeShape):
-            return WholeShape()
-        if isinstance(other, EmptyShape):
+        if isinstance(other, Whole):
+            return Whole()
+        if isinstance(other, Empty):
             return copy(self)
         if other in self:
             return copy(self)
@@ -559,27 +401,31 @@ class DefinedShape(BaseShape):
             return copy(other)
         new_jordans = FollowPath.or_shapes(self, other)
         if len(new_jordans) == 0:
-            return WholeShape()
+            return Whole()
         return ShapeFromJordans(new_jordans)
 
-    def __and__(self, other: BaseShape) -> BaseShape:
+    def __rand__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
-        if isinstance(other, WholeShape):
+        if isinstance(other, Whole):
             return copy(self)
-        if isinstance(other, EmptyShape):
-            return EmptyShape()
+        if isinstance(other, Empty):
+            return Empty()
         if other in self:
             return copy(other)
         if self in other:
             return copy(self)
         new_jordans = FollowPath.and_shapes(self, other)
         if len(new_jordans) == 0:
-            return EmptyShape()
+            return Empty()
         return ShapeFromJordans(new_jordans)
 
     def __contains__(
         self, other: Union[Point2D, JordanCurve, BaseShape]
     ) -> bool:
+        if isinstance(other, Empty):
+            return True
+        if isinstance(other, Whole):
+            return False
         if isinstance(other, BaseShape):
             return self.contains_shape(other)
         if isinstance(other, JordanCurve):
@@ -758,9 +604,9 @@ class DefinedShape(BaseShape):
 
         """
         assert isinstance(other, BaseShape)
-        if isinstance(other, EmptyShape):
+        if isinstance(other, Empty):
             return True
-        if isinstance(other, WholeShape):
+        if isinstance(other, Whole):
             return False
         return self._contains_shape(other)
 
@@ -805,7 +651,7 @@ class SimpleShape(DefinedShape):
         msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
         return msg
 
-    def __eq__(self, other: BaseShape) -> bool:
+    def __eq__(self, other: object) -> bool:
         """Compare two shapes
 
         Parameters
@@ -815,7 +661,7 @@ class SimpleShape(DefinedShape):
 
         :raises ValueError: If ``other`` is not a BaseShape instance
         """
-        if not isinstance(other, BaseShape):
+        if not isinstance(other, IObject2D):
             raise ValueError
         if not isinstance(other, SimpleShape):
             return False
@@ -961,8 +807,8 @@ class ConnectedShape(DefinedShape):
     def __repr__(self) -> str:
         return str(self)
 
-    def __eq__(self, other: BaseShape) -> bool:
-        assert isinstance(other, BaseShape)
+    def __eq__(self, other: IObject2D) -> bool:
+        assert isinstance(other, IObject2D)
         if not isinstance(other, ConnectedShape):
             return False
         if abs(float(self) - float(other)) > 1e-6:
@@ -1056,10 +902,10 @@ class DisjointShape(DefinedShape):
 
     def __new__(cls, subshapes: Tuple[ConnectedShape]):
         subshapes = list(subshapes)
-        while EmptyShape() in subshapes:
-            subshapes.remove(EmptyShape())
+        while Empty() in subshapes:
+            subshapes.remove(Empty())
         if len(subshapes) == 0:
-            return EmptyShape()
+            return Empty()
         for subshape in subshapes:
             assert isinstance(subshape, (SimpleShape, ConnectedShape))
         if len(subshapes) == 1:
@@ -1077,8 +923,7 @@ class DisjointShape(DefinedShape):
             total += float(subshape)
         return float(total)
 
-    def __eq__(self, other: BaseShape):
-        assert isinstance(other, BaseShape)
+    def __eq__(self, other: IObject2D):
         if not isinstance(other, DisjointShape):
             return False
         if float(self) != float(other):
@@ -1237,7 +1082,7 @@ def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
     Example
     ----------
     >>> ShapeFromJordans([])
-    EmptyShape
+    Empty
     """
     assert len(jordans) != 0
     simples = tuple(map(SimpleShape, jordans))
