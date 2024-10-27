@@ -12,7 +12,7 @@ from shapepy import Primitive
 @pytest.mark.order(5)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
+        "tests/test_point.py::test_end",
         "tests/test_jordan_polygon.py::test_end",
     ],
     scope="session",
@@ -110,7 +110,7 @@ class TestPrimitive:
             "TestPrimitive::test_regular",
         ]
     )
-    def test_polygon(self):
+    def test_point(self):
         points = [(0, 0), (1, 0), (0, 1)]
         triangle = Primitive.polygon(points)
         area = 0.5
@@ -129,7 +129,7 @@ class TestPrimitive:
             "TestPrimitive::test_creation",
             "TestPrimitive::test_square",
             "TestPrimitive::test_regular",
-            "TestPrimitive::test_polygon",
+            "TestPrimitive::test_point",
         ]
     )
     def test_circle(self):
@@ -150,7 +150,7 @@ class TestPrimitive:
             "TestPrimitive::test_creation",
             "TestPrimitive::test_square",
             "TestPrimitive::test_regular",
-            "TestPrimitive::test_polygon",
+            "TestPrimitive::test_point",
             "TestPrimitive::test_circle",
         ]
     )

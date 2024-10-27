@@ -59,7 +59,6 @@ def test_or():
 
     assert empty + empty is empty
     assert empty + whole is whole
-    print(whole + empty)
     assert whole + empty is whole
     assert whole + whole is whole
 
@@ -76,7 +75,6 @@ def test_and():
 
     assert empty * empty is empty
     assert empty * whole is empty
-    print(whole * empty)
     assert whole * empty is empty
     assert whole * whole is whole
 

@@ -13,7 +13,7 @@ from shapepy.shape import ConnectedShape, DisjointShape
 @pytest.mark.order(9)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
+        "tests/test_point.py::test_end",
         "tests/test_jordan_polygon.py::test_end",
         "tests/test_jordan_curve.py::test_end",
         "tests/test_primitive.py::test_end",
@@ -330,8 +330,6 @@ class TestEqualHollowSquare:
         big = Primitive.square(side=2, center=(0, 0))
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
-        print("square = ")
-        print(square)
         assert float(square) > 0
         assert square | square == square
         assert square | (~square) is Whole()

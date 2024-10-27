@@ -13,7 +13,7 @@ from shapepy.jordancurve import IntegrateJordan, JordanCurve
 @pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
+        "tests/test_point.py::test_end",
         "tests/test_curve.py::test_end",
     ],
     scope="session",

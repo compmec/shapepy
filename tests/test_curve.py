@@ -14,7 +14,7 @@ from shapepy.curve import BezierCurve, IntegratePlanar, Math, PlanarCurve
 @pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
+        "tests/test_point.py::test_end",
     ],
     scope="session",
 )
