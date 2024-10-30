@@ -18,7 +18,7 @@ import numpy as np
 
 from shapepy.core import Empty, IBoolean2D, IObject2D, Whole
 from shapepy.curve.nurbs.jordan import IntegrateJordan, JordanCurve
-from shapepy.point import Point2D
+from shapepy.point import GeneralPoint, Point2D
 
 
 class IntegrateShape:
@@ -412,7 +412,7 @@ class DefinedShape(BaseShape):
     def __float__(self) -> float:
         return float(IntegrateShape.area(self))
 
-    def move(self, *point: Point2D) -> BaseShape:
+    def move(self, point: GeneralPoint) -> BaseShape:
         """
         Moves/translate entire shape by an amount
 
@@ -432,7 +432,8 @@ class DefinedShape(BaseShape):
         >>> circle.move(1, 2)
 
         """
-        point = Point2D(*point)
+        if not isinstance(point, Point2D):
+            point = Point2D(point)
         for jordan in self.jordans:
             jordan.move(point)
         return self

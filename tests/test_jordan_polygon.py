@@ -183,8 +183,7 @@ class TestTransformationPolygon:
 
         test_square_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_square = JordanPolygon(test_square_pts)
-        test_square.move((1, 2))
-        test_square.move(1, 2)
+        test_square.move((2, 4))
 
         assert test_square == good_square
 

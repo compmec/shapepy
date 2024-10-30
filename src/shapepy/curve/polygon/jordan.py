@@ -77,9 +77,7 @@ class JordanPolygon(IJordanCurve):
         newvertices = tuple(self.vertices[::-1])
         return self.__class__(newvertices)
 
-    def move(self, *vector: GeneralPoint) -> JordanPolygon:
-        if len(vector) == 1:
-            vector = vector[0]
+    def move(self, vector: GeneralPoint) -> JordanPolygon:
         if not isinstance(vector, Point2D):
             vector = Point2D(vector)
         if vector != (0, 0):
