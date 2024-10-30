@@ -16,10 +16,10 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from shapepy.core import Empty, IBoolean2D, IObject2D, Scalar, Whole
+from shapepy.core import Empty, IObject2D, IShape, Scalar, Whole
 from shapepy.point import GeneralPoint, Point2D
 
-from .curve.abc import IJordanCurve
+from ..curve.abc import IJordanCurve
 
 
 class FollowPath:
@@ -178,7 +178,7 @@ class FollowPath:
 
     @staticmethod
     def midpoints_one_shape(
-        shapea: BaseShape, shapeb: BaseShape, closed: bool, inside: bool
+        shapea: IShape, shapeb: IShape, closed: bool, inside: bool
     ) -> Tuple[Tuple[int]]:
         """
         Returns a matrix [(a0, b0), (a1, b1), ...]
@@ -205,7 +205,7 @@ class FollowPath:
 
     @staticmethod
     def midpoints_shapes(
-        shapea: BaseShape, shapeb: BaseShape, closed: bool, inside: bool
+        shapea: IShape, shapeb: IShape, closed: bool, inside: bool
     ) -> Tuple[Tuple[int]]:
         indexsa = FollowPath.midpoints_one_shape(
             shapea, shapeb, closed, inside
@@ -220,9 +220,9 @@ class FollowPath:
         return tuple(indexsa)
 
     @staticmethod
-    def or_shapes(shapea: BaseShape, shapeb: BaseShape) -> Tuple[IJordanCurve]:
-        assert isinstance(shapea, BaseShape)
-        assert isinstance(shapeb, BaseShape)
+    def or_shapes(shapea: IShape, shapeb: IShape) -> Tuple[IJordanCurve]:
+        assert isinstance(shapea, IShape)
+        assert isinstance(shapeb, IShape)
         for jordana in shapea.jordans:
             for jordanb in shapeb.jordans:
                 FollowPath.split_two_jordans(jordana, jordanb)
@@ -234,11 +234,9 @@ class FollowPath:
         return new_jordans
 
     @staticmethod
-    def and_shapes(
-        shapea: BaseShape, shapeb: BaseShape
-    ) -> Tuple[IJordanCurve]:
-        assert isinstance(shapea, BaseShape)
-        assert isinstance(shapeb, BaseShape)
+    def and_shapes(shapea: IShape, shapeb: IShape) -> Tuple[IJordanCurve]:
+        assert isinstance(shapea, IShape)
+        assert isinstance(shapeb, IShape)
         for jordana in shapea.jordans:
             for jordanb in shapeb.jordans:
                 FollowPath.split_two_jordans(jordana, jordanb)
@@ -250,11 +248,7 @@ class FollowPath:
         return new_jordans
 
 
-class BaseShape(IBoolean2D):
-    pass
-
-
-class DefinedShape(BaseShape):
+class DefinedShape(IShape):
     """
     DefinedShape is the base class for SimpleShape, ConnectedShape and DisjointShape
 
@@ -270,11 +264,11 @@ class DefinedShape(BaseShape):
         jordans = tuple(copy(jordan) for jordan in self.jordans)
         return ShapeFromJordans(jordans)
 
-    def __invert__(self) -> BaseShape:
+    def __invert__(self) -> IShape:
         return ShapeFromJordans(tuple(~jordan for jordan in self.jordans))
 
-    def __ror__(self, other: BaseShape) -> BaseShape:
-        assert isinstance(other, BaseShape)
+    def __ror__(self, other: IShape) -> IShape:
+        assert isinstance(other, IShape)
         if isinstance(other, Whole):
             return Whole()
         if isinstance(other, Empty):
@@ -288,8 +282,8 @@ class DefinedShape(BaseShape):
             return Whole()
         return ShapeFromJordans(new_jordans)
 
-    def __rand__(self, other: BaseShape) -> BaseShape:
-        assert isinstance(other, BaseShape)
+    def __rand__(self, other: IShape) -> IShape:
+        assert isinstance(other, IShape)
         if isinstance(other, Whole):
             return copy(self)
         if isinstance(other, Empty):
@@ -304,20 +298,20 @@ class DefinedShape(BaseShape):
         return ShapeFromJordans(new_jordans)
 
     def __contains__(
-        self, other: Union[Point2D, IJordanCurve, BaseShape]
+        self, other: Union[Point2D, IJordanCurve, IShape]
     ) -> bool:
         if isinstance(other, Empty):
             return True
         if isinstance(other, Whole):
             return False
-        if isinstance(other, BaseShape):
+        if isinstance(other, IShape):
             return self.contains_shape(other)
         if isinstance(other, IJordanCurve):
             return self.contains_jordan(other)
         point = Point2D(other)
         return self.contains_point(point)
 
-    def move(self, point: GeneralPoint) -> BaseShape:
+    def move(self, point: GeneralPoint) -> IShape:
         """
         Moves/translate entire shape by an amount
 
@@ -328,7 +322,7 @@ class DefinedShape(BaseShape):
             The amount to move
 
         :return: The same instance
-        :rtype: BaseShape
+        :rtype: IShape
 
         Example use
         -----------
@@ -343,7 +337,7 @@ class DefinedShape(BaseShape):
             jordan.move(point)
         return self
 
-    def scale(self, xscale: float, yscale: float) -> BaseShape:
+    def scale(self, xscale: float, yscale: float) -> IShape:
         """
         Scales entire shape by an amount
 
@@ -356,7 +350,7 @@ class DefinedShape(BaseShape):
             The amount to scale in vertical direction
 
         :return: The same instance
-        :rtype: BaseShape
+        :rtype: IShape
 
         Example use
         -----------
@@ -369,7 +363,7 @@ class DefinedShape(BaseShape):
             jordan.scale(xscale, yscale)
         return self
 
-    def rotate(self, angle: float, degrees: bool = False) -> BaseShape:
+    def rotate(self, angle: float, degrees: bool = False) -> IShape:
         """
         Rotates entire shape around the origin by an amount
 
@@ -382,7 +376,7 @@ class DefinedShape(BaseShape):
             Flag to indicate if ``angle`` is in radians or degrees
 
         :return: The same instance
-        :rtype: BaseShape
+        :rtype: IShape
 
         Example use
         -----------
@@ -462,7 +456,7 @@ class DefinedShape(BaseShape):
         assert isinstance(boundary, bool)
         return self._contains_jordan(jordan, boundary)
 
-    def contains_shape(self, other: BaseShape) -> bool:
+    def contains_shape(self, other: IShape) -> bool:
         """
         Checks if the all points of given shape are inside the shape
 
@@ -471,7 +465,7 @@ class DefinedShape(BaseShape):
         Parameters
         ----------
 
-        other : BaseShape
+        other : IShape
             The shape to be verified if is inside
 
         :return: Whether the ``other`` shape is inside or not
@@ -486,7 +480,7 @@ class DefinedShape(BaseShape):
         True
 
         """
-        assert isinstance(other, BaseShape)
+        assert isinstance(other, IShape)
         if isinstance(other, Empty):
             return True
         if isinstance(other, Whole):
@@ -504,7 +498,7 @@ class DefinedShape(BaseShape):
         pass
 
     @abc.abstractmethod
-    def _contains_shape(other: BaseShape):
+    def _contains_shape(other: IShape):
         pass
 
 
@@ -548,10 +542,10 @@ class SimpleShape(DefinedShape):
 
         Parameters
         ----------
-        other: BaseShape
+        other: IShape
             The shape to compare
 
-        :raises ValueError: If ``other`` is not a BaseShape instance
+        :raises ValueError: If ``other`` is not a IShape instance
         """
         if not isinstance(other, IObject2D):
             raise ValueError
@@ -909,7 +903,7 @@ class DisjointShape(DefinedShape):
         return self.__subshapes
 
     @subshapes.setter
-    def subshapes(self, values: Tuple[BaseShape]):
+    def subshapes(self, values: Tuple[IShape]):
         for value in values:
             assert isinstance(value, (SimpleShape, ConnectedShape))
         areas = tuple(value.area for value in values)
@@ -960,7 +954,7 @@ def DivideConnecteds(
     return (connected,) + DivideConnecteds(externals)
 
 
-def ShapeFromJordans(jordans: Tuple[IJordanCurve]) -> BaseShape:
+def ShapeFromJordans(jordans: Tuple[IJordanCurve]) -> IShape:
     """Returns the correspondent shape
 
     This function don't do entry validation

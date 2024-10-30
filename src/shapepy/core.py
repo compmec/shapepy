@@ -182,3 +182,10 @@ class Whole(IBoolean2D):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+
+class IShape(IObject2D):
+    @property
+    @abstractmethod
+    def area(self) -> Scalar:
+        raise NotImplementedError
