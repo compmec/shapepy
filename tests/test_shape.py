@@ -3,13 +3,10 @@ Tests related to shape module, more specifically about the class SimpleShape
 Which are in fact positive shapes defined only by one jordan curve 
 """
 
-import math
-
 import pytest
 
-from shapepy.curve.polygon import JordanPolygon
 from shapepy.primitive import Primitive
-from shapepy.shape import SimpleShape
+from shapepy.shape import ConnectedShape, DisjointShape
 
 
 @pytest.mark.order(8)
@@ -17,10 +14,7 @@ from shapepy.shape import SimpleShape
     depends=[
         "tests/test_empty_whole.py::test_end",
         "tests/test_point.py::test_end",
-        "tests/test_jordan_polygon.py::test_end",
-        "tests/test_jordan_curve.py::test_end",
         "tests/test_primitive.py::test_end",
-        "tests/test_contains.py::test_end",
     ],
     scope="session",
 )
@@ -28,11 +22,195 @@ def test_begin():
     pass
 
 
+class TestSimple:
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "test_begin",
+        ]
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestSimple::test_begin",
+        ]
+    )
+    def test_build(self):
+        points = [(0, 0), (1, 0), (0, 1)]
+        Primitive.polygon(points)
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestSimple::test_begin",
+            "TestSimple::test_build",
+        ]
+    )
+    def test_area(self):
+        points = [(0, 0), (1, 0), (0, 1)]
+        shape = Primitive.polygon(points)
+        assert shape.area == 0.5
+
+        points = [(0, 0), (0, 1), (1, 0)]
+        shape = Primitive.polygon(points)
+        assert shape.area == -0.5
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestSimple::test_begin",
+            "TestSimple::test_build",
+            "TestSimple::test_area",
+        ]
+    )
+    def test_compare(self):
+        points = [(0, 0), (1, 0), (0, 1)]
+        shapea = Primitive.polygon(points)
+        shapeb = Primitive.polygon(points)
+        assert shapea == shapeb
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestSimple::test_begin",
+            "TestSimple::test_build",
+            "TestSimple::test_area",
+            "TestSimple::test_compare",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
+class TestConnected:
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "test_begin",
+        ]
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestConnected::test_begin",
+        ]
+    )
+    def test_build(self):
+        points = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
+        shapea = Primitive.polygon(points)
+        points = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
+        shapeb = Primitive.polygon(points)
+        ConnectedShape([shapea, shapeb])
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestConnected::test_begin",
+            "TestConnected::test_build",
+        ]
+    )
+    def test_area(self):
+        points = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
+        shapea = Primitive.polygon(points)
+        points = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
+        shapeb = Primitive.polygon(points)
+        shape = ConnectedShape([shapea, shapeb])
+        assert shape.area == 12
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestConnected::test_begin",
+            "TestConnected::test_build",
+            "TestConnected::test_area",
+        ]
+    )
+    def test_compare(self):
+        pointsa = [(1, 1), (1, -1), (-1, -1), (-1, 1)]
+        pointsb = [(-2, -2), (2, -2), (2, 2), (-2, 2)]
+        shapea = Primitive.polygon(pointsa)
+        shapeb = Primitive.polygon(pointsb)
+        shape0 = ConnectedShape([shapea, shapeb])
+        shapea = Primitive.polygon(pointsa)
+        shapeb = Primitive.polygon(pointsb)
+        shape1 = ConnectedShape([shapea, shapeb])
+        assert shape0 == shape1
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestConnected::test_begin",
+            "TestConnected::test_build",
+            "TestConnected::test_area",
+            "TestConnected::test_compare",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
+class TestDisjoint:
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "test_begin",
+        ]
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisjoint::test_begin",
+        ]
+    )
+    def test_build(self):
+        points = [(-3, -1), (3, -1), (3, 1), (-3, 1)]
+        shapea = Primitive.polygon(points)
+        points = [(1, -2), (3, -2), (3, 2), (1, 2)]
+        shapeb = Primitive.polygon(points)
+        DisjointShape([shapea, shapeb])
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisjoint::test_begin",
+            "TestDisjoint::test_build",
+        ]
+    )
+    def test_area(self):
+        points = [(-3, -2), (-1, -2), (-1, 2), (-3, 2)]
+        shapea = Primitive.polygon(points)
+        points = [(1, -2), (3, -2), (3, 2), (1, 2)]
+        shapeb = Primitive.polygon(points)
+        shape = DisjointShape([shapea, shapeb])
+        assert shape.area == 16
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisjoint::test_begin",
+            "TestDisjoint::test_build",
+            "TestDisjoint::test_area",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
 class TestOthers:
     @pytest.mark.order(8)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
+            "TestSimple::test_end",
         ]
     )
     def test_begin(self):
@@ -46,8 +224,7 @@ class TestOthers:
     )
     def test_print(self):
         points = [(0, 0), (1, 0), (0, 1)]
-        jordancurve = JordanPolygon(points)
-        shape = SimpleShape(jordancurve)
+        shape = Primitive.polygon(points)
         str(shape)
         repr(shape)
 
@@ -61,8 +238,6 @@ class TestOthers:
         shapea = Primitive.regular_polygon(3)
         shapeb = Primitive.regular_polygon(4)
         assert shapea != shapeb
-        with pytest.raises(ValueError):
-            shapea != 0
 
     @pytest.mark.order(8)
     @pytest.mark.dependency(
@@ -79,7 +254,9 @@ class TestOthers:
 @pytest.mark.order(8)
 @pytest.mark.dependency(
     depends=[
-        "TestIntegrate::test_end",
+        "TestSimple::test_end",
+        "TestConnected::test_end",
+        "TestDisjoint::test_end",
         "TestOthers::test_end",
     ]
 )

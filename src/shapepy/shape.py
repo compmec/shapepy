@@ -705,6 +705,10 @@ class ConnectedShape(DefinedShape):
         return DisjointShape(simples)
 
     @property
+    def area(self) -> Scalar:
+        return sum(subshape.area for subshape in self.subshapes)
+
+    @property
     def jordans(self) -> Tuple[IJordanCurve]:
         """Jordan curves that defines the shape
 
@@ -909,7 +913,7 @@ class DisjointShape(DefinedShape):
         for value in values:
             assert isinstance(value, (SimpleShape, ConnectedShape))
         areas = tuple(value.area for value in values)
-        lenghts = map(float, [val.jordans[0] for val in values])
+        lenghts = tuple(val.jordans[0].lenght for val in values)
         algori = lambda triple: triple[:2]
         values = sorted(zip(areas, lenghts, values), key=algori, reverse=True)
         values = tuple(val[2] for val in values)
