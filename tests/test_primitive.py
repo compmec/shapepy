@@ -57,19 +57,19 @@ class TestPrimitive:
     def test_square(self):
         square = Primitive.square()
         area = 1
-        assert abs(float(square) - area) < 1e-9
+        assert abs(square.area - area) < 1e-9
 
         square = Primitive.square(side=2)
         area = 4
-        assert abs(float(square) - area) < 1e-9
+        assert abs(square.area - area) < 1e-9
 
         square = Primitive.square(side=4)
         area = 16
-        assert abs(float(square) - area) < 1e-9
+        assert abs(square.area - area) < 1e-9
 
         square = Primitive.square(side=3, center=(1, 2))
         area = 9
-        assert abs(float(square) - area) < 1e-9
+        assert abs(square.area - area) < 1e-9
 
     @pytest.mark.order(5)
     @pytest.mark.timeout(10)
@@ -84,13 +84,13 @@ class TestPrimitive:
         for nsides in range(3, 10):
             polygon = Primitive.regular_polygon(nsides)
             area = nsides * math.sin(2 * math.pi / nsides) / 2
-            assert abs(float(polygon) - area) < 1e-9
+            assert abs(polygon.area - area) < 1e-9
 
         radius = 4
         for nsides in range(3, 10):
             polygon = Primitive.regular_polygon(nsides, radius=radius)
             area = radius**2 * nsides * math.sin(2 * math.pi / nsides) / 2
-            assert abs(float(polygon) - area) < 1e-9
+            assert abs(polygon.area - area) < 1e-9
 
     @pytest.mark.order(5)
     @pytest.mark.timeout(10)
@@ -106,12 +106,12 @@ class TestPrimitive:
         points = [(0, 0), (1, 0), (0, 1)]
         triangle = Primitive.polygon(points)
         area = 0.5
-        assert abs(float(triangle) - area) < 1e-9
+        assert abs(triangle.area - area) < 1e-9
 
         points = [(0, 0), (0, 1), (1, 0)]
         triangle = Primitive.polygon(points)
         area = -0.5
-        assert abs(float(triangle) - area) < 1e-9
+        assert abs(triangle.area - area) < 1e-9
 
     @pytest.mark.order(5)
     @pytest.mark.skip(reason="Needs new implementation")

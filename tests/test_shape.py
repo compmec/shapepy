@@ -7,9 +7,9 @@ import math
 
 import pytest
 
-from shapepy.curve.nurbs.jordan import JordanCurve
+from shapepy.curve.polygon import JordanPolygon
 from shapepy.primitive import Primitive
-from shapepy.shape import IntegrateShape, SimpleShape
+from shapepy.shape import SimpleShape
 
 
 @pytest.mark.order(8)
@@ -26,99 +26,6 @@ from shapepy.shape import IntegrateShape, SimpleShape
 )
 def test_begin():
     pass
-
-
-class TestIntegrate:
-    @pytest.mark.order(8)
-    @pytest.mark.dependency(depends=["test_begin"])
-    def test_begin(self):
-        pass
-
-    @pytest.mark.order(8)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
-    def test_centered_rectangular(self):
-        width, height = 6, 10  # sides of rectangle
-        nx, ny = 5, 5  # Max exponential
-        rectangular = Primitive.square()
-        rectangular.scale(width, height)
-        for expx in range(nx):
-            for expy in range(ny):
-                test = IntegrateShape.polynomial(rectangular, expx, expy)
-                if expx % 2 or expy % 2:
-                    good = 0
-                else:
-                    good = width ** (expx + 1)
-                    good *= height ** (expy + 1)
-                    good /= (1 + expx) * (1 + expy)
-                    good /= 2 ** (expx + expy)
-                assert abs(test - good) < 1e-9
-
-    @pytest.mark.order(8)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestIntegrate::test_begin",
-            "TestIntegrate::test_centered_rectangular",
-        ]
-    )
-    def test_noncenter_rectangular(self):
-        width, height = 6, 10  # sides of rectangle
-        center = 7, -3  # Center of shape
-        nx, ny = 5, 5  # Max exponential
-        rectangular = Primitive.square()
-        rectangular.scale(width, height)
-        rectangular.move(center)
-        for expx in range(nx):
-            for expy in range(ny):
-                test = IntegrateShape.polynomial(rectangular, expx, expy)
-                good = (center[0] + width / 2) ** (expx + 1) - (
-                    center[0] - width / 2
-                ) ** (expx + 1)
-                good *= (center[1] + height / 2) ** (expy + 1) - (
-                    center[1] - height / 2
-                ) ** (expy + 1)
-                good /= (1 + expx) * (1 + expy)
-                assert abs(test - good) < 1e-9 * abs(good)
-
-    @pytest.mark.order(8)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestIntegrate::test_begin",
-            "TestIntegrate::test_centered_rectangular",
-            "TestIntegrate::test_noncenter_rectangular",
-        ]
-    )
-    def test_centered_rombo(self):
-        width, height = 3, 5
-        rombo = Primitive.regular_polygon(4)
-        rombo.scale(width, height)
-        nx, ny = 5, 5
-        for expx in range(nx):
-            for expy in range(ny):
-                test = IntegrateShape.polynomial(rombo, expx, expy)
-                if expx % 2 or expy % 2:
-                    good = 0
-                else:
-                    good = 4 * width ** (expx + 1) * height ** (expy + 1)
-                    good *= math.factorial(expx) * math.factorial(expy)
-                    good /= math.factorial(expx + expy)
-                    good /= (1 + expx + expy) * (2 + expx + expy)
-                assert abs(test - good) < 1e-9
-
-    @pytest.mark.order(8)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestIntegrate::test_begin",
-            "TestIntegrate::test_centered_rectangular",
-            "TestIntegrate::test_noncenter_rectangular",
-            "TestIntegrate::test_centered_rombo",
-        ]
-    )
-    def test_end(self):
-        pass
 
 
 class TestOthers:

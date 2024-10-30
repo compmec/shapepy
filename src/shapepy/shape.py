@@ -16,105 +16,10 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from shapepy.core import Empty, IBoolean2D, IObject2D, Whole
+from shapepy.core import Empty, IBoolean2D, IObject2D, Scalar, Whole
 from shapepy.point import GeneralPoint, Point2D
 
 from .curve.abc import IJordanCurve
-
-
-class IntegrateShape:
-    """
-    Class that contains static functions to evaluate integrals over a shape
-    """
-
-    @staticmethod
-    def polynomial(
-        shape: BaseShape, expx: int, expy: int, nnodes: Optional[int] = None
-    ) -> float:
-        """
-        Computes the integral
-
-        .. math::
-            I = \\int_D x^a \\cdot y^b \\cdot dA
-
-        Which :math:`D` is the region defined by shape
-
-        We transform this integral into a boundary integral
-
-        .. math::
-            I = \dfrac{1}{a+1} \\cdot \\int_C x^{a+ 1} \\cdot y^b \\cdot dy
-
-        Parameters
-        ----------
-        shape : BaseShape
-            The shape to integrate
-        expx : int
-            The expoent :math:`a`
-        expy : int
-            The expoent :math:`b`
-        nnodes : int, default = None
-            The number of integration nodes
-
-            If ``None``, then it computes based on the
-            the sum of the expoents and the curve's degree
-
-        :return: The value of the integral :math:`I`
-        :rtype: float
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive, IntegrateShape
-        >>> circle = Primitive.circle(radius = 1)
-        >>> IntegrateShape.polynomial(circle, 2, 0)
-
-
-        """
-        assert isinstance(shape, BaseShape)
-        assert isinstance(expx, int)
-        assert isinstance(expy, int)
-        assert nnodes is None or isinstance(nnodes, int)
-        total = 0
-        for jordan in shape.jordans:
-            total += IntegrateJordan.vertical(jordan, expx + 1, expy, nnodes)
-        return total / (1 + expx)
-
-    @staticmethod
-    def area(shape: BaseShape, nnodes: Optional[int] = None) -> float:
-        """
-        Computes the area of the given shape
-
-        .. math::
-            I = \\int_D dA
-
-        Which :math:`D` is the region defined by shape
-
-        If the shape is unbounded (example, inverse of a circle), then
-        it returns the negative value of the area of the bounded shape
-
-        Parameters
-        ----------
-
-        shape : BaseShape
-            The shape to integrate
-        nnodes : int, default = None
-            The number of integration nodes
-
-            If ``None``, then it computes based on the curve's degree
-
-        :return: The value of the area :math:`I`
-        :rtype: float
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive, IntegrateShape
-        >>> circle = Primitive.circle(radius = 1)
-        >>> inertia_xx = IntegrateShape.area(circle, 2, 0)
-        >>> print(inertia_xx)
-
-        """
-        return IntegrateShape.polynomial(shape, 0, 0, nnodes)
 
 
 class FollowPath:
@@ -412,9 +317,6 @@ class DefinedShape(BaseShape):
         point = Point2D(other)
         return self.contains_point(point)
 
-    def __float__(self) -> float:
-        return float(IntegrateShape.area(self))
-
     def move(self, point: GeneralPoint) -> BaseShape:
         """
         Moves/translate entire shape by an amount
@@ -625,16 +527,19 @@ class SimpleShape(DefinedShape):
     def jordan(self) -> IJordanCurve:
         return self.__jordan
 
+    @property
+    def area(self) -> Scalar:
+        return self.jordan.area
+
     def __str__(self) -> str:
-        area = float(self)
-        vertices = self.jordans[0].vertices
+        vertices = self.jordan.vertices
         vertices = tuple([tuple(vertex) for vertex in vertices])
-        msg = f"Simple Shape of area {area:.2f} with vertices:\n"
+        msg = f"Simple Shape of area {self.area:.2f} with vertices:\n"
         msg += str(np.array(vertices, dtype="float64"))
         return msg
 
     def __repr__(self) -> str:
-        area, vertices = float(self), self.jordans[0].vertices
+        area, vertices = self.area, self.jordan.vertices
         msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
         return msg
 
@@ -652,7 +557,7 @@ class SimpleShape(DefinedShape):
             raise ValueError
         if not isinstance(other, SimpleShape):
             return False
-        if float(self) != float(other):
+        if self.area != other.area:
             return False
         return self.jordans[0] == other.jordans[0]
 
@@ -699,7 +604,7 @@ class SimpleShape(DefinedShape):
     ) -> bool:
         jordan = self.jordans[0]
         wind = IntegrateJordan.winding_number(jordan, center=point)
-        if float(jordan) > 0:
+        if jordan.area > 0:
             return wind > 0 if boundary else wind == 1
         return wind > -1 if boundary else wind == 0
 
@@ -749,8 +654,8 @@ class SimpleShape(DefinedShape):
 
     def __contains_simple(self, other: SimpleShape) -> bool:
         assert isinstance(other, SimpleShape)
-        areaA = float(other)
-        areaB = float(self)
+        areaA = other.area
+        areaB = self.area
         jordana = other.jordans[0]
         jordanb = self.jordans[0]
         if areaA < 0 and areaB > 0:
@@ -780,11 +685,8 @@ class ConnectedShape(DefinedShape):
         super().__init__()
         self.subshapes = subshapes
 
-    def __float__(self) -> float:
-        return sum(map(float, self.subshapes))
-
     def __str__(self) -> str:
-        msg = f"Connected shape total area {float(self)}"
+        msg = f"Connected shape total area {self.area}"
         return msg
 
     def __repr__(self) -> str:
@@ -794,7 +696,7 @@ class ConnectedShape(DefinedShape):
         assert isinstance(other, IObject2D)
         if not isinstance(other, ConnectedShape):
             return False
-        if abs(float(self) - float(other)) > 1e-6:
+        if abs(self.area - other.area) > 1e-6:
             return False
         return True
 
@@ -846,7 +748,7 @@ class ConnectedShape(DefinedShape):
     def subshapes(self, values: Tuple[SimpleShape]):
         for value in values:
             assert isinstance(value, SimpleShape)
-        areas = map(float, values)
+        areas = tuple(value.area for value in values)
         algori = lambda pair: pair[0]
         values = sorted(zip(areas, values), key=algori, reverse=True)
         values = tuple(val[1] for val in values)
@@ -900,16 +802,14 @@ class DisjointShape(DefinedShape):
     def __init__(self, subshapes: Tuple[ConnectedShape]):
         super().__init__()
 
-    def __float__(self) -> float:
-        total = 0
-        for subshape in self.subshapes:
-            total += float(subshape)
-        return float(total)
+    @property
+    def area(self) -> Scalar:
+        return sum(subshape.area for subshape in self.subshapes)
 
     def __eq__(self, other: IObject2D):
         if not isinstance(other, DisjointShape):
             return False
-        if float(self) != float(other):
+        if self.area != other.area:
             return False
         self_subshapes = list(self.subshapes)
         othe_subshapes = list(other.subshapes)
@@ -925,7 +825,7 @@ class DisjointShape(DefinedShape):
         return not (len(self_subshapes) or len(othe_subshapes))
 
     def __str__(self) -> str:
-        msg = f"Disjoint shape with total area {float(self)} and "
+        msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self.subshapes)} subshapes"
         return msg
 
@@ -1008,7 +908,7 @@ class DisjointShape(DefinedShape):
     def subshapes(self, values: Tuple[BaseShape]):
         for value in values:
             assert isinstance(value, (SimpleShape, ConnectedShape))
-        areas = map(float, values)
+        areas = tuple(value.area for value in values)
         lenghts = map(float, [val.jordans[0] for val in values])
         algori = lambda triple: triple[:2]
         values = sorted(zip(areas, lenghts, values), key=algori, reverse=True)
@@ -1033,7 +933,7 @@ def DivideConnecteds(
     connected = []
     simples = list(simples)
     while len(simples):
-        areas = map(float, simples)
+        areas = tuple(simple.area for simple in simples)
         absareas = tuple(map(abs, areas))
         index = absareas.index(max(absareas))
         connected.append(simples.pop(index))

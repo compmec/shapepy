@@ -11,12 +11,7 @@ from shapepy.curve.nurbs.jordan import IntegrateJordan, JordanCurve
 from shapepy.plot import ShapePloter
 from shapepy.point import Point2D
 from shapepy.primitive import Primitive
-from shapepy.shape import (
-    ConnectedShape,
-    DisjointShape,
-    IntegrateShape,
-    SimpleShape,
-)
+from shapepy.shape import ConnectedShape, DisjointShape, SimpleShape
 
 __version__ = "1.1.0"
 
