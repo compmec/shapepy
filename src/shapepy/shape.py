@@ -17,8 +17,9 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 from shapepy.core import Empty, IBoolean2D, IObject2D, Whole
-from shapepy.curve.nurbs.jordan import IntegrateJordan, JordanCurve
 from shapepy.point import GeneralPoint, Point2D
+
+from .curve.abc import IJordanCurve
 
 
 class IntegrateShape:
@@ -124,13 +125,13 @@ class FollowPath:
     """
 
     @staticmethod
-    def split_two_jordans(jordana: JordanCurve, jordanb: JordanCurve):
+    def split_two_jordans(jordana: IJordanCurve, jordanb: IJordanCurve):
         """
         Find the intersections between two jordan curves and call split on the
         nodes which intersects
         """
-        assert isinstance(jordana, JordanCurve)
-        assert isinstance(jordanb, JordanCurve)
+        assert isinstance(jordana, IJordanCurve)
+        assert isinstance(jordanb, IJordanCurve)
         if jordana.box() & jordanb.box() is None:
             return
         all_positions = (set(), set())
@@ -146,7 +147,7 @@ class FollowPath:
 
     @staticmethod
     def pursue_path(
-        index_jordan: int, index_segment: int, jordans: Tuple[JordanCurve]
+        index_jordan: int, index_segment: int, jordans: Tuple[IJordanCurve]
     ) -> Tuple[Tuple[int]]:
         """
         Given a list of jordans, it returns a matrix of integers like
@@ -232,12 +233,12 @@ class FollowPath:
 
     @staticmethod
     def indexs_to_jordan(
-        jordans: Tuple[JordanCurve], matrix_indexs: Tuple[Tuple[int, int]]
-    ) -> JordanCurve:
+        jordans: Tuple[IJordanCurve], matrix_indexs: Tuple[Tuple[int, int]]
+    ) -> IJordanCurve:
         """
         Given 'n' jordan curves, and a matrix of integers
         [(a0, b0), (a1, b1), ..., (am, bm)]
-        Returns a myjordan (JordanCurve instance) such
+        Returns a myjordan (IJordanCurve instance) such
         len(myjordan.segments) = matrix_indexs.shape[0]
         myjordan.segments[i] = jordans[ai].segments[bi]
         """
@@ -246,19 +247,19 @@ class FollowPath:
             new_bezier = jordans[index_jordan].segments[index_segment]
             new_bezier = copy(new_bezier)
             beziers.append(new_bezier)
-        new_jordan = JordanCurve.from_segments(beziers)
+        new_jordan = IJordanCurve.from_segments(beziers)
         return new_jordan
 
     @staticmethod
     def follow_path(
-        jordans: Tuple[JordanCurve], start_indexs: Tuple[Tuple[int]]
-    ) -> Tuple[JordanCurve]:
+        jordans: Tuple[IJordanCurve], start_indexs: Tuple[Tuple[int]]
+    ) -> Tuple[IJordanCurve]:
         """
         Returns a list of jordan curves which is the result
         of the intersection between 'jordansa' and 'jordansb'
         """
         for jordan in jordans:
-            assert isinstance(jordan, JordanCurve)
+            assert isinstance(jordan, IJordanCurve)
         bez_indexs = []
         for ind_jord, ind_seg in start_indexs:
             indices_matrix = FollowPath.pursue_path(ind_jord, ind_seg, jordans)
@@ -314,7 +315,7 @@ class FollowPath:
         return tuple(indexsa)
 
     @staticmethod
-    def or_shapes(shapea: BaseShape, shapeb: BaseShape) -> Tuple[JordanCurve]:
+    def or_shapes(shapea: BaseShape, shapeb: BaseShape) -> Tuple[IJordanCurve]:
         assert isinstance(shapea, BaseShape)
         assert isinstance(shapeb, BaseShape)
         for jordana in shapea.jordans:
@@ -328,7 +329,9 @@ class FollowPath:
         return new_jordans
 
     @staticmethod
-    def and_shapes(shapea: BaseShape, shapeb: BaseShape) -> Tuple[JordanCurve]:
+    def and_shapes(
+        shapea: BaseShape, shapeb: BaseShape
+    ) -> Tuple[IJordanCurve]:
         assert isinstance(shapea, BaseShape)
         assert isinstance(shapeb, BaseShape)
         for jordana in shapea.jordans:
@@ -396,7 +399,7 @@ class DefinedShape(BaseShape):
         return ShapeFromJordans(new_jordans)
 
     def __contains__(
-        self, other: Union[Point2D, JordanCurve, BaseShape]
+        self, other: Union[Point2D, IJordanCurve, BaseShape]
     ) -> bool:
         if isinstance(other, Empty):
             return True
@@ -404,7 +407,7 @@ class DefinedShape(BaseShape):
             return False
         if isinstance(other, BaseShape):
             return self.contains_shape(other)
-        if isinstance(other, JordanCurve):
+        if isinstance(other, IJordanCurve):
             return self.contains_jordan(other)
         point = Point2D(other)
         return self.contains_point(point)
@@ -526,7 +529,7 @@ class DefinedShape(BaseShape):
         return self._contains_point(point, boundary)
 
     def contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
+        self, jordan: IJordanCurve, boundary: Optional[bool] = True
     ) -> bool:
         """
         Checks if the all points of jordan are inside the shape
@@ -534,7 +537,7 @@ class DefinedShape(BaseShape):
         Parameters
         ----------
 
-        jordan : JordanCurve
+        jordan : IJordanCurve
             The jordan curve to verify
         boundary : bool, default = True
             The flag to check if jordan is inside a closed (True) or open (False) set
@@ -552,7 +555,8 @@ class DefinedShape(BaseShape):
         True
 
         """
-        assert isinstance(jordan, JordanCurve)
+        if not isinstance(jordan, IJordanCurve):
+            raise TypeError
         assert isinstance(boundary, bool)
         return self._contains_jordan(jordan, boundary)
 
@@ -592,7 +596,9 @@ class DefinedShape(BaseShape):
         pass
 
     @abc.abstractmethod
-    def _contains_jordan(jordan: JordanCurve, boundary: Optional[bool] = True):
+    def _contains_jordan(
+        jordan: IJordanCurve, boundary: Optional[bool] = True
+    ):
         pass
 
     @abc.abstractmethod
@@ -610,10 +616,14 @@ class SimpleShape(DefinedShape):
 
     """
 
-    def __init__(self, jordancurve: JordanCurve):
-        assert isinstance(jordancurve, JordanCurve)
-        super().__init__()
-        self.__set_jordancurve(jordancurve)
+    def __init__(self, jordancurve: IJordanCurve):
+        if not isinstance(jordancurve, IJordanCurve):
+            raise TypeError
+        self.__jordan = jordancurve
+
+    @property
+    def jordan(self) -> IJordanCurve:
+        return self.__jordan
 
     def __str__(self) -> str:
         area = float(self)
@@ -650,12 +660,8 @@ class SimpleShape(DefinedShape):
         return self.__class__(~self.jordans[0])
 
     @property
-    def jordans(self) -> Tuple[JordanCurve]:
-        return (self.__jordancurve,)
-
-    def __set_jordancurve(self, other: JordanCurve):
-        assert isinstance(other, JordanCurve)
-        self.__jordancurve = copy(other)
+    def jordans(self) -> Tuple[IJordanCurve]:
+        return (self.__jordan,)
 
     def invert(self) -> SimpleShape:
         """
@@ -698,7 +704,7 @@ class SimpleShape(DefinedShape):
         return wind > -1 if boundary else wind == 0
 
     def _contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
+        self, jordan: IJordanCurve, boundary: Optional[bool] = True
     ) -> bool:
         for point in jordan.points(0):
             if not self.contains_point(point, boundary):
@@ -797,13 +803,13 @@ class ConnectedShape(DefinedShape):
         return DisjointShape(simples)
 
     @property
-    def jordans(self) -> Tuple[JordanCurve]:
+    def jordans(self) -> Tuple[IJordanCurve]:
         """Jordan curves that defines the shape
 
         :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
+        :type: tuple[IJordanCurve]
         """
-        return tuple(shape.jordans[0] for shape in self.subshapes)
+        return tuple(shape.jordan for shape in self.subshapes)
 
     @property
     def subshapes(self) -> Tuple[SimpleShape]:
@@ -855,7 +861,7 @@ class ConnectedShape(DefinedShape):
         return True
 
     def _contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
+        self, jordan: IJordanCurve, boundary: Optional[bool] = True
     ) -> bool:
         for subshape in self.subshapes:
             if not subshape.contains_jordan(jordan, boundary):
@@ -935,7 +941,7 @@ class DisjointShape(DefinedShape):
         return False
 
     def _contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
+        self, jordan: IJordanCurve, boundary: Optional[bool] = True
     ) -> bool:
         for subshape in self.subshapes:
             if subshape.contains_jordan(jordan, boundary):
@@ -956,11 +962,11 @@ class DisjointShape(DefinedShape):
             return True
 
     @property
-    def jordans(self) -> Tuple[JordanCurve]:
+    def jordans(self) -> Tuple[IJordanCurve]:
         """Jordan curves that defines the shape
 
         :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
+        :type: tuple[IJordanCurve]
         """
         lista = []
         for subshape in self.subshapes:
@@ -1050,7 +1056,7 @@ def DivideConnecteds(
     return (connected,) + DivideConnecteds(externals)
 
 
-def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
+def ShapeFromJordans(jordans: Tuple[IJordanCurve]) -> BaseShape:
     """Returns the correspondent shape
 
     This function don't do entry validation
