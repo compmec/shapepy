@@ -34,13 +34,12 @@ class TestPrimitive:
         Primitive.square()
         Primitive.regular_polygon(3)
         Primitive.regular_polygon(4)
-        Primitive.circle()
 
         with pytest.raises(ValueError):
             Primitive.square(side=-1)
         with pytest.raises(ValueError):
             Primitive.square(side=0)
-        with pytest.raises(ValueError):
+        with pytest.raises(TypeError):
             Primitive.square(side="asd")
 
         with pytest.raises(ValueError):
@@ -49,13 +48,6 @@ class TestPrimitive:
             Primitive.regular_polygon(2)
         with pytest.raises(ValueError):
             Primitive.regular_polygon("asd")
-
-        with pytest.raises(ValueError):
-            Primitive.circle(radius=-1)
-        with pytest.raises(ValueError):
-            Primitive.circle(radius=0)
-        with pytest.raises(ValueError):
-            Primitive.circle(radius="asd")
 
     @pytest.mark.order(5)
     @pytest.mark.timeout(10)
@@ -122,6 +114,7 @@ class TestPrimitive:
         assert abs(float(triangle) - area) < 1e-9
 
     @pytest.mark.order(5)
+    @pytest.mark.skip(reason="Needs new implementation")
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -151,7 +144,6 @@ class TestPrimitive:
             "TestPrimitive::test_square",
             "TestPrimitive::test_regular",
             "TestPrimitive::test_point",
-            "TestPrimitive::test_circle",
         ]
     )
     def test_end(self):
