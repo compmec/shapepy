@@ -13,7 +13,7 @@ from shapepy import Primitive
 @pytest.mark.dependency(
     depends=[
         "tests/test_point.py::test_end",
-        "tests/test_jordan_polygon.py::test_end",
+        "tests/curve/polygon/test_jordan_polygon.py::test_end",
     ],
     scope="session",
 )

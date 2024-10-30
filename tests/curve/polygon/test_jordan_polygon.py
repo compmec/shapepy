@@ -7,7 +7,6 @@ import math
 import numpy as np
 import pytest
 
-from shapepy.curve.nurbs.jordan import IntegrateJordan
 from shapepy.curve.polygon import JordanPolygon
 
 
@@ -15,6 +14,7 @@ from shapepy.curve.polygon import JordanPolygon
 @pytest.mark.dependency(
     depends=[
         "tests/test_point.py::test_end",
+        "tests/curve/polygon/test_param_polygon.py::test_end",
     ],
     scope="session",
 )
