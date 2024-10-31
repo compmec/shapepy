@@ -77,9 +77,9 @@ def test_point():
 )
 def test_jordan():
     small_square = Primitive.square(side=2)
-    small_jordan = small_square.jordans[0]
+    small_jordan = small_square.jordan
     big_square = Primitive.square(side=4)
-    big_jordan = big_square.jordans[0]
+    big_jordan = big_square.jordan
     connected = ConnectedShape([big_square, ~small_square])
 
     assert small_jordan in connected

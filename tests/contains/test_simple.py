@@ -1,6 +1,8 @@
-import pytest
-import numpy as np
 from fractions import Fraction
+
+import numpy as np
+import pytest
+
 from shapepy import ConnectedShape, Empty, Primitive, Whole
 
 
@@ -44,13 +46,13 @@ def test_whole():
 )
 def test_keep_ids():
     square = Primitive.square(side=4)
-    jordan = square.jordans[0]
+    jordan = square.jordan
     good_ids = tuple(id(vertex) for vertex in jordan.vertices)
 
     for k in range(100):  # number of tests
         point = np.random.uniform(-4, 4, 2)
         point in square
-        jordan = square.jordans[0]
+        jordan = square.jordan
         test_ids = tuple(id(vertex) for vertex in jordan.vertices)
         assert len(test_ids) == len(good_ids)
         assert test_ids == good_ids
@@ -68,14 +70,14 @@ def test_keep_ids():
 def test_keep_type():
     square = Primitive.square(side=4)
     good_types = []
-    jordan = square.jordans[0]
+    jordan = square.jordan
     for vertex in jordan.vertices:
         good_types.append((type(vertex[0]), type(vertex[0])))
     one = Fraction(1)
     for point in [(0, 0), (1, 2), (one / 2, -one / 2), (1.2, 3.5)]:
         point in square
         test_types = []
-        jordan = square.jordans[0]
+        jordan = square.jordan
         for vertex in jordan.vertices:
             test_types.append((type(vertex[0]), type(vertex[0])))
         assert len(test_types) == len(good_types)
@@ -132,25 +134,25 @@ def test_jordan():
     small_square = Primitive.square(side=2)
     big_square = Primitive.square(side=4)
 
-    assert small_square.jordans[0] in small_square
-    assert small_square.jordans[0] in big_square
-    assert big_square.jordans[0] not in small_square
-    assert big_square.jordans[0] in big_square
+    assert small_square.jordan in small_square
+    assert small_square.jordan in big_square
+    assert big_square.jordan not in small_square
+    assert big_square.jordan in big_square
 
-    assert ~(small_square.jordans[0]) in small_square
-    assert ~(small_square.jordans[0]) in big_square
-    assert ~(big_square.jordans[0]) not in small_square
-    assert ~(big_square.jordans[0]) in big_square
+    assert ~(small_square.jordan) in small_square
+    assert ~(small_square.jordan) in big_square
+    assert ~(big_square.jordan) not in small_square
+    assert ~(big_square.jordan) in big_square
 
-    assert small_square.jordans[0] in (~small_square)
-    assert small_square.jordans[0] not in (~big_square)
-    assert big_square.jordans[0] in (~small_square)
-    assert big_square.jordans[0] in (~big_square)
+    assert small_square.jordan not in (~small_square)
+    assert small_square.jordan not in (~big_square)
+    assert big_square.jordan in (~small_square)
+    assert big_square.jordan not in (~big_square)
 
-    assert ~(small_square.jordans[0]) in (~small_square)
-    assert ~(small_square.jordans[0]) not in (~big_square)
-    assert ~(big_square.jordans[0]) in (~small_square)
-    assert ~(big_square.jordans[0]) in (~big_square)
+    assert ~(small_square.jordan) not in (~small_square)
+    assert ~(small_square.jordan) not in (~big_square)
+    assert ~(big_square.jordan) in (~small_square)
+    assert ~(big_square.jordan) not in (~big_square)
 
 
 @pytest.mark.order(22)
