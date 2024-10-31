@@ -3,23 +3,15 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Tuple
 
-from ..core import IObject2D, Parameter, Scalar
+from ..core import ICurve, Parameter, Scalar
 from ..point import GeneralPoint, Point2D
 
 
-class IBaseCurve(IObject2D):
-
-    @property
-    @abstractmethod
-    def lenght(self) -> Scalar:
-        raise NotImplementedError
-
-
-class IOpenCurve(IBaseCurve):
+class IOpenCurve(ICurve):
     pass
 
 
-class IClosedCurve(IBaseCurve):
+class IClosedCurve(ICurve):
 
     @property
     @abstractmethod
@@ -31,7 +23,7 @@ class IClosedCurve(IBaseCurve):
         raise NotImplementedError
 
 
-class IParameterCurve(IBaseCurve):
+class IParameterCurve(ICurve):
 
     @abstractmethod
     def knots(self) -> Tuple[Parameter, ...]:

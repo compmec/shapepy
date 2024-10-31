@@ -3,7 +3,6 @@ from __future__ import annotations
 import math
 from typing import Tuple
 
-from ...bounding import BoundRectangle
 from ...core import Scalar
 from ...point import GeneralPoint, Point2D
 from ..abc import IJordanCurve
@@ -104,10 +103,3 @@ class JordanPolygon(IJordanCurve):
         if not isinstance(point, Point2D):
             point = Point2D(point)
         return self.param_curve.winding(point)
-
-    def boundbox(self) -> BoundRectangle:
-        minx = min(vertex[0] for vertex in self.vertices)
-        miny = min(vertex[1] for vertex in self.vertices)
-        maxx = max(vertex[0] for vertex in self.vertices)
-        maxy = max(vertex[1] for vertex in self.vertices)
-        return BoundRectangle((minx, miny), (maxx, maxy))

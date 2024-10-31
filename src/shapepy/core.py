@@ -184,6 +184,13 @@ class Whole(IBoolean2D):
         return self.__str__()
 
 
+class ICurve(IObject2D):
+    @property
+    @abstractmethod
+    def lenght(self) -> Scalar:
+        raise NotImplementedError
+
+
 class IShape(IObject2D):
     @property
     @abstractmethod
