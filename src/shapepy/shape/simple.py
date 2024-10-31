@@ -182,23 +182,21 @@ class SimpleShape(IShape):
         raise NotImplementedError
 
     def __contains_curve(self, other: ICurve) -> bool:
-        raise NotImplementedError
+        if not isinstance(other, ICurve):
+            raise NotImplementedError
+        return all(vertex in self for vertex in other.vertices)
 
     def __contains_simple(self, other: SimpleShape) -> bool:
         if not isinstance(other, SimpleShape):
             raise TypeError
-        areaA = other.area
-        areaB = self.area
-        jordana = other.jordans[0]
-        jordanb = self.jordans[0]
-        if areaA < 0 and areaB > 0:
+        spos = self.area > 0
+        opos = other.area > 0
+        if spos and not opos:
             return False
-        if areaA > 0 and areaB < 0:
-            return jordana in self and jordanb not in other
-        if areaA > areaB or jordana not in self:
+        if opos and not spos:
+            return other.jordan in self and self.jordan not in other
+        if self.area < other.area:
             return False
-        if areaA > 0:
-            return True
-        # If simple shape is not a square
-        # may happens error here
-        return True
+        if spos and opos:
+            return other.jordan in self
+        return other.jordan in self and self.jordan not in other
