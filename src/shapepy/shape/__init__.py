@@ -1,1 +1,2 @@
-from .shape import ConnectedShape, DisjointShape, SimpleShape
+from .condisj import ConnectedShape, DisjointShape
+from .simple import SimpleShape
