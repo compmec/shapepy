@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Tuple
 
-from ...core import Scalar
+from ...core import Empty, ICurve, IObject2D, IShape, Scalar, Whole
 from ...point import GeneralPoint, Point2D
 from ..abc import IJordanCurve
 from .curve import PolygonClosedCurve, PolygonOpenCurve
@@ -75,6 +75,19 @@ class JordanPolygon(IJordanCurve):
     def __invert__(self) -> JordanPolygon:
         newvertices = tuple(self.vertices[::-1])
         return self.__class__(newvertices)
+
+    def __contains__(self, other: object) -> bool:
+        if isinstance(other, Empty):
+            return True
+        if isinstance(other, Whole):
+            return False
+        if isinstance(other, IShape):
+            return False
+        if isinstance(other, ICurve):
+            raise NotImplementedError
+        if not isinstance(other, Point2D):
+            other = Point2D(other)
+        return 0 < self.winding(other) < 1
 
     def move(self, vector: GeneralPoint) -> JordanPolygon:
         if not isinstance(vector, Point2D):
