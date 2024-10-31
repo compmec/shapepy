@@ -235,9 +235,9 @@ class DisjointShape(IShape):
         if isinstance(other, (Point2D, ICurve)):
             return any(other in subshape for subshape in self.subshapes)
         if isinstance(other, Empty):
-            return False
-        if isinstance(other, Whole):
             return True
+        if isinstance(other, Whole):
+            return False
         if isinstance(other, DisjointShape):
             return all(
                 any(osub in ssub for ssub in self.subshapes)
