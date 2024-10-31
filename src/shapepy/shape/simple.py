@@ -154,7 +154,7 @@ class SimpleShape(IShape):
             return False
         if self.area != other.area:
             return False
-        return self.jordans[0] == other.jordans[0]
+        return self.jordan == other.jordan and self.boundary == other.boundary
 
     def __invert__(self) -> SimpleShape:
         return self.__class__(~self.jordan, not self.boundary)
@@ -172,7 +172,7 @@ class SimpleShape(IShape):
         if isinstance(other, SimpleShape):
             return self.__contains_simple(other)
         if isinstance(other, IShape):
-            raise NotImplementedError
+            return (~self) in (~other)
         raise NotImplementedError
 
     def __ror__(self, other: IBoolean2D) -> IBoolean2D:
@@ -199,4 +199,6 @@ class SimpleShape(IShape):
             return False
         if spos and opos:
             return other.jordan in self
+        if self == other:
+            return True
         return other.jordan in self and self.jordan not in other
