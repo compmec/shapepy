@@ -1,17 +1,16 @@
 import pytest
-
+import numpy as np
+from fractions import Fraction
 from shapepy import ConnectedShape, Empty, Primitive, Whole
 
 
 @pytest.mark.order(22)
 @pytest.mark.dependency(
     depends=[
-        "test_begin",
-        "TestObjectsInEmptyWhole::test_end",
-        "TestObjectsInJordan::test_end",
         "tests/contains/test_empty_whole.py::test_end",
         "tests/contains/test_curve.py::test_end",
-    ]
+    ],
+    scope="session",
 )
 def test_begin():
     pass
