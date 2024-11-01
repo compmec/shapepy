@@ -6,7 +6,8 @@ Which are in fact positive shapes defined only by one jordan curve
 import pytest
 
 from shapepy.primitive import Primitive
-from shapepy.shape import ConnectedShape, DisjointShape
+from shapepy.shape import ConnectedShape, DisjointShape, SimpleShape
+from shapepy.shape.condisj import identify_shape
 
 
 @pytest.mark.order(8)
@@ -90,6 +91,7 @@ class TestConnected:
     @pytest.mark.dependency(
         depends=[
             "test_begin",
+            "TestSimple::test_end",
         ]
     )
     def test_begin(self):
@@ -160,6 +162,8 @@ class TestDisjoint:
     @pytest.mark.dependency(
         depends=[
             "test_begin",
+            "TestSimple::test_end",
+            "TestConnected::test_end",
         ]
     )
     def test_begin(self):
@@ -199,6 +203,89 @@ class TestDisjoint:
             "TestDisjoint::test_begin",
             "TestDisjoint::test_build",
             "TestDisjoint::test_area",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
+class TestIdentifyShape:
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "test_begin",
+            "TestSimple::test_end",
+            "TestConnected::test_end",
+        ]
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestIdentifyShape::test_begin",
+        ]
+    )
+    def test_simple(self):
+        square = Primitive.square()
+        test = identify_shape([square])
+        assert isinstance(test, SimpleShape)
+        assert test == square
+
+        square = ~Primitive.square()
+        test = identify_shape([square])
+        assert isinstance(test, SimpleShape)
+        assert test == square
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestIdentifyShape::test_simple",
+        ]
+    )
+    def test_connected(self):
+        big_square = Primitive.square(4)
+        sma_square = Primitive.square(2)
+        good = ConnectedShape([big_square, ~sma_square])
+        test = identify_shape([big_square, ~sma_square])
+        assert isinstance(test, ConnectedShape)
+        assert test == good
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestIdentifyShape::test_simple",
+            "TestIdentifyShape::test_connected",
+        ]
+    )
+    def test_disjoint(self):
+        left_square = Primitive.square(2, (-10, 0))
+        righ_square = Primitive.square(2, (10, 0))
+        good = DisjointShape([left_square, righ_square])
+        test = identify_shape([left_square, righ_square])
+        assert isinstance(test, DisjointShape)
+        assert test == good
+
+        square0 = Primitive.square(20)
+        square1 = Primitive.square(16)
+        square2 = Primitive.square(12)
+        square3 = Primitive.square(8)
+        consha0 = ConnectedShape([square0, ~square1])
+        consha1 = ConnectedShape([square2, ~square3])
+        good = DisjointShape([consha0, consha1])
+        test = identify_shape([square0, ~square1, square2, ~square3])
+        assert isinstance(test, DisjointShape)
+        assert test == good
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestIdentifyShape::test_begin",
+            "TestIdentifyShape::test_simple",
+            "TestIdentifyShape::test_connected",
+            "TestIdentifyShape::test_disjoint",
         ]
     )
     def test_end(self):
@@ -257,6 +344,7 @@ class TestOthers:
         "TestSimple::test_end",
         "TestConnected::test_end",
         "TestDisjoint::test_end",
+        "TestIdentifyShape::test_end",
         "TestOthers::test_end",
     ]
 )

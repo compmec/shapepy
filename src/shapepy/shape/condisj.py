@@ -17,6 +17,44 @@ from ..point import GeneralPoint, Point2D
 from .simple import SimpleShape
 
 
+def identify_shape(
+    simples: Tuple[SimpleShape, ...]
+) -> Union[SimpleShape, ConnectedShape, DisjointShape]:
+    """
+    Identify the final shape (Simple, Connected, Disjoint) from the
+    given simple shapes
+    """
+    for simple in simples:
+        if not isinstance(simple, SimpleShape):
+            raise TypeError
+    areas = tuple(simple.area for simple in simples)
+    indexs = [i for _, i in sorted(zip(areas, range(len(areas))))]
+    simples = [simples[i] for i in indexs]
+    disshapes = []
+    while simples:
+        connsimples = [simples.pop(len(simples) - 1)]
+        index = 0
+        while index < len(simples):
+            simple = simples[index]
+            for simplj in connsimples:
+                if simple.jordan not in simplj:
+                    break
+                if simplj.jordan not in simple:
+                    break
+            else:
+                connsimples.append(simples.pop(index))
+                index -= 1
+            index += 1
+        if len(connsimples) == 1:
+            shape = connsimples[0]
+        else:
+            shape = ConnectedShape(connsimples)
+        disshapes.append(shape)
+    if len(disshapes) == 1:
+        return disshapes[0]
+    return DisjointShape(disshapes)
+
+
 class ConnectedShape(IShape):
     """
     ConnectedShape Class
@@ -238,13 +276,19 @@ class DisjointShape(IShape):
         if isinstance(other, Whole):
             return False
         if isinstance(other, DisjointShape):
-            return all(
-                any(osub in ssub for ssub in self.subshapes)
-                for osub in other.subshapes
-            )
+            return all(osub in self for osub in other.subshapes)
         if isinstance(other, (SimpleShape, ConnectedShape)):
             return any(other in subshape for subshape in self.subshapes)
         raise NotImplementedError
+
+    def __invert__(self) -> Union[ConnectedShape, DisjointShape]:
+        simples = []
+        for subshape in self.subshapes:
+            if isinstance(subshape, SimpleShape):
+                simples.append(~subshape)
+            elif isinstance(subshape, ConnectedShape):
+                simples += [~sub for sub in subshape.subshapes]
+        return identify_shape(simples)
 
     @property
     def jordans(self) -> Tuple[IJordanCurve]:
