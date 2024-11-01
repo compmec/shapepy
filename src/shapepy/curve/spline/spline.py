@@ -145,3 +145,11 @@ class Spline:
                 break
         segment = self.__segments[index]
         return segment.eval(node, derivate)
+
+
+class SplineOpenCurve(Spline):
+    """ """
+
+
+class SplineClosedCurve(Spline):
+    """ """
