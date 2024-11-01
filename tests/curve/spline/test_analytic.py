@@ -224,12 +224,14 @@ def test_mult():
 @pytest.mark.dependency(depends=["test_compare"])
 def test_pow():
     poly = Polynomial([1, 1])
+    assert poly**0 == Polynomial([1])
     assert poly**1 == Polynomial([1, 1])
     assert poly**2 == Polynomial([1, 2, 1])
     assert poly**3 == Polynomial([1, 3, 3, 1])
     assert poly**4 == Polynomial([1, 4, 6, 4, 1])
 
     poly = Polynomial([1, 2])
+    assert poly**0 == Polynomial([1])
     assert poly**1 == Polynomial([1, 2])
     assert poly**2 == Polynomial([1, 4, 4])
     assert poly**3 == Polynomial([1, 6, 12, 8])

@@ -44,8 +44,10 @@ def polymult(
 
 def polypow(poly: Tuple[Scalar, ...], exp: int) -> Tuple[Scalar, ...]:
     exp = int(exp)
-    if exp < 1:
+    if exp < 0:
         raise ValueError
+    if exp == 0:
+        return (1 + 0 * sum(poly),)
     poly = tuple(poly)
     needs = sorted(keys(exp))
     cache = {1: poly}
