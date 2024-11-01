@@ -11,10 +11,9 @@ from __future__ import annotations
 
 from typing import Tuple, Union
 
-from shapepy.core import Empty, ICurve, IObject2D, IShape, Scalar, Whole
-from shapepy.point import GeneralPoint, Point2D
-
+from ..core import Empty, ICurve, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import IJordanCurve
+from ..point import GeneralPoint, Point2D
 from .simple import SimpleShape
 
 

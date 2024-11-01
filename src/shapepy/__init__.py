@@ -5,12 +5,12 @@ For the moment, it only uses polygon shapes:
     retangular is a 4-side shape while a circle is a polygon with many sides
 """
 
-from shapepy.core import Empty, Whole
-from shapepy.curve import JordanPolygon, JordanSpline
-from shapepy.plot import ShapePloter
-from shapepy.point import Point2D
-from shapepy.primitive import Primitive
-from shapepy.shape import ConnectedShape, DisjointShape, SimpleShape
+from .core import Empty, Whole
+from .curve import JordanPolygon, JordanSpline
+from .plot import ShapePloter
+from .point import Point2D
+from .primitive import Primitive
+from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 __version__ = "1.1.0"
 

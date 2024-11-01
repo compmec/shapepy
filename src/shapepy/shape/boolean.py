@@ -13,9 +13,8 @@ from copy import copy
 from fractions import Fraction
 from typing import Any, Tuple
 
-from shapepy.core import IShape
-
 from ..curve.abc import IJordanCurve
+from .core import IShape
 
 
 class FollowPath:

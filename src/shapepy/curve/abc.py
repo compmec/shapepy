@@ -47,3 +47,8 @@ class IJordanCurve(IClosedCurve):
     @abstractmethod
     def param_curve(self) -> IParameterCurve:
         raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def vertices(self) -> Tuple[Point2D, ...]:
+        raise NotImplementedError

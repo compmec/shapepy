@@ -11,10 +11,10 @@ from typing import Tuple
 
 import numpy as np
 
-from shapepy.core import Empty, Scalar, Whole
-from shapepy.curve.polygon import JordanPolygon
-from shapepy.point import GeneralPoint, Point2D
-from shapepy.shape import SimpleShape
+from .core import Empty, Scalar, Whole
+from .curve.polygon import JordanPolygon
+from .point import GeneralPoint, Point2D
+from .shape import SimpleShape
 
 
 class Primitive:

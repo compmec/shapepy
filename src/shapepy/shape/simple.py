@@ -13,10 +13,9 @@ from typing import Tuple
 
 import numpy as np
 
-from shapepy.point import GeneralPoint, Point2D
-
 from ..core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import IJordanCurve
+from ..point import GeneralPoint, Point2D
 
 
 class SimpleShape(IShape):
