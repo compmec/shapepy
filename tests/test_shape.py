@@ -253,6 +253,13 @@ class TestIdentifyShape:
         assert isinstance(test, ConnectedShape)
         assert test == good
 
+        left_square = Primitive.square(2, (-10, 0))
+        righ_square = Primitive.square(2, (10, 0))
+        good = ConnectedShape([~left_square, ~righ_square])
+        test = identify_shape([~left_square, ~righ_square])
+        assert isinstance(test, ConnectedShape)
+        assert test == good
+
     @pytest.mark.order(8)
     @pytest.mark.dependency(
         depends=[
