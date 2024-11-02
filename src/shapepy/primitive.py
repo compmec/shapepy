@@ -11,7 +11,7 @@ from typing import Tuple
 
 import numpy as np
 
-from .core import Empty, Scalar, Whole
+from .core import Scalar
 from .curve.polygon import JordanPolygon
 from .point import GeneralPoint, Point2D
 from .shape import SimpleShape
@@ -22,12 +22,7 @@ class Primitive:
     Primitive class with functions to create classical shapes such as
     `circle`, `triangle`, `square`, `regular_polygon` and a generic `polygon`
 
-    .. note:: This class also contains ``empty`` and ``whole`` instances to easy access
-
     """
-
-    empty = Empty()
-    whole = Whole()
 
     @staticmethod
     def regular_polygon(

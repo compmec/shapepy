@@ -5,9 +5,7 @@ is in fact, stores a list of spline-curves.
 
 from __future__ import annotations
 
-from copy import copy
-from fractions import Fraction
-from typing import Optional, Tuple, Union
+from typing import Tuple
 
 import numpy as np
 

@@ -3,7 +3,7 @@ from __future__ import annotations
 import math
 from typing import Tuple
 
-from ...core import Empty, ICurve, IObject2D, IShape, Scalar, Whole
+from ...core import Empty, ICurve, IShape, Scalar, Whole
 from ...point import GeneralPoint, Point2D
 from ..abc import IJordanCurve
 from .curve import PolygonClosedCurve, PolygonOpenCurve
