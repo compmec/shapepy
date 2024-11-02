@@ -9,12 +9,18 @@ or even unconnected shapes.
 
 from __future__ import annotations
 
-from typing import Tuple, Union
+from typing import Any, Iterable, Tuple, Union
 
 from ..core import Empty, ICurve, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint, Point2D
 from .simple import SimpleShape
+
+
+def sorter(items: Iterable[Any], /, *, reverse: bool = False) -> Iterable[int]:
+    items = tuple(items)
+    values = sorted(zip(items, range(len(items))), reverse=reverse)
+    return (vs[-1] for vs in values)
 
 
 def identify_shape(
@@ -28,8 +34,7 @@ def identify_shape(
         if not isinstance(simple, SimpleShape):
             raise TypeError
     areas = tuple(simple.area for simple in simples)
-    indexs = [i for _, i in sorted(zip(areas, range(len(areas))))]
-    simples = [simples[i] for i in indexs]
+    simples = [simples[i] for i in sorter(areas)]
     disshapes = []
     while simples:
         connsimples = [simples.pop(len(simples) - 1)]
@@ -139,9 +144,10 @@ class ConnectedShape(IShape):
         for value in values:
             assert isinstance(value, SimpleShape)
         areas = tuple(value.area for value in values)
-        algori = lambda pair: pair[0]
-        values = sorted(zip(areas, values), key=algori, reverse=True)
-        values = tuple(val[1] for val in values)
+        indexs = tuple(sorter(areas))
+        if areas[indexs[-1]] > 0:
+            indexs = (indexs[-1],) + indexs[:-1]
+        values = tuple(values[i] for i in indexs)
         self.__subshapes = tuple(values)
 
     def move(self, point: GeneralPoint) -> ConnectedShape:
@@ -338,10 +344,8 @@ class DisjointShape(IShape):
         for value in values:
             assert isinstance(value, (SimpleShape, ConnectedShape))
         areas = tuple(value.area for value in values)
-        lenghts = tuple(val.jordans[0].lenght for val in values)
-        algori = lambda triple: triple[:2]
-        values = sorted(zip(areas, lenghts, values), key=algori, reverse=True)
-        values = tuple(val[2] for val in values)
+        indexs = tuple(sorter(areas))
+        values = tuple(values[i] for i in indexs)
         self.__subshapes = tuple(values)
 
 
