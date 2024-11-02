@@ -8,6 +8,7 @@ from matplotlib import pyplot
 
 from shapepy import ShapePloter
 from shapepy.primitive import Primitive
+from shapepy.shape import ConnectedShape, DisjointShape
 
 
 @pytest.mark.order(13)
@@ -32,11 +33,15 @@ class TestPlot:
     @pytest.mark.dependency(depends=["TestPlot::test_begin"])
     def test_create(self):
         ShapePloter()
+
         fig = pyplot.figure()
         ShapePloter(fig=fig)
+
         ax = pyplot.gca()
         ShapePloter(ax=ax)
-        ShapePloter(fig=fig, ax=ax)
+
+        plt = ShapePloter(fig=fig, ax=ax)
+        plt.close("all")
 
     @pytest.mark.order(13)
     @pytest.mark.timeout(10)
@@ -54,12 +59,12 @@ class TestPlot:
         plt.plot(circle, fill_color="cyan")
         plt.plot(square, fill_color="yellow")
 
-        circle.invert()
         fig, ax = pyplot.subplots()
         plt = ShapePloter(fig=fig, ax=ax)
-        plt.plot(circle)
+        plt.plot(~square)
 
         # plt.show()
+        plt.close("all")
 
     @pytest.mark.order(13)
     @pytest.mark.timeout(10)
@@ -73,17 +78,19 @@ class TestPlot:
     def test_connected(self):
         circle = Primitive.circle(radius=1, center=(0, 0))
         square = Primitive.square(side=0.3, center=(0, 0))
-        hollow = circle - square
+        hollow = ConnectedShape([circle, ~square])
 
         plt = ShapePloter()
         plt.plot(hollow, fill_color="cyan")
 
         left = ~Primitive.circle(radius=1, center=(-2, 0))
         right = ~Primitive.square(side=1, center=(2, 0))
-        shape = left & right
+        shape = ConnectedShape([left, right])
 
         plt = ShapePloter()
         plt.plot(shape)
+        # plt.show()
+        plt.close("all")
 
     @pytest.mark.order(13)
     @pytest.mark.timeout(10)
@@ -98,10 +105,12 @@ class TestPlot:
     def test_disjoint(self):
         left = Primitive.circle(radius=1, center=(-1, 0))
         right = Primitive.square(side=2, center=(4, 0))
-        shape = left + right  # Unite shapes
+        shape = DisjointShape([left, right])  # Unite shapes
 
         plt = ShapePloter()
         plt.plot(shape, fill_color="cyan")
+        # plt.show()
+        plt.close("all")
 
     @pytest.mark.order(13)
     @pytest.mark.timeout(10)

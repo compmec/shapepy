@@ -209,4 +209,4 @@ class Primitive:
         .. image:: ../img/primitive/positive_circle.svg
 
         """
-        raise NotImplementedError
+        return Primitive.regular_polygon(32, radius, center)
