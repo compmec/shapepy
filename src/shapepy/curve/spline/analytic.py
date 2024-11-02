@@ -70,6 +70,21 @@ def polyderi(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
     )
 
 
+def polyinte(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
+    times = int(times)
+    if times < 0:
+        raise ValueError
+    if times == 0:
+        return poly
+    zero = 0 * sum(poly)
+    numbs = tuple(
+        factorial(n + times) // factorial(n) for n in range(len(poly))
+    )
+    coefs = [coef / numb for numb, coef in zip(numbs, poly)]
+    coefs = tuple([zero] * times + coefs)
+    return coefs
+
+
 class Polynomial:
     """
     Defines a polynomial with coefficients
@@ -228,6 +243,22 @@ class Polynomial:
         2 + 10 * x
         """
         coefs = polyderi(self.__coefs, times)
+        return self.__class__(coefs)
+
+    def integrate(self, times: int = 1) -> Polynomial:
+        """
+        Integrate the polynomial curve, giving a new one
+
+        Example
+        -------
+        >>> poly = Polynomial([2, 10])
+        >>> print(poly)
+        2 + 10 * x
+        >>> ipoly = poly.integrate()
+        >>> print(ipoly)
+        2 * x + 5 * x^2
+        """
+        coefs = polyinte(self.__coefs, times)
         return self.__class__(coefs)
 
     def shift(self, amount: Parameter) -> Polynomial:

@@ -138,6 +138,20 @@ def test_derivate():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_derivate"])
+def test_integrate():
+    coefs = [3, 5, -4, 3, 2]
+    poly = Polynomial(coefs)
+    test = poly.integrate(0)
+    assert test == poly
+
+    for times in range(5):
+        test = poly.integrate(times)
+        test = test.derivate(times)
+        assert test == poly
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_evaluate_natural", "test_derivate"])
 def test_evaluate_derivate():
     poly = Polynomial([1])  # p(x) = 1
@@ -297,6 +311,7 @@ def test_print():
         "test_keep_type",
         "test_compare",
         "test_derivate",
+        "test_integrate",
         "test_evaluate_derivate",
         "test_add",
         "test_sub",
