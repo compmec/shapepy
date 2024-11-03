@@ -37,6 +37,10 @@ class IParameterCurve(ICurve):
     def section(self, nodea: Parameter, nodeb: Parameter) -> IParameterCurve:
         raise NotImplementedError
 
+    @abstractmethod
+    def projection(self, point: GeneralPoint) -> Tuple[Parameter, ...]:
+        raise NotImplementedError
+
     def __call__(self, node: Parameter) -> Point2D:
         return self.eval(node, 0)
 

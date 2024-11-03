@@ -117,6 +117,7 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
         if derivate > 1:
             return 0 * self.vertices[0]
         if derivate == 1:
+            index = min(index, len(self.vertices) - 2)
             return self.vectors[index]
         node %= 1
         if not node:
@@ -135,7 +136,7 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
         if nodeb == int(nodeb):
             endingindex = int(nodeb)
         else:
-            endingindex = int(math.floor(nodeb))
+            endingindex = int(math.ceil(nodeb))
         middlevertices = self.vertices[startindex:endingindex]
         newvertices = [startpoint] + list(middlevertices) + [endingpoint]
         return PolygonOpenCurve(tuple(newvertices))
