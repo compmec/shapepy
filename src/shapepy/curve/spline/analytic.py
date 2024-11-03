@@ -80,9 +80,8 @@ def polyinte(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
     numbs = tuple(
         factorial(n + times) // factorial(n) for n in range(len(poly))
     )
-    coefs = [coef / numb for numb, coef in zip(numbs, poly)]
-    coefs = tuple([zero] * times + coefs)
-    return coefs
+    coefs = (coef / numb for numb, coef in zip(numbs, poly))
+    return tuple(times * [zero] + list(coefs))
 
 
 class Polynomial:
@@ -107,7 +106,9 @@ class Polynomial:
     """
 
     def __init__(self, coefs: Iterable[Any]):
-        self.__coefs = tuple(coefs)
+        coefs = tuple(coefs)
+        degree = max((i for i, coef in enumerate(coefs) if coef), default=0)
+        self.__coefs = coefs[: degree + 1]
 
     @property
     def degree(self) -> int:
@@ -118,7 +119,10 @@ class Polynomial:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Polynomial):
-            return False
+            try:
+                other = Polynomial([other])
+            except Exception:
+                return False
         if self.degree != other.degree:
             return False
         return all(ci == cj for ci, cj in zip(self, other))
@@ -291,3 +295,78 @@ class Polynomial:
     def scale(self, amount: Scalar) -> Polynomial:
         coefs = tuple(coef * amount**i for i, coef in enumerate(self))
         return self.__class__(coefs)
+
+
+def polydiv(
+    poly: Polynomial, doly: Polynomial
+) -> Tuple[Polynomial, Polynomial]:
+    """
+    Given two polynomials, p(x) and d(x), it finds two polynomials
+    q(x) and r(x) such
+
+    p(x) = q(x) * d(x) + r(x)
+    """
+    if not isinstance(poly, Polynomial):
+        raise TypeError
+    if not isinstance(doly, Polynomial):
+        raise TypeError
+    zero = 0 * (sum(tuple(poly)) + sum(tuple(doly)))
+    qoly = Polynomial([zero])
+    roly = poly - doly * qoly
+    while roly.degree >= doly.degree:
+        coef = roly[-1] / doly[-1]
+        coefs = [0] * (roly.degree - doly.degree) + [coef]
+        qoly += Polynomial(coefs)
+        roly = poly - doly * qoly
+    return qoly, roly
+
+
+def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
+    """
+    Find all real roots from the polynomial.
+
+    Example
+    -------
+    >>> find_roots(Polynomial([-1, 1]))  # x - 1
+    (1, )
+    >>> find_roots(Polynomial([-2, 1]))  # x - 2
+    (2, )
+    >>> find_roots(Polynomial([1, -2, 1]))  # x^2 - 2x + 1
+    (1, 1)
+    >>> find_roots(Polynomial([3, -4, 1]))  # x^2 - 4x + 3
+    (1, 3)
+    >>> find_roots(Polynomial([1, 0, 1]))  # x^2 + 1
+    ()
+    """
+    if not isinstance(poly, Polynomial):
+        raise TypeError
+    if poly.degree == 0:
+        raise ValueError
+    degree = poly.degree
+    coefs = tuple(coef / poly[degree] for coef in poly)
+    if poly.degree == 1:
+        return (-coefs[0],)
+    delta = coefs[degree - 1] ** 2 - 2 * degree * coefs[degree - 2] / (
+        degree - 1
+    )
+    if delta < 0:  # No roots
+        return tuple()
+    liminf = (-coefs[degree - 1] - (degree - 1) * math.sqrt(delta)) / degree
+    limsup = (-coefs[degree - 1] + (degree - 1) * math.sqrt(delta)) / degree
+    root = -coefs[degree - 1]
+    for _ in range(10):  # Newton's iteration
+        numer = poly.eval(root, 0)
+        if not numer:
+            break
+        denom = poly.eval(root, 1)
+        if not denom:
+            root = limsup
+            continue
+        root -= poly.eval(root) / denom
+        root = max(liminf, min(limsup, root))
+
+    doly = Polynomial((-root, 1))
+    qoly, roly = polydiv(poly, doly)
+    if roly != 0:
+        return tuple()
+    return tuple(sorted(find_roots(qoly) + (root,)))

@@ -2,9 +2,10 @@
 This file contains tests functions to test the module polygon.py
 """
 
+import numpy as np
 import pytest
 
-from shapepy.curve.spline.analytic import Polynomial
+from shapepy.curve.spline.analytic import Polynomial, find_roots, polydiv
 
 
 @pytest.mark.order(3)
@@ -31,6 +32,15 @@ def test_degree():
     assert Polynomial([1, 2]).degree == 1
     assert Polynomial([1, 3, 2]).degree == 2
     assert Polynomial([1.0, 2.0, 3.0]).degree == 2
+
+
+@pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_degree"])
+def test_simplify():
+    coefs = [1, 2, 3, 0]
+    polya = Polynomial(coefs)
+    assert polya.degree == 2
+    assert tuple(polya) == (1, 2, 3)
 
 
 @pytest.mark.order(3)
@@ -116,6 +126,13 @@ def test_compare():
     coefs = [3, -3, -4, 3, 2]
     polyb = Polynomial(coefs)
     assert polya != polyb
+
+    poly = Polynomial([0])
+    assert poly == 0
+    poly = Polynomial([1])
+    assert poly == 1
+    poly = Polynomial([2])
+    assert poly == 2
 
 
 @pytest.mark.order(3)
@@ -270,6 +287,53 @@ def test_scale():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_compare", "test_simplify"])
+def test_divide_poly():
+    poly = Polynomial([1, -1])  # 1 - x
+    qoly, roly = polydiv(poly, poly)
+    assert qoly == 1
+    assert roly == 0
+
+
+@pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_divide_poly"])
+def test_find_roots():
+    poly = Polynomial([1, -1])  # 1 - x
+    roots = find_roots(poly)
+    assert roots == (1,)
+    poly = Polynomial([1, 1])  # 1 + x
+    roots = find_roots(poly)
+    assert roots == (-1,)
+
+    poly = Polynomial([1, 0, 1])  # 1 + x^2
+    roots = find_roots(poly)
+    assert roots == tuple()
+    poly = Polynomial([1, 0, -1])  # 1 - x^2
+    roots = find_roots(poly)
+    assert roots == (-1, 1)
+    poly = Polynomial([-1, 0, 1])  # 1 - x^2
+    roots = find_roots(poly)
+    assert roots == (-1, 1)
+
+    poly = Polynomial([3, -4, 1])  # 3 - 4*x + x^2
+    roots = find_roots(poly)
+    np.testing.assert_allclose(roots, (1, 3))
+    poly = Polynomial([1, -4, 4])  # 1 - 4*x + 4*x^2
+    roots = find_roots(poly)
+    np.testing.assert_allclose(roots, (0.5, 0.5))
+    poly = Polynomial([2, -1, -2, 1])  # 2 - x - 2*x + x^3
+    roots = find_roots(poly)
+    np.testing.assert_allclose(roots, (-1, 1, 2))
+
+    poly = Polynomial([1, -2, 1])  # (x-1)^2
+    roots = find_roots(poly)
+    np.testing.assert_allclose(roots, (1, 1))
+    poly = Polynomial([-1, 3, -3, 1])  # (x-1)^3
+    roots = find_roots(poly)
+    np.testing.assert_allclose(roots, (1, 1, 1))
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():
     poly = Polynomial([0])
@@ -307,6 +371,7 @@ def test_print():
         "test_begin",
         "test_build",
         "test_degree",
+        "test_simplify",
         "test_evaluate_natural",
         "test_keep_type",
         "test_compare",
@@ -319,6 +384,8 @@ def test_print():
         "test_pow",
         "test_shift",
         "test_scale",
+        "test_divide_poly",
+        "test_find_roots",
     ]
 )
 def test_end():
