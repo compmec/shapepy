@@ -1,15 +1,30 @@
-.. autoclass:: shape.polygon.Point2D
+.. autoclass:: shapepy.point.Point2D
     :members:
 
 ----------------------------------------------------
 
-.. autoclass:: shape.polygon.Box
+.. autoclass:: shapepy.primitive.Primitive
     :members:
-
+    :inherited-members:
+    :undoc-members:
 
 ----------------------------------------------------
 
-.. autoclass:: shape.curve.PlanarCurve
+.. autoclass:: shapepy.core.Empty
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.core.Whole
+    :members:
+    :inherited-members:
+    :undoc-members:
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.shape.SimpleShape
     :members:
     :inherited-members:
     :undoc-members:
@@ -17,35 +32,7 @@
 
 ----------------------------------------------------
 
-.. autoclass:: shape.jordancurve.JordanCurve
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-----------------------------------------------------
-
-.. autoclass:: shape.primitive.Primitive
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-----------------------------------------------------
-
-.. autoclass:: shape.shape.EmptyShape
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-----------------------------------------------------
-
-.. autoclass:: shape.shape.WholeShape
-    :members:
-    :inherited-members:
-    :undoc-members:
-
-----------------------------------------------------
-
-.. autoclass:: shape.shape.SimpleShape
+.. autoclass:: shapepy.shape.ConnectedShape
     :members:
     :inherited-members:
     :undoc-members:
@@ -53,22 +40,8 @@
 
 ----------------------------------------------------
 
-.. autoclass:: shape.shape.ConnectedShape
+.. autoclass:: shapepy.shape.DisjointShape
     :members:
     :inherited-members:
     :undoc-members:
     :show-inheritance:
-
-----------------------------------------------------
-
-.. autoclass:: shape.shape.DisjointShape
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
-
-----------------------------------------------------
-
-.. autoclass:: shape.shape.IntegrateShape
-    :members:
-    :undoc-members:
