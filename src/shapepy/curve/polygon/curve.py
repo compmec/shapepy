@@ -10,6 +10,25 @@ from ...point import GeneralPoint, Point2D
 from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter, Scalar
 
 
+def clean_open_curve(
+    vertices: Tuple[GeneralPoint, ...]
+) -> Tuple[Point2D, ...]:
+    vertices = list(vertices)
+    for i, vertex in enumerate(vertices):
+        if not isinstance(vertex, Point2D):
+            vertices[i] = Point2D(vertex)
+    keep_vertices = [True] * len(vertices)
+    for i, vi1 in enumerate(vertices):
+        if i == 0 or i + 1 == len(vertices):
+            continue
+        vi0 = vertices[i - 1]
+        vi2 = vertices[i + 1]
+        if not (vi1 - vi0).cross(vi2 - vi1):
+            keep_vertices[i] = False
+    new_vertices = (vertices[i] for i, k in enumerate(keep_vertices) if k)
+    return tuple(new_vertices)
+
+
 class PolygonCurve(IParameterCurve):
 
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
@@ -28,26 +47,6 @@ class PolygonCurve(IParameterCurve):
             if verti != vertj:
                 return False
         return True
-
-    def clean(self) -> PolygonCurve:
-        """
-        Cleans the curve, returning a new instance if there's some
-        cleaning to be done. If it doesn't happen, return the same instance
-        """
-        keep_vertices = [True] * len(self.vertices)
-        for i, vi1 in enumerate(self.vertices):
-            if i == 0 or i + 1 == len(self.vertices):
-                continue
-            vi0 = self.vertices[i - 1]
-            vi2 = self.vertices[i + 1]
-            if not (vi1 - vi0).cross(vi2 - vi1):
-                keep_vertices[i] = False
-        if all(keep_vertices):
-            return self
-        new_vertices = (
-            self.vertices[i] for i, k in enumerate(keep_vertices) if k
-        )
-        return self.__class__(tuple(new_vertices))
 
     @property
     def knots(self) -> Tuple[Parameter, ...]:

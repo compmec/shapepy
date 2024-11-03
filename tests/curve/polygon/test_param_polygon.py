@@ -4,7 +4,11 @@ This file contains tests functions to test the module polygon.py
 
 import pytest
 
-from shapepy.curve.polygon import PolygonClosedCurve, PolygonOpenCurve
+from shapepy.curve.polygon.curve import (
+    PolygonClosedCurve,
+    PolygonOpenCurve,
+    clean_open_curve,
+)
 
 
 @pytest.mark.order(3)
@@ -387,6 +391,21 @@ def test_print():
     curve = PolygonClosedCurve(vertices)
     str(curve)
     repr(curve)
+
+
+def test_clean_curve():
+    vertices = [(0, 0), (1, 0), (2, 0)]
+    newverts = clean_open_curve(vertices)
+    assert len(newverts) == 2
+    assert newverts[0] == (0, 0)
+    assert newverts[1] == (2, 0)
+
+    vertices = [(0, 0), (1, 0), (1, 1), (1, 2)]
+    newverts = clean_open_curve(vertices)
+    assert len(newverts) == 3
+    assert newverts[0] == (0, 0)
+    assert newverts[1] == (1, 0)
+    assert newverts[2] == (1, 2)
 
 
 @pytest.mark.order(3)
