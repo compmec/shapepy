@@ -5,7 +5,7 @@ from typing import Any, Iterable, Optional, Tuple
 import numpy as np
 
 from ...core import Parameter
-from .analytic import Polynomial, binom
+from ..analytic.polynomial import Polynomial, binom
 from .knotvector import KnotVector
 
 

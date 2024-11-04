@@ -9,7 +9,7 @@ These are result of boolean operation between other things
 
 from typing import Any, Iterable, Tuple
 
-from .core import IBoolean2D, IObject2D
+from .core import Empty, IBoolean2D, IObject2D, Whole
 
 
 def permutations(*numbers: int) -> Iterable[Tuple[int, ...]]:
@@ -272,3 +272,30 @@ def expand(object: IObject2D) -> IObject2D:
         subitems = [subobjs[i] for i in indexs]
         subinters.append(Intersection(subitems))
     return expand(Union(subinters))
+
+
+def simplify(object: IObject2D) -> IObject2D:
+    if not isinstance(object, IObject2D):
+        raise TypeError
+    if not isinstance(object, (Inverse, Union, Intersection)):
+        return object
+    object = expand(object)
+    if isinstance(object, (Union, Intersection)):
+        object = object.__class__(map(simplify, object))
+    if isinstance(object, Union):
+        if any(isinstance(subobj, Whole) for subobj in object):
+            return Whole()
+        subobjs = tuple(sub for sub in object if not isinstance(sub, Empty))
+        if len(subobjs) == 0:
+            return Empty()
+        return object.__class__(subobjs)
+    if isinstance(object, Intersection):
+        print(tuple(object))
+        if any(isinstance(subobj, Empty) for subobj in object):
+            return Empty()
+        print(">..")
+        subobjs = tuple(sub for sub in object if not isinstance(sub, Whole))
+        if len(subobjs) == 0:
+            return Whole()
+        return object.__class__(subobjs)
+    return object
