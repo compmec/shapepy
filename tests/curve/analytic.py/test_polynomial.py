@@ -5,7 +5,7 @@ This file contains tests functions to test the module polygon.py
 import numpy as np
 import pytest
 
-from shapepy.curve.analytic.polynomial import Polynomial, find_roots, polydiv
+from shapepy.curve.analytic.polynomial import Polynomial, find_roots
 
 
 @pytest.mark.order(3)
@@ -65,6 +65,8 @@ def test_evaluate_natural():
     assert poly.eval(2) == 17
     assert poly.eval(0.0) == 1
     assert poly.eval(1.0) == 6
+
+    assert poly(1.0) == 6
 
 
 @pytest.mark.order(3)
@@ -228,6 +230,7 @@ def test_sub():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_mult():
     polya = Polynomial([1, 3])
@@ -252,6 +255,7 @@ def test_mult():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_pow():
     poly = Polynomial([1, 1])
@@ -270,6 +274,7 @@ def test_pow():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_shift():
     poly = Polynomial([-1, 3, -3, 1])  # (x-1)^3
@@ -280,6 +285,7 @@ def test_shift():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_scale():
     poly = Polynomial([1, 2, 3])  # 1 + 2*x + 3*x^2
@@ -287,12 +293,22 @@ def test_scale():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare", "test_simplify"])
 def test_divide_poly():
-    poly = Polynomial([1, -1])  # 1 - x
-    qoly, roly = polydiv(poly, poly)
+    x = Polynomial([0, 1])
+    poly = 1 - x  # 1 - x
+    qoly, roly = divmod(poly, poly)
     assert qoly == 1
     assert roly == 0
+
+    poly = (1 - x) ** 2  # 1 - 2*x + x^2
+    assert poly % (1 - x) == 0
+    assert poly // (1 - x) == (1 - x)
+    assert poly / (1 - x) == (1 - x)
+
+    poly = 2 * x * (1 - x)
+    assert poly / 2 == x * (1 - x)
 
 
 @pytest.mark.order(3)

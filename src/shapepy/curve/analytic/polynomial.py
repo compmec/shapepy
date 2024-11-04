@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 from functools import lru_cache
-from typing import Any, Iterable, List, Tuple, Union
+from typing import Any, Iterable, Tuple, Union
 
 from ...core import Parameter, Scalar
 
@@ -27,33 +27,6 @@ def keys(exp):
     if exp == 1:
         return set()
     return keys(exp // 2) | keys(exp - exp // 2) | {exp}
-
-
-def polymult(
-    poly: Tuple[Scalar, ...], qoly: Tuple[Scalar, ...]
-) -> Tuple[Scalar, ...]:
-    """
-    Multiplies two polynomials
-    """
-    woly: List[Scalar] = [0] * (len(poly) + len(qoly) - 1)
-    for i, pi in enumerate(poly):
-        for j, qj in enumerate(qoly):
-            woly[i + j] += pi * qj
-    return tuple(woly)
-
-
-def polypow(poly: Tuple[Scalar, ...], exp: int) -> Tuple[Scalar, ...]:
-    exp = int(exp)
-    if exp < 0:
-        raise ValueError
-    if exp == 0:
-        return (1 + 0 * sum(poly),)
-    poly = tuple(poly)
-    needs = sorted(keys(exp))
-    cache = {1: poly}
-    for n in needs:
-        cache[n] = polymult(cache[n // 2], cache[n - n // 2])
-    return cache[exp]
 
 
 def polyderi(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
@@ -119,10 +92,7 @@ class Polynomial:
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, Polynomial):
-            try:
-                other = Polynomial([other])
-            except Exception:
-                return False
+            other = Polynomial([other])
         if self.degree != other.degree:
             return False
         return all(ci == cj for ci, cj in zip(self, other))
@@ -138,31 +108,63 @@ class Polynomial:
         return self.__class__(coefs)
 
     def __add__(self, other: Union[Any, Polynomial]) -> Polynomial:
-        if isinstance(other, Polynomial):
-            coefs = [0] * (1 + max(self.degree, other.degree))
-            for i, coef in enumerate(self):
-                coefs[i] += coef
-            for i, coef in enumerate(other):
-                coefs[i] += coef
-        else:
-            coefs = list(self)
-            coefs[0] += other
-        return self.__class__(tuple(coefs))
+        if not isinstance(other, Polynomial):
+            other = Polynomial([other])
+        coefs = [0] * (1 + max(self.degree, other.degree))
+        for i, coef in enumerate(self):
+            coefs[i] += coef
+        for i, coef in enumerate(other):
+            coefs[i] += coef
+        return self.__class__(coefs)
 
     def __mul__(self, other: Union[Any, Polynomial]) -> Polynomial:
-        if isinstance(other, Polynomial):
-            coefs = polymult(tuple(self), tuple(other))
-        else:
-            coefs = tuple(other * coef for coef in self)
+        if not isinstance(other, Polynomial):
+            other = Polynomial([other])
+        coefs = [0] * (1 + self.degree + other.degree)
+        for i, ci in enumerate(self):
+            for j, cj in enumerate(other):
+                coefs[i + j] += ci * cj
         return self.__class__(coefs)
+
+    def __divmod__(
+        self, other: Union[Any, Polynomial]
+    ) -> Tuple[Polynomial, Polynomial]:
+        if not isinstance(other, Polynomial):
+            coefs = (coef / other for coef in self)
+            return Polynomial(coefs), Polynomial([0 * sum(self)])
+        zero = 0 * (sum(self) + sum(other))
+        qoly = Polynomial([zero])
+        roly = self - other * qoly
+        while roly.degree >= other.degree:
+            coef = roly[-1] / other[-1]
+            coefs = [0] * (roly.degree - other.degree) + [coef]
+            qoly += Polynomial(coefs)
+            roly = self - other * qoly
+        return qoly, roly
+
+    def __floordiv__(self, other: Union[Any, Polynomial]) -> Polynomial:
+        return self.__divmod__(other)[0]
+
+    def __mod__(self, other: Union[Any, Polynomial]) -> Polynomial:
+        return self.__divmod__(other)[1]
 
     def __truediv__(self, other: Scalar) -> Polynomial:
-        coefs = tuple(coef / other for coef in self)
-        return self.__class__(coefs)
+        div, res = self.__divmod__(other)
+        if res != 0:
+            raise ValueError(f"Cannot divide {self} by {other}")
+        return div
 
-    def __pow__(self, other: int) -> Polynomial:
-        coefs = polypow(self.__coefs, other)
-        return self.__class__(coefs)
+    def __pow__(self, exponent: int) -> Polynomial:
+        exponent = int(exponent)
+        if exponent < 0:
+            raise ValueError
+        if exponent == 0:
+            return self.__class__([1 + 0 * sum(self)])
+        needs = sorted(keys(exponent))
+        cache = {1: self}
+        for n in needs:
+            cache[n] = cache[n // 2] * cache[n - n // 2]
+        return cache[exponent]
 
     def __sub__(self, other: Union[Any, Polynomial]) -> Polynomial:
         return self.__add__(-other)
@@ -226,9 +228,7 @@ class Polynomial:
         0
         """
         coefs = polyderi(self.__coefs, derivate)
-        if len(coefs) == 1:
-            return coefs[0]
-        result = 0 * coefs[0]
+        result = 0 * node
         for coef in coefs[::-1]:
             result = node * result + coef
         return result
@@ -297,30 +297,6 @@ class Polynomial:
         return self.__class__(coefs)
 
 
-def polydiv(
-    poly: Polynomial, doly: Polynomial
-) -> Tuple[Polynomial, Polynomial]:
-    """
-    Given two polynomials, p(x) and d(x), it finds two polynomials
-    q(x) and r(x) such
-
-    p(x) = q(x) * d(x) + r(x)
-    """
-    if not isinstance(poly, Polynomial):
-        raise TypeError
-    if not isinstance(doly, Polynomial):
-        raise TypeError
-    zero = 0 * (sum(tuple(poly)) + sum(tuple(doly)))
-    qoly = Polynomial([zero])
-    roly = poly - doly * qoly
-    while roly.degree >= doly.degree:
-        coef = roly[-1] / doly[-1]
-        coefs = [0] * (roly.degree - doly.degree) + [coef]
-        qoly += Polynomial(coefs)
-        roly = poly - doly * qoly
-    return qoly, roly
-
-
 def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
     """
     Find all real roots from the polynomial.
@@ -366,7 +342,7 @@ def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
         root = max(liminf, min(limsup, root))
 
     doly = Polynomial((-root, 1))
-    qoly, roly = polydiv(poly, doly)
+    qoly, roly = divmod(poly, doly)
     if roly != 0:
-        return tuple()
+        raise NotImplementedError
     return tuple(sorted(find_roots(qoly) + (root,)))
