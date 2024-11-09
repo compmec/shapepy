@@ -7,7 +7,7 @@ This file defines basic boolean classes:
 These are result of boolean operation between other things
 """
 
-from typing import Any, Iterable, Tuple
+from typing import Any, Iterable, List, Tuple
 
 from .core import Empty, IBoolean2D, IObject2D, Whole
 
@@ -41,10 +41,13 @@ class Inverse(IBoolean2D):
     def __init__(self, object: IObject2D):
         if not isinstance(object, IObject2D):
             raise TypeError
+        if isinstance(object, (Empty, Whole)):
+            raise TypeError
         self.object = object
 
     def __eq__(self, other: IObject2D) -> bool:
-        print(f"Inv: comparing {self} with {other}")
+        if not isinstance(other, IObject2D):
+            raise TypeError
         selff = expand(self)
         other = expand(other)
         if type(selff) is not type(other):
@@ -79,10 +82,13 @@ class Union(IBoolean2D):
         for object in objects:
             if not isinstance(object, IObject2D):
                 raise TypeError
+            if isinstance(object, (Empty, Whole)):
+                raise TypeError
         self.__objects = objects
 
-    def __eq__(self, other: IObject2D) -> bool:
-        print(f"Uni: comparing {self} with {other}")
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, IObject2D):
+            raise TypeError
         selff = expand(self)
         other = expand(other)
         if type(selff) is not type(other):
@@ -135,22 +141,21 @@ class Intersection(IBoolean2D):
         for object in objects:
             if not isinstance(object, IObject2D):
                 raise TypeError
+            if isinstance(object, (Empty, Whole)):
+                raise TypeError
         self.__objects = objects
 
-    def __eq__(self, other: IObject2D) -> bool:
-        print(f"Int: comparing {self} with {other}")
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, IObject2D):
+            raise TypeError
         selff = expand(self)
-        print("selff = ")
-        print(selff)
         other = expand(other)
         if type(selff) is not type(other):
             return False
         if not isinstance(self, Intersection):
             return selff == other
         selfobjs = tuple(selff)
-        print(selfobjs)
         otheobjs = list(other)
-        print(otheobjs)
         for obji in selfobjs:
             for j, objj in enumerate(otheobjs):
                 if obji == objj:
@@ -189,7 +194,11 @@ def invert(object: IObject2D) -> IObject2D:
     """
     Inverts an object
     """
-    return object.object if isinstance(object, Inverse) else Inverse(object)
+    if isinstance(object, (Empty, Whole)):
+        raise NotImplementedError
+    if isinstance(object, Inverse):
+        return object.object
+    return Inverse(object)
 
 
 def union(*objects: IObject2D) -> IObject2D:
@@ -199,6 +208,12 @@ def union(*objects: IObject2D) -> IObject2D:
     for object in objects:
         if not isinstance(object, IObject2D):
             raise TypeError
+    if any(isinstance(obj, Whole) for obj in objects):
+        return Whole()
+    objects = tuple(obj for obj in objects if not isinstance(obj, Empty))
+    objects = filter_equal(objects)
+    if len(objects) == 1:
+        return objects[0]
     return flatten(Union(objects))
 
 
@@ -209,7 +224,26 @@ def intersection(*objects: IObject2D) -> IObject2D:
     for object in objects:
         if not isinstance(object, IObject2D):
             raise TypeError
+    if any(isinstance(obj, Empty) for obj in objects):
+        return Empty()
+    objects = tuple(obj for obj in objects if not isinstance(obj, Whole))
+    objects = filter_equal(objects)
+    if len(objects) == 1:
+        return objects[0]
     return flatten(Intersection(objects))
+
+
+def filter_equal(objects: Iterable[IObject2D]) -> Tuple[IObject2D, ...]:
+    items: List[IObject2D] = []
+    for subobj in objects:
+        if not isinstance(subobj, IObject2D):
+            raise TypeError
+        for item in items:
+            if subobj is item:
+                break
+        else:
+            items.append(subobj)
+    return tuple(items)
 
 
 def flatten(object: IObject2D) -> IObject2D:
@@ -258,8 +292,10 @@ def expand(object: IObject2D) -> IObject2D:
             object = union(*map(invert, invobj))
         return expand(object)
     object = flatten(object)
+    if not isinstance(object, (Union, Intersection)):
+        raise NotImplementedError("Not expected get here")
     if len(object) == 1:
-        return object[0]
+        return expand(object[0])
     if isinstance(object, Union):
         return object
     subobjs = tuple(object)
@@ -267,6 +303,8 @@ def expand(object: IObject2D) -> IObject2D:
     for i, subobj in enumerate(subobjs):
         if isinstance(subobj, Union):
             sizes[i] = len(subobj)
+    if all(size == 1 for size in sizes):
+        return object
     subinters = []
     for indexs in permutations(*sizes):
         subitems = [subobjs[i] for i in indexs]
@@ -280,22 +318,44 @@ def simplify(object: IObject2D) -> IObject2D:
     if not isinstance(object, (Inverse, Union, Intersection)):
         return object
     object = expand(object)
-    if isinstance(object, (Union, Intersection)):
-        object = object.__class__(map(simplify, object))
-    if isinstance(object, Union):
-        if any(isinstance(subobj, Whole) for subobj in object):
+    if not isinstance(object, (Union, Intersection)):
+        return object
+    subobjs = tuple(map(simplify, object))
+    subobjs = filter_equal(subobjs)
+    if len(subobjs) == 1:
+        return simplify(subobjs[0])
+    if has_inverse(subobjs):
+        if isinstance(object, Union):
             return Whole()
-        subobjs = tuple(sub for sub in object if not isinstance(sub, Empty))
-        if len(subobjs) == 0:
+        if isinstance(object, Intersection):
             return Empty()
-        return object.__class__(subobjs)
-    if isinstance(object, Intersection):
-        print(tuple(object))
-        if any(isinstance(subobj, Empty) for subobj in object):
-            return Empty()
-        print(">..")
-        subobjs = tuple(sub for sub in object if not isinstance(sub, Whole))
-        if len(subobjs) == 0:
-            return Whole()
-        return object.__class__(subobjs)
-    return object
+        raise NotImplementedError("Not expected get here")
+    return object.__class__(subobjs)
+
+
+def has_inverse(objects: Tuple[IObject2D, ...]) -> bool:
+    """
+    Private function used in simplify to know if there's
+    the union or intersection of inversed shape.
+
+    Example:
+        Union(object, ~object) -> Whole
+        Intersection(object, ~object) -> Empty
+    """
+    objects = tuple(objects)
+    flags = tuple(isinstance(obj, Inverse) for obj in objects)
+    if all(flags) or not any(flags):
+        return False
+    nobjs = len(objects)
+    for i, obji in enumerate(objects):
+        flag1 = isinstance(obji, Inverse)
+        for j in range(i + 1, nobjs):
+            objj = objects[j]
+            flag2 = isinstance(objj, Inverse)
+            if not (flag1 ^ flag2):
+                continue
+            if flag1 and (obji.object == objj):
+                return True
+            elif flag2 and (obji == objj.object):
+                return True
+    return False

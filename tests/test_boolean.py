@@ -5,7 +5,15 @@ the `Inverse`, `Union` and `Intersection` objects
 
 import pytest
 
-from shapepy.boolean import Intersection, Inverse, Union, expand, flatten
+from shapepy.boolean import (
+    Intersection,
+    Inverse,
+    Union,
+    expand,
+    flatten,
+    simplify,
+)
+from shapepy.core import Empty, Whole
 from shapepy.point import Point2D
 
 
@@ -25,14 +33,15 @@ def test_begin():
 @pytest.mark.dependency(depends=["test_begin"])
 def test_flatten():
     pointa = Point2D((0, 0))
+    pointb = Point2D((1, 2))
     assert flatten(pointa) == pointa
     invpta = Inverse(pointa)
     assert flatten(invpta) == invpta
 
-    union = Union([Union([pointa]), pointa])
-    assert flatten(union) == Union([pointa, pointa])
-    union = Intersection([Intersection([pointa]), pointa])
-    assert flatten(union) == Intersection([pointa, pointa])
+    union = Union([Union([pointa, pointb]), pointa])
+    assert flatten(union) == Union([pointa, pointa, pointb])
+    inter = Intersection([Intersection([pointa, pointb]), pointa])
+    assert flatten(inter) == Intersection([pointa, pointa, pointb])
 
 
 @pytest.mark.order(3)
@@ -101,6 +110,18 @@ def test_boolean():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_begin", "test_expand", "test_compare"])
+def test_simplify():
+    empty, whole = Empty(), Whole()
+
+    point = Point2D((0, 0))
+    assert simplify(Union([point, point])) == point
+    assert simplify(Union([point, Inverse(point)])) is whole
+    assert simplify(Intersection([point, point])) == point
+    assert simplify(Intersection([point, Inverse(point)])) is empty
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_print():
     point = Point2D((0, 0))
@@ -124,6 +145,7 @@ def test_print():
         "test_expand",
         "test_compare",
         "test_general",
+        "test_simplify",
         "test_print",
     ]
 )
