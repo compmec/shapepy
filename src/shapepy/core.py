@@ -72,8 +72,6 @@ class Empty(IBoolean2D):
     >>> empty = Empty()
     >>> print(empty)
     Empty
-    >>> print(float(empty))  # Area
-    0.0
     >>> (0, 0) in empty
     False
     """
@@ -109,9 +107,6 @@ class Empty(IBoolean2D):
     def __rxor__(self, other: IBoolean2D) -> IBoolean2D:
         return other
 
-    def __float__(self) -> float:
-        return float(0)
-
     def __invert__(self) -> Whole:
         return Whole()
 
@@ -134,8 +129,6 @@ class Whole(IBoolean2D):
     >>> whole = Whole()
     >>> print(whole)
     Whole
-    >>> print(float(whole))  # Area
-    inf
     >>> (0, 0) in whole
     True
     """
