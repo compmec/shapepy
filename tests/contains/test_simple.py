@@ -167,7 +167,7 @@ def test_jordan():
         "test_jordan",
     ]
 )
-def test_simple():
+def test_untouch():
     # Centered squares
     big_square = Primitive.square(side=4)
     small_square = Primitive.square(side=2)
@@ -203,7 +203,7 @@ def test_simple():
         "test_keep_type",
         "test_point",
         "test_jordan",
-        "test_simple",
+        "test_untouch",
     ]
 )
 def test_equal():
@@ -218,10 +218,32 @@ def test_equal():
         "test_begin",
         "test_empty",
         "test_whole",
+        "test_keep_ids",
+        "test_keep_type",
         "test_point",
         "test_jordan",
-        "test_simple",
+        "test_untouch",
         "test_equal",
+    ]
+)
+def test_touching():
+    int_square = Primitive.square(side=2)
+    ext_rectan = Primitive.square(side=2).scale(1, 2)
+    assert int_square in ext_rectan
+    assert (~ext_rectan) in (~int_square)
+
+
+@pytest.mark.order(22)
+@pytest.mark.dependency(
+    depends=[
+        "test_begin",
+        "test_empty",
+        "test_whole",
+        "test_point",
+        "test_jordan",
+        "test_untouch",
+        "test_equal",
+        "test_touching",
     ]
 )
 def test_end():
