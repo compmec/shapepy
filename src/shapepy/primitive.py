@@ -7,6 +7,7 @@ This file contains functions to create primitive shapes such as:
 """
 
 import math
+from fractions import Fraction
 from typing import Tuple
 
 import numpy as np
@@ -167,6 +168,8 @@ class Primitive:
         """
         if side <= 0:
             raise ValueError
+        if isinstance(side, int):
+            side = Fraction(side)
         vertices = [
             (side / 2, side / 2),
             (-side / 2, side / 2),
