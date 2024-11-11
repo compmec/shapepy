@@ -183,8 +183,8 @@ class Polynomial:
 
     def __str__(self):
         msgs = []
-        if all(coef == 0 for coef in self):
-            return "0"
+        if self.degree == 0:
+            return str(self[0])
         flag = False
         for i, coef in enumerate(self):
             if coef == 0:

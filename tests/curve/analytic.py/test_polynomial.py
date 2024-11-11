@@ -369,7 +369,7 @@ def test_print():
     poly = Polynomial([0, 0, 1])
     assert str(poly) == "x^2"
     poly = Polynomial([-1])
-    assert str(poly) == "- 1"
+    assert str(poly) == "-1"
     poly = Polynomial([-1, 1])
     assert str(poly) == "- 1 + x"
     poly = Polynomial([1, -1, 1])
