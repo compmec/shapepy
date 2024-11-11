@@ -126,10 +126,8 @@ class SimpleShape(IShape):
         return self
 
     def __str__(self) -> str:
-        vertices = self.jordan.vertices
-        vertices = tuple([tuple(vertex) for vertex in vertices])
-        msg = f"Simple Shape of area {self.area:.2f} with vertices:\n"
-        msg += str(np.array(vertices, dtype="float64"))
+        msg = f"Simple Shape of area {self.area} with vertices:\n"
+        msg += "[" + ",\n ".join(map(str, self.jordan.vertices)) + "]"
         return msg
 
     def __repr__(self) -> str:
@@ -183,7 +181,17 @@ class SimpleShape(IShape):
     def __contains_curve(self, other: ICurve) -> bool:
         if not isinstance(other, ICurve):
             raise NotImplementedError
-        return all(vertex in self for vertex in other.vertices)
+        if not all(vertex in self for vertex in other.vertices):
+            return False
+        nnodes = 64
+        unodes = tuple(i / nnodes for i in range(1, nnodes))
+        param_curve = other.param_curve
+        for ka, kb in zip(param_curve.knots, param_curve.knots[1:]):
+            for unode in unodes:
+                tnode = (1 - unode) * ka + unode * kb
+                if param_curve.eval(tnode, 0) not in self:
+                    return False
+        return True
 
     def __contains_simple(self, other: SimpleShape) -> bool:
         if not isinstance(other, SimpleShape):

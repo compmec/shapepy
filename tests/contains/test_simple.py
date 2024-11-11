@@ -199,9 +199,29 @@ def test_simple():
         "test_begin",
         "test_empty",
         "test_whole",
+        "test_keep_ids",
+        "test_keep_type",
         "test_point",
         "test_jordan",
         "test_simple",
+    ]
+)
+def test_equal():
+    square = Primitive.square(side=2)
+    assert square in square
+    assert (~square) in (~square)
+
+
+@pytest.mark.order(22)
+@pytest.mark.dependency(
+    depends=[
+        "test_begin",
+        "test_empty",
+        "test_whole",
+        "test_point",
+        "test_jordan",
+        "test_simple",
+        "test_equal",
     ]
 )
 def test_end():
