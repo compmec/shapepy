@@ -343,19 +343,10 @@ def has_inverse(objects: Tuple[IObject2D, ...]) -> bool:
         Intersection(object, ~object) -> Empty
     """
     objects = tuple(objects)
-    flags = tuple(isinstance(obj, Inverse) for obj in objects)
-    if all(flags) or not any(flags):
-        return False
-    nobjs = len(objects)
-    for i, obji in enumerate(objects):
-        flag1 = isinstance(obji, Inverse)
-        for j in range(i + 1, nobjs):
-            objj = objects[j]
-            flag2 = isinstance(objj, Inverse)
-            if not (flag1 ^ flag2):
-                continue
-            if flag1 and (obji.object == objj):
-                return True
-            elif flag2 and (obji == objj.object):
+    inveobjs = tuple(obj for obj in objects if isinstance(obj, Inverse))
+    normobjs = tuple(obj for obj in objects if not isinstance(obj, Inverse))
+    for inveobj in inveobjs:
+        for normobj in normobjs:
+            if inveobj.object == normobj:
                 return True
     return False
