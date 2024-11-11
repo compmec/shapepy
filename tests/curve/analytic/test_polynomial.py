@@ -171,6 +171,15 @@ def test_integrate():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_derivate", "test_integrate"])
+def test_definite_integral():
+    coefs = [3, 6, -12, 8, 10]
+    poly = Polynomial(coefs)
+    test = poly.defintegral(0, 3)
+    assert test == 576
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_evaluate_natural", "test_derivate"])
 def test_evaluate_derivate():
     poly = Polynomial([1])  # p(x) = 1
@@ -393,6 +402,7 @@ def test_print():
         "test_compare",
         "test_derivate",
         "test_integrate",
+        "test_definite_integral",
         "test_evaluate_derivate",
         "test_add",
         "test_sub",

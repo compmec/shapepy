@@ -9,7 +9,7 @@ import math
 from functools import lru_cache
 from typing import Any, Iterable, Tuple, Union
 
-from ...core import Parameter, Scalar
+from ...core import IAnalytic, Parameter, Scalar
 
 
 @lru_cache
@@ -57,7 +57,7 @@ def polyinte(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
     return tuple(times * [zero] + list(coefs))
 
 
-class Polynomial:
+class Polynomial(IAnalytic):
     """
     Defines a polynomial with coefficients
 
@@ -264,6 +264,10 @@ class Polynomial:
         """
         coefs = polyinte(self.__coefs, times)
         return self.__class__(coefs)
+
+    def defintegral(self, lower: Parameter, upper: Parameter) -> Scalar:
+        intself = self.integrate(1)
+        return intself.eval(upper) - intself.eval(lower)
 
     def shift(self, amount: Parameter) -> Polynomial:
         """

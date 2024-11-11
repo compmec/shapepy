@@ -357,6 +357,8 @@ def test_divide_random_pmax1():
 
     for _ in range(20):
         a, b, c, d = np.random.randint(-10, 11, 4)
+        if not (a or b or c):
+            continue
         denom = a * sint + b * cost + c
         numer = d * denom
         quot, rest = divmod(numer, denom)
@@ -464,6 +466,35 @@ def test_print():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_integrate"])
+def test_definite_integrate():
+    # Integrate constant
+    trig = Trignomial([0])
+    assert trig.defintegral(0, 1) == 0
+    for _ in range(100):  # ntests
+        const, lower, upper = np.random.randint(-10, 10, 3)
+        trig = Trignomial([const])
+        assert trig.defintegral(lower, upper) == (upper - lower) * const
+
+    # Integrate linear
+    for _ in range(100):  # ntests
+        freq = np.random.randint(1, 10)
+        omega = freq * 2 * np.pi
+        const, lower, upper = np.random.randint(-10, 10, 3)
+        sincoef, coscoef = np.random.randint(-10, 10, 2)
+        trig = Trignomial([const, sincoef, coscoef], freq)
+        good = const * (upper - lower)
+        good += (
+            sincoef * (np.cos(omega * lower) - np.cos(omega * upper)) / omega
+        )
+        good += (
+            coscoef * (np.sin(omega * upper) - np.sin(omega * lower)) / omega
+        )
+        test = trig.defintegral(lower, upper)
+        assert abs(test - good) < 1e-9
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
@@ -488,6 +519,7 @@ def test_print():
         "test_divide_pmax1",
         "test_divide_random_pmax1",
         "test_divide_random_mult",
+        "test_definite_integrate",
     ]
 )
 def test_end():

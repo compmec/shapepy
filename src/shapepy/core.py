@@ -189,3 +189,18 @@ class IShape(IObject2D):
     @abstractmethod
     def area(self) -> Scalar:
         raise NotImplementedError
+
+
+class IAnalytic(ABC):
+
+    @abstractmethod
+    def eval(self, node: Parameter, derivate: int = 0) -> Scalar:
+        raise NotImplementedError
+
+    @abstractmethod
+    def derivate(self, times: int = 1) -> IAnalytic:
+        raise NotImplementedError
+
+    @abstractmethod
+    def defintegral(self, lower: Parameter, upper: Parameter) -> Scalar:
+        raise NotImplementedError

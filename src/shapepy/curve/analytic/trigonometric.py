@@ -21,6 +21,8 @@ from fractions import Fraction
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
+from ...core import IAnalytic
+
 Parameter = Union[int, float]
 Scalar = Union[int, float]
 
@@ -32,7 +34,7 @@ def keys(exp):
     return keys(exp // 2) | keys(exp - exp // 2) | {exp}
 
 
-class Trignomial:
+class Trignomial(IAnalytic):
     """
     Defines a trignometric version of a polynomial
 
@@ -158,6 +160,9 @@ class Trignomial:
 
     def __getitem__(self, index):
         return self.__values[index]
+
+    def __setitem__(self, key, newvalue):
+        self.__values[key] = newvalue
 
     def __neg__(self) -> Trignomial:
         return self.__class__(tuple(-coef for coef in self), self.frequency)
@@ -344,6 +349,15 @@ class Trignomial:
                 coefs[2 * i + 1] = cos
                 coefs[2 * i + 2] = -sin
         return self.__class__(coefs, self.frequency)
+
+    def defintegral(self, lower: Parameter, upper: Parameter) -> Scalar:
+        const = self[0]
+        self[0] *= 0
+        inttrig = self.integrate(1)
+        value = inttrig.eval(upper, 0) - inttrig.eval(lower, 0)
+        value += const * (upper - lower)
+        self[0] += const
+        return value
 
     def shift(self, amount: Parameter) -> Trignomial:
         """
