@@ -11,8 +11,6 @@ from __future__ import annotations
 
 from typing import Tuple
 
-import numpy as np
-
 from ..core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint, Point2D
@@ -198,14 +196,19 @@ class SimpleShape(IShape):
             raise TypeError
         spos = self.area > 0
         opos = other.area > 0
-        if spos and not opos:
+        if spos ^ opos:
+            if spos and not opos:
+                return False
+        elif self.area < other.area:
             return False
-        if opos and not spos:
-            return other.jordan in self and self.jordan not in other
-        if self.area < other.area:
-            return False
-        if spos and opos:
+        elif spos and opos:
             return other.jordan in self
-        if self == other:
+        elif self == other:
             return True
-        return other.jordan in self and self.jordan not in other
+        if self.boundary or other.boundary:
+            return other.jordan in self and self.jordan not in other
+        self.__boundary = True
+        try:
+            return other.jordan in self and self.jordan not in other
+        finally:
+            self.__boundary = False
