@@ -355,7 +355,7 @@ def test_divide_random_pmax1():
     sint = Trignomial([0, 1, 0])
     cost = Trignomial([0, 0, 1])
 
-    for _ in range(20):
+    for _ in range(200):
         a, b, c, d = np.random.randint(-10, 11, 4)
         if not (a or b or c):
             continue
@@ -366,8 +366,10 @@ def test_divide_random_pmax1():
         assert quot == d
         assert rest == 0
 
-    for _ in range(20):
+    for _ in range(200):
         a, b, c = np.random.randint(-10, 11, 3)
+        if not (a or b or c):
+            continue
         numer = a * sint + b * cost + c
         a, b, c = np.random.randint(-10, 11, 3)
         denom = a * sint + b * cost + c
