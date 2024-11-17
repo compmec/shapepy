@@ -130,7 +130,7 @@ class SimpleShape(IShape):
 
     def __repr__(self) -> str:
         area, vertices = self.area, self.jordan.vertices
-        msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
+        msg = f"Simple shape of area {area} with {len(vertices)} vertices"
         return msg
 
     def __eq__(self, other: object) -> bool:

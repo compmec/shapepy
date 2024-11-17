@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Tuple, Union
 
-from ..core import Empty, ICurve, IObject2D, IShape, Scalar, Whole
+from ..core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint, Point2D
 from .simple import SimpleShape
@@ -87,13 +87,19 @@ class ConnectedShape(IShape):
         return True
 
     def __invert__(self) -> DisjointShape:
-        simples = [~simple for simple in self.subshapes]
+        simples = tuple(~simple for simple in self.subshapes)
         return DisjointShape(simples)
 
     def __contains__(self, other: object) -> bool:
         if not isinstance(other, IObject2D):
             other = Point2D(other)
         return all(other in subshape for subshape in self.subshapes)
+
+    def __ror__(self, other: IBoolean2D) -> IBoolean2D:
+        raise NotImplementedError
+
+    def __rand__(self, other: IBoolean2D) -> IBoolean2D:
+        raise NotImplementedError
 
     @property
     def area(self) -> Scalar:
@@ -285,6 +291,12 @@ class DisjointShape(IShape):
             return all(osub in self for osub in other.subshapes)
         if isinstance(other, (SimpleShape, ConnectedShape)):
             return any(other in subshape for subshape in self.subshapes)
+        raise NotImplementedError
+
+    def __ror__(self, other: IBoolean2D) -> IBoolean2D:
+        raise NotImplementedError
+
+    def __rand__(self, other: IBoolean2D) -> IBoolean2D:
         raise NotImplementedError
 
     def __invert__(self) -> Union[ConnectedShape, DisjointShape]:

@@ -45,7 +45,7 @@ class IBoolean2D(IObject2D):
         return (self & (~other)) | (other & (~self))
 
     def __sub__(self, other: IBoolean2D) -> IBoolean2D:
-        return ~(other.__rsub__(self))
+        return other.__rsub__(self)
 
     def __rsub__(self, other: IBoolean2D) -> IBoolean2D:
         return other & (~self)
@@ -155,7 +155,7 @@ class Whole(IBoolean2D):
     def __sub__(self, other: IBoolean2D) -> IBoolean2D:
         return ~other
 
-    def __rsub__(self, _: IBoolean2D) -> Empty:
+    def __rsub__(self, other: IBoolean2D) -> Empty:
         return Empty()
 
     def __xor__(self, other: IBoolean2D) -> IBoolean2D:
@@ -184,7 +184,7 @@ class ICurve(IObject2D):
         raise NotImplementedError
 
 
-class IShape(IObject2D):
+class IShape(IBoolean2D):
     @property
     @abstractmethod
     def area(self) -> Scalar:
