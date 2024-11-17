@@ -7,15 +7,17 @@ import pytest
 from shapepy.primitive import Primitive
 
 
-@pytest.mark.order(9)
+@pytest.mark.order(33)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_point.py::test_end",
-        "tests/test_jordan_polygon.py::test_end",
-        "tests/test_jordan_curve.py::test_end",
-        "tests/test_primitive.py::test_end",
-        "tests/test_contains.py::test_end",
         "tests/test_empty_whole.py::test_end",
+        "tests/test_point.py::test_end",
+        "tests/test_boolean.py::test_end",
+        "tests/test_primitive.py::test_end",
+        "tests/test_shape.py::test_end",
+        "tests/boolean/test_empty_whole.py::test_end",
+        "tests/boolean/test_bool_no_intersect.py::test_end",
+        "tests/boolean/test_bool_infinite_intersect.py::test_end",
     ],
     scope="session",
 )
@@ -24,7 +26,7 @@ def test_begin():
 
 
 class TestTriangle:
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -33,7 +35,7 @@ class TestTriangle:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTriangle::test_begin"])
     def test_or_triangles(self):
@@ -47,7 +49,7 @@ class TestTriangle:
         good = Primitive.polygon(vertices)
         assert test == good
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -66,7 +68,7 @@ class TestTriangle:
         good = Primitive.polygon(vertices)
         assert test == good
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -87,7 +89,7 @@ class TestTriangle:
 
         assert test == good
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.dependency(
         depends=[
             "TestTriangle::test_begin",
@@ -100,7 +102,7 @@ class TestTriangle:
         pass
 
 
-@pytest.mark.order(9)
+@pytest.mark.order(33)
 @pytest.mark.dependency(
     depends=[
         "TestTriangle::test_end",

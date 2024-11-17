@@ -6,7 +6,7 @@ import pytest
 
 from shapepy.core import Empty, Whole
 from shapepy.primitive import Primitive
-from shapepy.shape import ConnectedShape, DisjointShape
+from shapepy.shape import ConnectedShape
 
 
 @pytest.mark.order(30)
