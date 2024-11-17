@@ -368,10 +368,10 @@ def test_divide_random_pmax1():
 
     for _ in range(200):
         a, b, c = np.random.randint(-10, 11, 3)
-        if not (a or b or c):
-            continue
         numer = a * sint + b * cost + c
         a, b, c = np.random.randint(-10, 11, 3)
+        if not (a or b or c):
+            continue
         denom = a * sint + b * cost + c
         quot, rest = divmod(numer, denom)
         assert numer == quot * denom + rest
