@@ -33,7 +33,7 @@ def permutations(*numbers: int) -> Iterable[Tuple[int, ...]]:
                 yield (j,) + perm
 
 
-class Inverse(IBoolean2D):
+class BoolNot(IBoolean2D):
     """
     Inverse container of an object
     """
@@ -56,7 +56,7 @@ class Inverse(IBoolean2D):
         other = expand(other)
         if type(selff) is not type(other):
             return False
-        if not isinstance(selff, Inverse):
+        if not isinstance(selff, BoolNot):
             return selff == other
         return selff.object == other.object
 
@@ -76,7 +76,7 @@ class Inverse(IBoolean2D):
         return intersection(self, other)
 
 
-class Union(IBoolean2D):
+class BoolOr(IBoolean2D):
     """
     Union container of some objects
     """
@@ -101,7 +101,7 @@ class Union(IBoolean2D):
         other = expand(other)
         if type(selff) is not type(other):
             return False
-        if not isinstance(selff, Union):
+        if not isinstance(selff, BoolOr):
             return selff == other
         selfobjs = tuple(selff)
         otheobjs = list(other)
@@ -139,7 +139,7 @@ class Union(IBoolean2D):
         return intersection(self, other)
 
 
-class Intersection(IBoolean2D):
+class BoolAnd(IBoolean2D):
     """
     Intersection container of some objects
     """
@@ -164,7 +164,7 @@ class Intersection(IBoolean2D):
         other = expand(other)
         if type(selff) is not type(other):
             return False
-        if not isinstance(self, Intersection):
+        if not isinstance(self, BoolAnd):
             return selff == other
         selfobjs = tuple(selff)
         otheobjs = list(other)
@@ -208,9 +208,9 @@ def invert(object: IObject2D) -> IObject2D:
     """
     if isinstance(object, (Empty, Whole)):
         raise NotImplementedError
-    if isinstance(object, Inverse):
+    if isinstance(object, BoolNot):
         return object.object
-    return Inverse(object)
+    return BoolNot(object)
 
 
 def union(*objects: IObject2D) -> IObject2D:
@@ -226,7 +226,7 @@ def union(*objects: IObject2D) -> IObject2D:
     objects = filter_equal(objects)
     if len(objects) == 1:
         return objects[0]
-    return flatten(Union(objects))
+    return flatten(BoolOr(objects))
 
 
 def intersection(*objects: IObject2D) -> IObject2D:
@@ -242,7 +242,7 @@ def intersection(*objects: IObject2D) -> IObject2D:
     objects = filter_equal(objects)
     if len(objects) == 1:
         return objects[0]
-    return flatten(Intersection(objects))
+    return flatten(BoolAnd(objects))
 
 
 def filter_equal(objects: Iterable[IObject2D]) -> Tuple[IObject2D, ...]:
@@ -265,7 +265,7 @@ def flatten(object: IObject2D) -> IObject2D:
     or[or[A, B], C] = or[A, B, C]
     and[and[A, B], C] = and[A, B, C]
     """
-    if not isinstance(object, (Union, Intersection)):
+    if not isinstance(object, (BoolOr, BoolAnd)):
         return object
     subobjs = tuple(object)
     items = []
@@ -292,54 +292,54 @@ def expand(object: IObject2D) -> IObject2D:
     """
     if not isinstance(object, IObject2D):
         raise TypeError
-    if not isinstance(object, (Inverse, Union, Intersection)):
+    if not isinstance(object, (BoolNot, BoolOr, BoolAnd)):
         return object
-    if isinstance(object, Inverse):
-        if not isinstance(object.object, (Union, Intersection)):
+    if isinstance(object, BoolNot):
+        if not isinstance(object.object, (BoolOr, BoolAnd)):
             return object
         invobj = flatten(object.object)
-        if isinstance(object.object, Union):
+        if isinstance(object.object, BoolOr):
             object = intersection(*map(invert, invobj))
-        elif isinstance(object.object, Intersection):
+        elif isinstance(object.object, BoolAnd):
             object = union(*map(invert, invobj))
         return expand(object)
     object = flatten(object)
-    if not isinstance(object, (Union, Intersection)):
+    if not isinstance(object, (BoolOr, BoolAnd)):
         raise NotImplementedError("Not expected get here")
     if len(object) == 1:
         return expand(object[0])
-    if isinstance(object, Union):
+    if isinstance(object, BoolOr):
         return object
     subobjs = tuple(object)
     sizes = [1] * len(subobjs)
     for i, subobj in enumerate(subobjs):
-        if isinstance(subobj, Union):
+        if isinstance(subobj, BoolOr):
             sizes[i] = len(subobj)
     if all(size == 1 for size in sizes):
         return object
     subinters = []
     for indexs in permutations(*sizes):
         subitems = [subobjs[i] for i in indexs]
-        subinters.append(Intersection(subitems))
-    return expand(Union(subinters))
+        subinters.append(BoolAnd(subitems))
+    return expand(BoolOr(subinters))
 
 
 def simplify(object: IObject2D) -> IObject2D:
     if not isinstance(object, IObject2D):
         raise TypeError
-    if not isinstance(object, (Inverse, Union, Intersection)):
+    if not isinstance(object, (BoolNot, BoolOr, BoolAnd)):
         return object
     object = expand(object)
-    if not isinstance(object, (Union, Intersection)):
+    if not isinstance(object, (BoolOr, BoolAnd)):
         return object
     subobjs = tuple(map(simplify, object))
     subobjs = filter_equal(subobjs)
     if len(subobjs) == 1:
         return simplify(subobjs[0])
     if has_inverse(subobjs):
-        if isinstance(object, Union):
+        if isinstance(object, BoolOr):
             return Whole()
-        if isinstance(object, Intersection):
+        if isinstance(object, BoolAnd):
             return Empty()
         raise NotImplementedError("Not expected get here")
     return object.__class__(subobjs)
@@ -351,12 +351,12 @@ def has_inverse(objects: Tuple[IObject2D, ...]) -> bool:
     the union or intersection of inversed shape.
 
     Example:
-        Union(object, ~object) -> Whole
+        BoolOr(object, ~object) -> Whole
         Intersection(object, ~object) -> Empty
     """
     objects = tuple(objects)
-    inveobjs = tuple(obj for obj in objects if isinstance(obj, Inverse))
-    normobjs = tuple(obj for obj in objects if not isinstance(obj, Inverse))
+    inveobjs = tuple(obj for obj in objects if isinstance(obj, BoolNot))
+    normobjs = tuple(obj for obj in objects if not isinstance(obj, BoolNot))
     for inveobj in inveobjs:
         for normobj in normobjs:
             if inveobj.object == normobj:
