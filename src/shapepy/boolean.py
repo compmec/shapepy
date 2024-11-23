@@ -38,6 +38,10 @@ class Inverse(IBoolean2D):
     Inverse container of an object
     """
 
+    @property
+    def ndim(self) -> int:
+        return 4
+
     def __init__(self, object: IObject2D):
         if not isinstance(object, IObject2D):
             raise TypeError
@@ -76,6 +80,10 @@ class Union(IBoolean2D):
     """
     Union container of some objects
     """
+
+    @property
+    def ndim(self) -> int:
+        return 4
 
     def __init__(self, objects: Iterable[IObject2D]):
         objects = tuple(objects)
@@ -135,6 +143,10 @@ class Intersection(IBoolean2D):
     """
     Intersection container of some objects
     """
+
+    @property
+    def ndim(self) -> int:
+        return 4
 
     def __init__(self, objects: Iterable[IObject2D]):
         objects = tuple(objects)

@@ -8,6 +8,10 @@ from .core import IObject2D, Scalar
 
 class Point2D(IObject2D):
 
+    @property
+    def ndim(self) -> int:
+        return 0
+
     def __new__(cls, *point: Union[Point2D, Tuple[Scalar, Scalar]]):
         if isinstance(point[0], cls):
             return point

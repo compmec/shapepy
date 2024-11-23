@@ -12,7 +12,11 @@ Parameter = Union[int, float]
 
 
 class IObject2D(ABC):
-    pass
+
+    @property
+    @abstractmethod
+    def ndim(self) -> int:
+        raise NotImplementedError
 
 
 class IBoolean2D(IObject2D):
@@ -22,14 +26,18 @@ class IBoolean2D(IObject2D):
         raise NotImplementedError
 
     def __and__(self, other: IBoolean2D) -> IBoolean2D:
-        return other.__rand__(self)
+        if self.ndim < other.ndim:
+            return other.__rand__(self)
+        return self.__rand__(other)
 
     @abstractmethod
     def __rand__(self, other: IBoolean2D) -> IBoolean2D:
         raise NotImplementedError
 
     def __or__(self, other: IBoolean2D) -> IBoolean2D:
-        return other.__ror__(self)
+        if self.ndim < other.ndim:
+            return other.__ror__(self)
+        return self.__ror__(other)
 
     @abstractmethod
     def __ror__(self, other: IBoolean2D) -> IBoolean2D:
@@ -39,7 +47,9 @@ class IBoolean2D(IObject2D):
         return ~self
 
     def __xor__(self, other: IBoolean2D) -> IBoolean2D:
-        return other.__rxor__(self)
+        if self.ndim < other.ndim:
+            return other.__rxor__(self)
+        return self.__rxor__(other)
 
     def __rxor__(self, other: IBoolean2D) -> IBoolean2D:
         return (self & (~other)) | (other & (~self))
@@ -51,13 +61,13 @@ class IBoolean2D(IObject2D):
         return other & (~self)
 
     def __add__(self, other: IBoolean2D) -> IBoolean2D:
-        return other.__radd__(self)
+        return self.__or__(other)
 
     def __radd__(self, other: IBoolean2D) -> IBoolean2D:
         return self.__ror__(other)
 
     def __mul__(self, other: IBoolean2D) -> IBoolean2D:
-        return other.__rmul__(self)
+        return self.__and__(other)
 
     def __rmul__(self, other: IBoolean2D) -> IBoolean2D:
         return self.__rand__(other)
@@ -77,6 +87,10 @@ class Empty(IBoolean2D):
     """
 
     __instance = None
+
+    @property
+    def ndim(self) -> int:
+        return 5
 
     def __new__(cls) -> Empty:
         if cls.__instance is None:
@@ -135,6 +149,10 @@ class Whole(IBoolean2D):
 
     __instance = None
 
+    @property
+    def ndim(self) -> int:
+        return 5
+
     def __new__(cls):
         if cls.__instance is None:
             cls.__instance = super(Whole, cls).__new__(cls)
@@ -178,6 +196,11 @@ class Whole(IBoolean2D):
 
 
 class ICurve(IObject2D):
+
+    @property
+    def ndim(self) -> int:
+        return 1
+
     @property
     @abstractmethod
     def lenght(self) -> Scalar:
@@ -185,6 +208,11 @@ class ICurve(IObject2D):
 
 
 class IShape(IBoolean2D):
+
+    @property
+    def ndim(self) -> int:
+        return 2
+
     @property
     @abstractmethod
     def area(self) -> Scalar:
