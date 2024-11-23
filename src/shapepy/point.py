@@ -3,10 +3,11 @@ from __future__ import annotations
 import math
 from typing import Tuple, Union
 
-from .core import IObject2D, Scalar
+from .boolean import BoolNot, BoolOr
+from .core import Empty, IBoolean2D, IObject2D, Scalar
 
 
-class Point2D(IObject2D):
+class Point2D(IBoolean2D):
 
     @property
     def ndim(self) -> int:
@@ -128,6 +129,27 @@ class Point2D(IObject2D):
         float(xscale)
         float(yscale)
         return self.__class__((xscale * self[0], yscale * self[1]))
+
+    def __invert__(self) -> BoolNot:
+        return BoolNot(self)
+
+    def __ror__(self, other: IBoolean2D) -> IBoolean2D:
+        if not isinstance(other, IObject2D):
+            other = Point2D(other)
+        if other.ndim != 0:
+            raise NotImplementedError("Not expected get here")
+        if other == self:
+            return self
+        return BoolOr([self, other])
+
+    def __rand__(self, other: IBoolean2D) -> IBoolean2D:
+        if not isinstance(other, IObject2D):
+            other = Point2D(other)
+        if other.ndim != 0:
+            raise NotImplementedError("Not expected get here")
+        if other == self:
+            return self
+        return Empty()
 
 
 GeneralPoint = Union[Point2D, Tuple[Scalar, Scalar]]
