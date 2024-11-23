@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Tuple
 
+from ..boolean import intersection, union
 from ..core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint, Point2D
@@ -149,7 +150,9 @@ class SimpleShape(IShape):
             return False
         if self.area != other.area:
             return False
-        return self.jordan == other.jordan and self.boundary == other.boundary
+        v1 = self.jordan == other.jordan
+        v2 = self.boundary == other.boundary
+        return v1 and v2
 
     def __invert__(self) -> SimpleShape:
         return self.__class__(~self.jordan, not self.boundary)
@@ -171,10 +174,22 @@ class SimpleShape(IShape):
         raise NotImplementedError
 
     def __ror__(self, other: IBoolean2D) -> IBoolean2D:
-        raise NotImplementedError
+        if other in self:
+            return self
+        if not isinstance(other, IShape):
+            return union(self, other)
+        from .boolean import unite_shapes
+
+        return unite_shapes(self, other)
 
     def __rand__(self, other: IBoolean2D) -> IBoolean2D:
-        raise NotImplementedError
+        if other in self:
+            return other
+        if not isinstance(other, IShape):
+            return intersection(self, other)
+        from .boolean import intersect_shapes
+
+        return intersect_shapes(self, other)
 
     def __contains_curve(self, other: ICurve) -> bool:
         if not isinstance(other, ICurve):

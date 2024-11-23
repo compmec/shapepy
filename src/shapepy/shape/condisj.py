@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Any, Iterable, Tuple, Union
 
+from ..boolean import intersection, union
 from ..core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint, Point2D
@@ -24,12 +25,13 @@ def sorter(items: Iterable[Any], /, *, reverse: bool = False) -> Iterable[int]:
 
 
 def identify_shape(
-    simples: Tuple[SimpleShape, ...]
+    simples: Iterable[SimpleShape],
 ) -> Union[SimpleShape, ConnectedShape, DisjointShape]:
     """
     Identify the final shape (Simple, Connected, Disjoint) from the
     given simple shapes
     """
+    simples = tuple(simples)
     for simple in simples:
         if not isinstance(simple, SimpleShape):
             raise TypeError
@@ -96,10 +98,22 @@ class ConnectedShape(IShape):
         return all(other in subshape for subshape in self.subshapes)
 
     def __ror__(self, other: IBoolean2D) -> IBoolean2D:
-        raise NotImplementedError
+        if other in self:
+            return self
+        if not isinstance(other, IShape):
+            return union(self, other)
+        from .boolean import unite_shapes
+
+        return unite_shapes(self, other)
 
     def __rand__(self, other: IBoolean2D) -> IBoolean2D:
-        raise NotImplementedError
+        if other in self:
+            return other
+        if not isinstance(other, IShape):
+            return intersection(self, other)
+        from .boolean import intersect_shapes
+
+        return intersect_shapes(self, other)
 
     @property
     def area(self) -> Scalar:
@@ -262,6 +276,8 @@ class DisjointShape(IShape):
         # Compare if a curve is inside another
         while len(self_subshapes) and len(othe_subshapes):
             for j, osbshape in enumerate(othe_subshapes):
+                if osbshape.area != self_subshapes[0].area:
+                    continue
                 if osbshape == self_subshapes[0]:
                     self_subshapes.pop(0)
                     othe_subshapes.pop(j)
@@ -294,10 +310,22 @@ class DisjointShape(IShape):
         raise NotImplementedError
 
     def __ror__(self, other: IBoolean2D) -> IBoolean2D:
-        raise NotImplementedError
+        if other in self:
+            return self
+        if not isinstance(other, IShape):
+            return union(self, other)
+        from .boolean import unite_shapes
+
+        return unite_shapes(self, other)
 
     def __rand__(self, other: IBoolean2D) -> IBoolean2D:
-        raise NotImplementedError
+        if other in self:
+            return other
+        if not isinstance(other, IShape):
+            return intersection(self, other)
+        from .boolean import intersect_shapes
+
+        return intersect_shapes(self, other)
 
     def __invert__(self) -> Union[ConnectedShape, DisjointShape]:
         simples = []
