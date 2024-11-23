@@ -18,7 +18,7 @@ from shapepy.shape import SimpleShape
         "tests/test_primitive.py::test_end",
         "tests/test_shape.py::test_end",
         "tests/boolean/test_empty_whole.py::test_end",
-        "tests/boolean/test_bool_no_intersect.py::test_end",
+        "tests/boolean/test_no_intersect.py::test_end",
     ],
     scope="session",
 )
