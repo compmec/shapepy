@@ -298,6 +298,10 @@ class BooleanOperate:
         if isinstance(object, ICurve):
             if isinstance(other, Point2D):
                 return Contains.point_in_curve(object, other)
+        if isinstance(object, Point2D) and isinstance(other, Point2D):
+            return object == other
+        if isinstance(object, BoolNot) and isinstance(object.object, Point2D):
+            return not BooleanOperate.contains(other, object.object)
         raise NotImplementedError(
             f"Not expected: {type(object)}, {type(other)}"
         )
@@ -469,6 +473,43 @@ class Simplify:
         return Simplify.expand(BoolOr(subinters))
 
     @staticmethod
+    def treat_contains_or(object: IBoolean2D) -> IBoolean2D:
+        if not isinstance(object, BoolOr):
+            return object
+        filtered = []
+        for subobj in tuple(object)[::-1]:
+            for filobj in filtered:
+                if subobj in filobj:
+                    break
+            else:
+                filtered.append(subobj)
+        return BoolOr(filtered)
+
+    @staticmethod
+    def treat_contains_and(object: IBoolean2D) -> IBoolean2D:
+        if not isinstance(object, BoolAnd):
+            return object
+        filtered = []
+        for subobj in tuple(object):
+            for filobj in filtered:
+                if subobj in filobj:
+                    break
+            else:
+                filtered.append(subobj)
+        return BoolAnd(filtered)
+
+    @staticmethod
+    def treat_points(object: IBoolean2D) -> IBoolean2D:
+        if not isinstance(object, BoolAnd):
+            return object
+        points = (sub for sub in object if isinstance(sub, Point2D))
+        for point in points:
+            for sub in object:
+                if point not in sub:
+                    return Empty()
+        return point
+
+    @staticmethod
     def simplify(object: IObject2D) -> IObject2D:
         if not isinstance(object, IObject2D):
             raise TypeError
@@ -487,4 +528,10 @@ class Simplify:
             if isinstance(object, BoolAnd):
                 return Empty()
             raise NotImplementedError("Not expected get here")
-        return object.__class__(subobjs)
+        object = object.__class__(subobjs)
+        if isinstance(object, BoolOr):
+            object = Simplify.treat_contains_or(object)
+        elif isinstance(object, BoolAnd):
+            object = Simplify.treat_contains_and(object)
+            object = Simplify.treat_points(object)
+        return object

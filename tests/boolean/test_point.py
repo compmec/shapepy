@@ -76,7 +76,6 @@ def test_sub():
 
 
 @pytest.mark.order(32)
-@pytest.mark.skip(reason="Needs simplify expression")
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

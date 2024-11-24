@@ -100,22 +100,20 @@ def test_compare():
 def test_addsub():
     pointa = Point2D(0, 0)
     pointb = Point2D(1, 1)
-    assert pointa + pointb == pointb
-    assert pointa - pointb == -pointb
-    assert pointb + pointa == pointb
-    assert pointb - pointa == pointb
+    assert pointa + pointb == (1, 1)
+    assert pointa - pointb == (-1, -1)
+    assert pointb + pointa == (1, 1)
+    assert pointb - pointa == (1, 1)
 
     pointa = Point2D(3, 4)
     pointb = Point2D(12, 5)
-    aplusb = Point2D(15, 9)
-    aminusb = Point2D(-9, -1)
-    assert pointa + pointb == aplusb
-    assert pointa - pointb == aminusb
-    assert pointb + pointa == aplusb
-    assert pointb - pointa == -aminusb
+    assert pointa + pointb == (15, 9)
+    assert pointa - pointb == (-9, -1)
+    assert pointb + pointa == (15, 9)
+    assert pointb - pointa == (9, 1)
 
-    assert pointa + (12, 5) == aplusb
-    assert pointa - (12, 5) == aminusb
+    assert pointa + (12, 5) == (15, 9)
+    assert pointa - (12, 5) == (-9, -1)
 
     assert pointa != (12, 5)
 
