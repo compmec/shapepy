@@ -7,11 +7,11 @@ import pytest
 
 from shapepy.boolean import BoolAnd, BoolNot, BoolOr
 from shapepy.core import Empty, Whole
+from shapepy.operations import Simplify
 from shapepy.point import Point2D
 
 
 @pytest.mark.order(3)
-@pytest.mark.skip()
 @pytest.mark.dependency(
     depends=[
         "tests/test_empty_whole.py::test_end",
@@ -28,35 +28,35 @@ def test_begin():
 def test_flatten():
     pointa = Point2D((0, 0))
     pointb = Point2D((1, 2))
-    assert flatten(pointa) == pointa
+    assert Simplify.flatten(pointa) == pointa
     invpta = BoolNot(pointa)
-    assert flatten(invpta) == invpta
+    assert Simplify.flatten(invpta) == invpta
 
     union = BoolOr([BoolOr([pointa, pointb]), pointa])
-    assert flatten(union) == BoolOr([pointa, pointa, pointb])
+    assert Simplify.flatten(union) == BoolOr([pointa, pointa, pointb])
     inter = BoolAnd([BoolAnd([pointa, pointb]), pointa])
-    assert flatten(inter) == BoolAnd([pointa, pointa, pointb])
+    assert Simplify.flatten(inter) == BoolAnd([pointa, pointa, pointb])
 
 
 @pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_begin", "test_flatten"])
 def test_expand():
     pointa = Point2D((0, 0))
-    assert expand(pointa) == pointa
+    assert Simplify.expand(pointa) == pointa
 
-    pointb = Point2D((0, 0))
+    pointb = Point2D((1, 1))
     invpointa = BoolNot(pointa)
     invpointb = BoolNot(pointb)
 
     test = BoolNot(BoolOr([pointa, pointb]))
     good = BoolAnd([invpointa, invpointb])
-    assert test == good
+    assert Simplify.expand(test) == good
 
     union0 = BoolOr([pointa, pointa])
     union1 = BoolOr([pointa, pointa])
     union2 = BoolOr([pointa, pointa])
     inters = BoolAnd([union0, union1, union2])
-    inters = expand(inters)
+    inters = Simplify.expand(inters)
 
 
 @pytest.mark.order(3)
@@ -78,7 +78,7 @@ def test_compare():
 def test_general():
     pointa = Point2D((0, 0))
     invpointa = BoolNot(pointa)
-    pointb = Point2D((0, 0))
+    pointb = Point2D((1, 1))
     invpointb = BoolNot(pointb)
 
     union = BoolOr([pointa, pointb])
@@ -90,10 +90,10 @@ def test_general():
     objecta = BoolOr([pointa, pointb])
     objectb = BoolOr([pointa, pointb])
     object = BoolAnd([objecta, objectb])
-    temp = expand(object)
+    temp = Simplify.expand(object)
 
     object = BoolNot(object)
-    temp = expand(object)
+    temp = Simplify.expand(object)
 
 
 @pytest.mark.order(3)
@@ -109,10 +109,10 @@ def test_simplify():
     empty, whole = Empty(), Whole()
 
     point = Point2D((0, 0))
-    assert simplify(BoolOr([point, point])) == point
-    assert simplify(BoolOr([point, BoolNot(point)])) is whole
-    assert simplify(BoolAnd([point, point])) == point
-    assert simplify(BoolAnd([point, BoolNot(point)])) is empty
+    assert Simplify.simplify(BoolOr([point, point])) == point
+    assert Simplify.simplify(BoolOr([point, BoolNot(point)])) is whole
+    assert Simplify.simplify(BoolAnd([point, point])) == point
+    assert Simplify.simplify(BoolAnd([point, BoolNot(point)])) is empty
 
 
 @pytest.mark.order(3)

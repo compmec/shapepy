@@ -502,12 +502,14 @@ class Simplify:
     def treat_points(object: IBoolean2D) -> IBoolean2D:
         if not isinstance(object, BoolAnd):
             return object
-        points = (sub for sub in object if isinstance(sub, Point2D))
+        points = tuple(sub for sub in object if isinstance(sub, Point2D))
         for point in points:
             for sub in object:
                 if point not in sub:
                     return Empty()
-        return point
+        if len(points) > 0:
+            return points[0]
+        return object
 
     @staticmethod
     def simplify(object: IObject2D) -> IObject2D:
