@@ -9,19 +9,12 @@ or even unconnected shapes.
 
 from __future__ import annotations
 
-from typing import Any, Iterable, Tuple, Union
+from typing import Iterable, Tuple, Union
 
-from ..boolean import intersection, union
-from ..core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
+from ..core import IObject2D, IShape, Scalar
 from ..curve.abc import IJordanCurve
-from ..point import GeneralPoint, Point2D
+from ..utils import sorter
 from .simple import SimpleShape
-
-
-def sorter(items: Iterable[Any], /, *, reverse: bool = False) -> Iterable[int]:
-    items = tuple(items)
-    values = sorted(zip(items, range(len(items))), reverse=reverse)
-    return (vs[-1] for vs in values)
 
 
 def identify_shape(
@@ -92,28 +85,8 @@ class ConnectedShape(IShape):
         simples = tuple(~simple for simple in self.subshapes)
         return DisjointShape(simples)
 
-    def __contains__(self, other: object) -> bool:
-        if not isinstance(other, IObject2D):
-            other = Point2D(other)
-        return all(other in subshape for subshape in self.subshapes)
-
-    def __ror__(self, other: IBoolean2D) -> IBoolean2D:
-        if other in self:
-            return self
-        if not isinstance(other, IShape):
-            return union(self, other)
-        from .boolean import unite_shapes
-
-        return unite_shapes(self, other)
-
-    def __rand__(self, other: IBoolean2D) -> IBoolean2D:
-        if other in self:
-            return other
-        if not isinstance(other, IShape):
-            return intersection(self, other)
-        from .boolean import intersect_shapes
-
-        return intersect_shapes(self, other)
+    def __iter__(self):
+        yield from self.__subshapes
 
     @property
     def area(self) -> Scalar:
@@ -170,84 +143,6 @@ class ConnectedShape(IShape):
         values = tuple(values[i] for i in indexs)
         self.__subshapes = tuple(values)
 
-    def move(self, point: GeneralPoint) -> ConnectedShape:
-        """
-        Moves/translate entire shape by an amount
-
-        Parameters
-        ----------
-
-        point : Point2D
-            The amount to move
-
-        :return: The same instance
-        :rtype: IShape
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.move(1, 2)
-
-        """
-        if not isinstance(point, Point2D):
-            point = Point2D(point)
-        for subshape in self.subshapes:
-            subshape.move(point)
-        return self
-
-    def scale(self, xscale: float, yscale: float) -> ConnectedShape:
-        """
-        Scales entire shape by an amount
-
-        Parameters
-        ----------
-
-        xscale : float
-            The amount to scale in horizontal direction
-        yscale : float
-            The amount to scale in vertical direction
-
-        :return: The same instance
-        :rtype: IShape
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.scale(2, 3)
-
-        """
-        for subshape in self.subshapes:
-            subshape.scale(xscale, yscale)
-        return self
-
-    def rotate(self, angle: float, degrees: bool = False) -> ConnectedShape:
-        """
-        Rotates entire shape around the origin by an amount
-
-        Parameters
-        ----------
-
-        angle : float
-            The amount to rotate around origin
-        degrees : bool, default = False
-            Flag to indicate if ``angle`` is in radians or degrees
-
-        :return: The same instance
-        :rtype: IShape
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.rotate(angle = 90, degrees = True)
-
-        """
-        for subshape in self.subshapes:
-            subshape.rotate(angle, degrees)
-        return self
-
 
 class DisjointShape(IShape):
     """
@@ -294,47 +189,8 @@ class DisjointShape(IShape):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def __contains__(self, other: object) -> bool:
-        if not isinstance(other, IObject2D):
-            other = Point2D(other)
-        if isinstance(other, (Point2D, ICurve)):
-            return any(other in subshape for subshape in self.subshapes)
-        if isinstance(other, Empty):
-            return True
-        if isinstance(other, Whole):
-            return False
-        if isinstance(other, DisjointShape):
-            return all(osub in self for osub in other.subshapes)
-        if isinstance(other, (SimpleShape, ConnectedShape)):
-            return any(other in subshape for subshape in self.subshapes)
-        raise NotImplementedError
-
-    def __ror__(self, other: IBoolean2D) -> IBoolean2D:
-        if other in self:
-            return self
-        if not isinstance(other, IShape):
-            return union(self, other)
-        from .boolean import unite_shapes
-
-        return unite_shapes(self, other)
-
-    def __rand__(self, other: IBoolean2D) -> IBoolean2D:
-        if other in self:
-            return other
-        if not isinstance(other, IShape):
-            return intersection(self, other)
-        from .boolean import intersect_shapes
-
-        return intersect_shapes(self, other)
-
-    def __invert__(self) -> Union[ConnectedShape, DisjointShape]:
-        simples = []
-        for subshape in self.subshapes:
-            if isinstance(subshape, SimpleShape):
-                simples.append(~subshape)
-            elif isinstance(subshape, ConnectedShape):
-                simples += [~sub for sub in subshape.subshapes]
-        return identify_shape(simples)
+    def __iter__(self):
+        yield from self.__subshapes
 
     @property
     def jordans(self) -> Tuple[IJordanCurve]:

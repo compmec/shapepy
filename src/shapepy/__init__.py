@@ -5,14 +5,18 @@ For the moment, it only uses polygon shapes:
     retangular is a 4-side shape while a circle is a polygon with many sides
 """
 
-from .core import Empty, Whole
+from .core import Empty, IBoolean2D, IObject2D, Whole
 from .curve import JordanPolygon, JordanSpline
+from .operations import BooleanOperate, Transformation
 from .plot import ShapePloter
 from .point import Point2D
 from .primitive import Primitive
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 __version__ = "1.1.0"
+
+IObject2D.transform = Transformation
+IBoolean2D.booloperate = BooleanOperate
 
 if __name__ == "__main__":
     pass

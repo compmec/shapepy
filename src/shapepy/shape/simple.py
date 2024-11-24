@@ -11,10 +11,8 @@ from __future__ import annotations
 
 from typing import Tuple
 
-from ..boolean import intersection, union
-from ..core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
+from ..core import IObject2D, IShape, Scalar
 from ..curve.abc import IJordanCurve
-from ..point import GeneralPoint, Point2D
 
 
 class SimpleShape(IShape):
@@ -49,81 +47,6 @@ class SimpleShape(IShape):
     def boundary(self) -> bool:
         return self.__boundary
 
-    def move(self, point: GeneralPoint) -> SimpleShape:
-        """
-        Moves/translate entire shape by an amount
-
-        Parameters
-        ----------
-
-        point : Point2D
-            The amount to move
-
-        :return: The same instance
-        :rtype: IShape
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.move(1, 2)
-
-        """
-        if not isinstance(point, Point2D):
-            point = Point2D(point)
-        self.__jordan = self.jordan.move(point)
-        return self
-
-    def scale(self, xscale: float, yscale: float) -> IShape:
-        """
-        Scales entire shape by an amount
-
-        Parameters
-        ----------
-
-        xscale : float
-            The amount to scale in horizontal direction
-        yscale : float
-            The amount to scale in vertical direction
-
-        :return: The same instance
-        :rtype: IShape
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.scale(2, 3)
-
-        """
-        self.__jordan = self.jordan.scale(xscale, yscale)
-        return self
-
-    def rotate(self, angle: float, degrees: bool = False) -> IShape:
-        """
-        Rotates entire shape around the origin by an amount
-
-        Parameters
-        ----------
-
-        angle : float
-            The amount to rotate around origin
-        degrees : bool, default = False
-            Flag to indicate if ``angle`` is in radians or degrees
-
-        :return: The same instance
-        :rtype: IShape
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.rotate(angle = 90, degrees = True)
-
-        """
-        self.__jordan = self.jordan.rotate(angle, degrees)
-        return self
-
     def __str__(self) -> str:
         msg = f"Simple Shape of area {self.area} with vertices:\n"
         msg += "[" + ",\n ".join(map(str, self.jordan.vertices)) + "]"
@@ -156,74 +79,3 @@ class SimpleShape(IShape):
 
     def __invert__(self) -> SimpleShape:
         return self.__class__(~self.jordan, not self.boundary)
-
-    def __contains__(self, other: object) -> bool:
-        if isinstance(other, Point2D) or not isinstance(other, IObject2D):
-            wind = self.jordan.winding(other)
-            return wind == 1 or (0 < wind and self.boundary)
-        if isinstance(other, Empty):
-            return True
-        if isinstance(other, Whole):
-            return False
-        if isinstance(other, ICurve):
-            return self.__contains_curve(other)
-        if isinstance(other, SimpleShape):
-            return self.__contains_simple(other)
-        if isinstance(other, IShape):
-            return (~self) in (~other)
-        raise NotImplementedError
-
-    def __ror__(self, other: IBoolean2D) -> IBoolean2D:
-        if other in self:
-            return self
-        if not isinstance(other, IShape):
-            return union(self, other)
-        from .boolean import unite_shapes
-
-        return unite_shapes(self, other)
-
-    def __rand__(self, other: IBoolean2D) -> IBoolean2D:
-        if other in self:
-            return other
-        if not isinstance(other, IShape):
-            return intersection(self, other)
-        from .boolean import intersect_shapes
-
-        return intersect_shapes(self, other)
-
-    def __contains_curve(self, other: ICurve) -> bool:
-        if not isinstance(other, ICurve):
-            raise NotImplementedError
-        if not all(vertex in self for vertex in other.vertices):
-            return False
-        nnodes = 64
-        unodes = tuple(i / nnodes for i in range(1, nnodes))
-        param_curve = other.param_curve
-        for ka, kb in zip(param_curve.knots, param_curve.knots[1:]):
-            for unode in unodes:
-                tnode = (1 - unode) * ka + unode * kb
-                if param_curve.eval(tnode, 0) not in self:
-                    return False
-        return True
-
-    def __contains_simple(self, other: SimpleShape) -> bool:
-        if not isinstance(other, SimpleShape):
-            raise TypeError
-        spos = self.area > 0
-        opos = other.area > 0
-        if spos ^ opos:
-            if spos and not opos:
-                return False
-        elif self.area < other.area:
-            return False
-        elif spos and opos:
-            return other.jordan in self
-        elif self == other:
-            return True
-        if self.boundary or other.boundary:
-            return other.jordan in self and self.jordan not in other
-        self.__boundary = True
-        try:
-            return other.jordan in self and self.jordan not in other
-        finally:
-            self.__boundary = False

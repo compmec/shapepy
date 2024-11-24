@@ -52,6 +52,7 @@ def test_inverse():
 def test_or():
     empty = Empty()
     whole = Whole()
+
     assert empty | empty is empty
     assert empty | whole is whole
     assert whole | empty is whole

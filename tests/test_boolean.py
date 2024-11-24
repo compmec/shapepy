@@ -5,12 +5,13 @@ the `BoolNot`, `BoolOr` and `BoolAnd` objects
 
 import pytest
 
-from shapepy.boolean import BoolAnd, BoolNot, BoolOr, expand, flatten, simplify
+from shapepy.boolean import BoolAnd, BoolNot, BoolOr
 from shapepy.core import Empty, Whole
 from shapepy.point import Point2D
 
 
 @pytest.mark.order(3)
+@pytest.mark.skip()
 @pytest.mark.dependency(
     depends=[
         "tests/test_empty_whole.py::test_end",

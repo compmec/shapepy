@@ -183,7 +183,7 @@ class TestTransformationPolygon:
 
         test_square_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_square = JordanPolygon(test_square_pts)
-        test_square.move((2, 4))
+        test_square = test_square.move((2, 4))
 
         assert test_square == good_square
 
@@ -200,7 +200,7 @@ class TestTransformationPolygon:
         good_rectangle = JordanPolygon(good_rectangle_pts)
         test_rectangle_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_rectangle = JordanPolygon(test_rectangle_pts)
-        test_rectangle.scale(2, 3)
+        test_rectangle = test_rectangle.scale(2, 3)
         assert test_rectangle == good_rectangle
 
     @pytest.mark.order(4)
@@ -219,9 +219,9 @@ class TestTransformationPolygon:
         test_square = JordanPolygon(test_square_pts)
 
         assert test_square == good_square
-        test_square.rotate(np.pi / 6)  # 30 degrees
+        test_square = test_square.rotate(np.pi / 6)  # 30 degrees
         assert test_square != good_square
-        test_square.rotate(60, degrees=True)
+        test_square = test_square.rotate(60, degrees=True)
         assert test_square == good_square
 
     @pytest.mark.order(4)
