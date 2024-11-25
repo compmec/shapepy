@@ -5,7 +5,7 @@ This file contains tests functions to test the module polygon.py
 import numpy as np
 import pytest
 
-from shapepy.curve.analytic.polynomial import Polynomial, find_roots
+from shapepy.analytic.polynomial import Polynomial, find_roots
 
 
 @pytest.mark.order(3)

@@ -21,7 +21,7 @@ from fractions import Fraction
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
-from ...core import IAnalytic
+from ..core import IAnalytic
 
 Parameter = Union[int, float]
 Scalar = Union[int, float]

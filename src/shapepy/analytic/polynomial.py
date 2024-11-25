@@ -9,7 +9,7 @@ import math
 from functools import lru_cache
 from typing import Any, Iterable, Tuple, Union
 
-from ...core import IAnalytic, Parameter, Scalar
+from ..core import IAnalytic, Parameter, Scalar
 
 
 @lru_cache

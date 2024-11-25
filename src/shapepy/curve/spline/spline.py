@@ -4,8 +4,8 @@ from typing import Any, Iterable, Optional, Tuple
 
 import numpy as np
 
+from ...analytic.polynomial import Polynomial, binom
 from ...core import Parameter
-from ..analytic.polynomial import Polynomial, binom
 from .knotvector import KnotVector
 
 

@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 import sympy as sp
 
-from shapepy.curve.analytic.trigonometric import Trignomial
+from shapepy.analytic.trigonometric import Trignomial
 
 
 @pytest.mark.order(3)
