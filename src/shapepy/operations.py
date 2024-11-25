@@ -476,27 +476,35 @@ class Simplify:
     def treat_contains_or(object: IBoolean2D) -> IBoolean2D:
         if not isinstance(object, BoolOr):
             return object
-        filtered = []
-        for subobj in tuple(object)[::-1]:
-            for filobj in filtered:
-                if subobj in filobj:
+        subobjs = tuple(object)[::-1]
+        filtered = set(range(len(subobjs)))
+        for i, subi in enumerate(subobjs):
+            for j in filtered:
+                if j == i:
+                    continue
+                if subi in subobjs[j]:
+                    filtered.remove(i)
                     break
-            else:
-                filtered.append(subobj)
-        return BoolOr(filtered)
+        if len(filtered) == 1:
+            return subobjs[tuple(filtered)[0]]
+        return BoolOr(tuple(subobjs[i] for i in filtered))
 
     @staticmethod
     def treat_contains_and(object: IBoolean2D) -> IBoolean2D:
         if not isinstance(object, BoolAnd):
             return object
-        filtered = []
-        for subobj in tuple(object):
-            for filobj in filtered:
-                if subobj in filobj:
+        subobjs = tuple(object)
+        filtered = set(range(len(subobjs)))
+        for i, subi in enumerate(subobjs):
+            for j in filtered:
+                if j == i:
+                    continue
+                if subobjs[j] in subi:
+                    filtered.remove(i)
                     break
-            else:
-                filtered.append(subobj)
-        return BoolAnd(filtered)
+        if len(filtered) == 1:
+            return subobjs[tuple(filtered)[0]]
+        return BoolAnd(tuple(subobjs[i] for i in filtered))
 
     @staticmethod
     def treat_points(object: IBoolean2D) -> IBoolean2D:
