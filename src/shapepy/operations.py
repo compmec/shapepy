@@ -6,6 +6,7 @@ from .core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from .curve import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
 from .point import GeneralPoint, Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
+from .shape.boolean import intersect_shapes, unite_shapes
 from .utils import permutations, sorter
 
 
@@ -544,4 +545,19 @@ class Simplify:
         elif isinstance(object, BoolAnd):
             object = Simplify.treat_contains_and(object)
             object = Simplify.treat_points(object)
+        if not isinstance(object, (BoolOr, BoolAnd)):
+            return object
+        shapes = tuple(sub for sub in object if isinstance(sub, IShape))
+        if len(shapes) > 1:
+            others = [sub for sub in object if not isinstance(sub, IShape)]
+            if isinstance(object, BoolOr):
+                shape = unite_shapes(*shapes)
+            elif isinstance(object, BoolAnd):
+                shape = intersect_shapes(*shapes)
+            others.append(shape)
+            if isinstance(object, BoolAnd):
+                object = BooleanOperate.intersect(*others)
+            elif isinstance(object, BoolOr):
+                object = BooleanOperate.union(*others)
+            return Simplify.simplify(object)
         return object
