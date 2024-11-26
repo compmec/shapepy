@@ -6,19 +6,35 @@ from .core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from .curve import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
 from .point import GeneralPoint, Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
-from .shape.boolean import intersect_shapes, unite_shapes
+from .shape.boolean import (
+    close_shape,
+    intersect_shapes,
+    open_shape,
+    unite_shapes,
+)
 from .utils import permutations, sorter
 
 
-def closes(shape: IShape) -> IShape:
+def close(object: IBoolean2D) -> IBoolean2D:
     """
     Set boundaries to True
     """
-    if not isinstance(shape, IShape):
-        raise TypeError
-    if isinstance(shape, SimpleShape):
-        return SimpleShape(shape.jordan, True)
-    return shape.__class__(tuple(map(closes, shape.subshapes)))
+    if isinstance(object, (Empty, Whole, Point2D)):
+        return object
+    if isinstance(object, IShape):
+        return close_shape(object)
+    raise NotImplementedError("Not expected get here")
+
+
+def open(object: IBoolean2D) -> IBoolean2D:
+    """
+    Set boundaries to False
+    """
+    if isinstance(object, (Empty, Whole, Point2D)):
+        return object
+    if isinstance(object, IShape):
+        return open_shape(object)
+    raise NotImplementedError("Not expected get here")
 
 
 class Configuration:

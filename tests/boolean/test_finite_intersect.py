@@ -7,18 +7,17 @@ import pytest
 
 from shapepy.primitive import Primitive
 from shapepy.shape import SimpleShape
+from shapepy.shape.boolean import close_shape
 
 
 @pytest.mark.order(32)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_empty_whole.py::test_end",
         "tests/test_point.py::test_end",
-        "tests/test_boolean.py::test_end",
         "tests/test_primitive.py::test_end",
         "tests/test_shape.py::test_end",
         "tests/boolean/test_empty_whole.py::test_end",
-        "tests/boolean/test_no_intersect.py::test_end",
+        "tests/boolean/test_nobound_intersect.py::test_end",
     ],
     scope="session",
 )
@@ -48,7 +47,7 @@ class TestIntersectionSimple:
         good_points += [(0, -1), (1, -2), (3, 0), (1, 2)]
         good_shape = Primitive.polygon(good_points)
 
-        test_shape = square0 | square1
+        test_shape = close_shape(square0 | square1)
         assert test_shape == good_shape
 
     @pytest.mark.order(32)
@@ -58,7 +57,7 @@ class TestIntersectionSimple:
         square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
         square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
-        test = square0 & square1
+        test = close_shape(square0 & square1)
         good = Primitive.regular_polygon(nsides=4, radius=1, center=(0, 0))
         assert test == good
 
@@ -77,11 +76,10 @@ class TestIntersectionSimple:
         left_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2), (0, -1), (-1, 0)]
         left_shape = Primitive.polygon(left_points)
         right_points = [(0, 1), (1, 0), (0, -1), (1, -2), (3, 0), (1, 2)]
-        right_jordanpoly = Primitive.polygon(right_points)
-        right_shape = SimpleShape(right_jordanpoly)
+        right_shape = Primitive.polygon(right_points)
 
-        assert square0 - square1 == left_shape
-        assert square1 - square0 == right_shape
+        assert close_shape(square0 - square1) == left_shape
+        assert close_shape(square1 - square0) == right_shape
 
     @pytest.mark.order(32)
     @pytest.mark.dependency(

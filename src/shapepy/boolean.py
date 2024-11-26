@@ -61,6 +61,8 @@ class BoolOr(IBoolean2D):
                 raise TypeError
             if isinstance(object, (Empty, Whole)):
                 raise TypeError
+        if len(objects) < 2:
+            raise ValueError(f"Cannot init a BoolOr with {len(objects)} objs")
         self.__objects = objects
 
     def __eq__(self, other: object) -> bool:
@@ -111,6 +113,8 @@ class BoolAnd(IBoolean2D):
                 raise TypeError
             if isinstance(object, (Empty, Whole)):
                 raise TypeError
+        if len(objects) < 2:
+            raise ValueError(f"Cannot init a BoolOr with {len(objects)} objs")
         self.__objects = objects
 
     def __eq__(self, other: object) -> bool:

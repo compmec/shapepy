@@ -14,10 +14,30 @@ from typing import Dict, Iterable, Tuple
 import numpy as np
 
 from ..core import Empty, IBoolean2D, IShape, Whole
-from ..curve.abc import IJordanCurve, IParameterCurve
+from ..curve.abc import IJordanCurve
+from ..curve.concatenate import concatenate, transform_to_jordan
+from ..curve.intersect import curve_and_curve
 from ..point import Point2D
 from .condisj import ConnectedShape, DisjointShape, identify_shape
 from .simple import SimpleShape
+
+
+def close_shape(shape: IShape) -> IShape:
+    if not isinstance(shape, IShape):
+        raise TypeError
+    if isinstance(shape, SimpleShape):
+        return SimpleShape(shape.jordan, True)
+    subshapes = tuple(map(close_shape, shape.subshapes))
+    return shape.__class__(subshapes)
+
+
+def open_shape(shape: IShape) -> IShape:
+    if not isinstance(shape, IShape):
+        raise TypeError
+    if isinstance(shape, SimpleShape):
+        return SimpleShape(shape.jordan, False)
+    subshapes = tuple(map(open_shape, shape.subshapes))
+    return shape.__class__(subshapes)
 
 
 def flatten2simples(shape: IShape) -> Tuple[SimpleShape, ...]:
@@ -32,10 +52,6 @@ def flatten2simples(shape: IShape) -> Tuple[SimpleShape, ...]:
         for subshape in shape.subshapes:
             subshapes += list(flatten2simples(subshape))
     raise NotImplementedError
-
-
-def intersection(curvea: IParameterCurve, curveb: IParameterCurve):
-    return tuple()  # No intersection implemented yet
 
 
 def unite_shapes(*shapes: IShape) -> IBoolean2D:
@@ -61,7 +77,7 @@ def unite_shapes(*shapes: IShape) -> IBoolean2D:
         else:
             folsimples[i] = simpli
     if folsimples:
-        raise NotImplementedError
+        newsimples += FollowPath.follow(orisimples, positions, params_inters)
     if len(newsimples) == 0:
         return Whole()
     return identify_shape(newsimples)
@@ -76,9 +92,9 @@ def intersect_shapes(*shapes: IShape) -> IBoolean2D:
         orisimples += flatten2simples(shape)
     params_inters = tuple(FollowPath.curves_intersection(shapes))
     allpairs = set()
-    for triplea, tripleb in params_inters:
-        allpairs.add(triplea)
-        allpairs.add(tripleb)
+    for paira, pairb in params_inters:
+        allpairs.add(paira)
+        allpairs.add(pairb)
     positions = FollowPath.position_midpoints(shapes, allpairs, False)
     newsimples = []
     folsimples = {}
@@ -90,7 +106,7 @@ def intersect_shapes(*shapes: IShape) -> IBoolean2D:
         else:
             folsimples[i] = simpli
     if folsimples:
-        raise NotImplementedError
+        newsimples += FollowPath.follow(orisimples, positions, params_inters)
     if len(newsimples) == 0:
         return Empty()
     return identify_shape(newsimples)
@@ -104,17 +120,23 @@ class FollowPath:
 
     @staticmethod
     def two_curve_inter(
-        curvea: IParameterCurve, curveb: IParameterCurve
-    ) -> Iterable[Tuple[float]]:
+        curvea: IJordanCurve, curveb: IJordanCurve
+    ) -> Iterable[Tuple[float, float]]:
         """
         Computes the intersection of two parameted curves P(t) and Q(u)
         returning the pairs (ti, ui) such P(ti) = Q(ui)
         """
-        if not isinstance(curvea, IParameterCurve):
+        if not isinstance(curvea, IJordanCurve):
             raise TypeError
-        if not isinstance(curveb, IParameterCurve):
+        if not isinstance(curveb, IJordanCurve):
             raise TypeError
-        for item in intersection(curvea, curveb):
+        objs = curve_and_curve(curvea, curveb)
+        curvea = curvea.param_curve
+        curveb = curveb.param_curve
+        if isinstance(objs, Empty):
+            return
+        objs = (objs,) if isinstance(objs, Point2D) else tuple(objs)
+        for item in objs:
             if not isinstance(item, Point2D):
                 raise NotImplementedError
             parama = curvea.projection(item)[0]
@@ -134,10 +156,9 @@ class FollowPath:
         Which jordansa[i](a) == jordansb[j](b)
         """
         for i, jordani in enumerate(shapea.jordans):
-            curvei = jordani.param_curve
             for j, jordanj in enumerate(shapeb.jordans):
-                curvej = jordanj.param_curve
-                for ti, tj in FollowPath.two_curve_inter(curvei, curvej):
+                pairs = FollowPath.two_curve_inter(jordani, jordanj)
+                for ti, tj in pairs:
                     yield (i, ti), (j, tj)
 
     @staticmethod
@@ -217,7 +238,7 @@ class FollowPath:
 
     @staticmethod
     def follow(
-        jordans: Tuple[IJordanCurve],
+        simples: Tuple[SimpleShape],
         allpositions: Tuple[Tuple[bool]],
         intersparams: Tuple,
     ) -> Tuple[IJordanCurve, ...]:
@@ -244,15 +265,14 @@ class FollowPath:
         return: Tuple[IJordanCurve]
             The wanted jordan curves that don't intersect each others
         """
-        all_curves = tuple(jordan.param_curve for jordan in jordans)
+        all_curves = tuple(simple.jordan.param_curve for simple in simples)
         intersparams = tuple(intersparams)
         allpositions = list(map(list, allpositions))
 
         newjordans: list[IJordanCurve] = []
         for i, positions in enumerate(allpositions):
-            if all(positions):
-                allpositions[i] = [False] * len(positions)
-                newjordans.append(jordans[i])
+            if all(positions) or not any(positions):
+                raise ValueError
         if not intersparams:
             return tuple(newjordans)
 
@@ -295,7 +315,7 @@ class FollowPath:
                 for j, nodea, nodeb in triplets:
                     segment = all_curves[j].section(nodea, nodeb)
                     new_segments.append(segment)
-                new_jordan = None
+                new_curve = concatenate(*new_segments)
+                new_jordan = transform_to_jordan(new_curve)
                 newjordans.append(new_jordan)
-
-        return tuple(newjordans)
+        return tuple(SimpleShape(jordan, False) for jordan in newjordans)
