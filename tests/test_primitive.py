@@ -114,7 +114,6 @@ class TestPrimitive:
         assert abs(triangle.area - area) < 1e-9
 
     @pytest.mark.order(5)
-    @pytest.mark.skip(reason="Needs new implementation")
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -127,13 +126,12 @@ class TestPrimitive:
     )
     def test_circle(self):
         circle = Primitive.circle()
-        area = math.pi
-        assert abs(float(circle) - area) < 1e-3
+        assert abs(circle.area - math.pi) < 1e-3
 
         radius = 5
         circle = Primitive.circle(radius=radius)
         area = math.pi * radius**2
-        assert abs(float(circle) - area) < 1e-3 * radius**2
+        assert abs(circle.area - area) < 1e-3 * radius**2
 
     @pytest.mark.order(5)
     @pytest.mark.timeout(10)
