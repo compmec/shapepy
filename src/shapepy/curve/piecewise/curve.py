@@ -10,7 +10,7 @@ from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter
 
 class Piecewise(IParameterCurve):
 
-    def __init__(self, functions: Tuple[Tuple[IAnalytic, IAnalytic], ...]):
+    def __init__(self, functions: Iterable[Tuple[IAnalytic, IAnalytic]]):
         functions = tuple(functions)
         for func in functions:
             if len(func) != 2:
@@ -19,6 +19,11 @@ class Piecewise(IParameterCurve):
                 raise TypeError
             if not isinstance(func[1], IAnalytic):
                 raise TypeError
+        for i, fi in enumerate(functions[:-1]):
+            fj = functions[i + 1]
+            for fik, fjk in zip(fi, fj):
+                if fik.eval(i) != fjk.eval(i):
+                    raise ValueError("Not continous curve")
         self.__funcs = functions
 
     @property
@@ -67,6 +72,13 @@ class PiecewiseOpenCurve(Piecewise, IOpenCurve):
 
 
 class PiecewiseClosedCurve(Piecewise, IClosedCurve):
+
+    def __init__(self, functions: Tuple[Tuple[IAnalytic]]):
+        super().__init__(functions)
+        nsegs = self.nsegs
+        for fi, fj in zip(functions[0], functions[-1]):
+            if fi.eval(0) != fj.eval(nsegs):
+                raise ValueError("Not continous closed curve")
 
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
         node %= self.nsegs
