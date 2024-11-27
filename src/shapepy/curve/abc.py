@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from abc import abstractmethod
-from typing import Tuple
+from typing import Iterable, Tuple
 
 from ..core import ICurve, Parameter, Scalar
 from ..point import GeneralPoint, Point2D
@@ -38,7 +38,7 @@ class IParameterCurve(ICurve):
         raise NotImplementedError
 
     @abstractmethod
-    def projection(self, point: GeneralPoint) -> Tuple[Parameter, ...]:
+    def projection(self, point: GeneralPoint) -> Iterable[Parameter]:
         raise NotImplementedError
 
     def __call__(self, node: Parameter) -> Point2D:

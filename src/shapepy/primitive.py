@@ -12,7 +12,9 @@ from typing import Tuple
 
 import numpy as np
 
+from .analytic.trigonometric import Trignomial
 from .core import Scalar
+from .curve.piecewise import JordanPiecewise
 from .curve.polygon import JordanPolygon
 from .point import GeneralPoint, Point2D
 from .shape import SimpleShape
@@ -207,4 +209,7 @@ class Primitive:
         .. image:: ../img/primitive/positive_circle.svg
 
         """
-        return Primitive.regular_polygon(32, radius, center)
+        xfunc = Trignomial((center[0], 0 * radius, radius), 1)
+        yfunc = Trignomial((center[1], radius, 0 * radius), 1)
+        jordan = JordanPiecewise(((xfunc, yfunc),))
+        return SimpleShape(jordan, True)
