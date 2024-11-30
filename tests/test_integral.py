@@ -3,6 +3,7 @@ This file contains tests functions to test the module polygon.py
 """
 
 import math
+from typing import Tuple
 
 import numpy as np
 import pytest
@@ -122,7 +123,26 @@ class TestCircle:
             for j in range(b + i):
                 val *= (2 * j + 1) / (2 * j + 2)
             soma += val * math.comb(a, i) * (1 - 2 * (i % 2))
-        return 2 * soma
+        return soma
+
+    @staticmethod
+    def bidim_integ(
+        radius: float, xcenter: float, ycenter: float, expx: int, expy: int
+    ):
+        """
+        Computes I(R, x, y, a, b):
+        I(a, b) =
+            int_{0}^{2pi} int_{0}^{R} (x+r*cos t)^a * (y+r*sin t)^b * r dr dt
+        """
+        soma = 0
+        for i in range(expx + 1):
+            for j in range(expy + 1):
+                value = math.comb(expx, i) * math.comb(expy, j)
+                value *= xcenter ** (expx - i) * ycenter ** (expy - j)
+                value *= radius ** (i + j + 2) / (i + j + 2)
+                value *= TestCircle.sincos_integ(i, j)
+                soma += value
+        return 2 * math.pi * soma
 
     @pytest.mark.order(10)
     @pytest.mark.dependency(depends=["test_begin"])
@@ -186,30 +206,25 @@ class TestCircle:
                 for expy in range(0, 10):
                     test = polynomial(circle, (expx, expy))
                     good = radius ** (expx + expy + 2)
-                    good *= math.pi / (expx + expy + 2)
+                    good *= 2 * math.pi / (expx + expy + 2)
                     good *= TestCircle.sincos_integ(expx, expy)
                     assert abs(test - good) < 1e-6
 
     @pytest.mark.order(10)
-    @pytest.mark.skip("Needs correction")
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestCircle::test_centered"])
     def test_random(self):
         ntests = 100
         for _ in range(ntests):
-            radius = np.random.uniform(1, 2)
-            area = math.pi * radius**2
-            xcen, ycen = np.random.uniform(-10, 10, 2)
+            radius = np.random.uniform(0.25, 1)
+            xcen, ycen = np.random.uniform(-1, 1, 2)
             circle = Primitive.circle(radius, (xcen, ycen))
-            for expx in range(1, 10):
-                for expy in range(1, 10):
+            for expx in range(10):
+                for expy in range(10):
                     test = polynomial(circle, (expx, expy))
-                    good0 = area * xcen**expx * ycen**expy
-                    good0 /= expx * expy
-                    good1 = radius ** (expx + expy + 2)
-                    good1 *= math.pi / (expx + expy + 2)
-                    good1 *= TestCircle.sincos_integ(expx, expy)
-                    good = good0 + good1
+                    good = TestCircle.bidim_integ(
+                        radius, xcen, ycen, expx, expy
+                    )
                     assert abs(test - good) < 1e-9
 
     @pytest.mark.order(10)
