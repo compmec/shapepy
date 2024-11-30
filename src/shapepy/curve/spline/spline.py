@@ -5,7 +5,9 @@ from typing import Any, Iterable, Optional, Tuple
 import numpy as np
 
 from ...analytic.polynomial import Polynomial, binom
-from ...core import Parameter
+from ...core import Parameter, Scalar
+from ...point import GeneralPoint, Point2D
+from ..abc import IClosedCurve, IOpenCurve, IParameterCurve
 from .knotvector import KnotVector
 
 
@@ -92,6 +94,7 @@ def compute_segments(
     matrix3d = global_speval_matrix(knotvector, knotvector.degree)
     shape = len(knotvector.knots) - 1, knotvector.degree + 1
     allcoefs = np.zeros(shape, dtype="object")
+    allcoefs.fill(0 * ctrlpoints[0])
     for j, span in enumerate(knotvector.spans):
         for y in range(knotvector.degree + 1):
             i = y + span - knotvector.degree
@@ -137,6 +140,10 @@ class Spline:
     def segments(self) -> Tuple[Polynomial, ...]:
         return self.__segments
 
+    @property
+    def lenght(self) -> Scalar:
+        raise NotImplementedError
+
     def eval(self, node: Parameter, derivate: int = 0) -> Any:
         if node < self.knots[0] or self.knots[-1] < node:
             raise ValueError
@@ -147,9 +154,39 @@ class Spline:
         return segment.eval(node, derivate)
 
 
-class SplineOpenCurve(Spline):
+class SplineCurve(Spline, IParameterCurve):
+
+    def __init__(
+        self, knotvector: KnotVector, ctrlpoints: Iterable[GeneralPoint]
+    ):
+        ctrlpoints = list(ctrlpoints)
+        for i, point in enumerate(ctrlpoints):
+            if not isinstance(point, Point2D):
+                ctrlpoints[i] = Point2D(point)
+        super().__init__(knotvector, ctrlpoints)
+
+    def projection(self, point: GeneralPoint) -> Iterable[Parameter]:
+        raise NotImplementedError
+
+    def section(self, nodea: Parameter, nodeb: Parameter) -> IParameterCurve:
+        raise NotImplementedError
+
+
+class SplineOpenCurve(SplineCurve, IOpenCurve):
     """ """
 
 
-class SplineClosedCurve(Spline):
+class SplineClosedCurve(SplineCurve, IClosedCurve):
     """ """
+
+    def __init__(
+        self, knotvector: KnotVector, ctrlpoints: Iterable[GeneralPoint]
+    ):
+        super().__init__(knotvector, ctrlpoints)
+
+    @property
+    def area(self) -> Scalar:
+        raise NotImplementedError
+
+    def winding(self, point: GeneralPoint) -> Scalar:
+        raise NotImplementedError

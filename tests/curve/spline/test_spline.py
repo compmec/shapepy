@@ -13,7 +13,7 @@ from shapepy.curve.spline.spline import KnotVector, Spline
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(
-    depends=["tests/curve/analytic/test_polynomial.py::test_end"],
+    depends=["tests/analytic/test_polynomial.py::test_end"],
     scope="session",
 )
 def test_begin():
