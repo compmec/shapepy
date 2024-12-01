@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import Optional, Tuple
+from typing import Iterable, Optional, Tuple
 
 from ...core import Parameter
 
@@ -16,14 +16,14 @@ class KnotVector(tuple):
         return super(KnotVector, cls).__new__(cls, tuple(knotvector))
 
     def __init__(
-        self, knotvector: Tuple[Parameter, ...], degree: Optional[int] = None
+        self, knotvector: Iterable[Parameter], degree: Optional[int] = None
     ):
+        knotvector = list(knotvector)
         if degree is None:
             degree = max(
                 sum(val == knot for val in knotvector) - 1
                 for knot in sorted(set(knotvector))
             )
-        knotvector = list(knotvector)
         for i, value in enumerate(knotvector):
             if isinstance(value, int):
                 knotvector[i] = Fraction(value)

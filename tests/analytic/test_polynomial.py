@@ -5,7 +5,12 @@ This file contains tests functions to test the module polygon.py
 import numpy as np
 import pytest
 
-from shapepy.analytic.polynomial import Polynomial, find_roots
+from shapepy.analytic.polynomial import (
+    Polynomial,
+    find_numerical_roots,
+    find_rational_roots,
+    find_roots,
+)
 
 
 @pytest.mark.order(3)
@@ -321,7 +326,26 @@ def test_divide_poly():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_divide_poly"])
+def test_find_analytic_roots():
+    ntests = 10
+    for degree in range(1, 3):
+        for _ in range(ntests):
+            good_roots = np.random.randint(-20, 20, degree)
+            good_roots = tuple(sorted(map(int, good_roots)))
+            poly = Polynomial.from_roots(good_roots)
+            test_roots = find_rational_roots(poly)
+            assert len(test_roots) == degree
+            for test, good in zip(test_roots, good_roots):
+                assert test == good
+
+
+@pytest.mark.order(3)
+@pytest.mark.timeout(3)
+@pytest.mark.dependency(
+    depends=["test_divide_poly", "test_find_analytic_roots"]
+)
 def test_find_roots():
     poly = Polynomial([1, -1])  # 1 - x
     roots = find_roots(poly)
@@ -342,20 +366,35 @@ def test_find_roots():
 
     poly = Polynomial([3, -4, 1])  # 3 - 4*x + x^2
     roots = find_roots(poly)
-    np.testing.assert_allclose(roots, (1, 3))
+    assert roots == (1, 3)
     poly = Polynomial([1, -4, 4])  # 1 - 4*x + 4*x^2
     roots = find_roots(poly)
-    np.testing.assert_allclose(roots, (0.5, 0.5))
+    assert roots == (0.5, 0.5)
     poly = Polynomial([2, -1, -2, 1])  # 2 - x - 2*x + x^3
     roots = find_roots(poly)
-    np.testing.assert_allclose(roots, (-1, 1, 2))
+    assert roots == (-1, 1, 2)
 
     poly = Polynomial([1, -2, 1])  # (x-1)^2
     roots = find_roots(poly)
-    np.testing.assert_allclose(roots, (1, 1))
+    assert roots == (1, 1)
     poly = Polynomial([-1, 3, -3, 1])  # (x-1)^3
     roots = find_roots(poly)
-    np.testing.assert_allclose(roots, (1, 1, 1))
+    assert roots == (1, 1, 1)
+    poly = Polynomial([-16, 48, -36, 8])  # 4*(x-2)^2*(2x-1)
+    roots = find_roots(poly)
+    assert roots == (0.5, 2, 2)
+    poly = Polynomial([24, -28, 8])  # 4*(2x-3)*(x-2)
+    roots = find_roots(poly)
+    assert roots == (3 / 2, 2)
+
+    poly = Polynomial([-5, 13, -9, 2])
+    roots = find_roots(poly)
+    assert len(roots) == 1
+    assert abs(roots[0] - 0.601839048370279232474813636733) < 1e-9
+    poly = Polynomial([-4, 4, -12, 8])
+    roots = find_roots(poly)
+    assert len(roots) == 1
+    assert abs(roots[0] - 1.398160951629720767525186363267) < 1e-9
 
 
 @pytest.mark.order(3)
