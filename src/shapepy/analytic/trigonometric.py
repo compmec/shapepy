@@ -19,7 +19,7 @@ from __future__ import annotations
 import math
 from fractions import Fraction
 from functools import lru_cache
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
 from ..core import IAnalytic
 
@@ -100,8 +100,10 @@ class Trignomial(IAnalytic):
         self.__freq = frequency
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Trignomial):
+        if not isinstance(other, IAnalytic):
             return self.pmax == 0 and self[0] == other
+        if not isinstance(other, Trignomial):
+            return False
         if self.pmax != other.pmax or self.frequency != other.frequency:
             return False
         atol = 1e-9
@@ -387,6 +389,11 @@ class Trignomial(IAnalytic):
         Where a is the given parameter
         """
         return self.__class__(tuple(self), value * self.frequency)
+
+    def roots(
+        self, inflim: Optional[Parameter], suplim: Optional[Parameter]
+    ) -> Iterable[Parameter]:
+        raise NotImplementedError
 
     def __call__(self, nodes):
         return self.eval(nodes, 0)

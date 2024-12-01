@@ -6,7 +6,7 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from typing import Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
 Scalar = Union[int, float]
 Parameter = Union[int, float]
@@ -163,4 +163,18 @@ class IAnalytic(ABC):
 
     @abstractmethod
     def defintegral(self, lower: Parameter, upper: Parameter) -> Scalar:
+        raise NotImplementedError
+
+    @abstractmethod
+    def roots(
+        self, inflim: Optional[Parameter], suplim: Optional[Parameter]
+    ) -> Iterable[Parameter]:
+        raise NotImplementedError
+
+    @abstractmethod
+    def shift(self, amount: Parameter) -> IAnalytic:
+        raise NotImplementedError
+
+    @abstractmethod
+    def scale(self, amount: Scalar) -> IAnalytic:
         raise NotImplementedError

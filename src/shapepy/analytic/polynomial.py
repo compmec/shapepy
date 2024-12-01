@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import math
 from functools import lru_cache
-from typing import Any, Iterable, Tuple, Union
+from typing import Any, Iterable, Optional, Tuple, Union
 
 from ..core import IAnalytic, Parameter, Scalar
 
@@ -36,9 +36,9 @@ def polyderi(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
     if times == 0:
         return poly
     if times >= len(poly):
-        return (0 * sum(poly),)
+        return (0 * poly[0],)
     return tuple(
-        coef * (factorial(n + times) // factorial(n))
+        (factorial(n + times) // factorial(n)) * coef
         for n, coef in enumerate(poly[times:])
     )
 
@@ -91,8 +91,10 @@ class Polynomial(IAnalytic):
         return len(self.__coefs) - 1
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Polynomial):
+        if not isinstance(other, IAnalytic):
             other = Polynomial([other])
+        if not isinstance(other, Polynomial):
+            return False
         if self.degree != other.degree:
             return False
         return all(ci == cj for ci, cj in zip(self, other))
@@ -228,7 +230,7 @@ class Polynomial(IAnalytic):
         0
         """
         coefs = polyderi(self.__coefs, derivate)
-        result = 0 * node
+        result = 0 * node * self.__coefs[0]
         for coef in coefs[::-1]:
             result = node * result + coef
         return result
@@ -299,6 +301,16 @@ class Polynomial(IAnalytic):
     def scale(self, amount: Scalar) -> Polynomial:
         coefs = tuple(coef * amount**i for i, coef in enumerate(self))
         return self.__class__(coefs)
+
+    def roots(
+        self, inflim: Optional[Parameter], suplim: Optional[Parameter]
+    ) -> Iterable[Parameter]:
+        nodes = find_roots(self)
+        if inflim is not None:
+            nodes = (node for node in nodes if inflim <= node)
+        if suplim is not None:
+            nodes = (node for node in nodes if node <= suplim)
+        return tuple(sorted(nodes))
 
 
 def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
