@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import math
+from fractions import Fraction
 from typing import Tuple, Union
 
 from .boolean import BoolNot
@@ -27,6 +28,10 @@ class Point2D(IBoolean2D):
             raise ValueError
 
         3.0 * xcoord + 4 * ycoord - 5  # Verify if they are scalars
+        if isinstance(xcoord, int):
+            xcoord = Fraction(xcoord)
+        if isinstance(ycoord, int):
+            ycoord = Fraction(ycoord)
         self.__x = xcoord
         self.__y = ycoord
 

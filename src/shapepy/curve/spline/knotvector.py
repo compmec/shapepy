@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from fractions import Fraction
 from typing import Optional, Tuple
 
 from ...core import Parameter
@@ -22,7 +23,10 @@ class KnotVector(tuple):
                 sum(val == knot for val in knotvector) - 1
                 for knot in sorted(set(knotvector))
             )
-        knotvector = tuple(knotvector)
+        knotvector = list(knotvector)
+        for i, value in enumerate(knotvector):
+            if isinstance(value, int):
+                knotvector[i] = Fraction(value)
         npts = len(knotvector) - degree - 1
         if npts <= degree:
             raise ValueError

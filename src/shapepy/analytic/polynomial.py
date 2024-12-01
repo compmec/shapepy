@@ -97,7 +97,7 @@ class Polynomial(IAnalytic):
             return False
         if self.degree != other.degree:
             return False
-        return all(ci == cj for ci, cj in zip(self, other))
+        return all(abs(ci - cj) < 1e-12 for ci, cj in zip(self, other))
 
     def __iter__(self):
         yield from self.__coefs
@@ -122,7 +122,7 @@ class Polynomial(IAnalytic):
     def __mul__(self, other: Union[Any, Polynomial]) -> Polynomial:
         if not isinstance(other, Polynomial):
             other = Polynomial([other])
-        coefs = [0] * (1 + self.degree + other.degree)
+        coefs = [0 * self[0] for _ in range(1 + self.degree + other.degree)]
         for i, ci in enumerate(self):
             for j, cj in enumerate(other):
                 coefs[i + j] += ci * cj
