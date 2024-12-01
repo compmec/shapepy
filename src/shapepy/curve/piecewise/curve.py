@@ -218,7 +218,7 @@ def compute_winding(curve: PiecewiseClosedCurve, point: Point2D) -> Scalar:
             return 0 if xval > 0 else -1
         if not xval:
             return 0.25 if yval > 0 else 0.75
-        return np.arctan2(yval, xval) / math.tau
+        return np.arctan2(float(yval), float(xval)) / math.tau
 
     nodes = curve.projection(point)
     if len(nodes) == 1:
