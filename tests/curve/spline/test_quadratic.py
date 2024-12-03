@@ -3,7 +3,6 @@ This file contains tests functions to test the module polygon.py
 """
 
 from fractions import Fraction
-from typing import Tuple
 
 import pytest
 
@@ -28,8 +27,10 @@ class TestOpenCurve:
     @staticmethod
     def create_open_curve() -> SplineOpenCurve:
         knotvector = [0, 0, 0, 1, 1, 2, 2, 2]
+        knotvector = tuple(map(Fraction, knotvector))
         knotvector = KnotVector(knotvector, 2)
         ctrlpoints = [(1, 0), (1, 1), (0, 1), (-1, 1), (-1, 0)]
+        ctrlpoints = tuple(tuple(map(Fraction, pt)) for pt in ctrlpoints)
         return SplineOpenCurve(knotvector, ctrlpoints)
 
     @pytest.mark.order(6)
@@ -130,6 +131,7 @@ class TestClosedCurve:
     @staticmethod
     def create_closed_curve() -> SplineOpenCurve:
         knotvector = [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4]
+        knotvector = tuple(map(Fraction, knotvector))
         knotvector = KnotVector(knotvector, 2)
         ctrlpoints = [
             (1, 0),
@@ -142,6 +144,7 @@ class TestClosedCurve:
             (1, -1),
             (1, 0),
         ]
+        ctrlpoints = tuple(tuple(map(Fraction, pt)) for pt in ctrlpoints)
         return SplineClosedCurve(knotvector, ctrlpoints)
 
     @pytest.mark.order(6)
@@ -184,10 +187,10 @@ class TestClosedCurve:
     )
     def test_evaluate_middle(self):
         curve = TestClosedCurve.create_closed_curve()
-        assert curve.eval(0.5) == (0.5, 0)
-        assert curve.eval(1.5) == (1, 0.5)
-        assert curve.eval(2.5) == (0.5, 1)
-        assert curve.eval(3.5) == (0, 0.5)
+        assert curve.eval(0.5) == (0.75, 0.75)
+        assert curve.eval(1.5) == (-0.75, 0.75)
+        assert curve.eval(2.5) == (-0.75, -0.75)
+        assert curve.eval(3.5) == (0.75, -0.75)
 
     @pytest.mark.order(6)
     @pytest.mark.timeout(10)
@@ -229,15 +232,25 @@ class TestClosedCurve:
         assert abs(curve.area - good) < 1e-9
 
     @pytest.mark.order(6)
-    @pytest.mark.timeout(10)
+    @pytest.mark.timeout(3)
     @pytest.mark.dependency(depends=["TestClosedCurve::test_area"])
     def test_winding(self):
+        one = Fraction(1)
         curve = TestClosedCurve.create_closed_curve()
         assert curve.winding((0, 0)) == 1
-        assert curve.winding((1, 0)) == 0.5
-        assert curve.winding((1, 1)) == 0
-        assert curve.winding((0, 1)) == 0.5
-        assert curve.winding((0.5, 0)) == 1
+        assert curve.winding((one, 0)) == 0.5
+        assert curve.winding((one, one)) == 0
+        assert curve.winding((0, one)) == 0.5
+        assert curve.winding((one / 2, 0)) == 1
+        assert curve.winding((-3 * one / 4, 3 * one / 4)) == 0.5
+
+        ndivs = 8
+        units = tuple(Fraction(i, ndivs) for i in range(ndivs))
+        for ta, tb in zip(curve.knots, curve.knots[1:]):
+            for uj in units:
+                point = curve.eval((1 - uj) * ta + tb * uj)
+                wind = curve.winding(point)
+                assert wind == 0.5
 
     @pytest.mark.order(6)
     @pytest.mark.timeout(10)
@@ -250,8 +263,6 @@ class TestClosedCurve:
             "TestClosedCurve::test_evaluate_middle",
             "TestClosedCurve::test_evaluate_derivate",
             "TestClosedCurve::test_projection",
-            "TestClosedCurve::test_compare",
-            "TestClosedCurve::test_section",
             "TestClosedCurve::test_lenght",
             "TestClosedCurve::test_area",
             "TestClosedCurve::test_winding",

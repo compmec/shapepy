@@ -225,18 +225,23 @@ def compute_winding(curve: PiecewiseClosedCurve, point: Point2D) -> Scalar:
         node = nodes[0]
         curpt = curve.eval(node)
         if curpt == point:
-            if node != int(node):
+            if node != int(node):  # Not a vertex
                 return 0.5
             node = int(node)
             xleft, yleft = curve.functions[node - 1]
             xrigh, yrigh = curve.functions[node]
-            dxl = xleft.derivate().eval(node)
-            dyl = yleft.derivate().eval(node)
-            dxr = xrigh.derivate().eval(node)
-            dyr = yrigh.derivate().eval(node)
+            if node != curve.knots[0]:
+                dxl = xleft.eval(node, 1)
+                dyl = yleft.eval(node, 1)
+            else:
+                dxl = xleft.eval(curve.knots[-1], 1)
+                dyl = yleft.eval(curve.knots[-1], 1)
+            dxr = xrigh.eval(node, 1)
+            dyr = yrigh.eval(node, 1)
             inner = dxl * dxr + dyl * dyr
             cross = dxl * dyr - dyl * dxr
-            return unit_angle(-inner, cross)
+            angle = unit_angle(-inner, cross)
+            return 0.5 if angle == -1 else angle
 
     # Getting here, the only possible result is either 0 or 1
     nodes = sorted(set(nodes) | set(curve.knots))
