@@ -3,13 +3,15 @@ This file contains tests functions to test the module polygon.py
 """
 
 import math
-from typing import Tuple
+from fractions import Fraction
 
 import numpy as np
 import pytest
 
 from shapepy import Primitive
+from shapepy.curve.spline import JordanSpline, KnotVector
 from shapepy.integral import polynomial
+from shapepy.shape import SimpleShape
 
 
 @pytest.mark.order(10)
@@ -101,6 +103,60 @@ class TestRectangle:
             "TestRectangle::test_first",
             "TestRectangle::test_second",
             "TestRectangle::test_centered",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
+class TestQuadratic:
+
+    @staticmethod
+    def create_simple_shape():
+        knotvector = (0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4)
+        knotvector = tuple(map(Fraction, knotvector))
+        knotvector = KnotVector(knotvector, 2)
+        ctrlpoints = (
+            (1, 0),
+            (1, 1),
+            (0, 1),
+            (-1, 1),
+            (-1, 0),
+            (-1, -1),
+            (0, -1),
+            (1, -1),
+            (1, 0),
+        )
+        jordan = JordanSpline(knotvector, ctrlpoints)
+        return SimpleShape(jordan)
+
+    @pytest.mark.order(10)
+    @pytest.mark.dependency(
+        depends=[
+            "tests/curve/spline/test_spline.py::test_end",
+            "tests/curve/spline/test_linear.py::test_end",
+            "tests/test_integral.py::test_begin",
+        ],
+        scope="session",
+    )
+    def test_begin(self):
+        TestQuadratic.create_simple_shape()
+
+    @pytest.mark.order(10)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestQuadratic::test_begin"])
+    def test_area(self):
+        shape = TestQuadratic.create_simple_shape()
+        test = polynomial(shape, (0, 0))
+        good = 10 / 3
+        assert abs(test - good) < 1e-9
+
+    @pytest.mark.order(10)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestQuadratic::test_begin",
+            "TestQuadratic::test_area",
         ]
     )
     def test_end(self):
@@ -246,6 +302,7 @@ class TestCircle:
 @pytest.mark.dependency(
     depends=[
         "TestRectangle::test_end",
+        "TestQuadratic::test_end",
         "TestCircle::test_end",
     ]
 )

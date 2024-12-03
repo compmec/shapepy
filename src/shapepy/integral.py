@@ -1,7 +1,6 @@
 from typing import Tuple
 
 from .core import IShape, Scalar
-from .curve.piecewise import JordanPiecewise
 from .curve.polygon import JordanPolygon
 from .curve.polygon.integral import polybidim
 from .shape import ConnectedShape, DisjointShape, SimpleShape
@@ -19,14 +18,12 @@ def polynomial(shape: IShape, exponents: Tuple[int, int]) -> Scalar:
         vertices = shape.jordan.vertices
         vertices = tuple(map(tuple, vertices))
         return polybidim(vertices, expx, expy)
-    if isinstance(shape.jordan, JordanPiecewise):
-        soma = 0
-        curve = shape.jordan.param_curve
-        for i, (xfunc, yfunc) in enumerate(curve.functions):
-            cross = xfunc * yfunc.derivate(1) - yfunc * xfunc.derivate(1)
-            ifunc = (xfunc**expx) * (yfunc**expy) * cross
-            soma += ifunc.defintegral(i, i + 1)
-        soma /= expx + expy + 2
-        return soma
 
-    raise NotImplementedError
+    curve = shape.jordan.param_curve
+    soma = 0
+    for i, (xfunc, yfunc) in enumerate(curve.functions):
+        cross = xfunc * yfunc.derivate(1) - yfunc * xfunc.derivate(1)
+        ifunc = (xfunc**expx) * (yfunc**expy) * cross
+        soma += ifunc.defintegral(i, i + 1)
+    soma /= expx + expy + 2
+    return soma
