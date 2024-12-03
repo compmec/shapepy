@@ -225,9 +225,10 @@ class Polynomial(IAnalytic):
         roly = self - other * qoly
         while roly.degree >= other.degree:
             coef = roly[-1] / other[-1]
-            coefs = [0] * (roly.degree - other.degree) + [coef]
-            qoly += Polynomial(coefs)
-            roly = self - other * qoly
+            qcoefs = [0] * (roly.degree - other.degree) + [coef]
+            qoly += Polynomial(qcoefs)
+            rcoefs = tuple(self - other * qoly)
+            roly = Polynomial(rcoefs[: roly.degree])  # Shouldn't need
         return qoly, roly
 
     def __floordiv__(self, other: Union[Any, Polynomial]) -> Polynomial:
