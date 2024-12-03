@@ -477,26 +477,29 @@ def find_numerical_roots(poly: Polynomial) -> Tuple[float]:
     liminf = (-coefs[degree - 1] - (degree - 1) * math.sqrt(delta)) / degree
     limsup = (-coefs[degree - 1] + (degree - 1) * math.sqrt(delta)) / degree
     maxabs = max(abs(liminf), abs(limsup))
-    roots = []
-    for root in np.linspace(-maxabs, maxabs, 2 * degree + 1):
-        for _ in range(10):  # Newton's iteration
-            numer = poly.eval(root, 0)
-            if not numer:
-                break
-            denom = poly.eval(root, 1)
-            if not denom:
-                root = 0
-                continue
-            root -= numer / denom
-        roots.append(root)
-    roots = tuple(set(roots))
-    values = tuple(map(poly.eval, roots))
-    minval = min(map(abs, values))
+    roots = list(np.linspace(-maxabs, maxabs, 2 * degree + 1))
+    for _ in range(3):  # Filter roots three times
+        for i, root in enumerate(roots):
+            for _ in range(10):  # Newton's iteration
+                numer = poly.eval(root, 0)
+                if not numer:
+                    break
+                denom = poly.eval(root, 1)
+                if not denom:
+                    root = 0
+                    continue
+                root -= numer / denom
+            roots[i] = root
+        roots = tuple(set(roots))
+        values = tuple(map(poly.eval, roots))
+        minval = min(map(abs, values))
+        roots = [r for r, v in zip(roots, values) if abs(v) == minval]
     if minval > 1e-12:
-        raise ValueError(f"Roots found are not valid: {roots}, {values}")
-    roots = tuple(r for r, v in zip(roots, values) if abs(v) == minval)
+        raise ValueError(f"Roots {roots} found are not valid: {values}")
     poly = simplify_poly_by_roots(poly, roots)
-    return tuple(sorted(roots + find_numerical_roots(poly)))
+    if poly.degree:
+        roots += list(find_numerical_roots(poly))
+    return tuple(sorted(roots))
 
 
 def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
@@ -533,9 +536,5 @@ def simplify_poly_by_roots(
     poly: Polynomial, roots: Iterable[Parameter]
 ) -> Polynomial:
     for root in roots:
-        doly = Polynomial((-root, 1))
-        qoly, roly = divmod(poly, doly)
-        if roly != 0:
-            raise NotImplementedError("Not expected get here")
-        poly = qoly
+        poly //= Polynomial((-root, 1))
     return poly
