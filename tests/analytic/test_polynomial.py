@@ -5,6 +5,7 @@ This file contains tests functions to test the module polygon.py
 import numpy as np
 import pytest
 
+from shapepy.analytic.helper import check_shifted_polynomial
 from shapepy.analytic.polynomial import (
     Polynomial,
     find_numerical_roots,
@@ -405,6 +406,38 @@ def test_find_roots():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
+@pytest.mark.dependency(depends=["test_evaluate_natural"])
+def test_shift_polynomials():
+    polya = Polynomial([1])
+    param = check_shifted_polynomial(polya, polya)
+    assert param is None
+    polya = Polynomial([1, 1])
+    param = check_shifted_polynomial(polya, polya)
+    assert param == 0
+
+    polyb = Polynomial([2])
+    param = check_shifted_polynomial(polya, polyb)
+    assert param is None
+    polyb = Polynomial([2, 2])
+    param = check_shifted_polynomial(polya, polyb)
+    assert param is None
+
+    polya = Polynomial([0, 0, 1])  # x^2
+    polyb = Polynomial([1, -2, 1])  # (x-1)^2
+    param = check_shifted_polynomial(polya, polyb)
+    assert param == 1
+
+    xpoly = Polynomial([0, 1])
+    for degree in range(1, 6):
+        polya = Polynomial([0] * degree + [1])
+        for good in (-2, -1, 0, 1, 2):
+            polyb = (xpoly - good) ** degree
+            test = check_shifted_polynomial(polya, polyb)
+            assert test == good
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():
     poly = Polynomial([0])
@@ -458,6 +491,7 @@ def test_print():
         "test_scale",
         "test_divide_poly",
         "test_find_roots",
+        "test_shift_polynomials",
     ]
 )
 def test_end():
