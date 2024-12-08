@@ -60,30 +60,34 @@ class Trignomial(IAnalytic):
 
     """
 
-    tau = math.tau
-    sin = math.sin
-    cos = math.cos
-    # tau = 2*sp.pi
-    # sin = sp.sin
-    # cos = sp.cos
+    TAU = math.tau
+    SIN = math.sin
+    COS = math.cos
 
     @staticmethod
-    def sincos(angle: Scalar) -> Tuple[Scalar, Scalar]:
-        angle %= 1
-        quad, subangle = divmod(4 * angle, 1)
+    def sin(unit_angle: Scalar) -> Scalar:
+        unit_angle %= 1
+        quad, subangle = divmod(4 * unit_angle, 1)
         if not subangle:
-            sin, cos = 0, 1
-        else:
-            subangle *= Trignomial.tau / 4
-            sin = Trignomial.sin(subangle)
-            cos = Trignomial.cos(subangle)
-        if quad == 1:
-            sin, cos = cos, -sin
-        elif quad == 2:
-            sin, cos = -sin, -cos
-        elif quad == 3:
-            sin, cos = -cos, sin
-        return sin, cos
+            if not (quad % 2):
+                return 0
+            return 1 - 2 * (quad == 3)
+        return Trignomial.SIN(unit_angle * Trignomial.TAU)
+
+    @staticmethod
+    def cos(unit_angle: Scalar) -> Scalar:
+        unit_angle %= 1
+        quad, subangle = divmod(4 * unit_angle, 1)
+        if not subangle:
+            if quad % 2:
+                return 0
+            return 1 - 2 * (quad == 2)
+        return Trignomial.COS(unit_angle * Trignomial.TAU)
+
+    @staticmethod
+    def sincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
+        unit_angle %= 1
+        return Trignomial.sin(unit_angle), Trignomial.cos(unit_angle)
 
     def __init__(self, values: Iterable[Scalar], frequency: Scalar = 1):
         values = tuple(values)
@@ -155,7 +159,7 @@ class Trignomial(IAnalytic):
         >>> trig.omega
         9.42477796
         """
-        return self.tau * self.frequency
+        return self.TAU * self.frequency
 
     def __iter__(self):
         yield from self.__values
