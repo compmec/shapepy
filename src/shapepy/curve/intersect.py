@@ -1,7 +1,7 @@
 from ..boolean import BoolOr
 from ..core import Empty, IBoolean2D, ICurve
 from .abc import IClosedCurve, IJordanCurve
-from .polygon import PolygonClosedCurve
+from .polygon import PolygonClosedCurve, PolygonOpenCurve
 
 
 def curve_and_curve(curvea: ICurve, curveb: ICurve) -> IBoolean2D:
@@ -76,7 +76,12 @@ def polygon_and_polygon(
             paramd = avect.inner(diforigin + bvect) / avect.inner(avect)
             if paramd < 0 or 1 < paramd:
                 continue
-            raise NotImplementedError
+            if paramd < paramc:
+                paramc, paramd = paramd, paramc
+            pointc = avertex + paramc * avect
+            pointd = avertex + paramd * avect
+            segment = PolygonOpenCurve([pointc, pointd])
+            inters.append(segment)
     if not len(inters):
         return Empty()
     if len(inters) == 1:

@@ -13,7 +13,8 @@ from typing import Dict, Iterable, Tuple, Union
 
 import numpy as np
 
-from ..core import Empty, IBoolean2D, IShape, Whole
+from ..boolean import BoolOr
+from ..core import Empty, IBoolean2D, ICurve, IShape, Whole
 from ..curve.abc import IJordanCurve
 from ..curve.concatenate import concatenate, transform_to_jordan
 from ..curve.intersect import curve_and_curve
@@ -173,14 +174,29 @@ class FollowPath:
         curveb = curveb.param_curve
         if isinstance(objs, Empty):
             return
-        objs = (objs,) if isinstance(objs, Point2D) else tuple(objs)
-        for item in objs:
-            if isinstance(item, Point2D):
-                parama = curvea.projection(item)[0]
-                paramb = curveb.projection(item)[0]
-                yield (parama, paramb)
-                continue
-            raise NotImplementedError
+        if isinstance(objs, BoolOr):
+            objs = tuple(objs)
+        else:
+            objs = (objs,)
+        points = []
+        for obj in objs:
+            if isinstance(obj, Point2D):
+                points.append(obj)
+            elif isinstance(obj, ICurve):
+                points += list(obj.vertices)
+            else:
+                raise NotImplementedError
+        setpts = []
+        for point in points:
+            for setpt in setpts:
+                if point == setpt:
+                    break
+            else:
+                setpts.append(point)
+        for point in setpts:
+            parama = curvea.projection(point)[0]
+            paramb = curveb.projection(point)[0]
+            yield (parama, paramb)
 
     @staticmethod
     def two_shape_inter(shapea: IShape, shapeb: IShape):
