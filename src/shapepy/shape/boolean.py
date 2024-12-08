@@ -9,7 +9,7 @@ or even unconnected shapes.
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Tuple
+from typing import Dict, Iterable, Tuple, Union
 
 import numpy as np
 
@@ -18,8 +18,8 @@ from ..curve.abc import IJordanCurve
 from ..curve.concatenate import concatenate, transform_to_jordan
 from ..curve.intersect import curve_and_curve
 from ..point import Point2D
-from .condisj import ConnectedShape, DisjointShape, identify_shape
-from .simple import SimpleShape
+from ..utils import sorter
+from .simple import ConnectedShape, DisjointShape, SimpleShape
 
 
 def close_shape(shape: IShape) -> IShape:
@@ -112,6 +112,44 @@ def intersect_shapes(*shapes: IShape) -> IBoolean2D:
     return identify_shape(newsimples)
 
 
+def identify_shape(
+    simples: Iterable[SimpleShape],
+) -> Union[SimpleShape, ConnectedShape, DisjointShape]:
+    """
+    Identify the final shape (Simple, Connected, Disjoint) from the
+    given simple shapes
+    """
+    simples = tuple(simples)
+    for simple in simples:
+        if not isinstance(simple, SimpleShape):
+            raise TypeError
+    areas = tuple(simple.area for simple in simples)
+    simples = [simples[i] for i in sorter(areas)]
+    disshapes = []
+    while simples:
+        connsimples = [simples.pop(len(simples) - 1)]
+        index = 0
+        while index < len(simples):
+            simple = simples[index]
+            for simplj in connsimples:
+                if simple.jordan not in simplj:
+                    break
+                if simplj.jordan not in simple:
+                    break
+            else:
+                connsimples.append(simples.pop(index))
+                index -= 1
+            index += 1
+        if len(connsimples) == 1:
+            shape = connsimples[0]
+        else:
+            shape = ConnectedShape(connsimples)
+        disshapes.append(shape)
+    if len(disshapes) == 1:
+        return disshapes[0]
+    return DisjointShape(disshapes)
+
+
 class FollowPath:
     """
     Specific static class with functions to compute the
@@ -137,11 +175,12 @@ class FollowPath:
             return
         objs = (objs,) if isinstance(objs, Point2D) else tuple(objs)
         for item in objs:
-            if not isinstance(item, Point2D):
-                raise NotImplementedError
-            parama = curvea.projection(item)[0]
-            paramb = curveb.projection(item)[0]
-            yield (parama, paramb)
+            if isinstance(item, Point2D):
+                parama = curvea.projection(item)[0]
+                paramb = curveb.projection(item)[0]
+                yield (parama, paramb)
+                continue
+            raise NotImplementedError
 
     @staticmethod
     def two_shape_inter(shapea: IShape, shapeb: IShape):
@@ -224,10 +263,10 @@ class FollowPath:
                     for k, shapek in enumerate(shapes):
                         if k == i:
                             continue
-                        if union and midpoint in shapek:
+                        if union and 0 < shapek.winding(midpoint):
                             positions.append(False)
                             break
-                        if not union and midpoint not in shapek:
+                        if not union and not shapek.winding(midpoint):
                             positions.append(False)
                             break
                     else:
@@ -318,4 +357,8 @@ class FollowPath:
                 new_curve = concatenate(*new_segments)
                 new_jordan = transform_to_jordan(new_curve)
                 newjordans.append(new_jordan)
-        return tuple(SimpleShape(jordan, False) for jordan in newjordans)
+        boundaries = [False for _ in newjordans]
+        return tuple(
+            SimpleShape(jordan, boundary)
+            for jordan, boundary in zip(newjordans, boundaries)
+        )

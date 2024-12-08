@@ -7,7 +7,7 @@ import pytest
 
 from shapepy.primitive import Primitive
 from shapepy.shape import ConnectedShape, DisjointShape, SimpleShape
-from shapepy.shape.condisj import identify_shape
+from shapepy.shape.boolean import identify_shape
 
 
 @pytest.mark.order(8)
