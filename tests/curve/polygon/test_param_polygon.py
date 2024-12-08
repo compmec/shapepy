@@ -381,6 +381,9 @@ class TestClosedCurve:
         pass
 
 
+@pytest.mark.order(3)
+@pytest.mark.timeout(10)
+@pytest.mark.dependency(depends=["test_begin"])
 def test_print():
     vertices = [(0, 0), (1, 0), (1, 1)]
     curve = PolygonOpenCurve(vertices)
@@ -393,6 +396,9 @@ def test_print():
     repr(curve)
 
 
+@pytest.mark.order(3)
+@pytest.mark.timeout(10)
+@pytest.mark.dependency(depends=["test_begin"])
 def test_clean_curve():
     vertices = [(0, 0), (1, 0), (2, 0)]
     newverts = clean_open_curve(vertices)

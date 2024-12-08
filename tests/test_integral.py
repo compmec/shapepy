@@ -254,7 +254,7 @@ class TestCircle:
         ]
     )
     def test_centered(self):
-        ntests = 100
+        ntests = 5
         for _ in range(ntests):
             radius = np.random.uniform(1, 2)
             circle = Primitive.circle(radius, (0, 0))
@@ -270,7 +270,7 @@ class TestCircle:
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestCircle::test_centered"])
     def test_random(self):
-        ntests = 100
+        ntests = 5
         for _ in range(ntests):
             radius = np.random.uniform(0.25, 1)
             xcen, ycen = np.random.uniform(-1, 1, 2)

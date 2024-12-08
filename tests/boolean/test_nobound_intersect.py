@@ -48,7 +48,6 @@ class TestTwoCenteredSquares:
 
         assert square_sma | square_big == square_big
         assert square_big | square_sma == square_big
-        print("-" * 30)
         assert square_sma | (~square_big) == DisjointShape(
             [square_sma, ~square_big]
         )

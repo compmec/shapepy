@@ -386,6 +386,9 @@ def test_find_roots():
     poly = Polynomial([24, -28, 8])  # 4*(2x-3)*(x-2)
     roots = find_roots(poly)
     assert roots == (3 / 2, 2)
+    poly = Polynomial([-344, 294, -84, 8])
+    roots = find_roots(poly)
+    assert roots == (4,)
 
     poly = Polynomial([-5, 13, -9, 2])
     roots = find_roots(poly)
@@ -395,6 +398,10 @@ def test_find_roots():
     roots = find_roots(poly)
     assert len(roots) == 1
     assert abs(roots[0] - 1.398160951629720767525186363267) < 1e-9
+    coefs = [0.24576122535081, -1.3132004733713565, 8]
+    poly = Polynomial(coefs)
+    roots = find_roots(poly)
+    assert len(roots) == 0
 
 
 @pytest.mark.order(3)
