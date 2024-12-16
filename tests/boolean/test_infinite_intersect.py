@@ -5,6 +5,7 @@ This module tests when two shapes have common edges/segments
 import pytest
 
 from shapepy.primitive import Primitive
+from shapepy.shape.boolean import close_shape
 
 
 @pytest.mark.order(33)
@@ -16,8 +17,8 @@ from shapepy.primitive import Primitive
         "tests/test_primitive.py::test_end",
         "tests/test_shape.py::test_end",
         "tests/boolean/test_empty_whole.py::test_end",
-        "tests/boolean/test_bool_no_intersect.py::test_end",
-        "tests/boolean/test_bool_infinite_intersect.py::test_end",
+        "tests/boolean/test_nobound_intersect.py::test_end",
+        "tests/boolean/test_finite_intersect.py::test_end",
     ],
     scope="session",
 )
@@ -87,7 +88,7 @@ class TestTriangle:
         vertices = [(1, 0), (2, 0), (0, 2), (0, 1)]
         good = Primitive.polygon(vertices)
 
-        assert test == good
+        assert close_shape(test) == good
 
     @pytest.mark.order(33)
     @pytest.mark.dependency(

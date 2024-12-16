@@ -51,7 +51,9 @@ def flatten2simples(
         yield from flatten2simples(shapes.subshapes)
 
 
-def remove_wind_edges(graph: Graph, shapes: Iterable[IShape], wind: int):
+def remove_wind_edges(
+    graph: Graph, shapes: Iterable[IShape], wind: int
+) -> Graph:
     allknots = graph.allknots
     jordans = graph.jordans
     for i, knotsi in enumerate(allknots):
@@ -67,11 +69,25 @@ def remove_wind_edges(graph: Graph, shapes: Iterable[IShape], wind: int):
     return graph
 
 
+def remove_inverse_edges(graph: Graph) -> Graph:
+    edges = tuple(graph.edges)
+    nedgs = len(edges)
+    for i, edgi in enumerate(edges):
+        for j in range(i + 1, nedgs):
+            edgj = edges[j]
+            if edgi[1] != edgj[2] or edgi[2] != edgj[1]:
+                continue
+            graph.remove_edge(edgi[0], edgi[1], edgi[2])
+            graph.remove_edge(edgj[0], edgj[1], edgj[2])
+    return graph
+
+
 def unite_shapes(*shapes: IShape) -> IBoolean2D:
     shapes = tuple(shapes)
     orisimples = tuple(flatten2simples(shapes))  # Original simple shapes
     jordans = tuple(simple.jordan for simple in orisimples)
     graph = Graph(jordans)
+    graph = remove_inverse_edges(graph)
     graph = remove_wind_edges(graph, shapes, 1)
     new_simples = []
     for jordan in graph.extract_direct_jordans():
@@ -96,6 +112,7 @@ def intersect_shapes(*shapes: IShape) -> IBoolean2D:
     orisimples = tuple(flatten2simples(shapes))  # Original simple shapes
     jordans = tuple(simple.jordan for simple in orisimples)
     graph = Graph(jordans)
+    graph = remove_inverse_edges(graph)
     graph = remove_wind_edges(graph, shapes, 0)
     new_simples = []
     for jordan in graph.extract_direct_jordans():
@@ -275,14 +292,18 @@ class Graph:
         available_jordans = tuple(sorted(set(e[0] for e in self.edges)))
         for ijord in available_jordans:
             jordan = self.jordans[ijord]
-            if len(self.allknots[ijord]) == len(jordan.param_curve.knots):
-                index = 0
-                while index < len(self.edges):
-                    if self.edges[index].jordan_index == ijord:
-                        self.edges.pop(index)
-                    else:
-                        index += 1
-                yield jordan
+            if len(self.allknots[ijord]) != len(jordan.param_curve.knots):
+                continue
+            edges = tuple(e for e in self.edges if e[0] == ijord)
+            if len(edges) + 1 != len(self.allknots[ijord]):
+                continue
+            index = 0
+            while index < len(self.edges):
+                if self.edges[index].jordan_index == ijord:
+                    self.edges.pop(index)
+                else:
+                    index += 1
+            yield jordan
 
     def extract_mixed_jordans(self) -> Iterable[IJordanCurve]:
         """
@@ -316,6 +337,23 @@ class Graph:
                 self.remove_edge(edge[0], edge[1], edge[2])
             curve = concatenate(*segments)
             yield transform_to_jordan(curve)
+
+    def __str__(self) -> str:
+        msg = "Points:\n"
+        for i, point in enumerate(self.points):
+            msg += f"    {i}: {point}\n"
+        msg += "Knots:\n"
+        for i, knots in enumerate(self.allknots):
+            msg += f"    {i}: {knots}\n"
+        msg += "Nodes:\n"
+        for i, node in enumerate(self.nodes):
+            msg += f"    {i}: {node}\n"
+        msg += "Edges:\n"
+        for i, edge in enumerate(self.edges):
+            pta = self.points[edge[1]]
+            ptb = self.points[edge[2]]
+            msg += f"    {i}: {edge} : {pta} -> {ptb}\n"
+        return msg
 
 
 def two_curve_inter(
