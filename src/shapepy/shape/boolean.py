@@ -9,12 +9,10 @@ or even unconnected shapes.
 
 from __future__ import annotations
 
-from typing import Dict, Iterable, Tuple, Union
-
-import numpy as np
+from typing import Iterable, Tuple, Union
 
 from ..boolean import BoolOr
-from ..core import Empty, IBoolean2D, ICurve, IShape, Whole
+from ..core import Empty, IBoolean2D, ICurve, IShape, Parameter, Whole
 from ..curve.abc import IJordanCurve
 from ..curve.concatenate import concatenate, transform_to_jordan
 from ..curve.intersect import curve_and_curve
@@ -41,76 +39,80 @@ def open_shape(shape: IShape) -> IShape:
     return shape.__class__(subshapes)
 
 
-def flatten2simples(shape: IShape) -> Tuple[SimpleShape, ...]:
-    if not isinstance(shape, IShape):
-        raise TypeError
-    if isinstance(shape, SimpleShape):
-        return (shape,)
-    if isinstance(shape, ConnectedShape):
-        return shape.subshapes
-    if isinstance(shape, DisjointShape):
-        subshapes = []
-        for subshape in shape.subshapes:
-            subshapes += list(flatten2simples(subshape))
-    raise NotImplementedError
+def flatten2simples(
+    shapes: Union[IShape, Iterable[IShape]]
+) -> Iterable[SimpleShape]:
+    if not isinstance(shapes, IShape):
+        for shape in shapes:
+            yield from flatten2simples(shape)
+    elif isinstance(shapes, SimpleShape):
+        yield shapes
+    elif isinstance(shapes, (ConnectedShape, DisjointShape)):
+        yield from flatten2simples(shapes.subshapes)
+
+
+def remove_wind_edges(graph: Graph, shapes: Iterable[IShape], wind: int):
+    allknots = graph.allknots
+    jordans = graph.jordans
+    for i, knotsi in enumerate(allknots):
+        curve = jordans[i].param_curve
+        for knota, knotb in zip(knotsi, knotsi[1:]):
+            midpoint = curve.eval((knota + knotb) / 2, 0)
+            winds = (shape.winding(midpoint) for shape in shapes)
+            if not any(sub == wind for sub in winds):
+                continue
+            inpta = graph.find_node(i, knota)
+            inptb = graph.find_node(i, knotb)
+            graph.remove_edge(i, inpta, inptb)
+    return graph
 
 
 def unite_shapes(*shapes: IShape) -> IBoolean2D:
-    for shape in shapes:
-        if not isinstance(shape, IShape):
-            raise TypeError(f"Invalid type: {type(shape)}: {shape}")
-    orisimples = []  # Original simple shapes
-    for shape in shapes:
-        orisimples += flatten2simples(shape)
-    params_inters = tuple(FollowPath.curves_intersection(shapes))
-    allpairs = set()
-    for triplea, tripleb in params_inters:
-        allpairs.add(triplea)
-        allpairs.add(tripleb)
-    positions = FollowPath.position_midpoints(shapes, allpairs, True)
-    newsimples = []
-    folsimples = {}
-    for i, (posi, simpli) in enumerate(zip(positions, orisimples)):
-        if not any(posi):
-            continue
-        elif all(posi):
-            newsimples.append(simpli)
-        else:
-            folsimples[i] = simpli
-    if folsimples:
-        newsimples += FollowPath.follow(orisimples, positions, params_inters)
-    if len(newsimples) == 0:
+    shapes = tuple(shapes)
+    orisimples = tuple(flatten2simples(shapes))  # Original simple shapes
+    jordans = tuple(simple.jordan for simple in orisimples)
+    graph = Graph(jordans)
+    graph = remove_wind_edges(graph, shapes, 1)
+    new_simples = []
+    for jordan in graph.extract_direct_jordans():
+        for simple in orisimples:
+            if id(simple.jordan) == id(jordan):
+                new_simples.append(simple)
+    for jordan in graph.extract_mixed_jordans():
+        curve = jordan.param_curve
+        midcontained = [False] * (len(curve.knots) - 1)
+        for i, (knota, knotb) in enumerate(zip(curve.knots, curve.knots[1:])):
+            midpoint = curve.eval((knota + knotb) / 2, 0)
+            midcontained[i] = any(midpoint in shape for shape in shapes)
+        simple = SimpleShape(jordan, all(midcontained))
+        new_simples.append(simple)
+    if not len(new_simples):
         return Whole()
-    return identify_shape(newsimples)
+    return identify_shape(new_simples)
 
 
 def intersect_shapes(*shapes: IShape) -> IBoolean2D:
-    for shape in shapes:
-        if not isinstance(shape, IShape):
-            raise TypeError(f"Invalid type: {type(shape)}: {shape}")
-    orisimples = []  # Original simple shapes
-    for shape in shapes:
-        orisimples += flatten2simples(shape)
-    params_inters = tuple(FollowPath.curves_intersection(shapes))
-    allpairs = set()
-    for paira, pairb in params_inters:
-        allpairs.add(paira)
-        allpairs.add(pairb)
-    positions = FollowPath.position_midpoints(shapes, allpairs, False)
-    newsimples = []
-    folsimples = {}
-    for i, (posi, simpli) in enumerate(zip(positions, orisimples)):
-        if not any(posi):
-            continue
-        elif all(posi):
-            newsimples.append(simpli)
-        else:
-            folsimples[i] = simpli
-    if folsimples:
-        newsimples += FollowPath.follow(orisimples, positions, params_inters)
-    if len(newsimples) == 0:
+    shapes = tuple(shapes)
+    orisimples = tuple(flatten2simples(shapes))  # Original simple shapes
+    jordans = tuple(simple.jordan for simple in orisimples)
+    graph = Graph(jordans)
+    graph = remove_wind_edges(graph, shapes, 0)
+    new_simples = []
+    for jordan in graph.extract_direct_jordans():
+        for simple in orisimples:
+            if id(simple.jordan) == id(jordan):
+                new_simples.append(simple)
+    for jordan in graph.extract_mixed_jordans():
+        curve = jordan.param_curve
+        midcontained = [False] * (len(curve.knots) - 1)
+        for i, (knota, knotb) in enumerate(zip(curve.knots, curve.knots[1:])):
+            midpoint = curve.eval((knota + knotb) / 2, 0)
+            midcontained[i] = all(midpoint in shape for shape in shapes)
+        simple = SimpleShape(jordan, all(midcontained))
+        new_simples.append(simple)
+    if not len(new_simples):
         return Empty()
-    return identify_shape(newsimples)
+    return identify_shape(new_simples)
 
 
 def identify_shape(
@@ -151,230 +153,207 @@ def identify_shape(
     return DisjointShape(disshapes)
 
 
-class FollowPath:
-    """
-    Specific static class with functions to compute the
-    union and intersection of shapes
-    """
-
-    @staticmethod
-    def two_curve_inter(
-        curvea: IJordanCurve, curveb: IJordanCurve
-    ) -> Iterable[Tuple[float, float]]:
-        """
-        Computes the intersection of two parameted curves P(t) and Q(u)
-        returning the pairs (ti, ui) such P(ti) = Q(ui)
-        """
-        if not isinstance(curvea, IJordanCurve):
-            raise TypeError
-        if not isinstance(curveb, IJordanCurve):
-            raise TypeError
-        objs = curve_and_curve(curvea, curveb)
-        curvea = curvea.param_curve
-        curveb = curveb.param_curve
-        if isinstance(objs, Empty):
-            return
-        if isinstance(objs, BoolOr):
-            objs = tuple(objs)
-        else:
-            objs = (objs,)
-        points = []
-        for obj in objs:
-            if isinstance(obj, Point2D):
-                points.append(obj)
-            elif isinstance(obj, ICurve):
-                points += list(obj.vertices)
-            else:
-                raise NotImplementedError
-        setpts = []
-        for point in points:
-            for setpt in setpts:
-                if point == setpt:
-                    break
-            else:
-                setpts.append(point)
-        for point in setpts:
-            parama = curvea.projection(point)[0]
-            paramb = curveb.projection(point)[0]
-            yield (parama, paramb)
-
-    @staticmethod
-    def two_shape_inter(shapea: IShape, shapeb: IShape):
-        """
-        Computes the intersection of all the curves from two shapes.
-        Meaning, shapea has some jordan curves and shapeb have also some
-        jordan curves. By construction, jordan curves of shapea doesn't
-        intersect with each other, then we need only check the intersection
-        of the jordans from shapea with the jordans from shapeb.
-
-        This function gives an iterable of (i, a), (j, b)
-        Which jordansa[i](a) == jordansb[j](b)
-        """
-        for i, jordani in enumerate(shapea.jordans):
-            for j, jordanj in enumerate(shapeb.jordans):
-                pairs = FollowPath.two_curve_inter(jordani, jordanj)
-                for ti, tj in pairs:
-                    yield (i, ti), (j, tj)
-
-    @staticmethod
-    def curves_intersection(
-        shapes: Tuple[IShape, ...],
-    ) -> Iterable[Tuple[int, float]]:
-        """
-        Computes the parameters of the intersection of the curves for every
-        pair of shapes
-
-        Parameters
-        ----------
-        shapes: Tuple[IShape]
-            The shapes that we must compute the intersection points
-        return: Tuple[Tuple[(int, float), (int, float)]]
-            The intersection values.
-            Each line is a pair of (int, float)
-            The int means the index of the jordan curve
-            based from all shapes
-            the float means the node such has the
-        """
-        for shape in shapes:
-            if not isinstance(shape, IShape):
-                raise TypeError(f"Invalid type: {type(shape)}: {shape}")
-        lenghts = tuple(len(shape.jordans) for shape in shapes)
-        cumlens = [0] + list(np.cumsum(lenghts))
-        for i, shapei in enumerate(shapes):
-            for j, shapej in enumerate(shapes):
-                if j <= i:
-                    continue
-                temp_inters = FollowPath.two_shape_inter(shapei, shapej)
-                for (a, ta), (b, tb) in temp_inters:
-                    x = cumlens[i] + a
-                    y = cumlens[j] + b
-                    yield (x, ta), (y, tb)
-
-    @staticmethod
-    def position_midpoints(
-        shapes: Tuple[IShape],
-        pairs: Tuple[Tuple[int, float], Tuple[int, float]],
-        union: bool,
-    ) -> Dict[Tuple[int, int], bool]:
-        """
-        Receives the
-        """
-        alljordans = []
-        for shape in shapes:
-            alljordans += list(shape.jordans)
-        allknots = [None] * len(alljordans)
-        for i, jordan in enumerate(alljordans):
-            allknots[i] = set(jordan.param_curve.knots)
-        for k, node in pairs:
-            allknots[k].add(node)
-        allpositions = [None] * len(alljordans)
-        index = 0
-        for i, shape in enumerate(shapes):
-            for jordan in shape.jordans:
-                knots = tuple(sorted(allknots[index]))
-                curve = jordan.param_curve
-                positions = []
-                for ta, tb in zip(knots, knots[1:]):
-                    midpoint = curve.eval((ta + tb) / 2)
-                    for k, shapek in enumerate(shapes):
-                        if k == i:
-                            continue
-                        if union and 0 < shapek.winding(midpoint):
-                            positions.append(False)
-                            break
-                        if not union and not shapek.winding(midpoint):
-                            positions.append(False)
-                            break
-                    else:
-                        positions.append(True)
-                allpositions[index] = tuple(positions)
-                index += 1
-        return allpositions
-
-    @staticmethod
-    def follow(
-        simples: Tuple[SimpleShape],
-        allpositions: Tuple[Tuple[bool]],
-        intersparams: Tuple,
-    ) -> Tuple[IJordanCurve, ...]:
-        """
-        This function receives the jordan curves,
-        that can intersect the other jordan curves,
-        and follows the paths using these curves.
-
-        This is an intermediate function and should not be
-        called without taking care of the arguments.
-        I'm not proud of this function cause it became too
-        complex, but better working than perfect.
-
-        Parameters
-        ----------
-        jordans: Tuple[IJordanCurve]
-            The jordan curves that are on the plane
-        allpositions: Tuple[Tuple[bool]]
-            The midpoint positions, to start following the path
-        intersparams: Tuple[Tuple[int, float]]
-            A list of two pairs like [[[i0, ai0], [j0, bj0]], ...]
-            Which tells the intersection parameters.
-            Example: jordans[i0].eval(ai0) == jordans[j0].eval(bj0)
-        return: Tuple[IJordanCurve]
-            The wanted jordan curves that don't intersect each others
-        """
-        all_curves = tuple(simple.jordan.param_curve for simple in simples)
-        intersparams = tuple(intersparams)
-        allpositions = list(map(list, allpositions))
-
-        newjordans: list[IJordanCurve] = []
-        for i, positions in enumerate(allpositions):
-            if all(positions) or not any(positions):
-                raise ValueError
-        if not intersparams:
-            return tuple(newjordans)
-
-        connections = {}
-        for pairi, pairj in intersparams:
-            connections[pairi] = pairj
-            connections[pairj] = pairi
-        all_knots = [curve.knots for curve in all_curves]
-        for i, knots in enumerate(all_knots):
-            connections[(i, knots[0])] = i, knots[-1]
-            connections[(i, knots[-1])] = i, knots[0]
-
-        all_knots = tuple(map(set, all_knots))
-        for i, a in connections.keys():
-            all_knots[i].add(a)
-        all_knots = tuple(map(sorted, all_knots))
-
-        for index, positions in enumerate(allpositions):
-            while any(positions):
-                triplets = []
-                i = index
-                trues = tuple(k for k, p in enumerate(positions) if p)
-                nodea = all_knots[i][trues[0]]
-                while True:
-                    start = all_knots[i].index(nodea)
-                    ending = start
-                    while ending in trues:
-                        ending += 1
-                    for k in range(start, ending):
-                        allpositions[i][k] = False
-                    nodeb = all_knots[i][ending]
-                    triplets.append((i, nodea, nodeb))
-                    i, nodea = connections.pop((i, nodeb))
-                    if i == triplets[0][0] and nodea == triplets[0][1]:
-                        break
-                    trues = tuple(
-                        k for k, p in enumerate(allpositions[i]) if p
-                    )
-                new_segments = []
-                for j, nodea, nodeb in triplets:
-                    segment = all_curves[j].section(nodea, nodeb)
-                    new_segments.append(segment)
-                new_curve = concatenate(*new_segments)
-                new_jordan = transform_to_jordan(new_curve)
-                newjordans.append(new_jordan)
-        boundaries = [False for _ in newjordans]
-        return tuple(
-            SimpleShape(jordan, boundary)
-            for jordan, boundary in zip(newjordans, boundaries)
+class Node(tuple):
+    def __new__(
+        cls, jordan_index: int, parameter: Parameter, point_index: int
+    ):
+        self = super(Node, cls).__new__(
+            cls, (jordan_index, parameter, point_index)
         )
+        self.jordan_index = jordan_index
+        self.parameter = parameter
+        self.point_index = point_index
+        return self
+
+
+class Edge(tuple):
+    def __new__(cls, jordan_index: int, first_index: int, last_index: int):
+        self = super(Edge, cls).__new__(
+            cls, (jordan_index, first_index, last_index)
+        )
+        self.jordan_index = jordan_index
+        self.first_index = first_index
+        self.last_index = last_index
+        return self
+
+
+class Graph:
+    def __init__(self, jordans: Iterable[IJordanCurve]):
+        jordans = tuple(jordans)
+        for jordan in jordans:
+            if not isinstance(jordan, IJordanCurve):
+                raise TypeError
+        self.jordans = jordans
+        self.points = []
+        self.allknots = []
+        self.nodes = []
+        self.edges = []
+        self.compute_standard_nodes()
+        self.compute_intersect_nodes()
+        self.compute_allknots()
+        self.compute_edges()
+
+    def add_node(self, ijordan: int, param: Parameter):
+        jordan = self.jordans[ijordan]
+        newpt = jordan.param_curve.eval(param, 0)
+        for ptindex, curpt in enumerate(self.points):
+            if curpt == newpt:
+                break
+        else:
+            ptindex = len(self.points)
+            self.points.append(newpt)
+        node = Node(ijordan, param, ptindex)
+        self.nodes.append(node)
+
+    def find_node(self, ijordan: int, param: Parameter):
+        for node in self.nodes:
+            if node[0] == ijordan and node[1] == param:
+                return node[2]
+        raise ValueError(f"Could not find node {ijordan}, {param}")
+
+    def find_param(self, ijordan: int, indexpt: int):
+        for node in self.nodes:
+            if node.jordan_index == ijordan and node.point_index == indexpt:
+                return node.parameter
+        raise ValueError(f"Could not find parameter {ijordan}, {indexpt}")
+
+    def add_edge(self, ijordan: int, inodea: int, inodeb: int):
+        edge = Edge(ijordan, inodea, inodeb)
+        self.edges.append(edge)
+        self.edges = sorted(self.edges)
+
+    def remove_edge(self, ijordan: int, inodea: int, inodeb: int):
+        for i, edge in enumerate(self.edges):
+            if edge[0] == ijordan and edge[1] == inodea and edge[2] == inodeb:
+                self.edges.pop(i)
+                return
+        raise ValueError(
+            f"Could not remove edge ({ijordan}, {inodea}, {inodeb})"
+        )
+
+    def compute_standard_nodes(self):
+        for i, jordan in enumerate(self.jordans):
+            curve = jordan.param_curve
+            for knot in curve.knots:
+                self.add_node(i, knot)
+
+    def compute_intersect_nodes(self):
+        njords = len(self.jordans)
+        for i, jordani in enumerate(self.jordans):
+            for j in range(i + 1, njords):
+                jordanj = self.jordans[j]
+                inters = two_curve_inter(jordani, jordanj)
+                for parami, paramj in inters:
+                    self.add_node(i, parami)
+                    self.add_node(j, paramj)
+
+    def compute_allknots(self):
+        allknots = []
+        for indj, _ in enumerate(self.jordans):
+            knots = set()
+            for jndj, param, _ in self.nodes:
+                if jndj != indj:
+                    continue
+                knots.add(param)
+            allknots.append(tuple(sorted(knots)))
+        self.allknots = tuple(allknots)
+
+    def compute_edges(self):
+        for indj, _ in enumerate(self.jordans):
+            knots = self.allknots[indj]
+            for knota, knotb in zip(knots, knots[1:]):
+                ptinda = self.find_node(indj, knota)
+                ptindb = self.find_node(indj, knotb)
+                self.add_edge(indj, ptinda, ptindb)
+
+    def extract_direct_jordans(self) -> Iterable[IJordanCurve]:
+        """
+        Extract the order of the graph by connection
+
+        Returns a tuple of (index jordan, knot parameter, index point)
+        """
+        available_jordans = tuple(sorted(set(e[0] for e in self.edges)))
+        for ijord in available_jordans:
+            jordan = self.jordans[ijord]
+            if len(self.allknots[ijord]) == len(jordan.param_curve.knots):
+                index = 0
+                while index < len(self.edges):
+                    if self.edges[index].jordan_index == ijord:
+                        self.edges.pop(index)
+                    else:
+                        index += 1
+                yield jordan
+
+    def extract_mixed_jordans(self) -> Iterable[IJordanCurve]:
+        """
+        This function gives the jordan curves when there's intersection
+        between the jordans, so it's a mix of some jordan curves
+        """
+        available_jordans = tuple(sorted(set(e[0] for e in self.edges)))
+        for ijord in available_jordans:
+            filtedges = sorted(e for e in self.edges if e[0] == ijord)
+            if not filtedges:
+                continue
+            new_edges = [filtedges[0]]
+            while True:
+                if new_edges[-1].last_index == new_edges[0].first_index:
+                    break
+                for cur_edge in self.edges:
+                    if cur_edge.first_index == new_edges[-1].last_index:
+                        new_edges.append(cur_edge)
+                        break
+            segments = []
+            for edge in tuple(new_edges):
+                curve = self.jordans[edge[0]].param_curve
+                parama = self.find_param(edge[0], edge[1])
+                paramb = self.find_param(edge[0], edge[2])
+                if paramb <= parama:
+                    if paramb != curve.knots[0]:
+                        raise ValueError("Not expected get here")
+                    paramb = curve.knots[-1]
+                segment = curve.section(parama, paramb)
+                segments.append(segment)
+                self.remove_edge(edge[0], edge[1], edge[2])
+            curve = concatenate(*segments)
+            yield transform_to_jordan(curve)
+
+
+def two_curve_inter(
+    curvea: IJordanCurve, curveb: IJordanCurve
+) -> Iterable[Tuple[float, float]]:
+    """
+    Computes the intersection of two parameted curves P(t) and Q(u)
+    returning the pairs (ti, ui) such P(ti) = Q(ui)
+    """
+    if not isinstance(curvea, IJordanCurve):
+        raise TypeError
+    if not isinstance(curveb, IJordanCurve):
+        raise TypeError
+    objs = curve_and_curve(curvea, curveb)
+    curvea = curvea.param_curve
+    curveb = curveb.param_curve
+    if isinstance(objs, Empty):
+        return
+    if isinstance(objs, BoolOr):
+        objs = tuple(objs)
+    else:
+        objs = (objs,)
+    points = []
+    for obj in objs:
+        if isinstance(obj, Point2D):
+            points.append(obj)
+        elif isinstance(obj, ICurve):
+            points += list(obj.vertices)
+        else:
+            raise NotImplementedError
+    setpts = []
+    for point in points:
+        for setpt in setpts:
+            if point == setpt:
+                break
+        else:
+            setpts.append(point)
+    for point in setpts:
+        parama = curvea.projection(point)[0]
+        paramb = curveb.projection(point)[0]
+        yield (parama, paramb)
