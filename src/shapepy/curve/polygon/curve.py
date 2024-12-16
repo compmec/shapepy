@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import math
 from abc import abstractmethod
-from typing import Tuple, Union
+from typing import Iterable, Tuple, Union
 
 from numpy import arctan2
 
@@ -10,9 +10,7 @@ from ...point import GeneralPoint, Point2D
 from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter, Scalar
 
 
-def clean_open_curve(
-    vertices: Tuple[GeneralPoint, ...]
-) -> Tuple[Point2D, ...]:
+def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
     vertices = list(vertices)
     for i, vertex in enumerate(vertices):
         if not isinstance(vertex, Point2D):
@@ -30,12 +28,8 @@ def clean_open_curve(
 
 
 class PolygonCurve(IParameterCurve):
-    def __init__(self, vertices: Tuple[GeneralPoint, ...]):
-        vertices = list(vertices)
-        for i, vertex in enumerate(vertices):
-            if not isinstance(vertex, Point2D):
-                vertices[i] = Point2D(vertex)
-        self.__vertices = tuple(vertices)
+    def __init__(self, vertices: Iterable[GeneralPoint]):
+        self.__vertices = tuple(clean_open_curve(vertices))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PolygonCurve):

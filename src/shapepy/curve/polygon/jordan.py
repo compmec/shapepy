@@ -48,7 +48,9 @@ class JordanPolygon(IJordanCurve):
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, JordanPolygon):
             return False
-        if self.lenght != other.lenght or self.area != other.area:
+        if self.area != other.area:
+            return False
+        if abs(self.lenght - other.lenght) > 1e-9:
             return False
         if len(self.vertices) != len(other.vertices):
             return False
