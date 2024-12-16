@@ -9,7 +9,7 @@ or even unconnected shapes.
 
 from __future__ import annotations
 
-from typing import Tuple, Union
+from typing import Iterable, Tuple, Union
 
 from ..core import IObject2D, IShape, Scalar
 from ..curve.abc import IJordanCurve
@@ -75,9 +75,9 @@ class SimpleShape(IShape):
             return False
         if self.area != other.area:
             return False
-        v1 = self.jordan == other.jordan
-        v2 = self.boundary == other.boundary
-        return v1 and v2
+        if self.boundary != other.boundary:
+            return False
+        return self.jordan == other.jordan
 
     def __invert__(self) -> SimpleShape:
         return self.__class__(~self.jordan, not self.boundary)
@@ -94,7 +94,11 @@ class ConnectedShape(IShape):
 
     """
 
-    def __init__(self, subshapes: Tuple[SimpleShape, ...]):
+    def __init__(self, subshapes: Iterable[SimpleShape]):
+        subshapes = tuple(subshapes)
+        for subshape in subshapes:
+            if not isinstance(subshape, SimpleShape):
+                raise TypeError
         self.subshapes = subshapes
 
     def __str__(self) -> str:
@@ -191,8 +195,12 @@ class DisjointShape(IShape):
     """
 
     def __init__(
-        self, subshapes: Tuple[Union[SimpleShape, ConnectedShape], ...]
+        self, subshapes: Iterable[Union[SimpleShape, ConnectedShape]]
     ):
+        subshapes = tuple(subshapes)
+        for subshape in subshapes:
+            if not isinstance(subshape, (SimpleShape, ConnectedShape)):
+                raise TypeError
         self.subshapes = subshapes
 
     @property
