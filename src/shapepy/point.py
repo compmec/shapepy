@@ -9,7 +9,6 @@ from .core import IBoolean2D, Scalar
 
 
 class Point2D(IBoolean2D):
-
     @property
     def ndim(self) -> int:
         return 0

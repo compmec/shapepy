@@ -193,7 +193,6 @@ def test_mult():
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare", "test_mult"])
 def test_pow():
-
     sint = Trignomial([0, 1, 0])
     cost = Trignomial([0, 0, 1])
     sin2t = Trignomial([0, 0, 0, 1, 0])

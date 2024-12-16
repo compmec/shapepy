@@ -27,7 +27,6 @@ def test_begin():
 
 
 class TestRectangle:
-
     @pytest.mark.order(10)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
@@ -110,7 +109,6 @@ class TestRectangle:
 
 
 class TestQuadratic:
-
     @staticmethod
     def create_simple_shape():
         knotvector = (0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4)

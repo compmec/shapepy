@@ -9,7 +9,6 @@ from .curve import PiecewiseClosedCurve
 
 
 class JordanPiecewise(IJordanCurve):
-
     def __init__(self, functions: Iterable[Tuple[IAnalytic, IAnalytic]]):
         self.__param_curve = PiecewiseClosedCurve(functions)
 

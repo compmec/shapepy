@@ -7,7 +7,6 @@ from ...core import Parameter
 
 
 class KnotVector(tuple):
-
     def __new__(
         cls, knotvector: Tuple[Parameter, ...], degree: Optional[int] = None
     ):

@@ -9,7 +9,6 @@ from .curve import PolygonClosedCurve, PolygonOpenCurve
 
 
 class JordanPolygon(IJordanCurve):
-
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         self.vertices = vertices
 

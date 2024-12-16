@@ -13,7 +13,6 @@ Parameter = Union[int, float]
 
 
 class IObject2D(ABC):
-
     transform = None
 
     @property
@@ -34,7 +33,6 @@ class IObject2D(ABC):
 
 
 class IBoolean2D(IObject2D):
-
     booloperate = None
 
     def __contains__(self, other: IObject2D) -> IBoolean2D:
@@ -128,7 +126,6 @@ class Whole(IBoolean2D):
 
 
 class ICurve(IBoolean2D):
-
     @property
     def ndim(self) -> int:
         return 1
@@ -140,7 +137,6 @@ class ICurve(IBoolean2D):
 
 
 class IShape(IBoolean2D):
-
     @property
     def ndim(self) -> int:
         return 2
@@ -152,7 +148,6 @@ class IShape(IBoolean2D):
 
 
 class IAnalytic(ABC):
-
     @abstractmethod
     def eval(self, node: Parameter, derivate: int = 0) -> Scalar:
         raise NotImplementedError

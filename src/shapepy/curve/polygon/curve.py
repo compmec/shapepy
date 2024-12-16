@@ -30,7 +30,6 @@ def clean_open_curve(
 
 
 class PolygonCurve(IParameterCurve):
-
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         vertices = list(vertices)
         for i, vertex in enumerate(vertices):
@@ -86,7 +85,6 @@ class PolygonCurve(IParameterCurve):
 
 
 class PolygonOpenCurve(PolygonCurve, IOpenCurve):
-
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []
@@ -142,7 +140,6 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
 
 
 class PolygonClosedCurve(PolygonCurve, IClosedCurve):
-
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []

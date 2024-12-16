@@ -210,7 +210,6 @@ class TestDisjoint:
 
 
 class TestIdentifyShape:
-
     @pytest.mark.order(8)
     @pytest.mark.dependency(
         depends=[

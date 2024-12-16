@@ -38,13 +38,11 @@ def open(object: IBoolean2D) -> IBoolean2D:
 
 
 class Configuration:
-
     autoexpand = True
     autosimplify = True
 
 
 class Transformation:
-
     @staticmethod
     def move_point(object: Point2D, point: Point2D) -> Point2D:
         return Point2D(object[0] + point[0], object[1] + point[1])
@@ -192,7 +190,6 @@ class Transformation:
 
 
 class Contains:
-
     @staticmethod
     def point_in_curve(curve: ICurve, point: Point2D) -> bool:
         if not isinstance(point, Point2D):
@@ -288,7 +285,6 @@ class Contains:
 
 
 class BooleanOperate:
-
     @staticmethod
     def contains(object: IBoolean2D, other: IBoolean2D) -> bool:
         if not isinstance(other, IBoolean2D):
@@ -384,7 +380,6 @@ class BooleanOperate:
 
 
 class Simplify:
-
     @staticmethod
     def filter_equal(objects: Iterable[IObject2D]) -> Tuple[IObject2D, ...]:
         items: List[IObject2D] = []

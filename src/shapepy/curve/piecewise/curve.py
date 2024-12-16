@@ -11,7 +11,6 @@ from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter
 
 
 class PiecewiseCurve(IParameterCurve):
-
     def __init__(self, functions: Iterable[Tuple[IAnalytic, IAnalytic]]):
         functions = tuple(functions)
         for func in functions:
@@ -130,7 +129,6 @@ class PiecewiseCurve(IParameterCurve):
 
 
 class PiecewiseOpenCurve(PiecewiseCurve, IOpenCurve):
-
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
         if node < 0 or self.nsegs < node:
             raise ValueError
@@ -142,7 +140,6 @@ class PiecewiseOpenCurve(PiecewiseCurve, IOpenCurve):
 
 
 class PiecewiseClosedCurve(PiecewiseCurve, IClosedCurve):
-
     def __init__(self, functions: Tuple[Tuple[IAnalytic]]):
         super().__init__(functions)
         nsegs = self.nsegs

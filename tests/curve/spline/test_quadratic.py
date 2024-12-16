@@ -23,7 +23,6 @@ def test_begin():
 
 
 class TestOpenCurve:
-
     @staticmethod
     def create_open_curve() -> SplineOpenCurve:
         knotvector = [0, 0, 0, 1, 1, 2, 2, 2]
@@ -127,7 +126,6 @@ class TestOpenCurve:
 
 
 class TestClosedCurve:
-
     @staticmethod
     def create_closed_curve() -> SplineOpenCurve:
         knotvector = [0, 0, 0, 1, 1, 2, 2, 3, 3, 4, 4, 4]

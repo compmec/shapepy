@@ -12,7 +12,6 @@ class IOpenCurve(ICurve):
 
 
 class IClosedCurve(ICurve):
-
     @property
     @abstractmethod
     def area(self) -> Scalar:
@@ -24,7 +23,6 @@ class IClosedCurve(ICurve):
 
 
 class IParameterCurve(ICurve):
-
     @abstractmethod
     def knots(self) -> Tuple[Parameter, ...]:
         raise NotImplementedError
@@ -46,7 +44,6 @@ class IParameterCurve(ICurve):
 
 
 class IJordanCurve(IClosedCurve):
-
     @property
     @abstractmethod
     def param_curve(self) -> IParameterCurve:

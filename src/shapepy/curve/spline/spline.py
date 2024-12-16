@@ -114,7 +114,6 @@ def compute_segments(
 
 
 class Spline:
-
     def __init__(self, knotvector: KnotVector, ctrlpoints: Iterable[Any]):
         if not isinstance(knotvector, KnotVector):
             raise TypeError
