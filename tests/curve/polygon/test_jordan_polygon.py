@@ -219,7 +219,7 @@ class TestTransformationPolygon:
         test_square = JordanPolygon(test_square_pts)
 
         assert test_square == good_square
-        test_square = test_square.rotate(np.pi / 6)  # 30 degrees
+        test_square = test_square.rotate(1 / 12)  # 30 degrees
         assert test_square != good_square
         test_square = test_square.rotate(60, degrees=True)
         assert test_square == good_square

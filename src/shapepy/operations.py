@@ -1,6 +1,7 @@
 import math
 from typing import Iterable, List, Tuple
 
+from .analytic.trigonometric import Trignomial
 from .boolean import BoolAnd, BoolNot, BoolOr
 from .core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
 from .curve import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
@@ -57,10 +58,10 @@ class Transformation:
 
     @staticmethod
     def rotate_point(object: Point2D, angle: Scalar) -> Point2D:
-        sin, cos = math.sin(angle), math.cos(angle)
+        sin, cos = Trignomial.sincos(angle)
         oldx, oldy = object[0], object[1]
-        newx = oldx * cos + oldy * sin
-        newy = -oldx * sin + oldy * cos
+        newx = oldx * cos - oldy * sin
+        newy = oldx * sin + oldy * cos
         return Point2D(newx, newy)
 
     @staticmethod
@@ -110,7 +111,7 @@ class Transformation:
     @staticmethod
     def move_shape(object: IShape, point: Point2D) -> IShape:
         if not isinstance(object, IShape):
-            raise TypeError
+            raise TypeError(f"Received type {type(object)}")
         if isinstance(object, SimpleShape):
             newjordan = Transformation.move(object.jordan, point)
             return SimpleShape(newjordan, object.boundary)
@@ -120,9 +121,9 @@ class Transformation:
         return object.__class__(newsubshapes)
 
     @staticmethod
-    def scale_shape(object: ICurve, xscale: Scalar, yscale: Scalar) -> IShape:
+    def scale_shape(object: IShape, xscale: Scalar, yscale: Scalar) -> IShape:
         if not isinstance(object, IShape):
-            raise TypeError
+            raise TypeError(f"Received type {type(object)}")
         if isinstance(object, SimpleShape):
             newjordan = Transformation.scale_curve(
                 object.jordan, xscale, yscale
@@ -135,11 +136,11 @@ class Transformation:
         return object.__class__(newsubshapes)
 
     @staticmethod
-    def rotate_shape(object: ICurve, angle: Scalar) -> IShape:
+    def rotate_shape(object: IShape, angle: Scalar) -> IShape:
         if not isinstance(object, IShape):
-            raise TypeError
+            raise TypeError(f"Received type {type(object)}")
         if isinstance(object, SimpleShape):
-            newjordan = Transformation.rotate_shape(object.jordan, angle)
+            newjordan = Transformation.rotate_curve(object.jordan, angle)
             return SimpleShape(newjordan, object.boundary)
         newsubshapes = tuple(
             Transformation.rotate_shape(subshape, angle) for subshape in object

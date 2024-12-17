@@ -4,8 +4,8 @@ Core file, with the basics classes and interfaces used in the package
 
 from __future__ import annotations
 
-import math
 from abc import ABC, abstractmethod
+from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
 Scalar = Union[int, float]
@@ -28,7 +28,9 @@ class IObject2D(ABC):
 
     def rotate(self, angle: Scalar, degrees: bool = False) -> IObject2D:
         if degrees:
-            angle = (angle * math.pi) / 180
+            if isinstance(angle, (int, Fraction)):
+                angle = Fraction(angle)
+            angle /= 360
         return self.transform.rotate(self, angle)
 
 
