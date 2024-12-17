@@ -38,10 +38,6 @@ class SimpleShape(IShape):
         return self.__jordan
 
     @property
-    def jordans(self) -> Tuple[IJordanCurve]:
-        return (self.jordan,)
-
-    @property
     def area(self) -> Scalar:
         return self.jordan.area
 
@@ -79,7 +75,7 @@ class SimpleShape(IShape):
             return False
         return self.jordan == other.jordan
 
-    def __invert__(self) -> SimpleShape:
+    def __neg__(self) -> SimpleShape:
         return self.__class__(~self.jordan, not self.boundary)
 
     def winding(self, point: GeneralPoint) -> Scalar:
@@ -116,9 +112,8 @@ class ConnectedShape(IShape):
             return False
         return True
 
-    def __invert__(self) -> DisjointShape:
-        simples = tuple(~simple for simple in self)
-        return DisjointShape(simples)
+    def __neg__(self) -> DisjointShape:
+        return DisjointShape(~simple for simple in self)
 
     def __iter__(self):
         yield from self.__subshapes

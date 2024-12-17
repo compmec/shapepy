@@ -42,13 +42,11 @@ def open_shape(shape: IShape) -> IShape:
 def flatten2simples(
     shapes: Union[IShape, Iterable[IShape]]
 ) -> Iterable[SimpleShape]:
-    if not isinstance(shapes, IShape):
-        for shape in shapes:
-            yield from flatten2simples(shape)
-    elif isinstance(shapes, SimpleShape):
+    if isinstance(shapes, SimpleShape):
         yield shapes
-    elif isinstance(shapes, (ConnectedShape, DisjointShape)):
-        yield from flatten2simples(shapes)
+        return
+    for shape in shapes:
+        yield from flatten2simples(shape)
 
 
 def remove_wind_edges(
@@ -142,7 +140,7 @@ def identify_shape(
     simples = tuple(simples)
     for simple in simples:
         if not isinstance(simple, SimpleShape):
-            raise TypeError
+            raise TypeError(f"Received {type(simple)}")
     areas = tuple(simple.area for simple in simples)
     simples = [simples[i] for i in sorter(areas)]
     disshapes = []

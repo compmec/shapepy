@@ -8,6 +8,8 @@ from .point import GeneralPoint, Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 from .shape.boolean import (
     close_shape,
+    flatten2simples,
+    identify_shape,
     intersect_shapes,
     open_shape,
     unite_shapes,
@@ -259,8 +261,13 @@ class Contains:
             raise TypeError
         if not isinstance(other, IShape):
             raise TypeError
-        if isinstance(object, SimpleShape) and isinstance(other, SimpleShape):
-            return Contains.simple_in_simple(object, other)
+        if isinstance(object, SimpleShape):
+            if isinstance(other, SimpleShape):
+                return Contains.simple_in_simple(object, other)
+            invobj = -object
+            if isinstance(other, ConnectedShape):
+                return any(invobj in -sub for sub in other)
+            return invobj in Simplify.simplify(-other)
         if isinstance(other, DisjointShape):
             return all(Contains.shape_in_shape(object, sub) for sub in other)
         if isinstance(object, ConnectedShape):
@@ -522,14 +529,40 @@ class Simplify:
         return object
 
     @staticmethod
+    def simplify_not(object: BoolNot) -> IObject2D:
+        if not isinstance(object, BoolNot):
+            raise TypeError
+        invobj = object.object
+        if isinstance(invobj, (Point2D, ICurve)):
+            return object
+        if isinstance(invobj, (SimpleShape, ConnectedShape)):
+            return -invobj
+        if isinstance(invobj, DisjointShape):
+            simples = (~sub for sub in flatten2simples(invobj))
+            return identify_shape(simples)
+        raise NotImplementedError(f"Not expected get here: {object}")
+
+    @staticmethod
+    def simplify_and(object: BoolAnd) -> IObject2D:
+        if not isinstance(object, BoolAnd):
+            raise TypeError
+        return object
+
+    @staticmethod
+    def simplify_or(object: BoolOr) -> IObject2D:
+        if not isinstance(object, BoolOr):
+            raise TypeError
+        return object
+
+    @staticmethod
     def simplify(object: IObject2D) -> IObject2D:
         if not isinstance(object, IObject2D):
             raise TypeError
+        object = Simplify.expand(object)
         if not isinstance(object, (BoolNot, BoolOr, BoolAnd)):
             return object
-        object = Simplify.expand(object)
-        if not isinstance(object, (BoolOr, BoolAnd)):
-            return object
+        if isinstance(object, BoolNot):
+            return Simplify.simplify_not(object)
         subobjs = tuple(map(Simplify.simplify, object))
         subobjs = Simplify.filter_equal(subobjs)
         if len(subobjs) == 1:
