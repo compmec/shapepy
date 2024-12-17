@@ -149,3 +149,6 @@ class BoolAnd(IBoolean2D):
 
     def __len__(self) -> int:
         return len(self.__objects)
+
+    def __contains__(self, other):
+        return all(other in sub for sub in self)

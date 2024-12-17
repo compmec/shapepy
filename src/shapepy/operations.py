@@ -277,6 +277,8 @@ class BooleanOperate:
     def contains(object: IBoolean2D, other: IBoolean2D) -> bool:
         if not isinstance(other, IBoolean2D):
             other = Point2D(other)
+        if isinstance(object, (BoolAnd, ConnectedShape)):
+            return other in object
         if isinstance(other, Empty) or isinstance(object, Whole):
             return True
         if isinstance(object, Empty):

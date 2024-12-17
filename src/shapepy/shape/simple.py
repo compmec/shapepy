@@ -11,6 +11,7 @@ from __future__ import annotations
 
 from typing import Iterable, Tuple, Union
 
+from ..boolean import BoolOr
 from ..core import IObject2D, IShape, Scalar
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint
@@ -133,6 +134,9 @@ class ConnectedShape(IShape):
                 return wind
         return 1
 
+    def __contains__(self, other):
+        return all(other in sub for sub in self)
+
 
 class DisjointShape(IShape):
     """
@@ -192,3 +196,8 @@ class DisjointShape(IShape):
             if wind != 0:
                 return wind
         return 0
+
+    def __contains__(self, other):
+        if isinstance(other, (BoolOr, DisjointShape)):
+            return all(sub in self for sub in other)
+        return any(other in sub for sub in self)
