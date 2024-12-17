@@ -1,4 +1,3 @@
-import math
 from typing import Iterable, List, Tuple
 
 from .analytic.trigonometric import Trignomial
@@ -8,36 +7,12 @@ from .curve import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
 from .point import GeneralPoint, Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 from .shape.boolean import (
-    close_shape,
     flatten2simples,
     identify_shape,
     intersect_shapes,
-    open_shape,
     unite_shapes,
 )
 from .utils import permutations, sorter
-
-
-def close(object: IBoolean2D) -> IBoolean2D:
-    """
-    Set boundaries to True
-    """
-    if isinstance(object, (Empty, Whole, Point2D)):
-        return object
-    if isinstance(object, IShape):
-        return close_shape(object)
-    raise NotImplementedError("Not expected get here")
-
-
-def open(object: IBoolean2D) -> IBoolean2D:
-    """
-    Set boundaries to False
-    """
-    if isinstance(object, (Empty, Whole, Point2D)):
-        return object
-    if isinstance(object, IShape):
-        return open_shape(object)
-    raise NotImplementedError("Not expected get here")
 
 
 class Configuration:
@@ -164,7 +139,7 @@ class Transformation:
     @staticmethod
     def scale(object: IObject2D, xscale: Scalar, yscale: Scalar) -> IObject2D:
         if not isinstance(object, IObject2D):
-            object = Point2D(object)
+            raise TypeError
         if isinstance(object, (Empty, Whole)):
             return object
         if isinstance(object, Point2D):
@@ -178,7 +153,7 @@ class Transformation:
     @staticmethod
     def rotate(object: IObject2D, angle: Scalar) -> IObject2D:
         if not isinstance(object, IObject2D):
-            object = Point2D(object)
+            raise TypeError
         if isinstance(object, (Empty, Whole)):
             return object
         if isinstance(object, Point2D):
@@ -344,7 +319,7 @@ class BooleanOperate:
             return objects[0]
         for i, obj in enumerate(objects):
             if not isinstance(obj, IObject2D):
-                objects[i] = Point2D(obj)
+                raise TypeError
         ndims = (obj.ndim for obj in objects)
         objects = tuple(objects[i] for i in sorter(ndims))
         retorno = BoolOr(objects)
@@ -366,7 +341,7 @@ class BooleanOperate:
             return objects[0]
         for i, obj in enumerate(objects):
             if not isinstance(obj, IObject2D):
-                objects[i] = Point2D(obj)
+                raise TypeError
         ndims = (obj.ndim for obj in objects)
         objects = tuple(objects[i] for i in sorter(ndims))
         retorno = BoolAnd(objects)

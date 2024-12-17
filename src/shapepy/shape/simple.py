@@ -9,7 +9,7 @@ or even unconnected shapes.
 
 from __future__ import annotations
 
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Union
 
 from ..boolean import BoolOr
 from ..core import IObject2D, IShape, Scalar

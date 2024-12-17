@@ -26,17 +26,7 @@ def close_shape(shape: IShape) -> IShape:
         raise TypeError
     if isinstance(shape, SimpleShape):
         return SimpleShape(shape.jordan, True)
-    subshapes = tuple(map(close_shape, shape))
-    return shape.__class__(subshapes)
-
-
-def open_shape(shape: IShape) -> IShape:
-    if not isinstance(shape, IShape):
-        raise TypeError
-    if isinstance(shape, SimpleShape):
-        return SimpleShape(shape.jordan, False)
-    subshapes = tuple(map(open_shape, shape))
-    return shape.__class__(subshapes)
+    return shape.__class__(map(close_shape, shape))
 
 
 def flatten2simples(
@@ -335,23 +325,6 @@ class Graph:
                 self.remove_edge(edge[0], edge[1], edge[2])
             curve = concatenate(*segments)
             yield transform_to_jordan(curve)
-
-    def __str__(self) -> str:
-        msg = "Points:\n"
-        for i, point in enumerate(self.points):
-            msg += f"    {i}: {point}\n"
-        msg += "Knots:\n"
-        for i, knots in enumerate(self.allknots):
-            msg += f"    {i}: {knots}\n"
-        msg += "Nodes:\n"
-        for i, node in enumerate(self.nodes):
-            msg += f"    {i}: {node}\n"
-        msg += "Edges:\n"
-        for i, edge in enumerate(self.edges):
-            pta = self.points[edge[1]]
-            ptb = self.points[edge[2]]
-            msg += f"    {i}: {edge} : {pta} -> {ptb}\n"
-        return msg
 
 
 def two_curve_inter(
