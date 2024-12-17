@@ -113,8 +113,7 @@ class Transformation:
             newjordan = Transformation.move(object.jordan, point)
             return SimpleShape(newjordan, object.boundary)
         newsubshapes = tuple(
-            Transformation.move_shape(subshape, point)
-            for subshape in object.subshapes
+            Transformation.move_shape(subshape, point) for subshape in object
         )
         return object.__class__(newsubshapes)
 
@@ -129,7 +128,7 @@ class Transformation:
             return SimpleShape(newjordan, object.boundary)
         newsubshapes = tuple(
             Transformation.scale_shape(subshape, xscale, yscale)
-            for subshape in object.subshapes
+            for subshape in object
         )
         return object.__class__(newsubshapes)
 
@@ -141,8 +140,7 @@ class Transformation:
             newjordan = Transformation.rotate_shape(object.jordan, angle)
             return SimpleShape(newjordan, object.boundary)
         newsubshapes = tuple(
-            Transformation.rotate_shape(subshape, angle)
-            for subshape in object.subshapes
+            Transformation.rotate_shape(subshape, angle) for subshape in object
         )
         return object.__class__(newsubshapes)
 
@@ -208,13 +206,9 @@ class Contains:
             wind = shape.jordan.winding(point)
             return wind == 1 or (0 < wind and shape.boundary)
         if isinstance(shape, ConnectedShape):
-            return all(
-                Contains.point_in_shape(sub, point) for sub in shape.subshapes
-            )
+            return all(Contains.point_in_shape(sub, point) for sub in shape)
         if isinstance(shape, DisjointShape):
-            return any(
-                Contains.point_in_shape(sub, point) for sub in shape.subshapes
-            )
+            return any(Contains.point_in_shape(sub, point) for sub in shape)
         raise NotImplementedError(
             f"Not expected: {type(shape)}, {type(point)}"
         )
@@ -268,17 +262,11 @@ class Contains:
         if isinstance(object, SimpleShape) and isinstance(other, SimpleShape):
             return Contains.simple_in_simple(object, other)
         if isinstance(other, DisjointShape):
-            return all(
-                Contains.shape_in_shape(object, sub) for sub in other.subshapes
-            )
+            return all(Contains.shape_in_shape(object, sub) for sub in other)
         if isinstance(object, ConnectedShape):
-            return all(
-                Contains.shape_in_shape(sub, other) for sub in object.subshapes
-            )
+            return all(Contains.shape_in_shape(sub, other) for sub in object)
         if isinstance(object, DisjointShape):
-            return any(
-                Contains.shape_in_shape(sub, other) for sub in object.subshapes
-            )
+            return any(Contains.shape_in_shape(sub, other) for sub in object)
         raise NotImplementedError(
             f"Not expected: {type(object)}, {type(other)}"
         )

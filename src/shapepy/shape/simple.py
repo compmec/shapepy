@@ -14,7 +14,6 @@ from typing import Iterable, Tuple, Union
 from ..core import IObject2D, IShape, Scalar
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint
-from ..utils import sorter
 
 
 class SimpleShape(IShape):
@@ -99,7 +98,7 @@ class ConnectedShape(IShape):
         for subshape in subshapes:
             if not isinstance(subshape, SimpleShape):
                 raise TypeError
-        self.subshapes = subshapes
+        self.__subshapes = subshapes
 
     def __str__(self) -> str:
         msg = f"Connected shape total area {self.area}"
@@ -117,7 +116,7 @@ class ConnectedShape(IShape):
         return True
 
     def __invert__(self) -> DisjointShape:
-        simples = tuple(~simple for simple in self.subshapes)
+        simples = tuple(~simple for simple in self)
         return DisjointShape(simples)
 
     def __iter__(self):
@@ -125,61 +124,10 @@ class ConnectedShape(IShape):
 
     @property
     def area(self) -> Scalar:
-        return sum(subshape.area for subshape in self.subshapes)
-
-    @property
-    def jordans(self) -> Tuple[IJordanCurve]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[IJordanCurve]
-        """
-        return tuple(shape.jordan for shape in self.subshapes)
-
-    @property
-    def subshapes(self) -> Tuple[SimpleShape, ...]:
-        """
-        Subshapes that defines the connected shape
-
-        :getter: Subshapes that defines connected shape
-        :setter: Subshapes that defines connected shape
-        :type: tuple[SimpleShape]
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> big_square = Primitive.square(side = 2)
-        >>> small_square = Primitive.square(side = 1)
-        >>> shape = big_square - small_square
-        >>> for subshape in shape.subshapes:
-                print(subshape)
-        Simple Shape of area 4.00 with vertices:
-        [[ 1.  1.]
-        [-1.  1.]
-        [-1. -1.]
-        [ 1. -1.]]
-        Simple Shape of area -1.00 with vertices:
-        [[ 0.5  0.5]
-        [ 0.5 -0.5]
-        [-0.5 -0.5]
-        [-0.5  0.5]]
-
-        """
-        return self.__subshapes
-
-    @subshapes.setter
-    def subshapes(self, values: Tuple[SimpleShape, ...]):
-        for value in values:
-            assert isinstance(value, SimpleShape)
-        areas = tuple(value.area for value in values)
-        indexs = tuple(sorter(areas))
-        if areas[indexs[-1]] > 0:
-            indexs = (indexs[-1],) + indexs[:-1]
-        values = tuple(values[i] for i in indexs)
-        self.__subshapes = tuple(values)
+        return sum(subshape.area for subshape in self)
 
     def winding(self, point: GeneralPoint) -> Scalar:
-        for subshape in self.subshapes:
+        for subshape in self:
             wind = subshape.winding(point)
             if wind != 1:
                 return wind
@@ -201,19 +149,19 @@ class DisjointShape(IShape):
         for subshape in subshapes:
             if not isinstance(subshape, (SimpleShape, ConnectedShape)):
                 raise TypeError
-        self.subshapes = subshapes
+        self.__subshapes = subshapes
 
     @property
     def area(self) -> Scalar:
-        return sum(subshape.area for subshape in self.subshapes)
+        return sum(subshape.area for subshape in self)
 
     def __eq__(self, other: IObject2D):
         if not isinstance(other, DisjointShape):
             return False
         if self.area != other.area:
             return False
-        self_subshapes = list(self.subshapes)
-        othe_subshapes = list(other.subshapes)
+        self_subshapes = list(self)
+        othe_subshapes = list(other)
         # Compare if a curve is inside another
         while len(self_subshapes) and len(othe_subshapes):
             for j, osbshape in enumerate(othe_subshapes):
@@ -229,7 +177,7 @@ class DisjointShape(IShape):
 
     def __str__(self) -> str:
         msg = f"Disjoint shape with total area {self.area} and "
-        msg += f"{len(self.subshapes)} subshapes"
+        msg += f"{len(self)} subshapes"
         return msg
 
     def __repr__(self) -> str:
@@ -238,60 +186,8 @@ class DisjointShape(IShape):
     def __iter__(self):
         yield from self.__subshapes
 
-    @property
-    def jordans(self) -> Tuple[IJordanCurve]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[IJordanCurve]
-        """
-        lista = []
-        for subshape in self.subshapes:
-            lista += list(subshape.jordans)
-        return tuple(lista)
-
-    @property
-    def subshapes(self) -> Tuple[Union[SimpleShape, ConnectedShape]]:
-        """
-        Subshapes that defines the disjoint shape
-
-        :getter: Subshapes that defines disjoint shape
-        :setter: Subshapes that defines disjoint shape
-        :type: tuple[SimpleShape | ConnectedShape]
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> left = Primitive.square(center=(-2, 0))
-        >>> right = Primitive.square(center = (2, 0))
-        >>> shape = left | right
-        >>> for subshape in shape.subshapes:
-                print(subshape)
-        Simple Shape of area 1.00 with vertices:
-        [[-1.5  0.5]
-        [-2.5  0.5]
-        [-2.5 -0.5]
-        [-1.5 -0.5]]
-        Simple Shape of area 1.00 with vertices:
-        [[ 2.5  0.5]
-        [ 1.5  0.5]
-        [ 1.5 -0.5]
-        [ 2.5 -0.5]]
-
-        """
-        return self.__subshapes
-
-    @subshapes.setter
-    def subshapes(self, values: Tuple[IShape]):
-        for value in values:
-            assert isinstance(value, (SimpleShape, ConnectedShape))
-        areas = tuple(value.area for value in values)
-        indexs = tuple(sorter(areas))
-        values = tuple(values[i] for i in indexs)
-        self.__subshapes = tuple(values)
-
     def winding(self, point: GeneralPoint) -> Scalar:
-        for subshape in self.subshapes:
+        for subshape in self:
             wind = subshape.winding(point)
             if wind != 0:
                 return wind

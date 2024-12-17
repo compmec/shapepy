@@ -10,7 +10,7 @@ def polynomial(shape: IShape, exponents: Tuple[int, int]) -> Scalar:
     if not isinstance(shape, IShape):
         raise TypeError
     if isinstance(shape, (ConnectedShape, DisjointShape)):
-        return sum(polynomial(sub, exponents) for sub in shape.subshapes)
+        return sum(polynomial(sub, exponents) for sub in shape)
     if not isinstance(shape, SimpleShape):
         raise TypeError
     expx, expy = exponents

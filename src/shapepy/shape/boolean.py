@@ -26,7 +26,7 @@ def close_shape(shape: IShape) -> IShape:
         raise TypeError
     if isinstance(shape, SimpleShape):
         return SimpleShape(shape.jordan, True)
-    subshapes = tuple(map(close_shape, shape.subshapes))
+    subshapes = tuple(map(close_shape, shape))
     return shape.__class__(subshapes)
 
 
@@ -35,7 +35,7 @@ def open_shape(shape: IShape) -> IShape:
         raise TypeError
     if isinstance(shape, SimpleShape):
         return SimpleShape(shape.jordan, False)
-    subshapes = tuple(map(open_shape, shape.subshapes))
+    subshapes = tuple(map(open_shape, shape))
     return shape.__class__(subshapes)
 
 
@@ -48,7 +48,7 @@ def flatten2simples(
     elif isinstance(shapes, SimpleShape):
         yield shapes
     elif isinstance(shapes, (ConnectedShape, DisjointShape)):
-        yield from flatten2simples(shapes.subshapes)
+        yield from flatten2simples(shapes)
 
 
 def remove_wind_edges(

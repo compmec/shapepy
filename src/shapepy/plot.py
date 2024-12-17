@@ -47,7 +47,7 @@ def path_simple(simple: SimpleShape) -> Path:
 def path_connected(connected: ConnectedShape) -> Path:
     vertices = []
     commands = []
-    for simple in connected.subshapes:
+    for simple in connected:
         newverts, newcomms = patch_jordan(simple.jordan)
         vertices += newverts
         commands += newcomms
@@ -133,13 +133,13 @@ class ShapePloter:
             self.gca().set_facecolor(kwargs["facecolor"])
             patch = PathPatch(path, color="white", alpha=1)
         self.gca().add_patch(patch)
-        for subshape in shape.subshapes:
+        for subshape in shape:
             self.__plot_jordan_curve(subshape.jordan, **kwargs)
 
     def __plot_disjoint_shape(self, shape: DisjointShape, **kwargs):
         if not isinstance(shape, DisjointShape):
             raise TypeError
-        for subshape in shape.subshapes:
+        for subshape in shape:
             if isinstance(subshape, SimpleShape):
                 self.__plot_simple_shape(subshape, **kwargs)
             elif isinstance(subshape, ConnectedShape):
