@@ -432,6 +432,42 @@ class Simplify:
         return object.__class__(items)
 
     @staticmethod
+    def expand_not(object: BoolNot) -> IObject2D:
+        if not isinstance(object, BoolNot):
+            raise TypeError
+        invobj = object.object
+        if isinstance(invobj, BoolOr):
+            newobjs = map(BooleanOperate.invert, invobj)
+            object = BooleanOperate.intersect(*newobjs)
+        elif isinstance(invobj, BoolAnd):
+            newobjs = map(BooleanOperate.invert, invobj)
+            object = BooleanOperate.union(*newobjs)
+        return object
+
+    @staticmethod
+    def expand_and(object: BoolAnd) -> IObject2D:
+        if not isinstance(object, BoolAnd):
+            raise TypeError
+        subobjs = tuple(Simplify.flatten(object))
+        sizes = [1] * len(subobjs)
+        for i, subobj in enumerate(subobjs):
+            if isinstance(subobj, BoolOr):
+                sizes[i] = len(subobj)
+        if all(size == 1 for size in sizes):
+            return object
+        subinters = []
+        for indexs in permutations(*sizes):
+            subitems = [subobjs[i] for i in indexs]
+            subinters.append(BoolAnd(subitems))
+        return Simplify.expand_or(BoolOr(subinters))
+
+    @staticmethod
+    def expand_or(object: BoolOr) -> IObject2D:
+        if not isinstance(object, BoolOr):
+            raise TypeError
+        return Simplify.flatten(object)
+
+    @staticmethod
     def expand(object: IObject2D) -> IObject2D:
         """
         Expand the object by using Morgan's law, to get something like
@@ -446,40 +482,13 @@ class Simplify:
         """
         if not isinstance(object, IObject2D):
             raise TypeError
-        if not isinstance(object, (BoolNot, BoolOr, BoolAnd)):
-            return object
         if isinstance(object, BoolNot):
-            if not isinstance(object.object, (BoolOr, BoolAnd)):
-                return object
-            invobj = Simplify.flatten(object.object)
-            if isinstance(object.object, BoolOr):
-                object = BooleanOperate.intersect(
-                    *map(BooleanOperate.invert, invobj)
-                )
-            elif isinstance(object.object, BoolAnd):
-                object = BooleanOperate.union(
-                    *map(BooleanOperate.invert, invobj)
-                )
-            return Simplify.expand(object)
-        object = Simplify.flatten(object)
-        if not isinstance(object, (BoolOr, BoolAnd)):
-            raise NotImplementedError("Not expected get here")
-        if len(object) == 1:
-            return Simplify.expand(object[0])
-        if isinstance(object, BoolOr):
-            return object
-        subobjs = tuple(object)
-        sizes = [1] * len(subobjs)
-        for i, subobj in enumerate(subobjs):
-            if isinstance(subobj, BoolOr):
-                sizes[i] = len(subobj)
-        if all(size == 1 for size in sizes):
-            return object
-        subinters = []
-        for indexs in permutations(*sizes):
-            subitems = [subobjs[i] for i in indexs]
-            subinters.append(BoolAnd(subitems))
-        return Simplify.expand(BoolOr(subinters))
+            return Simplify.expand_not(object)
+        elif isinstance(object, BoolAnd):
+            return Simplify.expand_and(object)
+        elif isinstance(object, BoolOr):
+            return Simplify.expand_or(object)
+        return object
 
     @staticmethod
     def treat_contains_or(object: IBoolean2D) -> IBoolean2D:
