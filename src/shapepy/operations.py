@@ -243,13 +243,6 @@ class Contains:
             invobj = -object
             if isinstance(other, ConnectedShape):
                 return any(invobj in -sub for sub in other)
-            return invobj in Simplify.simplify(-other)
-        if isinstance(other, DisjointShape):
-            return all(Contains.shape_in_shape(object, sub) for sub in other)
-        if isinstance(object, ConnectedShape):
-            return all(Contains.shape_in_shape(sub, other) for sub in object)
-        if isinstance(object, DisjointShape):
-            return any(Contains.shape_in_shape(sub, other) for sub in object)
         raise NotImplementedError(
             f"Not expected: {type(object)}, {type(other)}"
         )
@@ -258,22 +251,18 @@ class Contains:
 class BooleanOperate:
     @staticmethod
     def contains(object: IBoolean2D, other: IBoolean2D) -> bool:
+        if isinstance(other, (Empty, Whole)):
+            raise NotImplementedError("Not expected get here")
+        if isinstance(object, (Empty, Whole)):
+            raise NotImplementedError("Not expected get here")
+        if isinstance(object, (BoolAnd, ConnectedShape)):
+            raise NotImplementedError("Not expected get here")
         if not isinstance(other, IBoolean2D):
             other = Point2D(other)
-        if isinstance(object, (BoolAnd, ConnectedShape)):
-            return other in object
-        if isinstance(other, Empty) or isinstance(object, Whole):
-            return True
-        if isinstance(object, Empty):
-            return isinstance(other, Empty)
-        if isinstance(other, Whole):
-            return isinstance(object, Whole)
-        if object.ndim < other.ndim:
+        if other.ndim > object.ndim:
             return False
-        if isinstance(object, (ConnectedShape, BoolAnd)):
-            return all(BooleanOperate.contains(sub, other) for sub in object)
         if isinstance(other, (DisjointShape, BoolOr)):
-            return all(BooleanOperate.contains(object, sub) for sub in other)
+            return all(sub in object for sub in other)
         if isinstance(object, IShape):
             if isinstance(other, IShape):
                 return Contains.shape_in_shape(object, other)
@@ -287,19 +276,15 @@ class BooleanOperate:
         if isinstance(object, Point2D) and isinstance(other, Point2D):
             return object == other
         if isinstance(object, BoolNot) and isinstance(object.object, Point2D):
-            return not BooleanOperate.contains(other, object.object)
+            return object.object not in other
         raise NotImplementedError(
             f"Not expected: {type(object)}, {type(other)}"
         )
 
     @staticmethod
     def invert(object: IBoolean2D) -> IBoolean2D:
-        if isinstance(object, Empty):
-            return Whole()
-        if isinstance(object, Whole):
-            return Empty()
-        if isinstance(object, BoolNot):
-            return object.object
+        if isinstance(object, (Empty, Whole, BoolNot)):
+            raise NotImplementedError("Not expected get here")
         retorno = BoolNot(object)
         if Configuration.autoexpand:
             retorno = Simplify.expand(retorno)

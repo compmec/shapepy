@@ -38,19 +38,25 @@ class IBoolean2D(IObject2D):
     booloperate = None
 
     def __contains__(self, other: IObject2D) -> IBoolean2D:
+        if isinstance(other, (Empty, Whole)):
+            return isinstance(other, Empty)
         return self.booloperate.contains(self, other)
 
     def __invert__(self) -> IBoolean2D:
         return self.booloperate.invert(self)
 
+    def __neg__(self) -> IBoolean2D:
+        return ~self
+
     def __and__(self, other: IBoolean2D) -> IBoolean2D:
+        if isinstance(other, (Empty, Whole)):
+            return other & self
         return self.booloperate.intersect(self, other)
 
     def __or__(self, other: IBoolean2D) -> IBoolean2D:
+        if isinstance(other, (Empty, Whole)):
+            return other | self
         return self.booloperate.union(self, other)
-
-    def __neg__(self) -> IBoolean2D:
-        return ~self
 
     def __xor__(self, other: IBoolean2D) -> IBoolean2D:
         return (self & (~other)) | (other & (~self))
@@ -82,7 +88,7 @@ class Empty(IBoolean2D):
 
     @property
     def ndim(self) -> int:
-        return 5
+        return 0
 
     def __new__(cls) -> Empty:
         if cls.__instance is None:
@@ -94,6 +100,36 @@ class Empty(IBoolean2D):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    def __contains__(self, other):
+        return other is self
+
+    def __invert__(self):
+        return Whole()
+
+    def __and__(self, _):
+        return self
+
+    def __rand__(self, _):
+        return self
+
+    def __or__(self, other):
+        return other
+
+    def __ror__(self, other):
+        return other
+
+    def __xor__(self, other):
+        return other
+
+    def __rxor__(self, other):
+        return other
+
+    def __sub__(self, _):
+        return self
+
+    def __rsub__(self, other):
+        return other
 
 
 class Whole(IBoolean2D):
@@ -125,6 +161,36 @@ class Whole(IBoolean2D):
 
     def __repr__(self) -> str:
         return self.__str__()
+
+    def __contains__(self, _):
+        return True
+
+    def __invert__(self):
+        return Empty()
+
+    def __and__(self, other):
+        return other
+
+    def __rand__(self, other):
+        return other
+
+    def __or__(self, _):
+        return self
+
+    def __ror__(self, _):
+        return self
+
+    def __xor__(self, other):
+        return ~other
+
+    def __rxor__(self, other):
+        return ~other
+
+    def __sub__(self, other):
+        return ~other
+
+    def __rsub__(self, _):
+        return Empty()
 
 
 class ICurve(IBoolean2D):
