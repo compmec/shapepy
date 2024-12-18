@@ -18,20 +18,13 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from functools import lru_cache
 from typing import Iterable, Optional, Tuple, Union
 
 from ..core import IAnalytic
+from .utils import keys_pow
 
 Parameter = Union[int, float]
 Scalar = Union[int, float]
-
-
-@lru_cache
-def keys(exp):
-    if exp == 1:
-        return set()
-    return keys(exp // 2) | keys(exp - exp // 2) | {exp}
 
 
 class Trignomial(IAnalytic):
@@ -277,7 +270,7 @@ class Trignomial(IAnalytic):
             raise ValueError
         if exponent == 0:
             return self.__class__([1 + 0 * sum(self)])
-        needs = sorted(keys(exponent))
+        needs = sorted(keys_pow(exponent))
         cache = {1: self}
         for n in needs:
             cache[n] = cache[n // 2] * cache[n - n // 2]
