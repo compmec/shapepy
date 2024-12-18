@@ -1,3 +1,6 @@
+"""
+This file contains helper functions, used to check if two analytic functions are equal
+"""
 from typing import Union
 
 from ..core import IAnalytic, Parameter
@@ -25,6 +28,12 @@ def check_shifted_analytic(
 def check_shifted_polynomial(
     polya: Polynomial, polyb: Polynomial
 ) -> Union[None, Parameter]:
+    """
+    Checks if two polynomial functions p(t) and q(t) are equal
+    or if there's a value 'u' such q(t-u) = p(t) for all t
+    If that's the case, then the function returns 'u'
+    If it's not, then returns None
+    """
     if not isinstance(polya, Polynomial) or not isinstance(polyb, Polynomial):
         raise TypeError
 
