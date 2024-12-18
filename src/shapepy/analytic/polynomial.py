@@ -16,6 +16,10 @@ from .utils import binom, divisors, factorial, gcd, keys_pow, lcm
 
 
 def polyderi(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
+    """
+    Computes the coefficients of a polynomial,
+     such is the derivated of given polynomial
+    """
     times = int(times)
     if times < 0:
         raise ValueError
@@ -30,6 +34,12 @@ def polyderi(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
 
 
 def polyinte(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
+    """
+    Computes the coefficients of a polynomial,
+     such is the integration of given polynomial.
+
+    The constant terms of integration is assumed zero
+    """
     times = int(times)
     if times < 0:
         raise ValueError
@@ -66,6 +76,16 @@ class Polynomial(IAnalytic):
 
     @classmethod
     def from_roots(cls, roots: Iterable[Parameter]) -> Polynomial:
+        """
+        Returns a polynomial p(t) such has the given roots.
+        It's degree is the number of roots
+
+
+        Parameters
+        ----------
+        roots: Iterable[Parameter]
+            The roots of the polynomial
+        """
         poly = cls([1])
         for root in roots:
             poly *= cls([-root, 1])
@@ -90,7 +110,7 @@ class Polynomial(IAnalytic):
             return False
         if self.degree != other.degree:
             return False
-        return all(abs(ci - cj) < 1e-12 for ci, cj in zip(self, other))
+        return all(abs(coi - coj) < 1e-12 for coi, coj in zip(self, other))
 
     def __iter__(self):
         yield from self.__coefs
@@ -116,9 +136,9 @@ class Polynomial(IAnalytic):
         if not isinstance(other, Polynomial):
             other = Polynomial([other])
         coefs = [0 * self[0] for _ in range(1 + self.degree + other.degree)]
-        for i, ci in enumerate(self):
-            for j, cj in enumerate(other):
-                coefs[i + j] += ci * cj
+        for i, coefi in enumerate(self):
+            for j, coefj in enumerate(other):
+                coefs[i + j] += coefi * coefj
         return self.__class__(coefs)
 
     def __divmod__(
@@ -135,7 +155,8 @@ class Polynomial(IAnalytic):
             qcoefs = [0] * (roly.degree - other.degree) + [coef]
             qoly += Polynomial(qcoefs)
             rcoefs = tuple(self - other * qoly)
-            roly = Polynomial(rcoefs[: roly.degree])  # Shouldn't need
+            # Needed for float precision problems
+            roly = Polynomial(rcoefs[: roly.degree])
         return qoly, roly
 
     def __floordiv__(self, other: Union[Any, Polynomial]) -> Polynomial:
@@ -158,8 +179,8 @@ class Polynomial(IAnalytic):
             return self.__class__([1 + 0 * sum(self)])
         needs = sorted(keys_pow(exponent))
         cache = {1: self}
-        for n in needs:
-            cache[n] = cache[n // 2] * cache[n - n // 2]
+        for need in needs:
+            cache[need] = cache[need // 2] * cache[need - need // 2]
         return cache[exponent]
 
     def __sub__(self, other: Union[Any, Polynomial]) -> Polynomial:
@@ -209,7 +230,14 @@ class Polynomial(IAnalytic):
 
     def eval(self, node: Parameter, derivate: int = 0) -> Any:
         """
-        Evaluates the polynomial at given node
+        Evaluates the polynomial p(t) at given node t
+
+        Parameters
+        ----------
+        node: Parameter
+            The value of t to compute p(t)
+        derivate: int
+            Number of times to derivate the polynomial
 
         Example
         -------
@@ -231,7 +259,16 @@ class Polynomial(IAnalytic):
 
     def derivate(self, times: int = 1) -> Polynomial:
         """
-        Derivate the polynomial curve, giving a new one
+        Derivate the polynomial p(t), giving a new one polynomial
+
+        Parameters
+        ----------
+        times: int, default = 1
+            How many times to derivate p(t)
+        return: Polynomial
+            The derivated polynomial
+
+        :raises ValueError: If ``times`` is negative
 
         Example
         -------
@@ -249,6 +286,15 @@ class Polynomial(IAnalytic):
         """
         Integrate the polynomial curve, giving a new one
 
+        Parameters
+        ----------
+        times: int, default = 1
+            Number of times to integrate the polynomial
+        return: Polynomial
+            The integrated polynomial
+
+        :raises ValueError: If ``times`` is negative
+
         Example
         -------
         >>> poly = Polynomial([2, 10])
@@ -262,17 +308,43 @@ class Polynomial(IAnalytic):
         return self.__class__(coefs)
 
     def defintegral(self, lower: Parameter, upper: Parameter) -> Scalar:
+        """
+        Evaluates the defined integral of the polynomial
+
+        Parameters
+        ----------
+        lower: Parameter
+            The lower bound of integration
+        upper: Parameter
+            The upper bound of integration
+        return: Scalar
+            The value of the defined integral
+
+        Example
+        -------
+        >>> poly = Polynomial([2, 10])
+        >>> print(poly)
+        2 + 10 * x
+        >>> ipoly = poly.integrate()
+        >>> print(ipoly)
+        2 * x + 5 * x^2
+        """
         intself = self.integrate(1)
         return intself.eval(upper) - intself.eval(lower)
 
     def shift(self, amount: Parameter) -> Polynomial:
         """
-        Transforms the polynomial p(x) into p(x-d) by
-        translating the curve by 'd' to the right.
+        Computes the polynomial q(x) = p(x-d) by
+        translating the polynomial by 'd' to the right.
 
         p(x) = a0 + a1 * x + ... + ap * x^p
-        p(x-d) = a0 + a1 * (x-d) + ... + ap * (x-d)^p
-               = b0 + b1 * x + ... + bp * x^p
+        q(x) = b0 + b1 * x + ... + bp * x^p
+             = a0 + a1 * (x-d) + ... + ap * (x-d)^p
+
+        Parameters
+        ----------
+        amount: Parameter
+            The quantity to shift the function
 
         Example
         -------
@@ -293,12 +365,57 @@ class Polynomial(IAnalytic):
         return self.__class__(tuple(newcoefs))
 
     def scale(self, amount: Scalar) -> Polynomial:
+        """
+        Computes the polynomial q(x) = p(s*x) by
+        scaling the polynomial by 's'.
+
+        p(x) = a0 + a1 * x + ... + ap * x^p
+        q(x) = b0 + b1 * x + ... + bp * x^p
+             = a0 + a1 * (s*x) + ... + ap * (s*x)^p
+
+        Parameters
+        ----------
+        amount: Parameter
+            The quantity to scale the t-axis
+
+        Example
+        -------
+        >>> old_poly = Polynomial([0, -1, 0, 1])
+        >>> print(old_poly)
+        - x + x^3
+        >>> new_poly = poly.scale(2)  # transform to (2*x)^3
+        >>> print(new_poly)
+        - 2 * x + 8 * x^3
+        """
         coefs = tuple(coef * amount**i for i, coef in enumerate(self))
         return self.__class__(coefs)
 
     def roots(
-        self, inflim: Optional[Parameter], suplim: Optional[Parameter]
+        self,
+        inflim: Optional[Parameter] = None,
+        suplim: Optional[Parameter] = None,
     ) -> Iterable[Parameter]:
+        """
+        Computes the roots of the polynomial that are
+        inside the given interval
+
+        If no interval is given, then it computes in the entire domain
+
+        Parameters
+        ----------
+        inflim: Optional[Parameter], default = None
+            The lower bound of research
+        suplim: Optional[Parameter], default = None
+            The upper bound of research
+
+        Example
+        -------
+        >>> poly = Polynomial.from_roots([1, 1, 2, 3, -4])
+        >>> poly.roots()
+        (-4, 1, 1, 2, 3)
+        >>> poly.roots(0, 2)
+        (1, 1, 2)
+        """
         nodes = find_roots(self)
         if inflim is not None:
             nodes = (node for node in nodes if inflim <= node)
@@ -327,7 +444,12 @@ def integer_polynomial(poly: Polynomial) -> Polynomial:
 
 def find_rational_roots(poly: Polynomial) -> Tuple[Fraction, ...]:
     """
-    Find all the rational rots
+    Find all the rational roots by using
+    the rational roots theorem:
+
+    If the coefficients of the polynomial are integers,
+    then it may have rational roots made by (p/q),
+    where (p, q) are the divisors of the the coefficients
     """
     if not isinstance(poly, Polynomial):
         raise TypeError
@@ -347,23 +469,23 @@ def find_rational_roots(poly: Polynomial) -> Tuple[Fraction, ...]:
     constdivs = tuple(divisors(const))
     lastdivs = tuple(divisors(last))
     roots = set()
-    for ci in constdivs:
-        for dj in lastdivs:
-            frac = Fraction(ci, dj)
+    for numi in constdivs:
+        for denj in lastdivs:
+            frac = Fraction(numi, denj)
             if not poly.eval(frac):
                 roots.add(frac)
             if not poly.eval(-frac):
                 roots.add(-frac)
     roots = tuple(sorted(roots))
     poly = simplify_poly_by_roots(poly, roots)
-    if len(roots) and poly.degree > 0:
+    if len(roots) > 0 and poly.degree > 0:
         roots = roots + find_rational_roots(poly)
     return tuple(sorted(roots))
 
 
 def find_numerical_roots(poly: Polynomial) -> Tuple[float]:
     """
-    Find all the rational rots
+    Find numerically all the roots of a polynomial using Newton's method
     """
     if not isinstance(poly, Polynomial):
         raise TypeError
@@ -414,6 +536,9 @@ def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
     """
     Find all real roots from the polynomial.
 
+    It finds at first all the rational roots.
+    For the remaining, it finds using numerical method
+
     Example
     -------
     >>> find_roots(Polynomial([-1, 1]))  # x - 1
@@ -443,6 +568,12 @@ def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
 def simplify_poly_by_roots(
     poly: Polynomial, roots: Iterable[Parameter]
 ) -> Polynomial:
+    """
+    Divide the polynomial for the roots.
+
+    This function doesn't check if the polynomial
+    has indeed that root
+    """
     for root in roots:
         poly //= Polynomial((-root, 1))
     return poly
