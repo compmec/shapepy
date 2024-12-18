@@ -183,10 +183,6 @@ class Contains:
         if isinstance(shape, SimpleShape):
             wind = shape.jordan.winding(point)
             return wind == 1 or (0 < wind and shape.boundary)
-        if isinstance(shape, ConnectedShape):
-            return all(Contains.point_in_shape(sub, point) for sub in shape)
-        if isinstance(shape, DisjointShape):
-            return any(Contains.point_in_shape(sub, point) for sub in shape)
         raise NotImplementedError(
             f"Not expected: {type(shape)}, {type(point)}"
         )
