@@ -59,6 +59,32 @@ class Trignomial(IAnalytic):
 
     @staticmethod
     def sin(unit_angle: Scalar) -> Scalar:
+        """
+        Computes the sinus of given angle.
+        The angle mesure is unitary, meaning
+
+            sin(x) = sin(1+x) for all x
+
+        Parameters
+        ----------
+        unit_angle: Scalar
+            Given angle to compute sinus
+
+        Example
+        -------
+        >>> Trignomial.sin(0)
+        0
+        >>> Trignomial.sin(0.25)
+        1
+        >>> Trignomial.sin(0.5)
+        0
+        >>> Trignomial.sin(0.75)
+        -1
+        >>> Trignomial.sin(1)
+        0
+        >>> Trignomial.sin(0.125)
+        0.7071067811865
+        """
         unit_angle %= 1
         quad, subangle = divmod(4 * unit_angle, 1)
         if not subangle:
@@ -69,6 +95,32 @@ class Trignomial(IAnalytic):
 
     @staticmethod
     def cos(unit_angle: Scalar) -> Scalar:
+        """
+        Computes the cossinus of given angle.
+        The angle mesure is unitary, meaning
+
+            cos(x) = cos(1+x) for all x
+
+        Parameters
+        ----------
+        unit_angle: Scalar
+            Given angle to compute cossinus
+
+        Example
+        -------
+        >>> Trignomial.cos(0)
+        1
+        >>> Trignomial.cos(0.25)
+        0
+        >>> Trignomial.cos(0.5)
+        -1
+        >>> Trignomial.cos(0.75)
+        0
+        >>> Trignomial.cos(1)
+        1
+        >>> Trignomial.cos(0.125)
+        0.7071067811865
+        """
         unit_angle %= 1
         quad, subangle = divmod(4 * unit_angle, 1)
         if not subangle:
@@ -79,6 +131,33 @@ class Trignomial(IAnalytic):
 
     @staticmethod
     def sincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
+        """
+        Computes the sinus and cossinus of given angle at same time.
+        The angle mesure is unitary, meaning
+
+            sin(x) = cos(1+x) for all x
+            cos(x) = cos(1+x) for all x
+
+        Parameters
+        ----------
+        unit_angle: Scalar
+            Given angle to compute sin and cos
+
+        Example
+        -------
+        >>> Trignomial.sincos(0)
+        (1, 0)
+        >>> Trignomial.sincos(0.25)
+        (0, 1)
+        >>> Trignomial.sincos(0.5)
+        (-1, 0)
+        >>> Trignomial.sincos(0.75)
+        (0, -1)
+        >>> Trignomial.sincos(1)
+        (1, 0)
+        >>> Trignomial.sincos(0.125)
+        (0.7071067811865, 0.7071067811865)
+        """
         unit_angle %= 1
         return Trignomial.sin(unit_angle), Trignomial.cos(unit_angle)
 
@@ -147,10 +226,10 @@ class Trignomial(IAnalytic):
         -------
         >>> trig = Trignomial([1, 0, 1])  # 1 + cos(tau*x)
         >>> trig.omega
-        3.14159265
+        6.283185307
         >>> trig = Trignomial([1, 0, 1], 3)  # 1 + cos(3*tau*x)
         >>> trig.omega
-        9.42477796
+        18.8495559
         """
         return self.TAU * self.frequency
 
@@ -191,20 +270,21 @@ class Trignomial(IAnalytic):
             raise NotImplementedError
         values = [0] * (1 + 2 * (self.pmax + other.pmax))
         for i, vali in enumerate(self):
-            p = (i + 1) // 2
+            harmi = (i + 1) // 2
             for j, valj in enumerate(other):
-                q = (j + 1) // 2
-                s, d = p + q, abs(p - q)
+                harmj = (j + 1) // 2
+                soma = harmi + harmj
+                diff = abs(harmi - harmj)
                 temp = (vali * valj) / 2
                 if (i % 2) ^ (j % 2):
-                    if p != q:
+                    if harmi != harmj:
                         sind = -1 if (i > j) ^ (i % 2) else 1
-                        values[2 * d - 1] += temp * sind
-                    values[2 * s - 1] += temp
+                        values[2 * diff - 1] += temp * sind
+                    values[2 * soma - 1] += temp
                 else:
                     coss = -1 if i % 2 else 1
-                    values[2 * d] += temp
-                    values[2 * s] += temp * coss
+                    values[2 * diff] += temp
+                    values[2 * soma] += temp * coss
         return self.__class__(values, self.frequency)
 
     def __divmod__(
@@ -272,13 +352,20 @@ class Trignomial(IAnalytic):
             return self.__class__([1 + 0 * sum(self)])
         needs = sorted(keys_pow(exponent))
         cache = {1: self}
-        for n in needs:
-            cache[n] = cache[n // 2] * cache[n - n // 2]
+        for need in needs:
+            cache[need] = cache[need // 2] * cache[need - need // 2]
         return cache[exponent]
 
     def eval(self, node: Parameter, derivate: int = 0):
         """
-        Evaluates the trignomio at given node
+        Evaluates the trignomio  at given node
+
+        Parameters
+        ----------
+        node: Parameter
+            The value of t to compute p(t)
+        derivate: int
+            Number of times to derivate the polynomial
 
         Example
         -------
@@ -297,12 +384,33 @@ class Trignomial(IAnalytic):
         if derivate != 0:
             return self.derivate(derivate).eval(node, 0)
         results = self[0]
-        for pi in range(self.pmax):
+        for pval in range(1, self.pmax + 1):
             sin, cos = Trignomial.sincos(node)
-            results += self[2 * pi + 1] * sin + self[2 * pi + 2] * cos
+            results += self[2 * pval - 1] * sin + self[2 * pval] * cos
         return results
 
     def derivate(self, times: int = 1) -> Trignomial:
+        """
+        Derivate the trignomio, giving a new one trignomio
+
+        Parameters
+        ----------
+        times: int, default = 1
+            How many times to derivate p(t)
+        return: Trignomial
+            The derivated trignomio
+
+        :raises ValueError: If ``times`` is negative
+
+        Example
+        -------
+        >>> trig = Trignomial([1, 2])
+        >>> print(trig)
+        1 + 2*sin(tau*x)
+        >>> dtrig = trig.derivate()
+        >>> print(dtrig)
+        12.566370614 * cos(tau*x)  # 2*tau*cos(tau*x)
+        """
         times = int(times)
         if times < 0:
             raise ValueError
@@ -326,6 +434,29 @@ class Trignomial(IAnalytic):
         return self.__class__(coefs, self.frequency)
 
     def integrate(self, times: int) -> Trignomial:
+        """
+        Integrate the trignomio, giving a new one
+
+        The constant term must me zero
+
+        Parameters
+        ----------
+        times: int, default = 1
+            Number of times to integrate the polynomial
+        return: Trignomial
+            The integrated trignomial
+
+        :raises ValueError: If the constant term is not zero
+
+        Example
+        -------
+        >>> trig = Trignomial([0, 2])
+        >>> print(trig)
+        2*sin(tau*x)
+        >>> itrig = trig.integrate()
+        >>> print(itrig)
+        -0.31830988 * cos(tau*x)  # (-2/tau)*cos(tau*x)
+        """
         times = int(times)
         if times < 0:
             raise ValueError
@@ -350,6 +481,26 @@ class Trignomial(IAnalytic):
         return self.__class__(coefs, self.frequency)
 
     def defintegral(self, lower: Parameter, upper: Parameter) -> Scalar:
+        """
+        Evaluates the defined integral of the trignomial
+
+        Parameters
+        ----------
+        lower: Parameter
+            The lower bound of integration
+        upper: Parameter
+            The upper bound of integration
+        return: Scalar
+            The value of the defined integral
+
+        Example
+        -------
+        >>> trig = Trignomial([1, 2])
+        >>> print(trig)
+        2*sin(tau*x)
+        >>> trig.defintegral(0, 0.5)
+        0.81830988  # 1/2 + 4/tau
+        """
         const = self[0]
         self[0] *= 0
         inttrig = self.integrate(1)
@@ -360,7 +511,15 @@ class Trignomial(IAnalytic):
 
     def shift(self, amount: Parameter) -> Trignomial:
         """
-        Evaluates the trignomio at given node
+        Shifts the trignomio by given amount
+
+        Computes the trignomial q(x) = p(x-d) by
+        translating the trignomial by 'd' to the right.
+
+        Parameters
+        ----------
+        amount: Parameter
+            The quantity to shift the function
 
         Example
         -------
@@ -373,23 +532,65 @@ class Trignomial(IAnalytic):
         """
         newcoefs = [0] * (1 + 2 * self.pmax)
         newcoefs[0] += self[0]
-        for p in range(1, self.pmax + 1):
-            sinpwa, cospwa = self.sincos(p * amount)
-            cofs, cofc = self[2 * p - 1], self[2 * p]
-            newcoefs[2 * p - 1] = cofs * cospwa + cofc * sinpwa
-            newcoefs[2 * p] = -cofs * sinpwa + cofc * cospwa
+        for pval in range(1, self.pmax + 1):
+            sinpwa, cospwa = self.sincos(pval * amount)
+            cofs, cofc = self[2 * pval - 1], self[2 * pval]
+            newcoefs[2 * pval - 1] = cofs * cospwa + cofc * sinpwa
+            newcoefs[2 * pval] = -cofs * sinpwa + cofc * cospwa
         return self.__class__(newcoefs, self.frequency)
 
-    def scale(self, value: Scalar) -> Trignomial:
+    def scale(self, amount: Scalar) -> Trignomial:
         """
-        Returns a function g(t) = f(a*t)
-        Where a is the given parameter
+        Computes the polynomial q(t) = p(s*t) by
+        scaling the polynomial by 's'.
+
+        p(x) = a0 + a1 * t + ... + ap * t^p
+        q(x) = b0 + b1 * t + ... + bp * t^p
+             = a0 + a1 * (s*t) + ... + ap * (s*t)^p
+
+        Parameters
+        ----------
+        amount: Parameter
+            The quantity to scale the t-axis
+
+        Example
+        -------
+        >>> old_trig = Trignomial([1, 2])
+        >>> print(old_trig)
+        1 + 2*sin(tau*x)
+        >>> new_trig = old_trig.scale(2)
+        >>> print(new_trig)
+        1 + 2*sin(2*tau*x)
+
         """
-        return self.__class__(tuple(self), value * self.frequency)
+        return self.__class__(tuple(self), amount * self.frequency)
 
     def roots(
         self, inflim: Optional[Parameter], suplim: Optional[Parameter]
     ) -> Iterable[Parameter]:
+        """
+        Computes the roots of the trignomial that are
+        inside the given interval
+
+        If no interval is given, then it computes in the unitary domain [0, 1)
+
+        If t0 is a root, then (t0 + 1) is also a root
+
+        Parameters
+        ----------
+        inflim: Optional[Parameter], default = None
+            The lower bound of research
+        suplim: Optional[Parameter], default = None
+            The upper bound of research
+
+        Example
+        -------
+        >>> poly = Trignomial([0, 1])
+        >>> poly.roots()
+        (0, )
+        >>> poly.roots(0, 3)
+        (0, 1, 2, 3)
+        """
         raise NotImplementedError
 
     def __call__(self, nodes):
@@ -410,7 +611,7 @@ class Trignomial(IAnalytic):
             else:
                 msg = ""
             flag = True
-            p = (i + 1) // 2
+            pval = (i + 1) // 2
             coef = abs(coef)
             if coef != 1 or i == 0:
                 msg += str(coef)
@@ -418,8 +619,8 @@ class Trignomial(IAnalytic):
                 if coef != 1:
                     msg += " * "
                 msg += "sin(" if i % 2 else "cos("
-                if p * self.frequency != 1:
-                    msg += f"{p*self.frequency}*"
+                if pval * self.frequency != 1:
+                    msg += f"{pval*self.frequency}*"
                 msg += "tau*t)"
             msgs.append(msg)
         return " ".join(msgs)
