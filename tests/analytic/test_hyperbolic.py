@@ -235,6 +235,50 @@ def test_evaluate_derivate():
 
 
 @pytest.mark.order(3)
+@pytest.mark.timeout(3)
+@pytest.mark.dependency(depends=["test_compare", "test_simplify"])
+def test_divide_scalar():
+    sint = Hypernomial([0, 1, 0])
+    cost = Hypernomial([0, 0, 1])
+
+    qrig, rrig = divmod(sint, 1)
+    assert qrig == sint
+    assert rrig == 0
+
+    qrig, rrig = divmod(sint, 2)
+    assert qrig == sint / 2
+    assert rrig == 0
+
+    qrig, rrig = divmod(cost, 1)
+    assert qrig == cost
+    assert rrig == 0
+
+    assert sint % 2 == 0
+    assert cost % 2 == 0
+    assert sint // 2 == Hypernomial([0, 1 / 2, 0])
+    assert cost // 2 == Hypernomial([0, 0, 1 / 2])
+    assert sint / 2 == Hypernomial([0, 1 / 2, 0])
+    assert cost / 2 == Hypernomial([0, 0, 1 / 2])
+
+
+@pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_divide_scalar"])
+def test_divide_zero():
+    numer = Hypernomial([1])
+    denom = Hypernomial([0])
+    with pytest.raises(ZeroDivisionError):
+        numer / denom
+
+
+@pytest.mark.order(3)
+@pytest.mark.timeout(3)
+@pytest.mark.dependency(depends=["test_divide_scalar"])
+def test_divide_pmax1():
+    sint = Hypernomial([0, 1, 0])
+    cost = Hypernomial([0, 0, 1])
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():
     trig = Hypernomial([0])
@@ -298,6 +342,9 @@ def test_definite_integrate():
         "test_sub",
         "test_mult",
         "test_pow",
+        "test_divide_scalar",
+        "test_divide_zero",
+        "test_divide_pmax1",
         "test_definite_integrate",
     ]
 )
