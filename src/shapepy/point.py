@@ -1,3 +1,6 @@
+"""
+File that contains only the Point2D object
+"""
 from __future__ import annotations
 
 import math
@@ -8,7 +11,28 @@ from .boolean import BoolNot
 from .core import IBoolean2D, Scalar
 
 
+def treat_scalar(number: Scalar) -> Scalar:
+    """
+    Treats and checks the scalar number received
+    """
+    if isinstance(number, int):
+        return Fraction(number)
+    if isinstance(number, (float, Fraction)):
+        return number
+    if isinstance(number, str):
+        raise TypeError
+    # pylint: disable=pointless-statement
+    3.2 * number + 4
+    return number
+
+
 class Point2D(IBoolean2D):
+    """
+    Class that describes a cartesian point.
+
+    It contains methods like inner, cross, norm2
+    """
+
     @property
     def ndim(self) -> int:
         return 0
@@ -25,12 +49,8 @@ class Point2D(IBoolean2D):
             xcoord, ycoord = point[0]
         else:
             raise ValueError
-
-        3.0 * xcoord + 4 * ycoord - 5  # Verify if they are scalars
-        if isinstance(xcoord, int):
-            xcoord = Fraction(xcoord)
-        if isinstance(ycoord, int):
-            ycoord = Fraction(ycoord)
+        xcoord = treat_scalar(xcoord)
+        ycoord = treat_scalar(ycoord)
         self.__x = xcoord
         self.__y = ycoord
 
@@ -51,6 +71,10 @@ class Point2D(IBoolean2D):
         return self[0] * other[1] - self[1] * other[0]
 
     def norm2(self) -> Scalar:
+        """
+        Computes the square of the norm L2 of the point.
+        Meaning, the inner product between itself
+        """
         return self.inner(self)
 
     def __abs__(self) -> Scalar:
