@@ -12,7 +12,8 @@ from typing import Any, Iterable, Optional, Tuple, Union
 import numpy as np
 
 from ..core import IAnalytic, Parameter, Scalar
-from .utils import binom, divisors, factorial, gcd, keys_pow, lcm
+from .base import BaseAnalytic
+from .utils import binom, divisors, factorial, gcd, lcm
 
 
 def polyderi(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
@@ -53,7 +54,7 @@ def polyinte(poly: Tuple[Scalar, ...], times: int) -> Tuple[Scalar, ...]:
     return tuple(times * [zero] + list(coefs))
 
 
-class Polynomial(IAnalytic):
+class Polynomial(BaseAnalytic):
     """
     Defines a polynomial with coefficients
 
@@ -94,35 +95,23 @@ class Polynomial(IAnalytic):
     def __init__(self, coefs: Iterable[Any]):
         coefs = tuple(coefs)
         degree = max((i for i, coef in enumerate(coefs) if coef), default=0)
-        self.__coefs = coefs[: degree + 1]
+        super().__init__(coefs[: degree + 1])
 
     @property
     def degree(self) -> int:
         """
         Gives the degree of the polynomial
         """
-        return len(self.__coefs) - 1
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, IAnalytic):
-            other = Polynomial([other])
-        if not isinstance(other, Polynomial):
-            return False
-        if self.degree != other.degree:
-            return False
-        return all(abs(coi - coj) < 1e-12 for coi, coj in zip(self, other))
-
-    def __iter__(self):
-        yield from self.__coefs
-
-    def __getitem__(self, index):
-        return self.__coefs[index]
+        return len(self) - 1
 
     def __neg__(self) -> Polynomial:
         coefs = tuple(-coef for coef in self)
         return self.__class__(coefs)
 
     def __add__(self, other: Union[Any, Polynomial]) -> Polynomial:
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, self.__class__):
+                raise TypeError(f"Cannot add {self} with {other}")
         if not isinstance(other, Polynomial):
             other = Polynomial([other])
         coefs = [0] * (1 + max(self.degree, other.degree))
@@ -133,6 +122,9 @@ class Polynomial(IAnalytic):
         return self.__class__(coefs)
 
     def __mul__(self, other: Union[Any, Polynomial]) -> Polynomial:
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, self.__class__):
+                raise TypeError(f"Cannot multiply {self} by {other}")
         if not isinstance(other, Polynomial):
             other = Polynomial([other])
         coefs = [0 * self[0] for _ in range(1 + self.degree + other.degree)]
@@ -144,6 +136,9 @@ class Polynomial(IAnalytic):
     def __divmod__(
         self, other: Union[Any, Polynomial]
     ) -> Tuple[Polynomial, Polynomial]:
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, self.__class__):
+                raise TypeError(f"Cannot divide {self} by {other}")
         if not isinstance(other, Polynomial):
             coefs = (coef / other for coef in self)
             return Polynomial(coefs), Polynomial([0 * sum(self)])
@@ -158,45 +153,6 @@ class Polynomial(IAnalytic):
             # Needed for float precision problems
             roly = Polynomial(rcoefs[: roly.degree])
         return qoly, roly
-
-    def __floordiv__(self, other: Union[Any, Polynomial]) -> Polynomial:
-        return self.__divmod__(other)[0]
-
-    def __mod__(self, other: Union[Any, Polynomial]) -> Polynomial:
-        return self.__divmod__(other)[1]
-
-    def __truediv__(self, other: Scalar) -> Polynomial:
-        div, res = self.__divmod__(other)
-        if res != 0:
-            raise ValueError(f"Cannot divide {self} by {other}")
-        return div
-
-    def __pow__(self, exponent: int) -> Polynomial:
-        exponent = int(exponent)
-        if exponent < 0:
-            raise ValueError
-        if exponent == 0:
-            return self.__class__([1 + 0 * sum(self)])
-        needs = sorted(keys_pow(exponent))
-        cache = {1: self}
-        for need in needs:
-            cache[need] = cache[need // 2] * cache[need - need // 2]
-        return cache[exponent]
-
-    def __sub__(self, other: Union[Any, Polynomial]) -> Polynomial:
-        return self.__add__(-other)
-
-    def __rsub__(self, other: Any) -> Polynomial:
-        return (-self).__add__(other)
-
-    def __radd__(self, other: Any) -> Polynomial:
-        return self.__add__(other)
-
-    def __rmul__(self, other: Any) -> Polynomial:
-        return self.__mul__(other)
-
-    def __call__(self, node: Parameter) -> Any:
-        return self.eval(node, 0)
 
     def __str__(self):
         msgs = []
@@ -225,9 +181,6 @@ class Polynomial(IAnalytic):
             msgs.append(msg)
         return " ".join(msgs)
 
-    def __repr__(self) -> str:
-        return str(self)
-
     def eval(self, node: Parameter, derivate: int = 0) -> Any:
         """
         Evaluates the polynomial p(t) at given node t
@@ -251,8 +204,8 @@ class Polynomial(IAnalytic):
         >>> poly.eval(1, 2)
         0
         """
-        coefs = polyderi(self.__coefs, derivate)
-        result = 0 * node * self.__coefs[0]
+        coefs = polyderi(tuple(self), derivate)
+        result = 0 * node * self[0]
         for coef in coefs[::-1]:
             result = node * result + coef
         return result
@@ -279,7 +232,7 @@ class Polynomial(IAnalytic):
         >>> print(dpoly)
         2 + 10 * x
         """
-        coefs = polyderi(self.__coefs, times)
+        coefs = polyderi(tuple(self), times)
         return self.__class__(coefs)
 
     def integrate(self, times: int = 1) -> Polynomial:
@@ -304,7 +257,7 @@ class Polynomial(IAnalytic):
         >>> print(ipoly)
         2 * x + 5 * x^2
         """
-        coefs = polyinte(self.__coefs, times)
+        coefs = polyinte(tuple(self), times)
         return self.__class__(coefs)
 
     def defintegral(self, lower: Parameter, upper: Parameter) -> Scalar:

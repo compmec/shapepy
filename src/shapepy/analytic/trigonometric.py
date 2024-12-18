@@ -20,14 +20,11 @@ import math
 from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
-from ..core import IAnalytic
-from .utils import keys_pow
-
-Parameter = Union[int, float]
-Scalar = Union[int, float]
+from ..core import IAnalytic, Parameter, Scalar
+from .base import BaseAnalytic
 
 
-class Trignomial(IAnalytic):
+class Trignomial(BaseAnalytic):
     """
     Defines a trignometric version of a polynomial
 
@@ -88,7 +85,7 @@ class Trignomial(IAnalytic):
         unit_angle %= 1
         quad, subangle = divmod(4 * unit_angle, 1)
         if not subangle:
-            if not (quad % 2):
+            if not quad % 2:
                 return 0
             return 1 - 2 * (quad == 3)
         return Trignomial.SIN(unit_angle * Trignomial.TAU)
@@ -172,18 +169,8 @@ class Trignomial(IAnalytic):
         for i, value in enumerate(values):
             if isinstance(value, int):
                 values[i] = Fraction(value)
-        self.__values = values
+        super().__init__(values)
         self.__freq = frequency
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, IAnalytic):
-            return self.pmax == 0 and self[0] == other
-        if not isinstance(other, Trignomial):
-            return False
-        if self.pmax != other.pmax or self.frequency != other.frequency:
-            return False
-        atol = 1e-9
-        return all(abs(ci - cj) < atol for ci, cj in zip(self, other))
 
     @property
     def pmax(self) -> int:
@@ -199,7 +186,7 @@ class Trignomial(IAnalytic):
         >>> trig.pmax
         2
         """
-        return len(self.__values) // 2
+        return len(self) // 2
 
     @property
     def frequency(self) -> Scalar:
@@ -233,19 +220,13 @@ class Trignomial(IAnalytic):
         """
         return self.TAU * self.frequency
 
-    def __iter__(self):
-        yield from self.__values
-
-    def __getitem__(self, index):
-        return self.__values[index]
-
-    def __setitem__(self, key, newvalue):
-        self.__values[key] = newvalue
-
     def __neg__(self) -> Trignomial:
         return self.__class__(tuple(-coef for coef in self), self.frequency)
 
     def __add__(self, other: Union[Scalar, Trignomial]):
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, Trignomial):
+                raise TypeError(f"Cannot add {self} with {other}")
         if not isinstance(other, Trignomial):
             coefs = list(self)
             coefs[0] += other
@@ -259,10 +240,10 @@ class Trignomial(IAnalytic):
             values[i] += val
         return self.__class__(values, self.frequency)
 
-    def __sub__(self, other: Union[Scalar, Trignomial]) -> Trignomial:
-        return self.__add__(-other)
-
     def __mul__(self, other: Union[Scalar, Trignomial]) -> Trignomial:
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, Trignomial):
+                raise TypeError(f"Cannot multiply {self} by {other}")
         if not isinstance(other, Trignomial):
             coefs = tuple(other * coef for coef in self)
             return self.__class__(coefs, self.frequency)
@@ -290,11 +271,15 @@ class Trignomial(IAnalytic):
     def __divmod__(
         self, other: Union[Scalar, Trignomial]
     ) -> Tuple[Trignomial, Trignomial]:
-        if isinstance(other, Trignomial) and not other.pmax:
-            return self.__divmod__(other[0])
+        print(f"Dividing {self} by {other}")
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, Trignomial):
+                raise TypeError(f"Cannot divide {self} by {other}")
+            if not other.pmax:
+                return self.__divmod__(other[0])
+        if other == 0:
+            raise ZeroDivisionError("division by zero")
         if not isinstance(other, Trignomial):
-            if not other:
-                raise ZeroDivisionError("division by zero")
             quot = self.__class__((ci / other for ci in self), self.frequency)
             rest = Trignomial([0 * sum(self)])
             return quot, rest
@@ -322,39 +307,6 @@ class Trignomial(IAnalytic):
         quot += newquot
         rest = newrest
         return quot, rest
-
-    def __floordiv__(self, other: Union[Scalar, Trignomial]) -> Trignomial:
-        return self.__divmod__(other)[0]
-
-    def __mod__(self, other: Union[Scalar, Trignomial]) -> Trignomial:
-        return self.__divmod__(other)[1]
-
-    def __truediv__(self, other: Scalar) -> Trignomial:
-        div, res = self.__divmod__(other)
-        if res != 0:
-            raise ValueError(f"Cannot divide {self} by {other}")
-        return div
-
-    def __rsub__(self, other: Scalar) -> Trignomial:
-        return (-self).__add__(other)
-
-    def __rmul__(self, other: Scalar) -> Trignomial:
-        return self.__mul__(other)
-
-    def __radd__(self, other: Scalar) -> Trignomial:
-        return self.__add__(other)
-
-    def __pow__(self, exponent: int) -> Trignomial:
-        exponent = int(exponent)
-        if exponent < 0:
-            raise ValueError
-        if exponent == 0:
-            return self.__class__([1 + 0 * sum(self)])
-        needs = sorted(keys_pow(exponent))
-        cache = {1: self}
-        for need in needs:
-            cache[need] = cache[need // 2] * cache[need - need // 2]
-        return cache[exponent]
 
     def eval(self, node: Parameter, derivate: int = 0):
         """
@@ -624,6 +576,3 @@ class Trignomial(IAnalytic):
                 msg += "tau*t)"
             msgs.append(msg)
         return " ".join(msgs)
-
-    def __repr__(self) -> str:
-        return str(self)

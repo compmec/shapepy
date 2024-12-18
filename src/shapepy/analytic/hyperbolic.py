@@ -22,14 +22,11 @@ import math
 from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
-from ..core import IAnalytic
-from .utils import keys_pow
-
-Parameter = Union[int, float]
-Scalar = Union[int, float]
+from ..core import IAnalytic, Parameter, Scalar
+from .base import BaseAnalytic
 
 
-class Hypernomial(IAnalytic):
+class Hypernomial(BaseAnalytic):
     """
     Defines a hyberbolic version of a trignomials
 
@@ -63,18 +60,8 @@ class Hypernomial(IAnalytic):
         for i, value in enumerate(values):
             if isinstance(value, int):
                 values[i] = Fraction(value)
-        self.__values = values
+        super().__init__(values)
         self.__freq = frequency
-
-    def __eq__(self, other: object) -> bool:
-        if not isinstance(other, IAnalytic):
-            return self.pmax == 0 and self[0] == other
-        if not isinstance(other, Hypernomial):
-            return False
-        if self.pmax != other.pmax or self.frequency != other.frequency:
-            return False
-        atol = 1e-9
-        return all(abs(ci - cj) < atol for ci, cj in zip(self, other))
 
     @property
     def pmax(self) -> int:
@@ -90,7 +77,7 @@ class Hypernomial(IAnalytic):
         >>> hyper.pmax
         2
         """
-        return len(self.__values) // 2
+        return len(self) // 2
 
     @property
     def frequency(self) -> Scalar:
@@ -108,19 +95,13 @@ class Hypernomial(IAnalytic):
         """
         return self.__freq
 
-    def __iter__(self):
-        yield from self.__values
-
-    def __getitem__(self, index):
-        return self.__values[index]
-
-    def __setitem__(self, key, newvalue):
-        self.__values[key] = newvalue
-
     def __neg__(self) -> Hypernomial:
         return self.__class__(tuple(-coef for coef in self), self.frequency)
 
     def __add__(self, other: Union[Scalar, Hypernomial]):
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, self.__class__):
+                raise TypeError(f"Cannot add {self} with {other}")
         if not isinstance(other, Hypernomial):
             coefs = list(self)
             coefs[0] += other
@@ -134,10 +115,10 @@ class Hypernomial(IAnalytic):
             values[i] += val
         return self.__class__(values, self.frequency)
 
-    def __sub__(self, other: Union[Scalar, Hypernomial]) -> Hypernomial:
-        return self.__add__(-other)
-
     def __mul__(self, other: Union[Scalar, Hypernomial]) -> Hypernomial:
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, self.__class__):
+                raise TypeError(f"Cannot multiply {self} by {other}")
         if not isinstance(other, Hypernomial):
             coefs = tuple(other * coef for coef in self)
             return self.__class__(coefs, self.frequency)
@@ -164,6 +145,9 @@ class Hypernomial(IAnalytic):
     def __divmod__(
         self, other: Union[Scalar, Hypernomial]
     ) -> Tuple[Hypernomial, Hypernomial]:
+        if isinstance(other, IAnalytic):
+            if not isinstance(other, self.__class__):
+                raise TypeError(f"Cannot divide {self} by {other}")
         if isinstance(other, Hypernomial) and not other.pmax:
             return self.__divmod__(other[0])
         if not isinstance(other, Hypernomial):
@@ -173,39 +157,6 @@ class Hypernomial(IAnalytic):
             rest = Hypernomial([0 * sum(self)])
             return quot, rest
         raise NotImplementedError
-
-    def __floordiv__(self, other: Union[Scalar, Hypernomial]) -> Hypernomial:
-        return self.__divmod__(other)[0]
-
-    def __mod__(self, other: Union[Scalar, Hypernomial]) -> Hypernomial:
-        return self.__divmod__(other)[1]
-
-    def __truediv__(self, other: Scalar) -> Hypernomial:
-        div, res = self.__divmod__(other)
-        if res != 0:
-            raise ValueError(f"Cannot divide {self} by {other}")
-        return div
-
-    def __rsub__(self, other: Scalar) -> Hypernomial:
-        return (-self).__add__(other)
-
-    def __rmul__(self, other: Scalar) -> Hypernomial:
-        return self.__mul__(other)
-
-    def __radd__(self, other: Scalar) -> Hypernomial:
-        return self.__add__(other)
-
-    def __pow__(self, exponent: int) -> Hypernomial:
-        exponent = int(exponent)
-        if exponent < 0:
-            raise ValueError
-        if exponent == 0:
-            return self.__class__([1 + 0 * sum(self)])
-        needs = sorted(keys_pow(exponent))
-        cache = {1: self}
-        for n in needs:
-            cache[n] = cache[n // 2] * cache[n - n // 2]
-        return cache[exponent]
 
     def eval(self, node: Parameter, derivate: int = 0):
         """
@@ -312,9 +263,6 @@ class Hypernomial(IAnalytic):
     ) -> Iterable[Parameter]:
         raise NotImplementedError
 
-    def __call__(self, nodes):
-        return self.eval(nodes, 0)
-
     def __str__(self) -> str:
         if self.pmax == 0:
             return str(self[0])
@@ -343,6 +291,3 @@ class Hypernomial(IAnalytic):
                 msg += "t)"
             msgs.append(msg)
         return " ".join(msgs)
-
-    def __repr__(self) -> str:
-        return str(self)

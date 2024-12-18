@@ -13,13 +13,6 @@ def binom(n: int, i: int) -> int:
     return math.comb(n, i)
 
 
-@lru_cache
-def keys_pow(exp):
-    if exp == 1:
-        return set()
-    return keys_pow(exp // 2) | keys_pow(exp - exp // 2) | {exp}
-
-
 def gcd(*numbers: int) -> int:
     """
     Greates common division
