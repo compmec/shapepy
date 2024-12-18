@@ -1,3 +1,7 @@
+"""
+This file contains the functions to compute the integrals
+over the package's objects, like shapes and curves
+"""
 from typing import Tuple
 
 from .core import IShape, Scalar
@@ -7,6 +11,24 @@ from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 
 def polynomial(shape: IShape, exponents: Tuple[int, int]) -> Scalar:
+    """
+    Computes the polynomial integral in the given shape
+
+    I = int_{S} x^{a} * y^{b} dx dy
+
+    Parameters
+    ----------
+    shape: IShape
+        The shape which we must compute the integral
+    exponents: tuple[int, int]
+        The pair of exponents (a, b), must be positives
+
+    Example
+    -------
+    >>> myshape = Primitive.square(side=4)
+    >>> polynomial(myshape, (0, 0))  # area
+    16
+    """
     if not isinstance(shape, IShape):
         raise TypeError
     if isinstance(shape, (ConnectedShape, DisjointShape)):
