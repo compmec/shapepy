@@ -126,20 +126,21 @@ class Hypernomial(BaseAnalytic):
             raise NotImplementedError
         values = [0] * (1 + 2 * (self.pmax + other.pmax))
         for i, vali in enumerate(self):
-            p = (i + 1) // 2
+            harmi = (i + 1) // 2
             for j, valj in enumerate(other):
-                q = (j + 1) // 2
-                s, d = p + q, abs(p - q)
+                harmj = (j + 1) // 2
+                soma = harmi + harmj
+                diff = abs(harmi - harmj)
                 temp = (vali * valj) / 2
                 if (i % 2) ^ (j % 2):
-                    if p != q:
+                    if harmi != harmj:
                         sind = 1 if (i > j) ^ (i % 2) else 1
-                        values[2 * d - 1] += temp * sind
-                    values[2 * s - 1] += temp
+                        values[2 * diff - 1] += temp * sind
+                    values[2 * soma - 1] += temp
                 else:
                     coss = -1 if i % 2 else 1
-                    values[2 * d] += temp * coss
-                    values[2 * s] += temp
+                    values[2 * diff] += temp * coss
+                    values[2 * soma] += temp
         return self.__class__(values, self.frequency)
 
     def __divmod__(
@@ -177,10 +178,10 @@ class Hypernomial(BaseAnalytic):
         if derivate != 0:
             return self.derivate(derivate).eval(node, 0)
         results = self[0]
-        for pi in range(self.pmax):
+        for pval in range(1, self.pmax + 1):
             sinh = math.sinh(self.frequency * node)
             cosh = math.cosh(self.frequency * node)
-            results += self[2 * pi + 1] * sinh + self[2 * pi + 2] * cosh
+            results += self[2 * pval - 1] * sinh + self[2 * pval] * cosh
         return results
 
     def derivate(self, times: int = 1) -> Hypernomial:
@@ -206,6 +207,29 @@ class Hypernomial(BaseAnalytic):
         return self.__class__(coefs, self.frequency)
 
     def integrate(self, times: int) -> Hypernomial:
+        """
+        Integrate the hypernomio, giving a new one
+
+        The constant term must me zero
+
+        Parameters
+        ----------
+        times: int, default = 1
+            Number of times to integrate the hypernomio
+        return: Hypernomial
+            The integrated hypernomio
+
+        :raises ValueError: If the constant term is not zero
+
+        Example
+        -------
+        >>> hyper = Hypernomial([0, 2])
+        >>> print(hyper)
+        2 * sinh(x)
+        >>> ihyper = hyper.integrate()
+        >>> print(ihyper)
+        2 * cosh(x)
+        """
         times = int(times)
         if times < 0:
             raise ValueError
@@ -240,6 +264,11 @@ class Hypernomial(BaseAnalytic):
         """
         Evaluates the hypernomio at given node
 
+        Parameters
+        ----------
+        amount: Parameter
+            The quantity to shift the function
+
         Example
         -------
         >>> old_hyper = Hypernomial([1, 2])
@@ -251,16 +280,52 @@ class Hypernomial(BaseAnalytic):
         """
         raise NotImplementedError
 
-    def scale(self, value: Scalar) -> Hypernomial:
+    def scale(self, amount: Scalar) -> Hypernomial:
         """
-        Returns a function g(t) = f(a*t)
-        Where a is the given parameter
+        Computes the hypernomio q(t) = p(s*t) by
+        scaling the hypernomio by 's'.
+
+        Parameters
+        ----------
+        amount: Parameter
+            The quantity to scale the t-axis
+
+        Example
+        -------
+        >>> old_hyper = Hypernomial([1, 2])
+        >>> print(old_hyper)
+        1 + 2 * sinh(x)
+        >>> new_hyper = old_hyper.scale(2)
+        >>> print(new_hyper)
+        1 + 2 * sinh(2*x)
         """
-        return self.__class__(tuple(self), value * self.frequency)
+        return self.__class__(tuple(self), amount * self.frequency)
 
     def roots(
         self, inflim: Optional[Parameter], suplim: Optional[Parameter]
     ) -> Iterable[Parameter]:
+        """
+        Computes the roots of the trignomial that are
+        inside the given interval
+
+        If no interval is given, then it computes in the entire domain
+
+
+        Parameters
+        ----------
+        inflim: Optional[Parameter], default = None
+            The lower bound of research
+        suplim: Optional[Parameter], default = None
+            The upper bound of research
+
+        Example
+        -------
+        >>> hyper = Trignomial([0, 1])
+        >>> print(hyper)
+        sinh(x)
+        >>> hyper.roots()
+        (0, )
+        """
         raise NotImplementedError
 
     def __str__(self) -> str:
@@ -278,7 +343,7 @@ class Hypernomial(BaseAnalytic):
             else:
                 msg = ""
             flag = True
-            p = (i + 1) // 2
+            pval = (i + 1) // 2
             coef = abs(coef)
             if coef != 1 or i == 0:
                 msg += str(coef)
@@ -286,8 +351,8 @@ class Hypernomial(BaseAnalytic):
                 if coef != 1:
                     msg += " * "
                 msg += "sinh(" if i % 2 else "cosh("
-                if p * self.frequency != 1:
-                    msg += f"{p*self.frequency}*"
+                if pval * self.frequency != 1:
+                    msg += f"{pval*self.frequency}*"
                 msg += "t)"
             msgs.append(msg)
         return " ".join(msgs)
