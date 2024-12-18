@@ -22,146 +22,142 @@ class Configuration:
 
 class Transformation:
     @staticmethod
-    def move_point(object: Point2D, point: Point2D) -> Point2D:
-        return Point2D(object[0] + point[0], object[1] + point[1])
+    def move_point(obje: Point2D, point: Point2D) -> Point2D:
+        return Point2D(obje[0] + point[0], obje[1] + point[1])
 
     @staticmethod
-    def scale_point(
-        object: Point2D, xscale: Scalar, yscale: Scalar
-    ) -> Point2D:
-        return Point2D(xscale * object[0], yscale * object[1])
+    def scale_point(obje: Point2D, xscale: Scalar, yscale: Scalar) -> Point2D:
+        return Point2D(xscale * obje[0], yscale * obje[1])
 
     @staticmethod
-    def rotate_point(object: Point2D, angle: Scalar) -> Point2D:
+    def rotate_point(obje: Point2D, angle: Scalar) -> Point2D:
         sin, cos = Trignomial.sincos(angle)
-        oldx, oldy = object[0], object[1]
+        oldx, oldy = obje[0], obje[1]
         newx = oldx * cos - oldy * sin
         newy = oldx * sin + oldy * cos
         return Point2D(newx, newy)
 
     @staticmethod
-    def move_curve(object: ICurve, point: Point2D) -> ICurve:
-        if not isinstance(object, ICurve):
+    def move_curve(obje: ICurve, point: Point2D) -> ICurve:
+        if not isinstance(obje, ICurve):
             raise TypeError
         if not isinstance(point, Point2D):
             raise TypeError
         if isinstance(
-            object, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
+            obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
         ):
             new_vertices = (
                 Transformation.move_point(vertex, point)
-                for vertex in object.vertices
+                for vertex in obje.vertices
             )
-            return object.__class__(tuple(new_vertices))
+            return obje.__class__(tuple(new_vertices))
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
-    def scale_curve(object: ICurve, xscale: Scalar, yscale: Scalar) -> ICurve:
-        if not isinstance(object, ICurve):
+    def scale_curve(obje: ICurve, xscale: Scalar, yscale: Scalar) -> ICurve:
+        if not isinstance(obje, ICurve):
             raise TypeError
         if isinstance(
-            object, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
+            obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
         ):
             new_vertices = (
                 Transformation.scale_point(vertex, xscale, yscale)
-                for vertex in object.vertices
+                for vertex in obje.vertices
             )
-            return object.__class__(tuple(new_vertices))
+            return obje.__class__(tuple(new_vertices))
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
-    def rotate_curve(object: ICurve, angle: Scalar) -> ICurve:
-        if not isinstance(object, ICurve):
+    def rotate_curve(obje: ICurve, angle: Scalar) -> ICurve:
+        if not isinstance(obje, ICurve):
             raise TypeError
         if isinstance(
-            object, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
+            obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
         ):
             new_vertices = (
                 Transformation.rotate_point(vertex, angle)
-                for vertex in object.vertices
+                for vertex in obje.vertices
             )
-            return object.__class__(tuple(new_vertices))
+            return obje.__class__(tuple(new_vertices))
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
-    def move_shape(object: IShape, point: Point2D) -> IShape:
-        if not isinstance(object, IShape):
-            raise TypeError(f"Received type {type(object)}")
-        if isinstance(object, SimpleShape):
-            newjordan = Transformation.move(object.jordan, point)
-            return SimpleShape(newjordan, object.boundary)
+    def move_shape(obje: IShape, point: Point2D) -> IShape:
+        if not isinstance(obje, IShape):
+            raise TypeError(f"Received type {type(obje)}")
+        if isinstance(obje, SimpleShape):
+            newjordan = Transformation.move(obje.jordan, point)
+            return SimpleShape(newjordan, obje.boundary)
         newsubshapes = tuple(
-            Transformation.move_shape(subshape, point) for subshape in object
+            Transformation.move_shape(subshape, point) for subshape in obje
         )
-        return object.__class__(newsubshapes)
+        return obje.__class__(newsubshapes)
 
     @staticmethod
-    def scale_shape(object: IShape, xscale: Scalar, yscale: Scalar) -> IShape:
-        if not isinstance(object, IShape):
-            raise TypeError(f"Received type {type(object)}")
-        if isinstance(object, SimpleShape):
-            newjordan = Transformation.scale_curve(
-                object.jordan, xscale, yscale
-            )
-            return SimpleShape(newjordan, object.boundary)
+    def scale_shape(obje: IShape, xscale: Scalar, yscale: Scalar) -> IShape:
+        if not isinstance(obje, IShape):
+            raise TypeError(f"Received type {type(obje)}")
+        if isinstance(obje, SimpleShape):
+            newjordan = Transformation.scale_curve(obje.jordan, xscale, yscale)
+            return SimpleShape(newjordan, obje.boundary)
         newsubshapes = tuple(
             Transformation.scale_shape(subshape, xscale, yscale)
-            for subshape in object
+            for subshape in obje
         )
-        return object.__class__(newsubshapes)
+        return obje.__class__(newsubshapes)
 
     @staticmethod
-    def rotate_shape(object: IShape, angle: Scalar) -> IShape:
-        if not isinstance(object, IShape):
-            raise TypeError(f"Received type {type(object)}")
-        if isinstance(object, SimpleShape):
-            newjordan = Transformation.rotate_curve(object.jordan, angle)
-            return SimpleShape(newjordan, object.boundary)
+    def rotate_shape(obje: IShape, angle: Scalar) -> IShape:
+        if not isinstance(obje, IShape):
+            raise TypeError(f"Received type {type(obje)}")
+        if isinstance(obje, SimpleShape):
+            newjordan = Transformation.rotate_curve(obje.jordan, angle)
+            return SimpleShape(newjordan, obje.boundary)
         newsubshapes = tuple(
-            Transformation.rotate_shape(subshape, angle) for subshape in object
+            Transformation.rotate_shape(subshape, angle) for subshape in obje
         )
-        return object.__class__(newsubshapes)
+        return obje.__class__(newsubshapes)
 
     @staticmethod
-    def move(object: IObject2D, point: GeneralPoint) -> IObject2D:
+    def move(obje: IObject2D, point: GeneralPoint) -> IObject2D:
         if not isinstance(point, IObject2D):
             point = Point2D(point)
-        if isinstance(object, (Empty, Whole)):
-            return object
-        if isinstance(object, Point2D):
-            return Transformation.move_point(object, point)
-        if isinstance(object, ICurve):
-            return Transformation.move_curve(object, point)
-        if isinstance(object, IShape):
-            return Transformation.move_shape(object, point)
+        if isinstance(obje, (Empty, Whole)):
+            return obje
+        if isinstance(obje, Point2D):
+            return Transformation.move_point(obje, point)
+        if isinstance(obje, ICurve):
+            return Transformation.move_curve(obje, point)
+        if isinstance(obje, IShape):
+            return Transformation.move_shape(obje, point)
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
-    def scale(object: IObject2D, xscale: Scalar, yscale: Scalar) -> IObject2D:
-        if not isinstance(object, IObject2D):
+    def scale(obje: IObject2D, xscale: Scalar, yscale: Scalar) -> IObject2D:
+        if not isinstance(obje, IObject2D):
             raise TypeError
-        if isinstance(object, (Empty, Whole)):
-            return object
-        if isinstance(object, Point2D):
-            return Transformation.scale_point(object, xscale, yscale)
-        if isinstance(object, ICurve):
-            return Transformation.scale_curve(object, xscale, yscale)
-        if isinstance(object, IShape):
-            return Transformation.scale_shape(object, xscale, yscale)
+        if isinstance(obje, (Empty, Whole)):
+            return obje
+        if isinstance(obje, Point2D):
+            return Transformation.scale_point(obje, xscale, yscale)
+        if isinstance(obje, ICurve):
+            return Transformation.scale_curve(obje, xscale, yscale)
+        if isinstance(obje, IShape):
+            return Transformation.scale_shape(obje, xscale, yscale)
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
-    def rotate(object: IObject2D, angle: Scalar) -> IObject2D:
-        if not isinstance(object, IObject2D):
+    def rotate(obje: IObject2D, angle: Scalar) -> IObject2D:
+        if not isinstance(obje, IObject2D):
             raise TypeError
-        if isinstance(object, (Empty, Whole)):
-            return object
-        if isinstance(object, Point2D):
-            return Transformation.rotate_point(object, angle)
-        if isinstance(object, ICurve):
-            return Transformation.rotate_curve(object, angle)
-        if isinstance(object, IShape):
-            return Transformation.rotate_shape(object, angle)
+        if isinstance(obje, (Empty, Whole)):
+            return obje
+        if isinstance(obje, Point2D):
+            return Transformation.rotate_point(obje, angle)
+        if isinstance(obje, ICurve):
+            return Transformation.rotate_curve(obje, angle)
+        if isinstance(obje, IShape):
+            return Transformation.rotate_shape(obje, angle)
         raise NotImplementedError("Not expected to get here")
 
 
@@ -188,12 +184,12 @@ class Contains:
         )
 
     @staticmethod
-    def curve_in_simple(object: SimpleShape, other: ICurve) -> bool:
-        if not isinstance(object, SimpleShape):
+    def curve_in_simple(obje: SimpleShape, other: ICurve) -> bool:
+        if not isinstance(obje, SimpleShape):
             raise TypeError
         if not isinstance(other, ICurve):
             raise TypeError
-        if not all(vertex in object for vertex in other.vertices):
+        if not all(vertex in obje for vertex in other.vertices):
             return False
         nnodes = 64
         unodes = tuple(i / nnodes for i in range(1, nnodes))
@@ -201,87 +197,83 @@ class Contains:
         for ka, kb in zip(param_curve.knots, param_curve.knots[1:]):
             for unode in unodes:
                 tnode = (1 - unode) * ka + unode * kb
-                if param_curve.eval(tnode, 0) not in object:
+                if param_curve.eval(tnode, 0) not in obje:
                     return False
         return True
 
     @staticmethod
-    def simple_in_simple(object: SimpleShape, other: SimpleShape) -> bool:
-        if not isinstance(object, SimpleShape):
+    def simple_in_simple(obje: SimpleShape, other: SimpleShape) -> bool:
+        if not isinstance(obje, SimpleShape):
             raise TypeError
         if not isinstance(other, SimpleShape):
             raise TypeError
-        spos = object.area > 0
+        spos = obje.area > 0
         opos = other.area > 0
         if spos ^ opos:
             if spos and not opos:
                 return False
-        elif object.area < other.area:
+        elif obje.area < other.area:
             return False
         elif spos and opos:
-            return other.jordan in object
-        elif object == other:
+            return other.jordan in obje
+        elif obje == other:
             return True
-        if object.boundary or other.boundary:
-            return other.jordan in object and object.jordan not in other
-        object = SimpleShape(object.jordan, True)
-        return other.jordan in object and object.jordan not in other
+        if obje.boundary or other.boundary:
+            return other.jordan in obje and obje.jordan not in other
+        obje = SimpleShape(obje.jordan, True)
+        return other.jordan in obje and obje.jordan not in other
 
     @staticmethod
-    def shape_in_shape(object: IShape, other: IShape) -> bool:
-        if not isinstance(object, IShape):
+    def shape_in_shape(obje: IShape, other: IShape) -> bool:
+        if not isinstance(obje, IShape):
             raise TypeError
         if not isinstance(other, IShape):
             raise TypeError
-        if isinstance(object, SimpleShape):
+        if isinstance(obje, SimpleShape):
             if isinstance(other, SimpleShape):
-                return Contains.simple_in_simple(object, other)
-            invobj = -object
+                return Contains.simple_in_simple(obje, other)
+            invobj = -obje
             if isinstance(other, ConnectedShape):
                 return any(invobj in -sub for sub in other)
-        raise NotImplementedError(
-            f"Not expected: {type(object)}, {type(other)}"
-        )
+        raise NotImplementedError(f"Not expected: {type(obje)}, {type(other)}")
 
 
 class BooleanOperate:
     @staticmethod
-    def contains(object: IBoolean2D, other: IBoolean2D) -> bool:
+    def contains(obje: IBoolean2D, other: IBoolean2D) -> bool:
         if isinstance(other, (Empty, Whole)):
             raise NotImplementedError("Not expected get here")
-        if isinstance(object, (Empty, Whole)):
+        if isinstance(obje, (Empty, Whole)):
             raise NotImplementedError("Not expected get here")
-        if isinstance(object, (BoolAnd, ConnectedShape)):
+        if isinstance(obje, (BoolAnd, ConnectedShape)):
             raise NotImplementedError("Not expected get here")
         if not isinstance(other, IBoolean2D):
             other = Point2D(other)
-        if other.ndim > object.ndim:
+        if other.ndim > obje.ndim:
             return False
         if isinstance(other, (DisjointShape, BoolOr)):
-            return all(sub in object for sub in other)
-        if isinstance(object, IShape):
+            return all(sub in obje for sub in other)
+        if isinstance(obje, IShape):
             if isinstance(other, IShape):
-                return Contains.shape_in_shape(object, other)
-            if isinstance(other, ICurve) and isinstance(object, SimpleShape):
-                return Contains.curve_in_simple(object, other)
+                return Contains.shape_in_shape(obje, other)
+            if isinstance(other, ICurve) and isinstance(obje, SimpleShape):
+                return Contains.curve_in_simple(obje, other)
             if isinstance(other, Point2D):
-                return Contains.point_in_shape(object, other)
-        if isinstance(object, ICurve):
+                return Contains.point_in_shape(obje, other)
+        if isinstance(obje, ICurve):
             if isinstance(other, Point2D):
-                return Contains.point_in_curve(object, other)
-        if isinstance(object, Point2D) and isinstance(other, Point2D):
-            return object == other
-        if isinstance(object, BoolNot) and isinstance(object.object, Point2D):
-            return object.object not in other
-        raise NotImplementedError(
-            f"Not expected: {type(object)}, {type(other)}"
-        )
+                return Contains.point_in_curve(obje, other)
+        if isinstance(obje, Point2D) and isinstance(other, Point2D):
+            return obje == other
+        if isinstance(obje, BoolNot) and isinstance(obje.obje, Point2D):
+            return obje.obje not in other
+        raise NotImplementedError(f"Not expected: {type(obje)}, {type(other)}")
 
     @staticmethod
-    def invert(object: IBoolean2D) -> IBoolean2D:
-        if isinstance(object, (Empty, Whole, BoolNot)):
+    def invert(obje: IBoolean2D) -> IBoolean2D:
+        if isinstance(obje, (Empty, Whole, BoolNot)):
             raise NotImplementedError("Not expected get here")
-        retorno = BoolNot(object)
+        retorno = BoolNot(obje)
         if Configuration.autoexpand:
             retorno = Simplify.expand(retorno)
         if Configuration.autosimplify:
@@ -354,8 +346,8 @@ class Simplify:
         the union or intersection of inversed shape.
 
         Example:
-            BoolOr(object, ~object) -> Whole
-            Intersection(object, ~object) -> Empty
+            BoolOr(obje, ~obje) -> Whole
+            Intersection(obje, ~obje) -> Empty
         """
         objects = tuple(objects)
         inveobjs = tuple(obj for obj in objects if isinstance(obj, BoolNot))
@@ -364,54 +356,54 @@ class Simplify:
         )
         for inveobj in inveobjs:
             for normobj in normobjs:
-                if inveobj.object == normobj:
+                if inveobj.obje == normobj:
                     return True
         return False
 
     @staticmethod
-    def flatten(object: IObject2D) -> IObject2D:
+    def flatten(obje: IObject2D) -> IObject2D:
         """
-        Flat the object, doing:
+        Flat the obje, doing:
 
         or[or[A, B], C] = or[A, B, C]
         and[and[A, B], C] = and[A, B, C]
         """
-        if not isinstance(object, (BoolOr, BoolAnd)):
-            return object
-        subobjs = tuple(object)
+        if not isinstance(obje, (BoolOr, BoolAnd)):
+            return obje
+        subobjs = tuple(obje)
         items = []
         for subobj in subobjs:
             subobj = Simplify.flatten(subobj)
-            if isinstance(subobj, object.__class__):
+            if isinstance(subobj, obje.__class__):
                 items += list(subobj)
             else:
                 items.append(subobj)
-        return object.__class__(items)
+        return obje.__class__(items)
 
     @staticmethod
-    def expand_not(object: BoolNot) -> IObject2D:
-        if not isinstance(object, BoolNot):
+    def expand_not(obje: BoolNot) -> IObject2D:
+        if not isinstance(obje, BoolNot):
             raise TypeError
-        invobj = object.object
+        invobj = obje.obje
         if isinstance(invobj, BoolOr):
             newobjs = map(BooleanOperate.invert, invobj)
-            object = BooleanOperate.intersect(*newobjs)
+            obje = BooleanOperate.intersect(*newobjs)
         elif isinstance(invobj, BoolAnd):
             newobjs = map(BooleanOperate.invert, invobj)
-            object = BooleanOperate.union(*newobjs)
-        return object
+            obje = BooleanOperate.union(*newobjs)
+        return obje
 
     @staticmethod
-    def expand_and(object: BoolAnd) -> IObject2D:
-        if not isinstance(object, BoolAnd):
+    def expand_and(obje: BoolAnd) -> IObject2D:
+        if not isinstance(obje, BoolAnd):
             raise TypeError
-        subobjs = tuple(Simplify.flatten(object))
+        subobjs = tuple(Simplify.flatten(obje))
         sizes = [1] * len(subobjs)
         for i, subobj in enumerate(subobjs):
             if isinstance(subobj, BoolOr):
                 sizes[i] = len(subobj)
         if all(size == 1 for size in sizes):
-            return object
+            return obje
         subinters = []
         for indexs in permutations(*sizes):
             subitems = [subobjs[i] for i in indexs]
@@ -419,15 +411,15 @@ class Simplify:
         return Simplify.expand_or(BoolOr(subinters))
 
     @staticmethod
-    def expand_or(object: BoolOr) -> IObject2D:
-        if not isinstance(object, BoolOr):
+    def expand_or(obje: BoolOr) -> IObject2D:
+        if not isinstance(obje, BoolOr):
             raise TypeError
-        return Simplify.flatten(object)
+        return Simplify.flatten(obje)
 
     @staticmethod
-    def expand(object: IObject2D) -> IObject2D:
+    def expand(obje: IObject2D) -> IObject2D:
         """
-        Expand the object by using Morgan's law, to get something like
+        Expand the obje by using Morgan's law, to get something like
 
         Union[Intersection[Inversion[OBJECT]]]
 
@@ -437,21 +429,21 @@ class Simplify:
         * or[A and B, C] -> or[A and B, C]
 
         """
-        if not isinstance(object, IObject2D):
+        if not isinstance(obje, IObject2D):
             raise TypeError
-        if isinstance(object, BoolNot):
-            return Simplify.expand_not(object)
-        elif isinstance(object, BoolAnd):
-            return Simplify.expand_and(object)
-        elif isinstance(object, BoolOr):
-            return Simplify.expand_or(object)
-        return object
+        if isinstance(obje, BoolNot):
+            return Simplify.expand_not(obje)
+        elif isinstance(obje, BoolAnd):
+            return Simplify.expand_and(obje)
+        elif isinstance(obje, BoolOr):
+            return Simplify.expand_or(obje)
+        return obje
 
     @staticmethod
-    def treat_contains_or(object: IBoolean2D) -> IBoolean2D:
-        if not isinstance(object, BoolOr):
-            return object
-        subobjs = tuple(object)[::-1]
+    def treat_contains_or(obje: IBoolean2D) -> IBoolean2D:
+        if not isinstance(obje, BoolOr):
+            return obje
+        subobjs = tuple(obje)[::-1]
         filtered = set(range(len(subobjs)))
         for i, subi in enumerate(subobjs):
             for j in filtered:
@@ -465,10 +457,10 @@ class Simplify:
         return BoolOr(tuple(subobjs[i] for i in filtered))
 
     @staticmethod
-    def treat_contains_and(object: IBoolean2D) -> IBoolean2D:
-        if not isinstance(object, BoolAnd):
-            return object
-        subobjs = tuple(object)
+    def treat_contains_and(obje: IBoolean2D) -> IBoolean2D:
+        if not isinstance(obje, BoolAnd):
+            return obje
+        subobjs = tuple(obje)
         filtered = set(range(len(subobjs)))
         for i, subi in enumerate(subobjs):
             for j in filtered:
@@ -482,82 +474,82 @@ class Simplify:
         return BoolAnd(tuple(subobjs[i] for i in filtered))
 
     @staticmethod
-    def treat_points(object: IBoolean2D) -> IBoolean2D:
-        if not isinstance(object, BoolAnd):
-            return object
-        points = tuple(sub for sub in object if isinstance(sub, Point2D))
+    def treat_points(obje: IBoolean2D) -> IBoolean2D:
+        if not isinstance(obje, BoolAnd):
+            return obje
+        points = tuple(sub for sub in obje if isinstance(sub, Point2D))
         for point in points:
-            for sub in object:
+            for sub in obje:
                 if point not in sub:
                     return Empty()
         if len(points) > 0:
             return points[0]
-        return object
+        return obje
 
     @staticmethod
-    def simplify_not(object: BoolNot) -> IObject2D:
-        if not isinstance(object, BoolNot):
+    def simplify_not(obje: BoolNot) -> IObject2D:
+        if not isinstance(obje, BoolNot):
             raise TypeError
-        invobj = object.object
+        invobj = obje.obje
         if isinstance(invobj, (Point2D, ICurve)):
-            return object
+            return obje
         if isinstance(invobj, (SimpleShape, ConnectedShape)):
             return -invobj
         if isinstance(invobj, DisjointShape):
             simples = (~sub for sub in flatten2simples(invobj))
             return identify_shape(simples)
-        raise NotImplementedError(f"Not expected get here: {object}")
+        raise NotImplementedError(f"Not expected get here: {obje}")
 
     @staticmethod
-    def simplify_and(object: BoolAnd) -> IObject2D:
-        if not isinstance(object, BoolAnd):
+    def simplify_and(obje: BoolAnd) -> IObject2D:
+        if not isinstance(obje, BoolAnd):
             raise TypeError
-        return object
+        return obje
 
     @staticmethod
-    def simplify_or(object: BoolOr) -> IObject2D:
-        if not isinstance(object, BoolOr):
+    def simplify_or(obje: BoolOr) -> IObject2D:
+        if not isinstance(obje, BoolOr):
             raise TypeError
-        return object
+        return obje
 
     @staticmethod
-    def simplify(object: IObject2D) -> IObject2D:
-        if not isinstance(object, IObject2D):
+    def simplify(obje: IObject2D) -> IObject2D:
+        if not isinstance(obje, IObject2D):
             raise TypeError
-        object = Simplify.expand(object)
-        if not isinstance(object, (BoolNot, BoolOr, BoolAnd)):
-            return object
-        if isinstance(object, BoolNot):
-            return Simplify.simplify_not(object)
-        subobjs = tuple(map(Simplify.simplify, object))
+        obje = Simplify.expand(obje)
+        if not isinstance(obje, (BoolNot, BoolOr, BoolAnd)):
+            return obje
+        if isinstance(obje, BoolNot):
+            return Simplify.simplify_not(obje)
+        subobjs = tuple(map(Simplify.simplify, obje))
         subobjs = Simplify.filter_equal(subobjs)
         if len(subobjs) == 1:
             return Simplify.simplify(subobjs[0])
         if Simplify.has_inverse(subobjs):
-            if isinstance(object, BoolOr):
+            if isinstance(obje, BoolOr):
                 return Whole()
-            if isinstance(object, BoolAnd):
+            if isinstance(obje, BoolAnd):
                 return Empty()
             raise NotImplementedError("Not expected get here")
-        object = object.__class__(subobjs)
-        if isinstance(object, BoolOr):
-            object = Simplify.treat_contains_or(object)
-        elif isinstance(object, BoolAnd):
-            object = Simplify.treat_contains_and(object)
-            object = Simplify.treat_points(object)
-        if not isinstance(object, (BoolOr, BoolAnd)):
-            return object
-        shapes = tuple(sub for sub in object if isinstance(sub, IShape))
+        obje = obje.__class__(subobjs)
+        if isinstance(obje, BoolOr):
+            obje = Simplify.treat_contains_or(obje)
+        elif isinstance(obje, BoolAnd):
+            obje = Simplify.treat_contains_and(obje)
+            obje = Simplify.treat_points(obje)
+        if not isinstance(obje, (BoolOr, BoolAnd)):
+            return obje
+        shapes = tuple(sub for sub in obje if isinstance(sub, IShape))
         if len(shapes) > 1:
-            others = [sub for sub in object if not isinstance(sub, IShape)]
-            if isinstance(object, BoolOr):
+            others = [sub for sub in obje if not isinstance(sub, IShape)]
+            if isinstance(obje, BoolOr):
                 shape = unite_shapes(*shapes)
-            elif isinstance(object, BoolAnd):
+            elif isinstance(obje, BoolAnd):
                 shape = intersect_shapes(*shapes)
             others.append(shape)
-            if isinstance(object, BoolAnd):
-                object = BooleanOperate.intersect(*others)
-            elif isinstance(object, BoolOr):
-                object = BooleanOperate.union(*others)
-            return Simplify.simplify(object)
-        return object
+            if isinstance(obje, BoolAnd):
+                obje = BooleanOperate.intersect(*others)
+            elif isinstance(obje, BoolOr):
+                obje = BooleanOperate.union(*others)
+            return Simplify.simplify(obje)
+        return obje
