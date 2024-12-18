@@ -46,6 +46,48 @@ def test_whole():
         "test_whole",
     ]
 )
+def test_winding():
+    squarea = Primitive.square(side=2, center=(-3, 0))
+    squareb = Primitive.square(side=2, center=(3, 0))
+    disj_shape = DisjointShape([squarea, squareb])
+
+    assert disj_shape.winding((-3, 0)) == 1
+    assert disj_shape.winding((3, 0)) == 1
+    midpts = [
+        (-4, 0),
+        (-2, 0),
+        (-3, 1),
+        (-3, -1),
+        (2, 0),
+        (4, 0),
+        (3, 1),
+        (3, -1),
+    ]
+    for point in midpts:
+        assert disj_shape.winding(point) == 0.5
+    corpts = [
+        (-4, -1),
+        (-4, 1),
+        (-2, -1),
+        (-2, 1),
+        (2, -1),
+        (2, 1),
+        (4, -1),
+        (4, 1),
+    ]
+    for point in corpts:
+        assert disj_shape.winding(point) == 0.25
+
+    squarea = Primitive.square(side=2, center=(-1, -1))
+    squareb = Primitive.square(side=2, center=(1, 1))
+    disj_shape = DisjointShape([squarea, squareb])
+    assert disj_shape.winding((-1, -1)) == 1
+    assert disj_shape.winding((1, 1)) == 1
+    assert disj_shape.winding((0, 0)) == 0.5
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_winding"])
 def test_point():
     squarea = Primitive.square(center=(-3, 0))
     squareb = Primitive.square(center=(3, 0))

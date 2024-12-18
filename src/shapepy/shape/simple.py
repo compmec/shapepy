@@ -189,11 +189,7 @@ class DisjointShape(IShape):
         return len(self.__subshapes)
 
     def winding(self, point: GeneralPoint) -> Scalar:
-        for subshape in self:
-            wind = subshape.winding(point)
-            if wind != 0:
-                return wind
-        return 0
+        return sum(sub.winding(point) for sub in self)
 
     def __contains__(self, other):
         if isinstance(other, (BoolOr, DisjointShape)):

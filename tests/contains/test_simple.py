@@ -94,6 +94,32 @@ def test_keep_type():
         "test_keep_type",
     ]
 )
+def test_winding():
+    square = Primitive.square(side=4)
+    assert square.winding((0, 0)) == 1
+    assert square.winding((2, 0)) == 0.5
+    assert square.winding((2, 2)) == 0.25
+    assert square.winding((0, 2)) == 0.5
+
+    for _ in range(10):
+        point = np.random.uniform(-1.9, 1.9, 2)
+        assert square.winding(point) == 1
+    for _ in range(10):
+        rval = np.random.uniform(-1.9, 1.9)
+        assert square.winding((rval, -2)) == 0.5
+        assert square.winding((rval, 2)) == 0.5
+        assert square.winding((-2, rval)) == 0.5
+        assert square.winding((2, rval)) == 0.5
+    for _ in range(10):
+        while True:
+            xval, yval = np.random.uniform(-4, 4, 2)
+            if xval < -2 or 2 < xval or yval < -2 or 2 < yval:
+                break
+        assert square.winding((xval, yval)) == 0
+
+
+@pytest.mark.order(22)
+@pytest.mark.dependency(depends=["test_winding"])
 def test_point():
     square = Primitive.square(side=4)
 

@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from shapepy import ConnectedShape, Empty, Primitive, Whole
@@ -40,6 +41,39 @@ def test_whole():
         "test_whole",
     ]
 )
+def test_winding():
+    big_square = Primitive.square(side=4)
+    sma_square = Primitive.square(side=2)
+    shape = ConnectedShape([big_square, ~sma_square])
+
+    outpts = [(0, 0), (5, 0), (-3, 6)]
+    for point in outpts:
+        assert shape.winding(point) == 0
+    intpts = [(1.5, 0), (1.5, 0.5)]
+    for point in intpts:
+        assert shape.winding(point) == 1
+    midpts = [
+        (1, 0),
+        (-1, 0),
+        (0, 1),
+        (0, -1),
+        (2, 0),
+        (-2, 0),
+        (0, 2),
+        (0, -2),
+    ]
+    for point in midpts:
+        assert shape.winding(point) == 0.5
+    corpts = [(-2, -2), (-2, 2), (2, -2), (2, 2)]
+    for point in corpts:
+        assert shape.winding(point) == 0.25
+    corpts = [(-1, -1), (-1, 1), (1, -1), (1, 1)]
+    for point in corpts:
+        assert shape.winding(point) == 0.75
+
+
+@pytest.mark.order(23)
+@pytest.mark.dependency(depends=["test_winding"])
 def test_point():
     big_square = Primitive.square(side=4)
     small_square = Primitive.square(side=2)
