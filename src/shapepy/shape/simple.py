@@ -185,6 +185,9 @@ class DisjointShape(IShape):
     def __iter__(self):
         yield from self.__subshapes
 
+    def __len__(self):
+        return len(self.__subshapes)
+
     def winding(self, point: GeneralPoint) -> Scalar:
         for subshape in self:
             wind = subshape.winding(point)

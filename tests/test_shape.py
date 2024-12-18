@@ -303,7 +303,6 @@ class TestOthers:
     @pytest.mark.dependency(
         depends=[
             "test_begin",
-            "TestSimple::test_end",
         ]
     )
     def test_begin(self):
@@ -313,9 +312,10 @@ class TestOthers:
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
+            "TestSimple::test_end",
         ]
     )
-    def test_print(self):
+    def test_print_simple(self):
         points = [(0, 0), (1, 0), (0, 1)]
         shape = Primitive.polygon(points)
         str(shape)
@@ -325,6 +325,35 @@ class TestOthers:
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
+            "TestConnected::test_end",
+        ]
+    )
+    def test_print_connected(self):
+        big_square = Primitive.square(4)
+        sma_square = Primitive.square(2)
+        shape = ConnectedShape([big_square, ~sma_square])
+        str(shape)
+        repr(shape)
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestOthers::test_begin",
+            "TestDisjoint::test_end",
+        ]
+    )
+    def test_print_disjoint(self):
+        left_square = Primitive.square(2, (-4, 0))
+        righ_square = Primitive.square(2, (4, 0))
+        shape = DisjointShape([left_square, righ_square])
+        str(shape)
+        repr(shape)
+
+    @pytest.mark.order(8)
+    @pytest.mark.dependency(
+        depends=[
+            "TestOthers::test_begin",
+            "TestSimple::test_end",
         ]
     )
     def test_compare(self):
@@ -336,7 +365,9 @@ class TestOthers:
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
-            "TestOthers::test_print",
+            "TestOthers::test_print_simple",
+            "TestOthers::test_print_connected",
+            "TestOthers::test_print_disjoint",
             "TestOthers::test_compare",
         ]
     )
