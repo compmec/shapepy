@@ -21,28 +21,28 @@ class BoolNot(IBoolean2D):
     def ndim(self) -> int:
         return 2
 
-    def __init__(self, object: IObject2D):
-        if not isinstance(object, IObject2D):
+    def __init__(self, obje: IObject2D):
+        if not isinstance(obje, IObject2D):
             raise TypeError
-        if isinstance(object, (Empty, Whole)):
+        if isinstance(obje, (Empty, Whole)):
             raise TypeError
-        self.object = object
+        self.obje = obje
 
     def __eq__(self, other: IObject2D) -> bool:
         if not isinstance(other, IObject2D):
             raise TypeError
         if type(self) is not type(other):
             return False
-        return self.object == other.object
+        return self.obje == other.obje
 
     def __str__(self) -> str:
-        return f"NOT[{str(self.object)}]"
+        return f"NOT[{str(self.obje)}]"
 
     def __repr__(self) -> str:
-        return f"NOT[{repr(self.object)}]"
+        return f"NOT[{repr(self.obje)}]"
 
     def __invert__(self) -> IObject2D:
-        return self.object
+        return self.obje
 
 
 class BoolOr(IBoolean2D):
@@ -56,10 +56,10 @@ class BoolOr(IBoolean2D):
 
     def __init__(self, objects: Iterable[IObject2D]):
         objects = tuple(objects)
-        for object in objects:
-            if not isinstance(object, IObject2D):
+        for obje in objects:
+            if not isinstance(obje, IObject2D):
                 raise TypeError
-            if isinstance(object, (Empty, Whole)):
+            if isinstance(obje, (Empty, Whole)):
                 raise TypeError
         if len(objects) < 2:
             raise ValueError(f"Cannot init a BoolOr with {len(objects)} objs")
@@ -108,10 +108,10 @@ class BoolAnd(IBoolean2D):
 
     def __init__(self, objects: Iterable[IObject2D]):
         objects = tuple(objects)
-        for object in objects:
-            if not isinstance(object, IObject2D):
+        for obje in objects:
+            if not isinstance(obje, IObject2D):
                 raise TypeError
-            if isinstance(object, (Empty, Whole)):
+            if isinstance(obje, (Empty, Whole)):
                 raise TypeError
         if len(objects) < 2:
             raise ValueError(f"Cannot init a BoolOr with {len(objects)} objs")
