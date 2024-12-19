@@ -6,6 +6,7 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import Tuple, Union
 
+from .analytic.utils import usincos
 from .boolean import BoolNot
 from .core import IBoolean2D, Math, Scalar
 
@@ -52,6 +53,73 @@ class Point2D(IBoolean2D):
         ycoord = treat_scalar(ycoord)
         self.__x = xcoord
         self.__y = ycoord
+
+    def move(self, vector: GeneralPoint) -> Point2D:
+        """
+        Moves the object in the plane by the given vector
+
+        Parameters
+        ----------
+        vector: Point
+            The pair (x, y) that must be added to the coordinates
+
+        Example
+        -------
+        >>> mypoint = Point(0, 0)
+        >>> mypoint.move((1, 2))
+        (1, 2)
+        """
+        return self.__class__(self[0] + vector[0], self[1] + vector[1])
+
+    def scale(self, xscale: Scalar, yscale: Scalar) -> Point2D:
+        """
+        Scales the object in the X and Y directions
+
+        Parameters
+        ----------
+        xscale: Scalar
+            The amount to be scaled in the X direction
+        yscale: Scalar
+            The amount to be scaled in the Y direction
+
+        Example
+        -------
+        >>> mypoint = Point(2, 3)
+        >>> mypoint.scale(5, 3)
+        (10, 9)
+        """
+        return self.__class__(xscale * self[0], yscale * self[1])
+
+    def rotate(self, uangle: Scalar, degrees: bool = False) -> Point2D:
+        """
+        Rotates the point around the origin.
+
+        The angle mesure is unitary:
+        * angle = 1 means 360 degrees rotation
+        * angle = 0.5 means 180 degrees rotation
+        * angle = 0.125 means 45 degrees rotation
+
+        Parameters
+        ----------
+        angle: Scalar
+            The unitary angle the be rotated.
+        degrees: bool, default = False
+            If the angle is mesure in degrees
+
+        Example
+        -------
+        >>> mypoint = Point(2, 3)
+        >>> mypoint.rotate(0.5)  # 180 degrees
+        (-2, -3)
+        >>> mypoint.rotate(90, degrees=True)
+        (-3, 2)
+        """
+        if degrees:
+            uangle = treat_scalar(uangle) / 360
+        sin, cos = usincos(uangle)
+        newx = self[0] * cos - self[1] * sin
+        newy = self[0] * sin + self[1] * cos
+        return self.__class__(newx, newy)
 
     def inner(self, other: Union[Point2D, Tuple[Scalar, Scalar]]) -> Scalar:
         """

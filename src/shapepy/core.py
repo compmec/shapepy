@@ -98,7 +98,7 @@ class IObject2D(ABC):
         """
         return self.transform.scale(self, xscale, yscale)
 
-    def rotate(self, angle: Scalar, degrees: bool = False) -> IObject2D:
+    def rotate(self, uangle: Scalar, degrees: bool = False) -> IObject2D:
         """
         Rotates the object around the origin.
 
@@ -112,7 +112,7 @@ class IObject2D(ABC):
         angle: Scalar
             The unitary angle the be rotated.
         degrees: bool, default = False
-            The amount to be scaled in the Y direction
+            Flag that tells if angle is mesure in radians
 
         Example
         -------
@@ -123,10 +123,10 @@ class IObject2D(ABC):
         (-3, 2)
         """
         if degrees:
-            if isinstance(angle, (int, Fraction)):
-                angle = Fraction(angle)
-            angle /= 360
-        return self.transform.rotate(self, angle)
+            if isinstance(uangle, (int, Fraction)):
+                uangle = Fraction(uangle)
+            uangle /= 360
+        return self.transform.rotate(self, uangle)
 
 
 class IBoolean2D(IObject2D):

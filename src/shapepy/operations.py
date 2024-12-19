@@ -1,6 +1,5 @@
 from typing import Any, Iterable, List, Tuple
 
-from .analytic.utils import usincos
 from .boolean import BoolAnd, BoolNot, BoolOr
 from .core import (
     Configuration,
@@ -73,34 +72,15 @@ def sorter(items: Iterable[Any], /, *, reverse: bool = False) -> Iterable[int]:
 
 class Transformation:
     @staticmethod
-    def move_point(obje: Point2D, point: Point2D) -> Point2D:
-        return Point2D(obje[0] + point[0], obje[1] + point[1])
-
-    @staticmethod
-    def scale_point(obje: Point2D, xscale: Scalar, yscale: Scalar) -> Point2D:
-        return Point2D(xscale * obje[0], yscale * obje[1])
-
-    @staticmethod
-    def rotate_point(obje: Point2D, uangle: Scalar) -> Point2D:
-        sin, cos = usincos(uangle)
-        oldx, oldy = obje[0], obje[1]
-        newx = oldx * cos - oldy * sin
-        newy = oldx * sin + oldy * cos
-        return Point2D(newx, newy)
-
-    @staticmethod
-    def move_curve(obje: ICurve, point: Point2D) -> ICurve:
+    def move_curve(obje: ICurve, vector: Point2D) -> ICurve:
         if not isinstance(obje, ICurve):
             raise TypeError
-        if not isinstance(point, Point2D):
+        if not isinstance(vector, Point2D):
             raise TypeError
         if isinstance(
             obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
         ):
-            new_vertices = (
-                Transformation.move_point(vertex, point)
-                for vertex in obje.vertices
-            )
+            new_vertices = (vertex.move(vector) for vertex in obje.vertices)
             return obje.__class__(tuple(new_vertices))
         raise NotImplementedError("Not expected to get here")
 
@@ -112,8 +92,7 @@ class Transformation:
             obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
         ):
             new_vertices = (
-                Transformation.scale_point(vertex, xscale, yscale)
-                for vertex in obje.vertices
+                vertex.scale(xscale, yscale) for vertex in obje.vertices
             )
             return obje.__class__(tuple(new_vertices))
         raise NotImplementedError("Not expected to get here")
@@ -125,10 +104,7 @@ class Transformation:
         if isinstance(
             obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
         ):
-            new_vertices = (
-                Transformation.rotate_point(vertex, uangle)
-                for vertex in obje.vertices
-            )
+            new_vertices = (vertex.rotate(uangle) for vertex in obje.vertices)
             return obje.__class__(tuple(new_vertices))
         raise NotImplementedError("Not expected to get here")
 
