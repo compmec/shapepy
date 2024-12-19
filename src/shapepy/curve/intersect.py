@@ -9,23 +9,13 @@ def curve_and_curve(curvea: ICurve, curveb: ICurve) -> IBoolean2D:
         raise TypeError
     if not isinstance(curveb, ICurve):
         raise TypeError
-    if isinstance(curvea, IJordanCurve) and isinstance(curveb, IJordanCurve):
-        return jordan_and_jordan(curvea, curveb)
     if isinstance(curvea, IClosedCurve) and isinstance(curveb, IClosedCurve):
         return closed_and_closed(curvea, curveb)
+    if isinstance(curvea, IJordanCurve) and isinstance(curveb, IJordanCurve):
+        return curve_and_curve(curvea.param_curve, curveb.param_curve)
     raise NotImplementedError(
         f"Not expected: {type(curvea)} and {type(curveb)}"
     )
-
-
-def jordan_and_jordan(
-    curvea: IJordanCurve, curveb: IJordanCurve
-) -> IBoolean2D:
-    if not isinstance(curvea, IJordanCurve):
-        raise TypeError
-    if not isinstance(curveb, IJordanCurve):
-        raise TypeError
-    return curve_and_curve(curvea.param_curve, curveb.param_curve)
 
 
 def closed_and_closed(

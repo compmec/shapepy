@@ -1,45 +1,22 @@
 from __future__ import annotations
 
-from typing import Tuple
+from typing import Iterable
 
-from ...core import Scalar
-from ...point import GeneralPoint, Point2D
-from ..abc import IJordanCurve
-from .curve import PolygonClosedCurve, PolygonCurve, PolygonOpenCurve
+from ...point import GeneralPoint
+from ..abc import IClosedCurve, IJordanCurve
+from .curve import PolygonClosedCurve
 
 
-class JordanPolygon(IJordanCurve, PolygonCurve):
-    def __init__(self, vertices):
+class JordanPolygon(PolygonClosedCurve, IJordanCurve):
+    def __init__(self, vertices: Iterable[GeneralPoint]):
         super().__init__(vertices)
-        self.__param_curve = PolygonClosedCurve(self.vertices)
 
     @property
     def param_curve(self) -> PolygonClosedCurve:
-        return self.__param_curve
-
-    @property
-    def vectors(self) -> Tuple[Point2D, ...]:
-        return self.param_curve.vectors
-
-    @property
-    def lenght(self) -> Scalar:
-        return self.param_curve.lenght
-
-    @property
-    def area(self) -> Scalar:
-        return self.param_curve.area
-
-    @property
-    def segments(self) -> Tuple[PolygonOpenCurve, ...]:
-        segments = []
-        for i, verti in enumerate(self.vertices):
-            verj = self.vertices[(i + 1) % len(self.vertices)]
-            segment = PolygonOpenCurve([verti, verj])
-            segments.append(segment)
-        return tuple(segments)
+        return self
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, JordanPolygon):
+        if not isinstance(other, (IClosedCurve, IJordanCurve)):
             return False
         if self.area != other.area:
             return False
@@ -68,8 +45,3 @@ class JordanPolygon(IJordanCurve, PolygonCurve):
     def __invert__(self) -> JordanPolygon:
         newvertices = tuple(self.vertices[::-1])
         return self.__class__(newvertices)
-
-    def winding(self, point: GeneralPoint) -> Scalar:
-        if not isinstance(point, Point2D):
-            point = Point2D(point)
-        return self.param_curve.winding(point)
