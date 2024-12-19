@@ -234,6 +234,15 @@ class Empty(IBoolean2D):
     def __rsub__(self, other):
         return other
 
+    def move(self, vector: Tuple[Scalar, Scalar]) -> Empty:
+        return self
+
+    def scale(self, xscale, yscale) -> Empty:
+        return self
+
+    def rotate(self, uangle, degrees=False) -> Empty:
+        return self
+
 
 class Whole(IBoolean2D):
     """Whole is a singleton class to represent all plane
@@ -294,6 +303,15 @@ class Whole(IBoolean2D):
 
     def __rsub__(self, _):
         return Empty()
+
+    def move(self, vector: Tuple[Scalar, Scalar]) -> Whole:
+        return self
+
+    def scale(self, xscale, yscale) -> Whole:
+        return self
+
+    def rotate(self, uangle, degrees=False) -> Whole:
+        return self
 
 
 class ICurve(IBoolean2D):

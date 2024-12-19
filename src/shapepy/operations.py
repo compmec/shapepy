@@ -149,8 +149,6 @@ class Transformation:
     def move(obje: IObject2D, point: GeneralPoint) -> IObject2D:
         if not isinstance(point, IObject2D):
             point = Point2D(point)
-        if isinstance(obje, (Empty, Whole)):
-            return obje
         if isinstance(obje, ICurve):
             return Transformation.move_curve(obje, point)
         if isinstance(obje, IShape):
@@ -161,10 +159,6 @@ class Transformation:
     def scale(obje: IObject2D, xscale: Scalar, yscale: Scalar) -> IObject2D:
         if not isinstance(obje, IObject2D):
             raise TypeError
-        if isinstance(obje, (Empty, Whole)):
-            return obje
-        if isinstance(obje, Point2D):
-            return Transformation.scale_point(obje, xscale, yscale)
         if isinstance(obje, ICurve):
             return Transformation.scale_curve(obje, xscale, yscale)
         if isinstance(obje, IShape):
@@ -175,10 +169,6 @@ class Transformation:
     def rotate(obje: IObject2D, angle: Scalar) -> IObject2D:
         if not isinstance(obje, IObject2D):
             raise TypeError
-        if isinstance(obje, (Empty, Whole)):
-            return obje
-        if isinstance(obje, Point2D):
-            return Transformation.rotate_point(obje, angle)
         if isinstance(obje, ICurve):
             return Transformation.rotate_curve(obje, angle)
         if isinstance(obje, IShape):
