@@ -12,9 +12,9 @@ from __future__ import annotations
 from typing import Iterable, Union
 
 from ..boolean import BoolAnd, BoolOr
-from ..core import IObject2D, IShape, Scalar
+from ..core import Empty, ICurve, IObject2D, IShape, Scalar
 from ..curve.abc import IJordanCurve
-from ..point import GeneralPoint
+from ..point import GeneralPoint, Point2D
 
 
 class SimpleShape(IShape):
@@ -78,6 +78,56 @@ class SimpleShape(IShape):
 
     def __neg__(self) -> SimpleShape:
         return self.__class__(~self.jordan, not self.boundary)
+
+    def __contains_curve(self, curve: ICurve) -> bool:
+        if not isinstance(curve, ICurve):
+            raise TypeError
+        if not all(map(self.__contains__, curve.vertices)):
+            return False
+        nnodes = 64
+        unodes = tuple(i / nnodes for i in range(1, nnodes))
+        param_curve = curve.param_curve
+        for ka, kb in zip(param_curve.knots, param_curve.knots[1:]):
+            for unode in unodes:
+                tnode = (1 - unode) * ka + unode * kb
+                if param_curve.eval(tnode, 0) not in self:
+                    return False
+        return True
+
+    def __contains_simple(self, other: SimpleShape) -> bool:
+        if not isinstance(other, SimpleShape):
+            raise TypeError
+        spos = self.area > 0
+        opos = other.area > 0
+        if spos ^ opos:
+            if spos and not opos:
+                return False
+        elif self.area < other.area:
+            return False
+        elif spos and opos:
+            return other.jordan in self
+        elif self == other:
+            return True
+        if self.boundary or other.boundary:
+            return other.jordan in self and self.jordan not in other
+        self = SimpleShape(self.jordan, True)
+        return other.jordan in self and self.jordan not in other
+
+    def __contains__(self, other):
+        if not isinstance(other, IObject2D):
+            other = Point2D(other)
+        if isinstance(other, Point2D):
+            wind = self.winding(other)
+            return wind == 1 or (0 < wind and self.boundary)
+        if isinstance(other, BoolOr):
+            return all(sub in self for sub in other)
+        if isinstance(other, BoolAnd):
+            return (~self) in (~other)
+        if isinstance(other, ICurve):
+            return self.__contains_curve(other)
+        if isinstance(other, SimpleShape):
+            return self.__contains_simple(other)
+        return isinstance(other, Empty)
 
     def winding(self, point: GeneralPoint) -> Scalar:
         """
@@ -215,6 +265,6 @@ class DisjointShape(IShape, BoolOr):
         return sum(sub.winding(point) for sub in self)
 
     def __contains__(self, other):
-        if isinstance(other, (BoolOr, DisjointShape)):
+        if isinstance(other, BoolOr):
             return all(sub in self for sub in other)
         return any(other in sub for sub in self)
