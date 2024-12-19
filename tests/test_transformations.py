@@ -340,6 +340,58 @@ class TestDisjoint:
         pass
 
 
+class TestBoolNot:
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(depends=["test_begin", "TestPoint::test_end"])
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestBoolNot::test_begin",
+        ]
+    )
+    def test_move(self):
+        point = Point2D(0, 0)
+        vector = Point2D(1, 2)
+        assert (~point).move(vector) == ~vector
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestBoolNot::test_begin",
+        ]
+    )
+    def test_rotate(self):
+        pointa = Point2D(2, 3)
+        pointb = Point2D(-3, 2)
+        assert (~pointa).rotate(0.25) == ~pointb
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestBoolNot::test_begin",
+        ]
+    )
+    def test_scale(self):
+        pointa = Point2D(2, 3)
+        pointb = Point2D(6, 15)
+        assert (~pointa).scale(3, 5) == ~pointb
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestBoolNot::test_begin",
+            "TestBoolNot::test_move",
+            "TestBoolNot::test_rotate",
+            "TestBoolNot::test_scale",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
 @pytest.mark.order(9)
 @pytest.mark.dependency(
     depends=[
@@ -348,6 +400,7 @@ class TestDisjoint:
         "TestSimple::test_end",
         "TestConnected::test_end",
         "TestDisjoint::test_end",
+        "TestBoolNot::test_end",
     ]
 )
 def test_end():
