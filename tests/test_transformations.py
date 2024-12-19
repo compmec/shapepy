@@ -163,6 +163,72 @@ class TestPoint:
         pass
 
 
+class TestPolygonCurve:
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "test_begin",
+            "TestPoint::test_end",
+        ]
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestPolygonCurve::test_begin",
+        ]
+    )
+    def test_move(self):
+        old_vertices = [(0, 0), (1, 0), (0, 1)]
+        new_vertices = [(1, 2), (2, 2), (1, 3)]
+        base_curve = PolygonClosedCurve(old_vertices)
+        good_curve = PolygonClosedCurve(new_vertices)
+        test_curve = base_curve.move((1, 2))
+        assert test_curve == good_curve
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestPolygonCurve::test_begin",
+        ]
+    )
+    def test_rotate(self):
+        old_vertices = [(0, 0), (1, 0), (0, 1)]
+        new_vertices = [(0, 0), (0, 1), (-1, 0)]
+        base_curve = PolygonClosedCurve(old_vertices)
+        good_curve = PolygonClosedCurve(new_vertices)
+        test_curve = base_curve.rotate(0.25)
+        assert test_curve == good_curve
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestPolygonCurve::test_begin",
+        ]
+    )
+    def test_scale(self):
+        old_vertices = [(0, 0), (1, 0), (0, 1)]
+        new_vertices = [(0, 0), (4, 0), (0, 3)]
+        base_curve = PolygonClosedCurve(old_vertices)
+        good_curve = PolygonClosedCurve(new_vertices)
+        test_curve = base_curve.scale(4, 3)
+        assert test_curve == good_curve
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestPolygonCurve::test_begin",
+            "TestPolygonCurve::test_move",
+            "TestPolygonCurve::test_rotate",
+            "TestPolygonCurve::test_scale",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
 class TestSimple:
     @pytest.mark.order(9)
     @pytest.mark.dependency(
@@ -397,6 +463,7 @@ class TestBoolNot:
     depends=[
         "TestSingleton::test_end",
         "TestPoint::test_end",
+        "TestPolygonCurve::test_end",
         "TestSimple::test_end",
         "TestConnected::test_end",
         "TestDisjoint::test_end",
