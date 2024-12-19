@@ -7,7 +7,7 @@ For the moment, it only uses polygon shapes:
 
 from .core import Empty, IBoolean2D, IObject2D, Whole
 from .curve import JordanPolygon, JordanSpline
-from .operations import BooleanOperate, Transformation
+from .operations import BooleanOperate
 from .plot import ShapePloter
 from .point import Point2D
 from .primitive import Primitive
@@ -15,7 +15,6 @@ from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 __version__ = "1.1.0"
 
-IObject2D.transform = Transformation
 IBoolean2D.booloperate = BooleanOperate
 
 if __name__ == "__main__":

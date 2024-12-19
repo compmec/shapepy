@@ -7,11 +7,22 @@ from ..core import ICurve, Parameter, Scalar
 from ..point import GeneralPoint, Point2D
 
 
-class IOpenCurve(ICurve):
+class BaseCurve(ICurve):
+    """
+    This is an abstract class, it serves as interface to create a curve
+    """
+
+    @property
+    @abstractmethod
+    def vertices(self) -> Iterable[Point2D]:
+        raise NotImplementedError
+
+
+class IOpenCurve(BaseCurve):
     pass
 
 
-class IClosedCurve(ICurve):
+class IClosedCurve(BaseCurve):
     @property
     @abstractmethod
     def area(self) -> Scalar:
@@ -22,7 +33,7 @@ class IClosedCurve(ICurve):
         raise NotImplementedError
 
 
-class IParameterCurve(ICurve):
+class IParameterCurve(BaseCurve):
     @abstractmethod
     def knots(self) -> Tuple[Parameter, ...]:
         raise NotImplementedError
@@ -47,9 +58,4 @@ class IJordanCurve(IClosedCurve):
     @property
     @abstractmethod
     def param_curve(self) -> IParameterCurve:
-        raise NotImplementedError
-
-    @property
-    @abstractmethod
-    def vertices(self) -> Tuple[Point2D, ...]:
         raise NotImplementedError

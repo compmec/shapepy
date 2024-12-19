@@ -5,8 +5,15 @@ from typing import Iterable, Tuple, Union
 
 from ...analytic.utils import uarctan2
 from ...core import Math
-from ...point import GeneralPoint, Point2D
-from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter, Scalar
+from ...point import GeneralPoint, Point2D, treat_scalar
+from ..abc import (
+    BaseCurve,
+    IClosedCurve,
+    IOpenCurve,
+    IParameterCurve,
+    Parameter,
+    Scalar,
+)
 
 
 def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
@@ -26,36 +33,98 @@ def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
     return tuple(new_vertices)
 
 
-class PolygonCurve(IParameterCurve):
+class PolygonCurve(BaseCurve):
     def __init__(self, vertices: Iterable[GeneralPoint]):
         self.__vertices = tuple(clean_open_curve(vertices))
+
+    @property
+    def vertices(self) -> Iterable[Point2D]:
+        return self.__vertices
+
+    @property
+    @abstractmethod
+    def vectors(self) -> Iterable[Point2D]:
+        raise NotImplementedError
+
+    @property
+    def lenght(self) -> Scalar:
+        return sum(map(abs, self.vectors))
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PolygonCurve):
             return False
-        if self.knots[-1] != other.knots[-1]:
+        if len(self.vertices) != len(other.vertices):
             return False
         for verti, vertj in zip(self.vertices, other.vertices):
             if verti != vertj:
                 return False
         return True
 
+    def move(self, vector: GeneralPoint) -> Point2D:
+        """
+        Moves the curve in the plane by the given vector
+
+        Parameters
+        ----------
+        vector: Point
+            The pair (x, y) that must be added to the coordinates
+        return: PolygonCurve
+            Gives a polygonal curve, either open, closed or a jordan
+        """
+        if not isinstance(vector, Point2D):
+            vector = Point2D(vector)
+        return self.__class__(vertex.move(vector) for vertex in self.vertices)
+
+    def scale(self, xscale: Scalar, yscale: Scalar) -> Point2D:
+        """
+        Scales the curve in the X and Y directions
+
+        Parameters
+        ----------
+        xscale: Scalar
+            The amount to be scaled in the X direction
+        yscale: Scalar
+            The amount to be scaled in the Y direction
+        """
+        return self.__class__(
+            vertex.scale(xscale, yscale) for vertex in self.vertices
+        )
+
+    def rotate(self, uangle: Scalar, degrees: bool = False) -> Point2D:
+        """
+        Rotates the point around the origin.
+
+        The angle mesure is unitary:
+        * angle = 1 means 360 degrees rotation
+        * angle = 0.5 means 180 degrees rotation
+        * angle = 0.125 means 45 degrees rotation
+
+        Parameters
+        ----------
+        angle: Scalar
+            The unitary angle the be rotated.
+        degrees: bool, default = False
+            If the angle is mesure in degrees
+
+        Example
+        -------
+        >>> mypoint = Point(2, 3)
+        >>> mypoint.rotate(0.5)  # 180 degrees
+        (-2, -3)
+        >>> mypoint.rotate(90, degrees=True)
+        (-3, 2)
+        """
+        if degrees:
+            uangle = treat_scalar(uangle) / 360
+        return self.__class__(
+            vertex.rotate(uangle) for vertex in self.vertices
+        )
+
+
+class ParamPolygonCurve(IParameterCurve, PolygonCurve):
     @property
     def knots(self) -> Tuple[Parameter, ...]:
         return tuple(range(len(self.vectors) + 1))
-
-    @property
-    def vertices(self) -> Tuple[Point2D, ...]:
-        return self.__vertices
-
-    @property
-    def lenght(self) -> Scalar:
-        return sum(map(abs, self.vectors))
-
-    @property
-    @abstractmethod
-    def vectors(self) -> Tuple[Point2D, ...]:
-        raise NotImplementedError
 
     def projection(self, point: GeneralPoint) -> Tuple[Parameter, ...]:
         if not isinstance(point, Point2D):
@@ -77,7 +146,7 @@ class PolygonCurve(IParameterCurve):
         return tuple(sorted(params))
 
 
-class PolygonOpenCurve(PolygonCurve, IOpenCurve):
+class PolygonOpenCurve(ParamPolygonCurve, IOpenCurve):
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []
@@ -132,7 +201,7 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
         return PolygonOpenCurve(tuple(newvertices))
 
 
-class PolygonClosedCurve(PolygonCurve, IClosedCurve):
+class PolygonClosedCurve(ParamPolygonCurve, IClosedCurve):
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []

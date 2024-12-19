@@ -5,20 +5,17 @@ from typing import Tuple
 from ...core import Scalar
 from ...point import GeneralPoint, Point2D
 from ..abc import IJordanCurve
-from .curve import PolygonClosedCurve, PolygonOpenCurve
+from .curve import PolygonClosedCurve, PolygonCurve, PolygonOpenCurve
 
 
-class JordanPolygon(IJordanCurve):
-    def __init__(self, vertices: Tuple[GeneralPoint, ...]):
-        self.vertices = vertices
+class JordanPolygon(IJordanCurve, PolygonCurve):
+    def __init__(self, vertices):
+        super().__init__(vertices)
+        self.__param_curve = PolygonClosedCurve(self.vertices)
 
     @property
     def param_curve(self) -> PolygonClosedCurve:
         return self.__param_curve
-
-    @property
-    def vertices(self) -> Tuple[Point2D, ...]:
-        return self.param_curve.vertices
 
     @property
     def vectors(self) -> Tuple[Point2D, ...]:
@@ -40,10 +37,6 @@ class JordanPolygon(IJordanCurve):
             segment = PolygonOpenCurve([verti, verj])
             segments.append(segment)
         return tuple(segments)
-
-    @vertices.setter
-    def vertices(self, vertices: Tuple[GeneralPoint, ...]):
-        self.__param_curve = PolygonClosedCurve(vertices)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, JordanPolygon):

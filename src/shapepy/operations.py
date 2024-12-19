@@ -8,11 +8,9 @@ from .core import (
     ICurve,
     IObject2D,
     IShape,
-    Scalar,
     Whole,
 )
-from .curve import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
-from .point import GeneralPoint, Point2D
+from .point import Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 from .shape.boolean import (
     flatten2simples,
@@ -70,69 +68,6 @@ def sorter(items: Iterable[Any], /, *, reverse: bool = False) -> Iterable[int]:
     return (vs[-1] for vs in values)
 
 
-class Transformation:
-    @staticmethod
-    def move_curve(obje: ICurve, vector: Point2D) -> ICurve:
-        if not isinstance(obje, ICurve):
-            raise TypeError
-        if not isinstance(vector, Point2D):
-            raise TypeError
-        if isinstance(
-            obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
-        ):
-            new_vertices = (vertex.move(vector) for vertex in obje.vertices)
-            return obje.__class__(tuple(new_vertices))
-        raise NotImplementedError("Not expected to get here")
-
-    @staticmethod
-    def scale_curve(obje: ICurve, xscale: Scalar, yscale: Scalar) -> ICurve:
-        if not isinstance(obje, ICurve):
-            raise TypeError
-        if isinstance(
-            obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
-        ):
-            new_vertices = (
-                vertex.scale(xscale, yscale) for vertex in obje.vertices
-            )
-            return obje.__class__(tuple(new_vertices))
-        raise NotImplementedError("Not expected to get here")
-
-    @staticmethod
-    def rotate_curve(obje: ICurve, uangle: Scalar) -> ICurve:
-        if not isinstance(obje, ICurve):
-            raise TypeError
-        if isinstance(
-            obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
-        ):
-            new_vertices = (vertex.rotate(uangle) for vertex in obje.vertices)
-            return obje.__class__(tuple(new_vertices))
-        raise NotImplementedError("Not expected to get here")
-
-    @staticmethod
-    def move(obje: IObject2D, point: GeneralPoint) -> IObject2D:
-        if not isinstance(point, IObject2D):
-            point = Point2D(point)
-        if isinstance(obje, ICurve):
-            return Transformation.move_curve(obje, point)
-        raise NotImplementedError("Not expected to get here")
-
-    @staticmethod
-    def scale(obje: IObject2D, xscale: Scalar, yscale: Scalar) -> IObject2D:
-        if not isinstance(obje, IObject2D):
-            raise TypeError
-        if isinstance(obje, ICurve):
-            return Transformation.scale_curve(obje, xscale, yscale)
-        raise NotImplementedError("Not expected to get here")
-
-    @staticmethod
-    def rotate(obje: IObject2D, angle: Scalar) -> IObject2D:
-        if not isinstance(obje, IObject2D):
-            raise TypeError
-        if isinstance(obje, ICurve):
-            return Transformation.rotate_curve(obje, angle)
-        raise NotImplementedError("Not expected to get here")
-
-
 class Contains:
     @staticmethod
     def point_in_curve(curve: ICurve, point: Point2D) -> bool:
@@ -170,7 +105,10 @@ class BooleanOperate:
     @staticmethod
     def union(*objects: IBoolean2D) -> IBoolean2D:
         objects = (obj for obj in objects if not isinstance(obj, Empty))
-        objects = [obj if isinstance(obj, IBoolean2D) else Point2D(obj) for obj in objects]
+        objects = [
+            obj if isinstance(obj, IBoolean2D) else Point2D(obj)
+            for obj in objects
+        ]
         if any(isinstance(obj, Whole) for obj in objects):
             return Whole()
         if len(objects) == 1:
@@ -187,7 +125,10 @@ class BooleanOperate:
     @staticmethod
     def intersect(*objects: IBoolean2D) -> IBoolean2D:
         objects = (obj for obj in objects if not isinstance(obj, Whole))
-        objects = [obj if isinstance(obj, IBoolean2D) else Point2D(obj) for obj in objects]
+        objects = [
+            obj if isinstance(obj, IBoolean2D) else Point2D(obj)
+            for obj in objects
+        ]
         if any(isinstance(obj, Empty) for obj in objects):
             return Empty()
         if len(objects) == 1:

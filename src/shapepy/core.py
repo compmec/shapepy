@@ -77,7 +77,7 @@ class IObject2D(ABC):
         >>> mypoint.move((1, 2))
         (1, 2)
         """
-        return self.transform.move(self, vector)
+        raise NotImplementedError
 
     def scale(self, xscale: Scalar, yscale: Scalar) -> IObject2D:
         """
@@ -96,7 +96,7 @@ class IObject2D(ABC):
         >>> mypoint.scale(5, 3)
         (10, 9)
         """
-        return self.transform.scale(self, xscale, yscale)
+        raise NotImplementedError
 
     def rotate(self, uangle: Scalar, degrees: bool = False) -> IObject2D:
         """
@@ -122,11 +122,7 @@ class IObject2D(ABC):
         >>> mypoint.rotate(90, degrees=True)
         (-3, 2)
         """
-        if degrees:
-            if isinstance(uangle, (int, Fraction)):
-                uangle = Fraction(uangle)
-            uangle /= 360
-        return self.transform.rotate(self, uangle)
+        raise NotImplementedError
 
 
 class IBoolean2D(IObject2D):
