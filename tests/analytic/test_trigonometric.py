@@ -355,7 +355,7 @@ def test_divide_random_pmax1():
     cost = Trignomial([0, 0, 1])
 
     for _ in range(200):
-        a, b, c, d = np.random.randint(-10, 11, 4)
+        a, b, c, d = map(int, np.random.randint(-10, 11, 4))
         if not (a or b or c):
             continue
         denom = a * sint + b * cost + c
@@ -366,9 +366,9 @@ def test_divide_random_pmax1():
         assert rest == 0
 
     for _ in range(200):
-        a, b, c = np.random.randint(-10, 11, 3)
+        a, b, c = map(int, np.random.randint(-10, 11, 3))
         numer = a * sint + b * cost + c
-        a, b, c = np.random.randint(-10, 11, 3)
+        a, b, c = map(int, np.random.randint(-10, 11, 3))
         if not (a or b or c):
             continue
         denom = a * sint + b * cost + c
@@ -390,6 +390,8 @@ def test_divmod_sum():
                     coefsb = np.random.randint(-10, 10, 2 * pmaxb + 1)
                     if any(coefsb):
                         break
+                coefsa = map(int, coefsa)
+                coefsb = map(int, coefsb)
                 numer = Trignomial(map(int, coefsa))
                 denom = Trignomial(map(int, coefsb))
                 quot, rest = divmod(numer, denom)
