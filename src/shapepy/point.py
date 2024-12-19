@@ -3,12 +3,11 @@ File that contains only the Point2D object
 """
 from __future__ import annotations
 
-import math
 from fractions import Fraction
 from typing import Tuple, Union
 
 from .boolean import BoolNot
-from .core import IBoolean2D, Scalar
+from .core import IBoolean2D, Math, Scalar
 
 
 def treat_scalar(number: Scalar) -> Scalar:
@@ -81,7 +80,7 @@ class Point2D(IBoolean2D):
         """
         The euclidean distance to origin
         """
-        return math.sqrt(self.inner(self))
+        return Math.sqrt(self.inner(self))
 
     def __copy__(self) -> Point2D:
         return self.__deepcopy__(None)

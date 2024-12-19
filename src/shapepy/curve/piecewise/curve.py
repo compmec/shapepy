@@ -1,12 +1,11 @@
 from __future__ import annotations
 
-import math
 from typing import Iterable, Tuple
 
 import numpy as np
 
 from ...analytic.utils import unit_angle
-from ...core import IAnalytic, Scalar
+from ...core import IAnalytic, Math, Scalar
 from ...point import GeneralPoint, Point2D
 from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter
 
@@ -47,7 +46,7 @@ class PiecewiseCurve(IParameterCurve):
         return self.__lenght
 
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
-        index = int(math.floor(node))
+        index = int(Math.floor(node))
         if index == len(self.__funcs):
             index -= 1
         xfunc, yfunc = self.__funcs[index]
@@ -95,8 +94,8 @@ class PiecewiseCurve(IParameterCurve):
             return self
         if not (nodea < nodeb):
             raise ValueError
-        indexa = int(math.floor(nodea))
-        indexb = int(math.ceil(nodeb)) - 1
+        indexa = int(Math.floor(nodea))
+        indexb = int(Math.ceil(nodeb)) - 1
         if indexa == indexb:
             denom = 1 / (nodeb - nodea)
             xfunc, yfunc = self.functions[indexa]
@@ -180,7 +179,7 @@ def compute_lenght(curve: PiecewiseCurve, tolerance: Scalar = 1e-9) -> Scalar:
     def direct_integral(ta: Parameter, tb: Parameter) -> Scalar:
         nodes = (1 / 4, 1 / 2, 3 / 4)
         weigs = (2 / 3, -1 / 3, 2 / 3)
-        dsvas = map(math.sqrt, map(ds2fun.eval, nodes))
+        dsvas = map(Math.sqrt, map(ds2fun.eval, nodes))
         return (tb - ta) * np.inner(weigs, tuple(dsvas))
 
     def adapt_integral(

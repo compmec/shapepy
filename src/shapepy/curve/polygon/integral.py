@@ -1,15 +1,9 @@
-import math
-from functools import lru_cache
 from typing import Tuple
 
 import numpy as np
 
+from ...analytic.utils import binom
 from ...core import Scalar
-
-
-@lru_cache
-def binom(n: int, i: int) -> int:
-    return math.comb(n, i)
 
 
 def polybidim(

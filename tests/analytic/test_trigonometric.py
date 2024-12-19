@@ -8,7 +8,7 @@ import sympy as sp
 
 from shapepy.analytic.trigonometric import Trignomial
 from shapepy.analytic.utils import usincos
-from shapepy.core import Configuration
+from shapepy.core import Math
 
 
 @pytest.mark.order(3)
@@ -254,24 +254,24 @@ def test_evaluate_derivate():
     assert trig.eval(1, 2) == 0
 
     trig = Trignomial([1, 2])  # p(x) = 1 + 2*sin(2*pi*x)
-    assert trig.eval(0, 1) == 2 * Configuration.TAU
-    assert trig.eval(1, 1) == 2 * Configuration.TAU
-    assert trig.eval(2, 1) == 2 * Configuration.TAU
-    assert trig.eval(0.0, 1) == 2 * Configuration.TAU
-    assert trig.eval(1.0, 1) == 2 * Configuration.TAU
+    assert trig.eval(0, 1) == 2 * Math.tau
+    assert trig.eval(1, 1) == 2 * Math.tau
+    assert trig.eval(2, 1) == 2 * Math.tau
+    assert trig.eval(0.0, 1) == 2 * Math.tau
+    assert trig.eval(1.0, 1) == 2 * Math.tau
     assert trig.eval(2, 2) == 0
     assert trig.eval(0.0, 2) == 0
 
     trig = Trignomial([1, 2, 3])  # p(x) = 1 + 2*sin(w*x) + 3*cos(w*x)
-    assert trig.eval(0, 1) == 2 * Configuration.TAU
-    assert trig.eval(1, 1) == 2 * Configuration.TAU
-    assert trig.eval(2, 1) == 2 * Configuration.TAU
-    assert trig.eval(0.0, 1) == 2 * Configuration.TAU
-    assert trig.eval(1.0, 1) == 2 * Configuration.TAU
-    assert trig.eval(2, 2) == -3 * Configuration.TAU**2
-    assert trig.eval(0.0, 2) == -3 * Configuration.TAU**2
-    assert trig.eval(2, 3) == -2 * Configuration.TAU**3
-    assert trig.eval(0.0, 3) == -2 * Configuration.TAU**3
+    assert trig.eval(0, 1) == 2 * Math.tau
+    assert trig.eval(1, 1) == 2 * Math.tau
+    assert trig.eval(2, 1) == 2 * Math.tau
+    assert trig.eval(0.0, 1) == 2 * Math.tau
+    assert trig.eval(1.0, 1) == 2 * Math.tau
+    assert trig.eval(2, 2) == -3 * Math.tau**2
+    assert trig.eval(0.0, 2) == -3 * Math.tau**2
+    assert trig.eval(2, 3) == -2 * Math.tau**3
+    assert trig.eval(0.0, 3) == -2 * Math.tau**3
 
 
 @pytest.mark.order(3)

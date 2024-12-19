@@ -1,10 +1,10 @@
 from __future__ import annotations
 
-import math
 from abc import abstractmethod
 from typing import Iterable, Tuple, Union
 
 from ...analytic.utils import uarctan2
+from ...core import Math
 from ...point import GeneralPoint, Point2D
 from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter, Scalar
 
@@ -103,7 +103,7 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
         if node < 0 or len(self.vertices) - 1 < node:
             raise ValueError(f"Given node {node} is outside the interval")
-        index = int(math.floor(node))
+        index = int(Math.floor(node))
         if derivate > 1:
             return 0 * self.vertices[0]
         if derivate == 1:
@@ -122,11 +122,11 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
         if nodea == int(nodea):
             startindex = int(nodea) + 1
         else:
-            startindex = int(math.ceil(nodea))
+            startindex = int(Math.ceil(nodea))
         if nodeb == int(nodeb):
             endingindex = int(nodeb)
         else:
-            endingindex = int(math.ceil(nodeb))
+            endingindex = int(Math.ceil(nodeb))
         middlevertices = self.vertices[startindex:endingindex]
         newvertices = [startpoint] + list(middlevertices) + [endingpoint]
         return PolygonOpenCurve(tuple(newvertices))
@@ -179,11 +179,11 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
         if nodea == int(nodea):
             startindex = int(nodea) + 1
         else:
-            startindex = int(math.ceil(nodea))
+            startindex = int(Math.ceil(nodea))
         if nodeb == int(nodeb):
             endingindex = int(nodeb)
         else:
-            endingindex = int(math.floor(nodeb)) + 1
+            endingindex = int(Math.floor(nodeb)) + 1
         middlevertices = self.vertices[startindex:endingindex]
         newvertices = [startpoint] + list(middlevertices) + [endingpoint]
         return PolygonOpenCurve(newvertices)
@@ -224,7 +224,7 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
         return 0 if abs(wind + 1) < 1e-9 else 1 - wind
 
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
-        index = int(math.floor(node)) % len(self.vertices)
+        index = int(Math.floor(node)) % len(self.vertices)
         if derivate > 1:
             return 0 * self.vertices[0]
         if derivate == 1:

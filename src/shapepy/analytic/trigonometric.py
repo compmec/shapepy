@@ -19,7 +19,7 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
-from ..core import Configuration, IAnalytic, Parameter, Scalar
+from ..core import IAnalytic, Math, Parameter, Scalar
 from .base import BaseAnalytic
 from .utils import usincos
 
@@ -110,7 +110,7 @@ class Trignomial(BaseAnalytic):
         >>> trig.omega
         18.8495559
         """
-        return Configuration.TAU * self.frequency
+        return Math.tau * self.frequency
 
     def __neg__(self) -> Trignomial:
         return self.__class__(tuple(-coef for coef in self), self.frequency)

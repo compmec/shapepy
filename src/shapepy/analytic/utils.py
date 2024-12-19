@@ -6,7 +6,7 @@ import math
 from functools import lru_cache
 from typing import Iterable, Tuple
 
-from ..core import Configuration, Scalar
+from ..core import Math, Scalar
 
 
 @lru_cache
@@ -169,7 +169,7 @@ def rsin(rad_angle: Scalar) -> Scalar:
     Computes the sinus of given angle.
     The angule mesure is in radians
     """
-    return Configuration.SIN(rad_angle)
+    return Math.sin(rad_angle)
 
 
 def rcos(rad_angle: Scalar) -> Scalar:
@@ -177,7 +177,7 @@ def rcos(rad_angle: Scalar) -> Scalar:
     Computes the cossinus of given angle.
     The angule mesure is in radians
     """
-    return Configuration.COS(rad_angle)
+    return Math.cos(rad_angle)
 
 
 def usin(uangle: Scalar) -> Scalar:
@@ -213,7 +213,7 @@ def usin(uangle: Scalar) -> Scalar:
         if not quad % 2:
             return 0
         return 1 - 2 * (quad == 3)
-    return rsin(uangle * Configuration.TAU)
+    return rsin(uangle * Math.tau)
 
 
 def ucos(uangle: Scalar) -> Scalar:
@@ -249,7 +249,7 @@ def ucos(uangle: Scalar) -> Scalar:
         if quad % 2:
             return 0
         return 1 - 2 * (quad == 2)
-    return rcos(uangle * Configuration.TAU)
+    return rcos(uangle * Math.tau)
 
 
 def usincos(uangle: Scalar) -> Tuple[Scalar, Scalar]:
@@ -313,7 +313,7 @@ def uarctan2(yval: Scalar, xval: Scalar) -> Scalar:
         return 0 if xval > 0 else -0.5
     if not xval:
         return 0.25 if yval > 0 else -0.25
-    return Configuration.ARCTAN2(float(yval), float(xval)) / Configuration.TAU
+    return Math.arctan2(float(yval), float(xval)) / Math.tau
 
 
 def unit_angle(xval: Scalar, yval: Scalar) -> Scalar:

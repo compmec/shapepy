@@ -21,7 +21,7 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
-from ..core import Configuration, IAnalytic, Parameter, Scalar
+from ..core import IAnalytic, Math, Parameter, Scalar
 from .base import BaseAnalytic
 
 
@@ -178,8 +178,8 @@ class Hypernomial(BaseAnalytic):
             return self.derivate(derivate).eval(node, 0)
         results = self[0]
         for pval in range(1, self.pmax + 1):
-            sinh = Configuration.SINH(self.frequency * node)
-            cosh = Configuration.COSH(self.frequency * node)
+            sinh = Math.sinh(self.frequency * node)
+            cosh = Math.cosh(self.frequency * node)
             results += self[2 * pval - 1] * sinh + self[2 * pval] * cosh
         return results
 

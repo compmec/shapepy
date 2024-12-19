@@ -5,13 +5,12 @@ making operations with polynomials, like adding, multiplying, etc
 
 from __future__ import annotations
 
-import math
 from fractions import Fraction
 from typing import Any, Iterable, Optional, Tuple, Union
 
 import numpy as np
 
-from ..core import IAnalytic, Parameter, Scalar
+from ..core import IAnalytic, Math, Parameter, Scalar
 from .base import BaseAnalytic
 from .utils import binom, divisors, factorial, gcd, lcm
 
@@ -457,8 +456,8 @@ def find_numerical_roots(poly: Polynomial) -> Tuple[float]:
     if delta < 0:
         return tuple()
 
-    liminf = (-coefs[degree - 1] - (degree - 1) * math.sqrt(delta)) / degree
-    limsup = (-coefs[degree - 1] + (degree - 1) * math.sqrt(delta)) / degree
+    liminf = (-coefs[degree - 1] - (degree - 1) * Math.sqrt(delta)) / degree
+    limsup = (-coefs[degree - 1] + (degree - 1) * Math.sqrt(delta)) / degree
     maxabs = max(abs(liminf), abs(limsup))
     roots = list(np.linspace(-maxabs, maxabs, 2 * degree + 1))
     for _ in range(3):  # Filter roots three times

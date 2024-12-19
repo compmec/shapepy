@@ -13,6 +13,27 @@ Scalar = Union[int, float]
 Parameter = Union[int, float]
 
 
+class Math:
+    """
+    Contains math functions, to easy change everywhere
+    """
+
+    # General math
+    arctan2 = math.atan2
+    sqrt = math.sqrt
+    floor = math.floor
+    ceil = math.ceil
+
+    # Trigonometric
+    tau = math.tau
+    sin = math.sin
+    cos = math.cos
+
+    # Hyperbolic
+    sinh = math.sinh
+    cosh = math.cosh
+
+
 class Configuration:
     """
     Configuration class for the package
@@ -20,18 +41,6 @@ class Configuration:
 
     AUTOEXPAND = True
     AUTOSIMPLIFY = True
-
-    # General math
-    ARCTAN2 = math.atan2
-
-    # Trigonometric
-    TAU = math.tau
-    SIN = math.sin
-    COS = math.cos
-
-    # Hyperbolic
-    SINH = math.sinh
-    COSH = math.cosh
 
 
 class IObject2D(ABC):
