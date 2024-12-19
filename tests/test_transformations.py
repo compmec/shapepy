@@ -261,6 +261,85 @@ class TestConnected:
         pass
 
 
+class TestDisjoint:
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "test_begin",
+            "TestSimple::test_end",
+            "TestConnected::test_end",
+        ]
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisjoint::test_begin",
+        ]
+    )
+    def test_move(self):
+        lef_square = Primitive.square(2, (-4, 0))
+        rig_square = Primitive.square(2, (4, 0))
+        disj_shape = DisjointShape([lef_square, rig_square])
+        test_shape = disj_shape.move((1, 2))
+
+        lef_square = Primitive.square(2, (-3, 2))
+        rig_square = Primitive.square(2, (5, 2))
+        good_shape = DisjointShape([lef_square, rig_square])
+
+        assert test_shape == good_shape
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisjoint::test_begin",
+        ]
+    )
+    def test_rotate(self):
+        lef_square = Primitive.square(2, (-4, 0))
+        rig_square = Primitive.square(2, (4, 0))
+        disj_shape = DisjointShape([lef_square, rig_square])
+        test_shape = disj_shape.rotate(0.25)
+
+        top_square = Primitive.square(2, (0, 4))
+        bot_square = Primitive.square(2, (0, -4))
+        good_shape = DisjointShape([top_square, bot_square])
+
+        assert test_shape == good_shape
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisjoint::test_begin",
+        ]
+    )
+    def test_scale(self):
+        lef_square = Primitive.square(2, (-4, 0))
+        rig_square = Primitive.square(2, (4, 0))
+        disj_shape = DisjointShape([lef_square, rig_square])
+        test_shape = disj_shape.scale(2, 2)
+
+        lef_square = Primitive.square(4, (-8, 0))
+        rig_square = Primitive.square(4, (8, 0))
+        good_shape = DisjointShape([lef_square, rig_square])
+
+        assert test_shape == good_shape
+
+    @pytest.mark.order(9)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisjoint::test_begin",
+            "TestDisjoint::test_move",
+            "TestDisjoint::test_rotate",
+            "TestDisjoint::test_scale",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
 @pytest.mark.order(9)
 @pytest.mark.dependency(
     depends=[
@@ -268,6 +347,7 @@ class TestConnected:
         "TestPoint::test_end",
         "TestSimple::test_end",
         "TestConnected::test_end",
+        "TestDisjoint::test_end",
     ]
 )
 def test_end():
