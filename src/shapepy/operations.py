@@ -151,8 +151,6 @@ class Transformation:
             point = Point2D(point)
         if isinstance(obje, (Empty, Whole)):
             return obje
-        if isinstance(obje, Point2D):
-            return Transformation.move_point(obje, point)
         if isinstance(obje, ICurve):
             return Transformation.move_curve(obje, point)
         if isinstance(obje, IShape):
@@ -377,7 +375,7 @@ class Simplify:
             Intersection(obje, ~obje) -> Empty
         """
         objects = tuple(objects)
-        inveobjs = tuple(obj for obj in objects if isinstance(obj, BoolNot))
+        inveobjs = tuple(obj for obj in objects if type(obj) is BoolNot)
         normobjs = tuple(
             obj for obj in objects if not isinstance(obj, BoolNot)
         )
@@ -395,7 +393,7 @@ class Simplify:
         or[or[A, B], C] = or[A, B, C]
         and[and[A, B], C] = and[A, B, C]
         """
-        if not isinstance(obje, (BoolOr, BoolAnd)):
+        if type(obje) not in (BoolOr, BoolAnd):
             return obje
         subobjs = tuple(obje)
         items = []
@@ -409,25 +407,25 @@ class Simplify:
 
     @staticmethod
     def expand_not(obje: BoolNot) -> IObject2D:
-        if not isinstance(obje, BoolNot):
+        if type(obje) is not BoolNot:
             raise TypeError
         invobj = obje.obje
-        if isinstance(invobj, BoolOr):
+        if type(invobj) is BoolOr:
             newobjs = map(BooleanOperate.invert, invobj)
             obje = BooleanOperate.intersect(*newobjs)
-        elif isinstance(invobj, BoolAnd):
+        elif type(invobj) is BoolAnd:
             newobjs = map(BooleanOperate.invert, invobj)
             obje = BooleanOperate.union(*newobjs)
         return obje
 
     @staticmethod
     def expand_and(obje: BoolAnd) -> IObject2D:
-        if not isinstance(obje, BoolAnd):
+        if type(obje) is not BoolAnd:
             raise TypeError
         subobjs = tuple(Simplify.flatten(obje))
         sizes = [1] * len(subobjs)
         for i, subobj in enumerate(subobjs):
-            if isinstance(subobj, BoolOr):
+            if type(subobj) is BoolOr:
                 sizes[i] = len(subobj)
         if all(size == 1 for size in sizes):
             return obje
@@ -439,7 +437,7 @@ class Simplify:
 
     @staticmethod
     def expand_or(obje: BoolOr) -> IObject2D:
-        if not isinstance(obje, BoolOr):
+        if type(obje) is not BoolOr:
             raise TypeError
         return Simplify.flatten(obje)
 
@@ -458,17 +456,17 @@ class Simplify:
         """
         if not isinstance(obje, IObject2D):
             raise TypeError
-        if isinstance(obje, BoolNot):
+        if type(obje) is BoolNot:
             return Simplify.expand_not(obje)
-        elif isinstance(obje, BoolAnd):
+        elif type(obje) is BoolAnd:
             return Simplify.expand_and(obje)
-        elif isinstance(obje, BoolOr):
+        elif type(obje) is BoolOr:
             return Simplify.expand_or(obje)
         return obje
 
     @staticmethod
     def treat_contains_or(obje: IBoolean2D) -> IBoolean2D:
-        if not isinstance(obje, BoolOr):
+        if type(obje) is not BoolOr:
             return obje
         subobjs = tuple(obje)[::-1]
         filtered = set(range(len(subobjs)))
@@ -485,7 +483,7 @@ class Simplify:
 
     @staticmethod
     def treat_contains_and(obje: IBoolean2D) -> IBoolean2D:
-        if not isinstance(obje, BoolAnd):
+        if type(obje) is not BoolAnd:
             return obje
         subobjs = tuple(obje)
         filtered = set(range(len(subobjs)))
@@ -502,7 +500,7 @@ class Simplify:
 
     @staticmethod
     def treat_points(obje: IBoolean2D) -> IBoolean2D:
-        if not isinstance(obje, BoolAnd):
+        if type(obje) is not BoolAnd:
             return obje
         points = tuple(sub for sub in obje if isinstance(sub, Point2D))
         for point in points:
@@ -529,13 +527,13 @@ class Simplify:
 
     @staticmethod
     def simplify_and(obje: BoolAnd) -> IObject2D:
-        if not isinstance(obje, BoolAnd):
+        if type(obje) is not BoolAnd:
             raise TypeError
         return obje
 
     @staticmethod
     def simplify_or(obje: BoolOr) -> IObject2D:
-        if not isinstance(obje, BoolOr):
+        if type(obje) is not BoolOr:
             raise TypeError
         return obje
 
@@ -544,7 +542,9 @@ class Simplify:
         if not isinstance(obje, IObject2D):
             raise TypeError
         obje = Simplify.expand(obje)
-        if not isinstance(obje, (BoolNot, BoolOr, BoolAnd)):
+        if isinstance(obje, (Point2D, ICurve, IShape, Empty, Whole)):
+            return obje
+        if type(obje) not in (BoolNot, BoolOr, BoolAnd):
             return obje
         if isinstance(obje, BoolNot):
             return Simplify.simplify_not(obje)
@@ -553,30 +553,30 @@ class Simplify:
         if len(subobjs) == 1:
             return Simplify.simplify(subobjs[0])
         if Simplify.has_inverse(subobjs):
-            if isinstance(obje, BoolOr):
+            if type(obje) is BoolOr:
                 return Whole()
-            if isinstance(obje, BoolAnd):
+            if type(obje) is BoolAnd:
                 return Empty()
             raise NotImplementedError("Not expected get here")
         obje = obje.__class__(subobjs)
-        if isinstance(obje, BoolOr):
+        if type(obje) is BoolOr:
             obje = Simplify.treat_contains_or(obje)
-        elif isinstance(obje, BoolAnd):
+        elif type(obje) is BoolAnd:
             obje = Simplify.treat_contains_and(obje)
             obje = Simplify.treat_points(obje)
-        if not isinstance(obje, (BoolOr, BoolAnd)):
+        if type(obje) not in (BoolOr, BoolAnd):
             return obje
         shapes = tuple(sub for sub in obje if isinstance(sub, IShape))
         if len(shapes) > 1:
             others = [sub for sub in obje if not isinstance(sub, IShape)]
-            if isinstance(obje, BoolOr):
+            if type(obje) is BoolOr:
                 shape = unite_shapes(*shapes)
-            elif isinstance(obje, BoolAnd):
+            elif type(obje) is BoolAnd:
                 shape = intersect_shapes(*shapes)
             others.append(shape)
-            if isinstance(obje, BoolAnd):
+            if type(obje) is BoolAnd:
                 obje = BooleanOperate.intersect(*others)
-            elif isinstance(obje, BoolOr):
+            elif type(obje) is BoolOr:
                 obje = BooleanOperate.union(*others)
             return Simplify.simplify(obje)
         return obje

@@ -11,7 +11,7 @@ from __future__ import annotations
 
 from typing import Iterable, Union
 
-from ..boolean import BoolOr
+from ..boolean import BoolAnd, BoolOr
 from ..core import IObject2D, IShape, Scalar
 from ..curve.abc import IJordanCurve
 from ..point import GeneralPoint
@@ -96,7 +96,7 @@ class SimpleShape(IShape):
         return self.jordan.winding(point)
 
 
-class ConnectedShape(IShape):
+class ConnectedShape(IShape, BoolAnd):
 
     """
     ConnectedShape Class
@@ -110,14 +110,11 @@ class ConnectedShape(IShape):
         for subshape in subshapes:
             if not isinstance(subshape, SimpleShape):
                 raise TypeError
-        self.__subshapes = subshapes
+        super().__init__(subshapes)
 
     def __str__(self) -> str:
         msg = f"Connected shape total area {self.area}"
         return msg
-
-    def __repr__(self) -> str:
-        return str(self)
 
     def __eq__(self, other: IObject2D) -> bool:
         assert isinstance(other, IObject2D)
@@ -129,9 +126,6 @@ class ConnectedShape(IShape):
 
     def __neg__(self) -> DisjointShape:
         return DisjointShape(~simple for simple in self)
-
-    def __iter__(self):
-        yield from self.__subshapes
 
     @property
     def area(self) -> Scalar:
@@ -157,11 +151,8 @@ class ConnectedShape(IShape):
                 return wind
         return 1
 
-    def __contains__(self, other):
-        return all(other in sub for sub in self)
 
-
-class DisjointShape(IShape):
+class DisjointShape(IShape, BoolOr):
     """
     DisjointShape Class
 
@@ -176,7 +167,7 @@ class DisjointShape(IShape):
         for subshape in subshapes:
             if not isinstance(subshape, (SimpleShape, ConnectedShape)):
                 raise TypeError
-        self.__subshapes = subshapes
+        super().__init__(subshapes)
 
     @property
     def area(self) -> Scalar:
@@ -206,15 +197,6 @@ class DisjointShape(IShape):
         msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self)} subshapes"
         return msg
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def __iter__(self):
-        yield from self.__subshapes
-
-    def __len__(self):
-        return len(self.__subshapes)
 
     def winding(self, point: GeneralPoint) -> Scalar:
         """
