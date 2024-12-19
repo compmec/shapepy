@@ -6,13 +6,11 @@ This file contains functions to create primitive shapes such as:
 
 """
 
-import math
 from fractions import Fraction
 from typing import Tuple
 
-import numpy as np
-
 from .analytic.trigonometric import Trignomial
+from .analytic.utils import ucos, usin
 from .core import Scalar
 from .curve.piecewise import JordanPiecewise
 from .curve.polygon import JordanPolygon
@@ -77,10 +75,11 @@ class Primitive:
                 (0 * radius, -radius),
             ]
         else:
-            vertices = np.empty((nsides, 2), dtype="float64")
-            theta = np.linspace(0, math.tau, nsides, endpoint=False)
-            vertices[:, 0] = radius * np.cos(theta)
-            vertices[:, 1] = radius * np.sin(theta)
+            uangles = tuple(Fraction(i, nsides) for i in range(nsides))
+            vertices = (
+                (radius * ucos(uangle), radius * usin(uangle))
+                for uangle in uangles
+            )
         simple = Primitive.polygon(vertices)
         return simple.move(center)
 
