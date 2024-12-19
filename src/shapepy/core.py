@@ -6,7 +6,6 @@ from __future__ import annotations
 
 import math
 from abc import ABC, abstractmethod
-from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
 Scalar = Union[int, float]
@@ -315,25 +314,6 @@ class Whole(IBoolean2D):
 
     def rotate(self, uangle, degrees=False) -> Whole:
         return self
-
-
-class ICurve(IBoolean2D):
-    """
-    This is an abstract class, it serves as interface to create a curve
-    """
-
-    @property
-    def ndim(self) -> int:
-        return 1
-
-    @property
-    @abstractmethod
-    def lenght(self) -> Scalar:
-        """
-        Gives the lenght of the curve.
-        It's always positive
-        """
-        raise NotImplementedError
 
 
 class IShape(IBoolean2D):

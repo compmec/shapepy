@@ -27,8 +27,8 @@ from __future__ import annotations
 from typing import Iterable, Tuple, Union
 
 from ..boolean import BoolOr
-from ..core import Empty, IBoolean2D, ICurve, IShape, Parameter, Whole
-from ..curve.abc import IJordanCurve
+from ..core import Empty, IBoolean2D, IShape, Parameter, Whole
+from ..curve.abc import ICurve, IJordanCurve
 from ..curve.concatenate import concatenate, transform_to_jordan
 from ..curve.intersect import curve_and_curve
 from ..point import Point2D

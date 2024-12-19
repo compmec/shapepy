@@ -7,8 +7,8 @@ from ...analytic.utils import uarctan2
 from ...core import Math
 from ...point import GeneralPoint, Point2D, treat_scalar
 from ..abc import (
-    BaseCurve,
     IClosedCurve,
+    ICurve,
     IOpenCurve,
     IParameterCurve,
     Parameter,
@@ -33,7 +33,7 @@ def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
     return tuple(new_vertices)
 
 
-class PolygonCurve(BaseCurve):
+class PolygonCurve(ICurve):
     def __init__(self, vertices: Iterable[GeneralPoint]):
         self.__vertices = tuple(clean_open_curve(vertices))
 
@@ -121,7 +121,7 @@ class PolygonCurve(BaseCurve):
         )
 
 
-class ParamPolygonCurve(IParameterCurve, PolygonCurve):
+class ParamPolygonCurve(PolygonCurve, IParameterCurve):
     @property
     def knots(self) -> Tuple[Parameter, ...]:
         return tuple(range(len(self.vectors) + 1))

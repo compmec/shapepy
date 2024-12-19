@@ -1,5 +1,10 @@
-from ..core import ICurve
-from .abc import IClosedCurve, IJordanCurve, IOpenCurve, IParameterCurve
+from .abc import (
+    IClosedCurve,
+    ICurve,
+    IJordanCurve,
+    IOpenCurve,
+    IParameterCurve,
+)
 from .polygon import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
 
 

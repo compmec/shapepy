@@ -12,8 +12,8 @@ from __future__ import annotations
 from typing import Iterable, Union
 
 from ..boolean import BoolAnd, BoolOr
-from ..core import Empty, ICurve, IObject2D, IShape, Scalar
-from ..curve.abc import IJordanCurve
+from ..core import Empty, IObject2D, IShape, Scalar
+from ..curve.abc import ICurve, IJordanCurve
 from ..point import GeneralPoint, Point2D
 
 

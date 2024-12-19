@@ -1,15 +1,8 @@
 from typing import Any, Iterable, List, Tuple
 
 from .boolean import BoolAnd, BoolNot, BoolOr
-from .core import (
-    Configuration,
-    Empty,
-    IBoolean2D,
-    ICurve,
-    IObject2D,
-    IShape,
-    Whole,
-)
+from .core import Configuration, Empty, IBoolean2D, IObject2D, IShape, Whole
+from .curve.abc import ICurve
 from .point import Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 from .shape.boolean import (

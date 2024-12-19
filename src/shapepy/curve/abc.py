@@ -3,26 +3,34 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Iterable, Tuple
 
-from ..core import ICurve, Parameter, Scalar
+from ..core import IBoolean2D, Parameter, Scalar
 from ..point import GeneralPoint, Point2D
 
 
-class BaseCurve(ICurve):
+class ICurve(IBoolean2D):
     """
     This is an abstract class, it serves as interface to create a curve
     """
 
     @property
+    def ndim(self) -> int:
+        return 1
+
+    @property
     @abstractmethod
-    def vertices(self) -> Iterable[Point2D]:
+    def lenght(self) -> Scalar:
+        """
+        Gives the lenght of the curve.
+        It's always positive
+        """
         raise NotImplementedError
 
 
-class IOpenCurve(BaseCurve):
+class IOpenCurve(ICurve):
     pass
 
 
-class IClosedCurve(BaseCurve):
+class IClosedCurve(ICurve):
     @property
     @abstractmethod
     def area(self) -> Scalar:
@@ -33,7 +41,7 @@ class IClosedCurve(BaseCurve):
         raise NotImplementedError
 
 
-class IParameterCurve(BaseCurve):
+class IParameterCurve(ICurve):
     @abstractmethod
     def knots(self) -> Tuple[Parameter, ...]:
         raise NotImplementedError
@@ -48,6 +56,11 @@ class IParameterCurve(BaseCurve):
 
     @abstractmethod
     def projection(self, point: GeneralPoint) -> Iterable[Parameter]:
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def vertices(self) -> Iterable[Point2D]:
         raise NotImplementedError
 
     def __call__(self, node: Parameter) -> Point2D:

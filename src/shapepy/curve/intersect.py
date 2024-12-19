@@ -1,6 +1,6 @@
 from ..boolean import BoolOr
-from ..core import Empty, IBoolean2D, ICurve
-from .abc import IClosedCurve, IJordanCurve
+from ..core import Empty, IBoolean2D
+from .abc import IClosedCurve, ICurve, IJordanCurve
 from .polygon import PolygonClosedCurve, PolygonOpenCurve
 
 
