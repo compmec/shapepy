@@ -32,7 +32,6 @@ from ..curve.abc import IJordanCurve
 from ..curve.concatenate import concatenate, transform_to_jordan
 from ..curve.intersect import curve_and_curve
 from ..point import Point2D
-from ..utils import sorter
 from .simple import ConnectedShape, DisjointShape, SimpleShape
 
 
@@ -211,8 +210,11 @@ def identify_shape(
     for simple in simples:
         if not isinstance(simple, SimpleShape):
             raise TypeError(f"Received {type(simple)}")
-    areas = tuple(simple.area for simple in simples)
-    simples = [simples[i] for i in sorter(areas)]
+
+    def sorter(simple):
+        return simple.area
+
+    simples = sorted(simples, key=sorter)
     disshapes = []
     while simples:
         connsimples = [simples.pop(len(simples) - 1)]
