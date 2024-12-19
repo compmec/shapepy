@@ -21,6 +21,7 @@ from typing import Iterable, Optional, Tuple, Union
 
 from ..core import Configuration, IAnalytic, Parameter, Scalar
 from .base import BaseAnalytic
+from .utils import usincos
 
 
 class Trignomial(BaseAnalytic):
@@ -48,110 +49,6 @@ class Trignomial(BaseAnalytic):
     1 + 2 * sin(x) - 3*sin(2*x)
 
     """
-
-    @staticmethod
-    def sin(unit_angle: Scalar) -> Scalar:
-        """
-        Computes the sinus of given angle.
-        The angle mesure is unitary, meaning
-
-            sin(x) = sin(1+x) for all x
-
-        Parameters
-        ----------
-        unit_angle: Scalar
-            Given angle to compute sinus
-
-        Example
-        -------
-        >>> Trignomial.sin(0)
-        0
-        >>> Trignomial.sin(0.25)
-        1
-        >>> Trignomial.sin(0.5)
-        0
-        >>> Trignomial.sin(0.75)
-        -1
-        >>> Trignomial.sin(1)
-        0
-        >>> Trignomial.sin(0.125)
-        0.7071067811865
-        """
-        unit_angle %= 1
-        quad, subangle = divmod(4 * unit_angle, 1)
-        if not subangle:
-            if not quad % 2:
-                return 0
-            return 1 - 2 * (quad == 3)
-        return Configuration.SIN(unit_angle * Configuration.TAU)
-
-    @staticmethod
-    def cos(unit_angle: Scalar) -> Scalar:
-        """
-        Computes the cossinus of given angle.
-        The angle mesure is unitary, meaning
-
-            cos(x) = cos(1+x) for all x
-
-        Parameters
-        ----------
-        unit_angle: Scalar
-            Given angle to compute cossinus
-
-        Example
-        -------
-        >>> Trignomial.cos(0)
-        1
-        >>> Trignomial.cos(0.25)
-        0
-        >>> Trignomial.cos(0.5)
-        -1
-        >>> Trignomial.cos(0.75)
-        0
-        >>> Trignomial.cos(1)
-        1
-        >>> Trignomial.cos(0.125)
-        0.7071067811865
-        """
-        unit_angle %= 1
-        quad, subangle = divmod(4 * unit_angle, 1)
-        if not subangle:
-            if quad % 2:
-                return 0
-            return 1 - 2 * (quad == 2)
-        return Configuration.COS(unit_angle * Configuration.TAU)
-
-    @staticmethod
-    def sincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
-        """
-        Computes the sinus and cossinus of given angle at same time.
-        The angle mesure is unitary, meaning
-
-            sin(x) = cos(1+x) for all x
-            cos(x) = cos(1+x) for all x
-
-        Parameters
-        ----------
-        unit_angle: Scalar
-            Given angle to compute sin and cos
-
-        Example
-        -------
-        >>> Trignomial.sincos(0)
-        (1, 0)
-        >>> Trignomial.sincos(0.25)
-        (0, 1)
-        >>> Trignomial.sincos(0.5)
-        (-1, 0)
-        >>> Trignomial.sincos(0.75)
-        (0, -1)
-        >>> Trignomial.sincos(1)
-        (1, 0)
-        >>> Trignomial.sincos(0.125)
-        (0.7071067811865, 0.7071067811865)
-        """
-        unit_angle %= 1
-        return Trignomial.sin(unit_angle), Trignomial.cos(unit_angle)
 
     def __init__(self, values: Iterable[Scalar], frequency: Scalar = 1):
         values = tuple(values)
@@ -332,7 +229,7 @@ class Trignomial(BaseAnalytic):
             return self.derivate(derivate).eval(node, 0)
         results = self[0]
         for pval in range(1, self.pmax + 1):
-            sin, cos = Trignomial.sincos(node)
+            sin, cos = usincos(node)
             results += self[2 * pval - 1] * sin + self[2 * pval] * cos
         return results
 
@@ -480,7 +377,7 @@ class Trignomial(BaseAnalytic):
         newcoefs = [0] * (1 + 2 * self.pmax)
         newcoefs[0] += self[0]
         for pval in range(1, self.pmax + 1):
-            sinpwa, cospwa = self.sincos(pval * amount)
+            sinpwa, cospwa = usincos(pval * amount)
             cofs, cofc = self[2 * pval - 1], self[2 * pval]
             newcoefs[2 * pval - 1] = cofs * cospwa + cofc * sinpwa
             newcoefs[2 * pval] = -cofs * sinpwa + cofc * cospwa

@@ -2,13 +2,12 @@
 This file contains tests functions to test the module polygon.py
 """
 
-import math
-
 import numpy as np
 import pytest
 import sympy as sp
 
 from shapepy.analytic.trigonometric import Trignomial
+from shapepy.analytic.utils import usincos
 from shapepy.core import Configuration
 
 
@@ -54,7 +53,7 @@ def test_evaluate_sincos():
     nodes = np.linspace(0, 1, 129)
     for node in nodes:
         angle = node * 2 * np.pi
-        sin, cos = Trignomial.sincos(node)
+        sin, cos = usincos(node)
         assert abs(sin - np.sin(angle)) < 1e-9
         assert abs(cos - np.cos(angle)) < 1e-9
 

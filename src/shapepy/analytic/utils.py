@@ -4,7 +4,9 @@ This file contains some useful functions used to compute analytic functions
 
 import math
 from functools import lru_cache
-from typing import Iterable
+from typing import Iterable, Tuple
+
+from ..core import Configuration, Scalar
 
 
 @lru_cache
@@ -160,3 +162,123 @@ def divisors(number: int) -> Iterable[int]:
             divs.add(number // factor)
             divs |= set(divisors(number // factor))
     return tuple(sorted(divs))
+
+
+def rsin(rad_angle: Scalar) -> Scalar:
+    """
+    Computes the sinus of given angle.
+    The angule mesure is in radians
+    """
+    return Configuration.SIN(rad_angle)
+
+
+def rcos(rad_angle: Scalar) -> Scalar:
+    """
+    Computes the cossinus of given angle.
+    The angule mesure is in radians
+    """
+    return Configuration.COS(rad_angle)
+
+
+def usin(unit_angle: Scalar) -> Scalar:
+    """
+    Computes the sinus of given angle.
+    The angle mesure is unitary, meaning
+
+        sin(x) = sin(1+x) for all x
+
+    Parameters
+    ----------
+    unit_angle: Scalar
+        Given angle to compute sinus
+
+    Example
+    -------
+    >>> Trignomial.sin(0)
+    0
+    >>> Trignomial.sin(0.25)
+    1
+    >>> Trignomial.sin(0.5)
+    0
+    >>> Trignomial.sin(0.75)
+    -1
+    >>> Trignomial.sin(1)
+    0
+    >>> Trignomial.sin(0.125)
+    0.7071067811865
+    """
+    unit_angle %= 1
+    quad, subangle = divmod(4 * unit_angle, 1)
+    if not subangle:
+        if not quad % 2:
+            return 0
+        return 1 - 2 * (quad == 3)
+    return rsin(unit_angle * Configuration.TAU)
+
+
+def ucos(unit_angle: Scalar) -> Scalar:
+    """
+    Computes the cossinus of given angle.
+    The angle mesure is unitary, meaning
+
+        cos(x) = cos(1+x) for all x
+
+    Parameters
+    ----------
+    unit_angle: Scalar
+        Given angle to compute cossinus
+
+    Example
+    -------
+    >>> Trignomial.cos(0)
+    1
+    >>> Trignomial.cos(0.25)
+    0
+    >>> Trignomial.cos(0.5)
+    -1
+    >>> Trignomial.cos(0.75)
+    0
+    >>> Trignomial.cos(1)
+    1
+    >>> Trignomial.cos(0.125)
+    0.7071067811865
+    """
+    unit_angle %= 1
+    quad, subangle = divmod(4 * unit_angle, 1)
+    if not subangle:
+        if quad % 2:
+            return 0
+        return 1 - 2 * (quad == 2)
+    return rcos(unit_angle * Configuration.TAU)
+
+
+def usincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
+    """
+    Computes the sinus and cossinus of given angle at same time.
+    The angle mesure is unitary, meaning
+
+        sin(x) = cos(1+x) for all x
+        cos(x) = cos(1+x) for all x
+
+    Parameters
+    ----------
+    unit_angle: Scalar
+        Given angle to compute sin and cos
+
+    Example
+    -------
+    >>> Trignomial.sincos(0)
+    (1, 0)
+    >>> Trignomial.sincos(0.25)
+    (0, 1)
+    >>> Trignomial.sincos(0.5)
+    (-1, 0)
+    >>> Trignomial.sincos(0.75)
+    (0, -1)
+    >>> Trignomial.sincos(1)
+    (1, 0)
+    >>> Trignomial.sincos(0.125)
+    (0.7071067811865, 0.7071067811865)
+    """
+    unit_angle %= 1
+    return usin(unit_angle), ucos(unit_angle)

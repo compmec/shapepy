@@ -1,6 +1,6 @@
 from typing import Iterable, List, Tuple
 
-from .analytic.trigonometric import Trignomial
+from .analytic.utils import usincos
 from .boolean import BoolAnd, BoolNot, BoolOr
 from .core import (
     Configuration,
@@ -34,8 +34,8 @@ class Transformation:
         return Point2D(xscale * obje[0], yscale * obje[1])
 
     @staticmethod
-    def rotate_point(obje: Point2D, angle: Scalar) -> Point2D:
-        sin, cos = Trignomial.sincos(angle)
+    def rotate_point(obje: Point2D, uangle: Scalar) -> Point2D:
+        sin, cos = usincos(uangle)
         oldx, oldy = obje[0], obje[1]
         newx = oldx * cos - oldy * sin
         newy = oldx * sin + oldy * cos
@@ -72,14 +72,14 @@ class Transformation:
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
-    def rotate_curve(obje: ICurve, angle: Scalar) -> ICurve:
+    def rotate_curve(obje: ICurve, uangle: Scalar) -> ICurve:
         if not isinstance(obje, ICurve):
             raise TypeError
         if isinstance(
             obje, (JordanPolygon, PolygonOpenCurve, PolygonClosedCurve)
         ):
             new_vertices = (
-                Transformation.rotate_point(vertex, angle)
+                Transformation.rotate_point(vertex, uangle)
                 for vertex in obje.vertices
             )
             return obje.__class__(tuple(new_vertices))
@@ -111,14 +111,14 @@ class Transformation:
         return obje.__class__(newsubshapes)
 
     @staticmethod
-    def rotate_shape(obje: IShape, angle: Scalar) -> IShape:
+    def rotate_shape(obje: IShape, uangle: Scalar) -> IShape:
         if not isinstance(obje, IShape):
             raise TypeError(f"Received type {type(obje)}")
         if isinstance(obje, SimpleShape):
-            newjordan = Transformation.rotate_curve(obje.jordan, angle)
+            newjordan = Transformation.rotate_curve(obje.jordan, uangle)
             return SimpleShape(newjordan, obje.boundary)
         newsubshapes = tuple(
-            Transformation.rotate_shape(subshape, angle) for subshape in obje
+            Transformation.rotate_shape(subshape, uangle) for subshape in obje
         )
         return obje.__class__(newsubshapes)
 
