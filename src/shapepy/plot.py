@@ -104,7 +104,7 @@ class ShapePloter:
         patch = PathPatch(path, edgecolor=color, facecolor="none", lw=2)
         self.gca().add_patch(patch)
         vertices = tuple(map(tuple, jordan.vertices))
-        xvals, yvals = np.array(vertices, dtype="float64").T
+        xvals, yvals = np.transpose(vertices).astype("float64")
         self.gca().scatter(xvals, yvals, color=color, marker=kwargs["marker"])
 
     def __plot_simple_shape(self, shape: SimpleShape, **kwargs):

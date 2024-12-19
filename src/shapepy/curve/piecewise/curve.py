@@ -2,8 +2,6 @@ from __future__ import annotations
 
 from typing import Iterable, Tuple
 
-import numpy as np
-
 from ...analytic.utils import unit_angle
 from ...core import IAnalytic, Math, Scalar
 from ...point import GeneralPoint, Point2D
@@ -180,7 +178,7 @@ def compute_lenght(curve: PiecewiseCurve, tolerance: Scalar = 1e-9) -> Scalar:
         nodes = (1 / 4, 1 / 2, 3 / 4)
         weigs = (2 / 3, -1 / 3, 2 / 3)
         dsvas = map(Math.sqrt, map(ds2fun.eval, nodes))
-        return (tb - ta) * np.inner(weigs, tuple(dsvas))
+        return (tb - ta) * sum(w * ds for w, ds in zip(weigs, dsvas))
 
     def adapt_integral(
         ta: Parameter, tb: Parameter, tolerance: Scalar
