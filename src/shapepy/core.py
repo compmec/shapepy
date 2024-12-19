@@ -141,8 +141,11 @@ class IBoolean2D(IObject2D):
     booloperate = None
 
     def __contains__(self, other: IObject2D) -> IBoolean2D:
-        if isinstance(other, (Empty, Whole)):
-            return isinstance(other, Empty)
+        if isinstance(other, IObject2D):
+            if other.ndim > self.ndim:
+                return False
+            if isinstance(other, Empty):
+                return True
         return self.booloperate.contains(self, other)
 
     def __invert__(self) -> IBoolean2D:

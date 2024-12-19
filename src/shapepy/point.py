@@ -8,7 +8,7 @@ from typing import Tuple, Union
 
 from .analytic.utils import usincos
 from .boolean import BoolNot
-from .core import IBoolean2D, Math, Scalar
+from .core import Empty, IBoolean2D, Math, Scalar
 
 
 def treat_scalar(number: Scalar) -> Scalar:
@@ -36,11 +36,6 @@ class Point2D(IBoolean2D):
     @property
     def ndim(self) -> int:
         return 0
-
-    def __new__(cls, *point: Union[Point2D, Tuple[Scalar, Scalar]]):
-        if isinstance(point[0], cls):
-            return point
-        return super().__new__(cls)
 
     def __init__(self, *point: Union[Point2D, Tuple[Scalar, Scalar]]):
         if len(point) == 2:
@@ -125,16 +120,12 @@ class Point2D(IBoolean2D):
         """
         Inner product between two points
         """
-        if not isinstance(other, Point2D):
-            other = self.__class__(other)
         return self[0] * other[0] + self[1] * other[1]
 
     def cross(self, other: Union[Point2D, Tuple[Scalar, Scalar]]) -> Scalar:
         """
         Cross product between two points
         """
-        if not isinstance(other, Point2D):
-            other = self.__class__(other)
         return self[0] * other[1] - self[1] * other[0]
 
     def norm2(self) -> Scalar:
@@ -149,13 +140,6 @@ class Point2D(IBoolean2D):
         The euclidean distance to origin
         """
         return Math.sqrt(self.inner(self))
-
-    def __copy__(self) -> Point2D:
-        return self.__deepcopy__(None)
-
-    def __deepcopy__(self, memo) -> Point2D:
-        """Creates a deepcopy of the object"""
-        return self.__class__(self.__x, self.__y)
 
     def __iter__(self):
         yield self.__x
@@ -192,6 +176,14 @@ class Point2D(IBoolean2D):
 
     def __invert__(self) -> BoolNot:
         return BoolNot(self)
+
+    def __contains__(self, other: IBoolean2D):
+        if isinstance(other, Point2D):
+            return other == self
+        return super().__contains__(other)
+
+    def __and__(self, other: IBoolean2D) -> IBoolean2D:
+        return self if (self in other) else Empty()
 
 
 GeneralPoint = Union[Point2D, Tuple[Scalar, Scalar]]

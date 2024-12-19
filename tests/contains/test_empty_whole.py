@@ -7,6 +7,7 @@ import pytest
 
 from shapepy.core import Empty, Whole
 from shapepy.curve.polygon import JordanPolygon
+from shapepy.point import Point2D
 from shapepy.primitive import Primitive
 from shapepy.shape import ConnectedShape, DisjointShape
 
@@ -59,8 +60,11 @@ def test_point():
     empty = Empty()
     whole = Whole()
     for point in [(0, 0), (1, 1), (0, -1)]:
+        point = Point2D(point)
         assert point not in empty
         assert point in whole
+        assert empty in point
+        assert whole not in point
 
 
 @pytest.mark.order(20)

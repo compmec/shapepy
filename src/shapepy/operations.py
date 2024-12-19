@@ -154,8 +154,7 @@ class BooleanOperate:
             raise NotImplementedError("Not expected get here")
         if not isinstance(other, IBoolean2D):
             other = Point2D(other)
-        if other.ndim > obje.ndim:
-            return False
+            return other in obje
         if isinstance(obje, ICurve):
             if isinstance(other, Point2D):
                 return Contains.point_in_curve(obje, other)
