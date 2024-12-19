@@ -35,14 +35,24 @@ class SimpleShape(IShape):
 
     @property
     def jordan(self) -> IJordanCurve:
+        """
+        The jordan's curve that defines the Simple Shape
+        """
         return self.__jordan
 
     @property
     def area(self) -> Scalar:
+        """
+        The area defined by the jordan's curve.
+        It's negative if jordans is clockwise
+        """
         return self.jordan.area
 
     @property
     def boundary(self) -> bool:
+        """
+        Flag that tells if shape contains the boundary or not
+        """
         return self.__boundary
 
     def __str__(self) -> str:
@@ -56,15 +66,6 @@ class SimpleShape(IShape):
         return msg
 
     def __eq__(self, other: object) -> bool:
-        """Compare two shapes
-
-        Parameters
-        ----------
-        other: IShape
-            The shape to compare
-
-        :raises ValueError: If ``other`` is not a IShape instance
-        """
         if not isinstance(other, IObject2D):
             raise ValueError
         if not isinstance(other, SimpleShape):
@@ -79,10 +80,24 @@ class SimpleShape(IShape):
         return self.__class__(~self.jordan, not self.boundary)
 
     def winding(self, point: GeneralPoint) -> Scalar:
+        """
+        Computes the winding number relative to the given point
+
+        Parameters
+        ----------
+        point: Point2D
+            The point to check its position
+        return: Scalar
+            Number in the interval [0, 1]
+            0 means the point is outside the simple shape
+            1 means the point is inside the simple shape
+            other means it's on the boundary
+        """
         return self.jordan.winding(point)
 
 
 class ConnectedShape(IShape):
+
     """
     ConnectedShape Class
 
@@ -123,6 +138,19 @@ class ConnectedShape(IShape):
         return sum(subshape.area for subshape in self)
 
     def winding(self, point: GeneralPoint) -> Scalar:
+        """
+        Computes the winding number relative to the given point
+
+        Parameters
+        ----------
+        point: Point2D
+            The point to check its position
+        return: Scalar
+            Number in the interval [0, 1]
+            0 means the point is outside the simple shape
+            1 means the point is inside the simple shape
+            other means it's on the boundary
+        """
         for subshape in self:
             wind = subshape.winding(point)
             if wind != 1:
@@ -162,7 +190,7 @@ class DisjointShape(IShape):
         self_subshapes = list(self)
         othe_subshapes = list(other)
         # Compare if a curve is inside another
-        while len(self_subshapes) and len(othe_subshapes):
+        while len(self_subshapes) > 0 and len(othe_subshapes) > 0:
             for j, osbshape in enumerate(othe_subshapes):
                 if osbshape.area != self_subshapes[0].area:
                     continue
@@ -189,6 +217,19 @@ class DisjointShape(IShape):
         return len(self.__subshapes)
 
     def winding(self, point: GeneralPoint) -> Scalar:
+        """
+        Computes the winding number relative to the given point
+
+        Parameters
+        ----------
+        point: Point2D
+            The point to check its position
+        return: Scalar
+            Number in the interval [0, 1]
+            0 means the point is outside the simple shape
+            1 means the point is inside the simple shape
+            other means it's on the boundary
+        """
         return sum(sub.winding(point) for sub in self)
 
     def __contains__(self, other):
