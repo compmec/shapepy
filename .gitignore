@@ -125,3 +125,4 @@ dmypy.json
 
 docs/source/sphinx_gallery_examples/index.rst
 console.py
+.vscode/*
