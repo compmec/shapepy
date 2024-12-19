@@ -2,7 +2,16 @@ from typing import Iterable, List, Tuple
 
 from .analytic.trigonometric import Trignomial
 from .boolean import BoolAnd, BoolNot, BoolOr
-from .core import Empty, IBoolean2D, ICurve, IObject2D, IShape, Scalar, Whole
+from .core import (
+    Configuration,
+    Empty,
+    IBoolean2D,
+    ICurve,
+    IObject2D,
+    IShape,
+    Scalar,
+    Whole,
+)
 from .curve import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
 from .point import GeneralPoint, Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
@@ -13,11 +22,6 @@ from .shape.boolean import (
     unite_shapes,
 )
 from .utils import permutations, sorter
-
-
-class Configuration:
-    autoexpand = True
-    autosimplify = True
 
 
 class Transformation:
@@ -274,9 +278,9 @@ class BooleanOperate:
         if isinstance(obje, (Empty, Whole, BoolNot)):
             raise NotImplementedError("Not expected get here")
         retorno = BoolNot(obje)
-        if Configuration.autoexpand:
+        if Configuration.AUTOEXPAND:
             retorno = Simplify.expand(retorno)
-        if Configuration.autosimplify:
+        if Configuration.AUTOSIMPLIFY:
             retorno = Simplify.simplify(retorno)
         return retorno
 
@@ -296,9 +300,9 @@ class BooleanOperate:
         ndims = (obj.ndim for obj in objects)
         objects = tuple(objects[i] for i in sorter(ndims))
         retorno = BoolOr(objects)
-        if Configuration.autoexpand:
+        if Configuration.AUTOEXPAND:
             retorno = Simplify.expand(retorno)
-        if Configuration.autosimplify:
+        if Configuration.AUTOSIMPLIFY:
             retorno = Simplify.simplify(retorno)
         return retorno
 
@@ -318,9 +322,9 @@ class BooleanOperate:
         ndims = (obj.ndim for obj in objects)
         objects = tuple(objects[i] for i in sorter(ndims))
         retorno = BoolAnd(objects)
-        if Configuration.autoexpand:
+        if Configuration.AUTOEXPAND:
             retorno = Simplify.expand(retorno)
-        if Configuration.autosimplify:
+        if Configuration.AUTOSIMPLIFY:
             retorno = Simplify.simplify(retorno)
         return retorno
 

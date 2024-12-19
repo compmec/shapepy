@@ -16,11 +16,10 @@ Example
 
 from __future__ import annotations
 
-import math
 from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
-from ..core import IAnalytic, Parameter, Scalar
+from ..core import Configuration, IAnalytic, Parameter, Scalar
 from .base import BaseAnalytic
 
 
@@ -49,10 +48,6 @@ class Trignomial(BaseAnalytic):
     1 + 2 * sin(x) - 3*sin(2*x)
 
     """
-
-    TAU = math.tau
-    SIN = math.sin
-    COS = math.cos
 
     @staticmethod
     def sin(unit_angle: Scalar) -> Scalar:
@@ -88,7 +83,7 @@ class Trignomial(BaseAnalytic):
             if not quad % 2:
                 return 0
             return 1 - 2 * (quad == 3)
-        return Trignomial.SIN(unit_angle * Trignomial.TAU)
+        return Configuration.SIN(unit_angle * Configuration.TAU)
 
     @staticmethod
     def cos(unit_angle: Scalar) -> Scalar:
@@ -124,7 +119,7 @@ class Trignomial(BaseAnalytic):
             if quad % 2:
                 return 0
             return 1 - 2 * (quad == 2)
-        return Trignomial.COS(unit_angle * Trignomial.TAU)
+        return Configuration.COS(unit_angle * Configuration.TAU)
 
     @staticmethod
     def sincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
@@ -218,7 +213,7 @@ class Trignomial(BaseAnalytic):
         >>> trig.omega
         18.8495559
         """
-        return self.TAU * self.frequency
+        return Configuration.TAU * self.frequency
 
     def __neg__(self) -> Trignomial:
         return self.__class__(tuple(-coef for coef in self), self.frequency)

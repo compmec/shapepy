@@ -4,12 +4,31 @@ Core file, with the basics classes and interfaces used in the package
 
 from __future__ import annotations
 
+import math
 from abc import ABC, abstractmethod
 from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
 Scalar = Union[int, float]
 Parameter = Union[int, float]
+
+
+class Configuration:
+    """
+    Configuration class for the package
+    """
+
+    AUTOEXPAND = True
+    AUTOSIMPLIFY = True
+
+    # Trigonometric
+    TAU = math.tau
+    SIN = math.sin
+    COS = math.cos
+
+    # Hyperbolic
+    SINH = math.sinh
+    COSH = math.cosh
 
 
 class IObject2D(ABC):
