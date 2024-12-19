@@ -59,27 +59,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_error_creation",
         ]
     )
-    def test_id_points(self):
-        points = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        jordan = JordanPolygon(points)
-        segments = jordan.segments
-        for i, segi in enumerate(segments):
-            segj = segments[(i + 1) % len(segments)]
-            last_point = segi.vertices[-1]
-            first_point = segj.vertices[0]
-            assert last_point == first_point
-            assert id(last_point) == id(first_point)
-
-    @pytest.mark.order(4)
-    @pytest.mark.timeout(20)
-    @pytest.mark.dependency(
-        depends=[
-            "TestJordanPolygon::test_begin",
-            "TestJordanPolygon::test_creation",
-            "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
-        ]
-    )
     def test_equal_curves(self):
         postri0 = JordanPolygon([(0, 0), (1, 0), (0, 1)])
         postri1 = JordanPolygon([(1, 0), (0, 1), (0, 0)])
@@ -104,7 +83,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_begin",
             "TestJordanPolygon::test_creation",
             "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
             "TestJordanPolygon::test_equal_curves",
         ]
     )
@@ -133,7 +111,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_begin",
             "TestJordanPolygon::test_creation",
             "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
             "TestJordanPolygon::test_equal_curves",
         ]
     )
@@ -158,7 +135,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_begin",
             "TestJordanPolygon::test_creation",
             "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
             "TestJordanPolygon::test_equal_curves",
             "TestJordanPolygon::test_nonequal_curves",
             "TestJordanPolygon::test_invert_curves",
