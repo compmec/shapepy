@@ -6,10 +6,11 @@ This file defines basic boolean classes:
 
 These are result of boolean operation between other things
 """
+from __future__ import annotations
 
-from typing import Iterable
+from typing import Iterable, Tuple
 
-from .core import Empty, IBoolean2D, IObject2D, Whole
+from .core import Empty, IBoolean2D, IObject2D, Scalar, Whole
 
 
 class BoolNot(IBoolean2D):
@@ -43,6 +44,48 @@ class BoolNot(IBoolean2D):
 
     def __invert__(self) -> IObject2D:
         return self.obje
+
+    def move(self, vector: Tuple[Scalar, Scalar]) -> BoolOr:
+        """
+        Moves the object in the plane by the given vector
+
+        Parameters
+        ----------
+        vector: Point
+            The pair (x, y) that must be added to the coordinates
+        """
+        return self.__class__(self.obje.move(vector))
+
+    def scale(self, xscale: Scalar, yscale: Scalar) -> BoolOr:
+        """
+        Scales the object in the X and Y directions
+
+        Parameters
+        ----------
+        xscale: Scalar
+            The amount to be scaled in the X direction
+        yscale: Scalar
+            The amount to be scaled in the Y direction
+        """
+        return self.__class__(self.obje.scale(xscale, yscale))
+
+    def rotate(self, uangle: Scalar, degrees: bool = False) -> BoolOr:
+        """
+        Rotates the object around the origin.
+
+        The angle mesure is unitary:
+        * angle = 1 means 360 degrees rotation
+        * angle = 0.5 means 180 degrees rotation
+        * angle = 0.125 means 45 degrees rotation
+
+        Parameters
+        ----------
+        angle: Scalar
+            The unitary angle the be rotated.
+        degrees: bool, default = False
+            If the angle is mesure in degrees
+        """
+        return self.__class__(self.obje.rotate(uangle, degrees))
 
 
 class BoolOr(IBoolean2D):
@@ -95,6 +138,48 @@ class BoolOr(IBoolean2D):
 
     def __len__(self) -> int:
         return len(self.__objects)
+
+    def move(self, vector: Tuple[Scalar, Scalar]) -> BoolOr:
+        """
+        Moves the object in the plane by the given vector
+
+        Parameters
+        ----------
+        vector: Point
+            The pair (x, y) that must be added to the coordinates
+        """
+        return self.__class__(sub.move(vector) for sub in self)
+
+    def scale(self, xscale: Scalar, yscale: Scalar) -> BoolOr:
+        """
+        Scales the object in the X and Y directions
+
+        Parameters
+        ----------
+        xscale: Scalar
+            The amount to be scaled in the X direction
+        yscale: Scalar
+            The amount to be scaled in the Y direction
+        """
+        return self.__class__(sub.scale(xscale, yscale) for sub in self)
+
+    def rotate(self, uangle: Scalar, degrees: bool = False) -> BoolOr:
+        """
+        Rotates the object around the origin.
+
+        The angle mesure is unitary:
+        * angle = 1 means 360 degrees rotation
+        * angle = 0.5 means 180 degrees rotation
+        * angle = 0.125 means 45 degrees rotation
+
+        Parameters
+        ----------
+        angle: Scalar
+            The unitary angle the be rotated.
+        degrees: bool, default = False
+            If the angle is mesure in degrees
+        """
+        return self.__class__(sub.rotate(uangle, degrees) for sub in self)
 
 
 class BoolAnd(IBoolean2D):
@@ -152,3 +237,45 @@ class BoolAnd(IBoolean2D):
 
     def __contains__(self, other):
         return all(other in sub for sub in self)
+
+    def move(self, vector: Tuple[Scalar, Scalar]) -> BoolAnd:
+        """
+        Moves the object in the plane by the given vector
+
+        Parameters
+        ----------
+        vector: Point
+            The pair (x, y) that must be added to the coordinates
+        """
+        return self.__class__(sub.move(vector) for sub in self)
+
+    def scale(self, xscale: Scalar, yscale: Scalar) -> BoolOr:
+        """
+        Scales the object in the X and Y directions
+
+        Parameters
+        ----------
+        xscale: Scalar
+            The amount to be scaled in the X direction
+        yscale: Scalar
+            The amount to be scaled in the Y direction
+        """
+        return self.__class__(sub.scale(xscale, yscale) for sub in self)
+
+    def rotate(self, uangle: Scalar, degrees: bool = False) -> BoolOr:
+        """
+        Rotates the object around the origin.
+
+        The angle mesure is unitary:
+        * angle = 1 means 360 degrees rotation
+        * angle = 0.5 means 180 degrees rotation
+        * angle = 0.125 means 45 degrees rotation
+
+        Parameters
+        ----------
+        angle: Scalar
+            The unitary angle the be rotated.
+        degrees: bool, default = False
+            If the angle is mesure in degrees
+        """
+        return self.__class__(sub.rotate(uangle, degrees) for sub in self)
