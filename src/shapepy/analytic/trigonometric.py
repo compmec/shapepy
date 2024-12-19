@@ -518,7 +518,9 @@ class Trignomial(BaseAnalytic):
         return self.__class__(tuple(self), amount * self.frequency)
 
     def roots(
-        self, inflim: Optional[Parameter], suplim: Optional[Parameter]
+        self,
+        inflim: Optional[Parameter] = None,
+        suplim: Optional[Parameter] = None,
     ) -> Iterable[Parameter]:
         """
         Computes the roots of the trignomial that are

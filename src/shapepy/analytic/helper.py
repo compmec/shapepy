@@ -1,5 +1,6 @@
 """
-This file contains helper functions, used to check if two analytic functions are equal
+This file contains helper functions,
+used to check if two analytic functions are equal
 """
 from typing import Union
 
