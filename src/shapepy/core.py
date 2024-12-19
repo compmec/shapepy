@@ -156,18 +156,22 @@ class IBoolean2D(IObject2D):
 
     def __and__(self, other: IBoolean2D) -> IBoolean2D:
         if isinstance(other, (Empty, Whole)):
-            return other & self
+            return other.__rand__(self)
         return self.booloperate.intersect(self, other)
 
     def __or__(self, other: IBoolean2D) -> IBoolean2D:
         if isinstance(other, (Empty, Whole)):
-            return other | self
+            return other.__ror__(self)
         return self.booloperate.union(self, other)
 
     def __xor__(self, other: IBoolean2D) -> IBoolean2D:
+        if isinstance(other, (Empty, Whole)):
+            return other.__rxor__(self)
         return (self & (~other)) | (other & (~self))
 
     def __sub__(self, other: IBoolean2D) -> IBoolean2D:
+        if isinstance(other, (Empty, Whole)):
+            return other.__rsub__(self)
         return self & (~other)
 
     def __add__(self, other: IBoolean2D) -> IBoolean2D:
