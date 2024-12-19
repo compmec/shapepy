@@ -146,20 +146,12 @@ class Contains:
 class BooleanOperate:
     @staticmethod
     def contains(obje: IBoolean2D, other: IBoolean2D) -> bool:
-        if isinstance(other, (Empty, Whole)):
-            raise NotImplementedError("Not expected get here")
-        if isinstance(obje, (Empty, Whole)):
-            raise NotImplementedError("Not expected get here")
-        if isinstance(obje, (BoolAnd, ConnectedShape)):
-            raise NotImplementedError("Not expected get here")
         if not isinstance(other, IBoolean2D):
             other = Point2D(other)
             return other in obje
         if isinstance(obje, ICurve):
             if isinstance(other, Point2D):
                 return Contains.point_in_curve(obje, other)
-        if isinstance(obje, Point2D) and isinstance(other, Point2D):
-            return obje == other
         if isinstance(obje, BoolNot) and isinstance(obje.obje, Point2D):
             return obje.obje not in other
         raise NotImplementedError(f"Not expected: {type(obje)}, {type(other)}")
@@ -177,17 +169,12 @@ class BooleanOperate:
 
     @staticmethod
     def union(*objects: IBoolean2D) -> IBoolean2D:
-        objects = tuple(objects)
+        objects = (obj for obj in objects if not isinstance(obj, Empty))
+        objects = [obj if isinstance(obj, IBoolean2D) else Point2D(obj) for obj in objects]
         if any(isinstance(obj, Whole) for obj in objects):
             return Whole()
-        objects = list(obj for obj in objects if not isinstance(obj, Empty))
-        if len(objects) == 0:
-            return Empty()
         if len(objects) == 1:
             return objects[0]
-        for i, obj in enumerate(objects):
-            if not isinstance(obj, IObject2D):
-                raise TypeError
         ndims = (obj.ndim for obj in objects)
         objects = tuple(objects[i] for i in sorter(ndims))
         retorno = BoolOr(objects)
@@ -199,17 +186,12 @@ class BooleanOperate:
 
     @staticmethod
     def intersect(*objects: IBoolean2D) -> IBoolean2D:
-        objects = tuple(objects)
+        objects = (obj for obj in objects if not isinstance(obj, Whole))
+        objects = [obj if isinstance(obj, IBoolean2D) else Point2D(obj) for obj in objects]
         if any(isinstance(obj, Empty) for obj in objects):
             return Empty()
-        objects = tuple(obj for obj in objects if not isinstance(obj, Whole))
-        if len(objects) == 0:
-            return Whole()
         if len(objects) == 1:
             return objects[0]
-        for i, obj in enumerate(objects):
-            if not isinstance(obj, IObject2D):
-                raise TypeError
         ndims = (obj.ndim for obj in objects)
         objects = tuple(objects[i] for i in sorter(ndims))
         retorno = BoolAnd(objects)
@@ -337,7 +319,7 @@ class Simplify:
     @staticmethod
     def treat_contains_or(obje: IBoolean2D) -> IBoolean2D:
         if type(obje) is not BoolOr:
-            return obje
+            raise TypeError
         subobjs = tuple(obje)[::-1]
         filtered = set(range(len(subobjs)))
         for i, subi in enumerate(subobjs):
@@ -354,7 +336,7 @@ class Simplify:
     @staticmethod
     def treat_contains_and(obje: IBoolean2D) -> IBoolean2D:
         if type(obje) is not BoolAnd:
-            return obje
+            raise TypeError
         subobjs = tuple(obje)
         filtered = set(range(len(subobjs)))
         for i, subi in enumerate(subobjs):
@@ -367,19 +349,6 @@ class Simplify:
         if len(filtered) == 1:
             return subobjs[tuple(filtered)[0]]
         return BoolAnd(tuple(subobjs[i] for i in filtered))
-
-    @staticmethod
-    def treat_points(obje: IBoolean2D) -> IBoolean2D:
-        if type(obje) is not BoolAnd:
-            return obje
-        points = tuple(sub for sub in obje if isinstance(sub, Point2D))
-        for point in points:
-            for sub in obje:
-                if point not in sub:
-                    return Empty()
-        if len(points) > 0:
-            return points[0]
-        return obje
 
     @staticmethod
     def simplify_not(obje: BoolNot) -> IObject2D:
@@ -396,25 +365,11 @@ class Simplify:
         raise NotImplementedError(f"Not expected get here: {obje}")
 
     @staticmethod
-    def simplify_and(obje: BoolAnd) -> IObject2D:
-        if type(obje) is not BoolAnd:
-            raise TypeError
-        return obje
-
-    @staticmethod
-    def simplify_or(obje: BoolOr) -> IObject2D:
-        if type(obje) is not BoolOr:
-            raise TypeError
-        return obje
-
-    @staticmethod
     def simplify(obje: IObject2D) -> IObject2D:
         if not isinstance(obje, IObject2D):
             raise TypeError
         obje = Simplify.expand(obje)
         if isinstance(obje, (Point2D, ICurve, IShape, Empty, Whole)):
-            return obje
-        if type(obje) not in (BoolNot, BoolOr, BoolAnd):
             return obje
         if isinstance(obje, BoolNot):
             return Simplify.simplify_not(obje)
@@ -433,7 +388,6 @@ class Simplify:
             obje = Simplify.treat_contains_or(obje)
         elif type(obje) is BoolAnd:
             obje = Simplify.treat_contains_and(obje)
-            obje = Simplify.treat_points(obje)
         if type(obje) not in (BoolOr, BoolAnd):
             return obje
         shapes = tuple(sub for sub in obje if isinstance(sub, IShape))

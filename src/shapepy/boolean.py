@@ -133,9 +133,6 @@ class BoolOr(IBoolean2D):
     def __iter__(self):
         yield from self.__objects
 
-    def __getitem__(self, index):
-        return self.__objects[index]
-
     def __len__(self) -> int:
         return len(self.__objects)
 
@@ -228,9 +225,6 @@ class BoolAnd(IBoolean2D):
 
     def __iter__(self):
         yield from self.__objects
-
-    def __getitem__(self, index):
-        return self.__objects[index]
 
     def __len__(self) -> int:
         return len(self.__objects)
