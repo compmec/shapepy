@@ -5,6 +5,7 @@ from typing import Iterable, Tuple
 
 import numpy as np
 
+from ...analytic.utils import unit_angle
 from ...core import IAnalytic, Scalar
 from ...point import GeneralPoint, Point2D
 from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter
@@ -209,13 +210,6 @@ def compute_winding(curve: PiecewiseClosedCurve, point: Point2D) -> Scalar:
         raise TypeError
     if not isinstance(point, Point2D):
         raise TypeError
-
-    def unit_angle(xval: Scalar, yval: Scalar) -> Scalar:
-        if not yval:
-            return 0 if xval > 0 else -1
-        if not xval:
-            return 0.25 if yval > 0 else 0.75
-        return np.arctan2(float(yval), float(xval)) / math.tau
 
     nodes = curve.projection(point)
     if len(nodes) == 1:

@@ -4,8 +4,7 @@ import math
 from abc import abstractmethod
 from typing import Iterable, Tuple, Union
 
-from numpy import arctan2
-
+from ...analytic.utils import uarctan2
 from ...point import GeneralPoint, Point2D
 from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter, Scalar
 
@@ -201,7 +200,7 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
             v0, v1 = self.vectors[proj - 1], self.vectors[proj]
             cross = float(v0.cross(v1))
             inner = float(v0.inner(v1))
-            wind = arctan2(cross, -inner) / math.tau
+            wind = uarctan2(cross, -inner)
             return wind % 1
 
         nverts = len(self.vertices)
@@ -211,7 +210,7 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
             vertex1 = vertices[(i + 1) % nverts]
             cross = float(vertex0.cross(vertex1))
             inner = float(vertex0.inner(vertex1))
-            subwind = arctan2(cross, inner) / math.tau
+            subwind = uarctan2(cross, inner)
             wind += subwind
 
         if abs(wind) < 1e-9:

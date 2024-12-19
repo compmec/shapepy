@@ -180,7 +180,7 @@ def rcos(rad_angle: Scalar) -> Scalar:
     return Configuration.COS(rad_angle)
 
 
-def usin(unit_angle: Scalar) -> Scalar:
+def usin(uangle: Scalar) -> Scalar:
     """
     Computes the sinus of given angle.
     The angle mesure is unitary, meaning
@@ -189,7 +189,7 @@ def usin(unit_angle: Scalar) -> Scalar:
 
     Parameters
     ----------
-    unit_angle: Scalar
+    uangle: Scalar
         Given angle to compute sinus
 
     Example
@@ -207,16 +207,16 @@ def usin(unit_angle: Scalar) -> Scalar:
     >>> Trignomial.sin(0.125)
     0.7071067811865
     """
-    unit_angle %= 1
-    quad, subangle = divmod(4 * unit_angle, 1)
+    uangle %= 1
+    quad, subangle = divmod(4 * uangle, 1)
     if not subangle:
         if not quad % 2:
             return 0
         return 1 - 2 * (quad == 3)
-    return rsin(unit_angle * Configuration.TAU)
+    return rsin(uangle * Configuration.TAU)
 
 
-def ucos(unit_angle: Scalar) -> Scalar:
+def ucos(uangle: Scalar) -> Scalar:
     """
     Computes the cossinus of given angle.
     The angle mesure is unitary, meaning
@@ -225,7 +225,7 @@ def ucos(unit_angle: Scalar) -> Scalar:
 
     Parameters
     ----------
-    unit_angle: Scalar
+    uangle: Scalar
         Given angle to compute cossinus
 
     Example
@@ -243,16 +243,16 @@ def ucos(unit_angle: Scalar) -> Scalar:
     >>> Trignomial.cos(0.125)
     0.7071067811865
     """
-    unit_angle %= 1
-    quad, subangle = divmod(4 * unit_angle, 1)
+    uangle %= 1
+    quad, subangle = divmod(4 * uangle, 1)
     if not subangle:
         if quad % 2:
             return 0
         return 1 - 2 * (quad == 2)
-    return rcos(unit_angle * Configuration.TAU)
+    return rcos(uangle * Configuration.TAU)
 
 
-def usincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
+def usincos(uangle: Scalar) -> Tuple[Scalar, Scalar]:
     """
     Computes the sinus and cossinus of given angle at same time.
     The angle mesure is unitary, meaning
@@ -262,7 +262,7 @@ def usincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
 
     Parameters
     ----------
-    unit_angle: Scalar
+    uangle: Scalar
         Given angle to compute sin and cos
 
     Example
@@ -280,5 +280,50 @@ def usincos(unit_angle: Scalar) -> Tuple[Scalar, Scalar]:
     >>> Trignomial.sincos(0.125)
     (0.7071067811865, 0.7071067811865)
     """
-    unit_angle %= 1
-    return usin(unit_angle), ucos(unit_angle)
+    uangle %= 1
+    return usin(uangle), ucos(uangle)
+
+
+def uarctan2(yval: Scalar, xval: Scalar) -> Scalar:
+    """
+    Computes the unitary angle such tangent gives yval/xval.
+
+    The given result is in the interval [-0.5, 0.5)
+
+    Examples
+    --------
+    >>> uarctan2(yval=0, xval=-1)
+    -0.5
+    >>> uarctan2(yval=-1, xval=-1)
+    -0.375
+    >>> uarctan2(yval=-1, xval=0)
+    -0.25
+    >>> uarctan2(yval=-1, xval=1)
+    -0.125
+    >>> uarctan2(yval=0, xval=1)
+    0
+    >>> uarctan2(yval=1, xval=1)
+    0.125
+    >>> uarctan2(yval=1, xval=0)
+    0.25
+    >>> uarctan2(yval=1, xval=-1)
+    0.375
+    """
+    if not yval:
+        return 0 if xval > 0 else -0.5
+    if not xval:
+        return 0.25 if yval > 0 else -0.25
+    return Configuration.ARCTAN2(float(yval), float(xval)) / Configuration.TAU
+
+
+def unit_angle(xval: Scalar, yval: Scalar) -> Scalar:
+    """
+    Given a point, it computes the 'unitary angle' used in winding
+    In fact this function is wrong, but it works when
+    computing the winding number
+    """
+    if yval == 0:
+        return 0 if xval >= 0 else -1
+    if xval == 0:
+        return 0.25 if yval > 0 else 0.75
+    return uarctan2(yval, xval)

@@ -21,6 +21,9 @@ class Configuration:
     AUTOEXPAND = True
     AUTOSIMPLIFY = True
 
+    # General math
+    ARCTAN2 = math.atan2
+
     # Trigonometric
     TAU = math.tau
     SIN = math.sin
