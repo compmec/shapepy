@@ -145,6 +145,53 @@ class SimpleShape(IShape):
         """
         return self.jordan.winding(point)
 
+    def move(self, vector: GeneralPoint) -> SimpleShape:
+        """
+        Moves the simple shape in the plane by the given vector
+
+        Parameters
+        ----------
+        vector: Point
+            The pair (x, y) that must be added to the coordinates
+        return: SimpleShape
+            The moved simple shape
+
+        """
+        return self.__class__(self.jordan.move(vector), self.boundary)
+
+    def scale(self, xscale: Scalar, yscale: Scalar) -> Point2D:
+        """
+        Scales the object in the X and Y directions
+
+        Parameters
+        ----------
+        xscale: Scalar
+            The amount to be scaled in the X direction
+        yscale: Scalar
+            The amount to be scaled in the Y direction
+        """
+        return self.__class__(self.jordan.scale(xscale, yscale), self.boundary)
+
+    def rotate(self, uangle: Scalar, degrees: bool = False) -> Point2D:
+        """
+        Rotates the simple shape around the origin.
+
+        The angle mesure is unitary:
+        * angle = 1 means 360 degrees rotation
+        * angle = 0.5 means 180 degrees rotation
+        * angle = 0.125 means 45 degrees rotation
+
+        Parameters
+        ----------
+        angle: Scalar
+            The unitary angle the be rotated.
+        degrees: bool, default = False
+            If the angle is mesure in degrees
+        """
+        return self.__class__(
+            self.jordan.rotate(uangle, degrees), self.boundary
+        )
+
 
 class ConnectedShape(IShape, BoolAnd):
 
@@ -167,7 +214,6 @@ class ConnectedShape(IShape, BoolAnd):
         return msg
 
     def __eq__(self, other: IObject2D) -> bool:
-        assert isinstance(other, IObject2D)
         if not isinstance(other, ConnectedShape):
             return False
         if abs(self.area - other.area) > 1e-6:

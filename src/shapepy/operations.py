@@ -109,50 +109,11 @@ class Transformation:
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
-    def move_shape(obje: IShape, point: Point2D) -> IShape:
-        if not isinstance(obje, IShape):
-            raise TypeError(f"Received type {type(obje)}")
-        if isinstance(obje, SimpleShape):
-            newjordan = Transformation.move(obje.jordan, point)
-            return SimpleShape(newjordan, obje.boundary)
-        newsubshapes = tuple(
-            Transformation.move_shape(subshape, point) for subshape in obje
-        )
-        return obje.__class__(newsubshapes)
-
-    @staticmethod
-    def scale_shape(obje: IShape, xscale: Scalar, yscale: Scalar) -> IShape:
-        if not isinstance(obje, IShape):
-            raise TypeError(f"Received type {type(obje)}")
-        if isinstance(obje, SimpleShape):
-            newjordan = Transformation.scale_curve(obje.jordan, xscale, yscale)
-            return SimpleShape(newjordan, obje.boundary)
-        newsubshapes = tuple(
-            Transformation.scale_shape(subshape, xscale, yscale)
-            for subshape in obje
-        )
-        return obje.__class__(newsubshapes)
-
-    @staticmethod
-    def rotate_shape(obje: IShape, uangle: Scalar) -> IShape:
-        if not isinstance(obje, IShape):
-            raise TypeError(f"Received type {type(obje)}")
-        if isinstance(obje, SimpleShape):
-            newjordan = Transformation.rotate_curve(obje.jordan, uangle)
-            return SimpleShape(newjordan, obje.boundary)
-        newsubshapes = tuple(
-            Transformation.rotate_shape(subshape, uangle) for subshape in obje
-        )
-        return obje.__class__(newsubshapes)
-
-    @staticmethod
     def move(obje: IObject2D, point: GeneralPoint) -> IObject2D:
         if not isinstance(point, IObject2D):
             point = Point2D(point)
         if isinstance(obje, ICurve):
             return Transformation.move_curve(obje, point)
-        if isinstance(obje, IShape):
-            return Transformation.move_shape(obje, point)
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
@@ -161,8 +122,6 @@ class Transformation:
             raise TypeError
         if isinstance(obje, ICurve):
             return Transformation.scale_curve(obje, xscale, yscale)
-        if isinstance(obje, IShape):
-            return Transformation.scale_shape(obje, xscale, yscale)
         raise NotImplementedError("Not expected to get here")
 
     @staticmethod
@@ -171,8 +130,6 @@ class Transformation:
             raise TypeError
         if isinstance(obje, ICurve):
             return Transformation.rotate_curve(obje, angle)
-        if isinstance(obje, IShape):
-            return Transformation.rotate_shape(obje, angle)
         raise NotImplementedError("Not expected to get here")
 
 
@@ -199,15 +156,6 @@ class BooleanOperate:
             other = Point2D(other)
         if other.ndim > obje.ndim:
             return False
-        if isinstance(other, (DisjointShape, BoolOr)):
-            return all(sub in obje for sub in other)
-        if isinstance(obje, IShape):
-            if isinstance(other, IShape):
-                return Contains.shape_in_shape(obje, other)
-            if isinstance(other, ICurve) and isinstance(obje, SimpleShape):
-                return Contains.curve_in_simple(obje, other)
-            if isinstance(other, Point2D):
-                return Contains.point_in_shape(obje, other)
         if isinstance(obje, ICurve):
             if isinstance(other, Point2D):
                 return Contains.point_in_curve(obje, other)
