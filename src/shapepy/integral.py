@@ -5,8 +5,7 @@ over the package's objects, like shapes and curves
 from typing import Tuple
 
 from .core import IShape, Scalar
-from .curve.polygon import JordanPolygon
-from .curve.polygon.curve import polybidim
+from .curve.polygon import JordanPolygon, polybidim
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 

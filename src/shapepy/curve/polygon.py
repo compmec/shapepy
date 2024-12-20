@@ -5,10 +5,10 @@ from typing import Iterable, Tuple, Union
 
 import numpy as np
 
-from ...analytic.utils import binom, uarctan2
-from ...core import Math
-from ...point import GeneralPoint, Point2D, treat_scalar
-from ..abc import (
+from ..analytic.utils import binom, uarctan2
+from ..core import Math
+from ..point import GeneralPoint, Point2D, treat_scalar
+from .abc import (
     IClosedCurve,
     IJordanCurve,
     IOpenCurve,

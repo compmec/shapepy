@@ -4,7 +4,7 @@ This file contains tests functions to test the module polygon.py
 
 import pytest
 
-from shapepy.curve.polygon.curve import (
+from shapepy.curve.polygon import (
     PolygonClosedCurve,
     PolygonOpenCurve,
     clean_open_curve,
