@@ -35,9 +35,9 @@ class PiecewiseCurve(IParameterCurve):
                 raise TypeError
             if not isinstance(func[1], IAnalytic):
                 raise TypeError
-        for i, fi in enumerate(functions[:-1]):
-            fj = functions[i + 1]
-            for fik, fjk in zip(fi, fj):
+        for i, funci in enumerate(functions[:-1]):
+            funcj = functions[i + 1]
+            for fik, fjk in zip(funci, funcj):
                 if fik.eval(i + 1) != fjk.eval(i + 1):
                     msg = f"Not continous curve: ({fik}) != ({fjk}) at ({i+1})"
                     raise ValueError(msg)
@@ -100,15 +100,15 @@ class PiecewiseCurve(IParameterCurve):
         if self.nsegs != other.nsegs:
             return False
         for funis, funjs in zip(self.functions, other.functions):
-            for fi, fj in zip(funis, funjs):
-                if fi != fj:
+            for funi, funj in zip(funis, funjs):
+                if funi != funj:
                     return False
         return True
 
     def section(self, nodea: Parameter, nodeb: Parameter) -> IParameterCurve:
         if nodea == self.knots[0] and nodeb == self.knots[-1]:
             return self
-        if not (nodea < nodeb):
+        if not nodea < nodeb:
             raise ValueError
         indexa = int(Math.floor(nodea))
         indexb = int(Math.ceil(nodeb)) - 1
@@ -167,8 +167,8 @@ class PiecewiseClosedCurve(PiecewiseCurve, IClosedCurve):
     def __init__(self, functions: Tuple[Tuple[IAnalytic]]):
         super().__init__(functions)
         nsegs = self.nsegs
-        for fi, fj in zip(functions[0], functions[-1]):
-            if fi.eval(0) != fj.eval(nsegs):
+        for funci, funcj in zip(functions[0], functions[-1]):
+            if funci.eval(0) != funcj.eval(nsegs):
                 raise ValueError("Not continous closed curve")
 
     def winding(self, point: GeneralPoint) -> Scalar:
@@ -223,23 +223,23 @@ def compute_lenght(curve: PiecewiseCurve, tolerance: Scalar = 1e-9) -> Scalar:
     if not isinstance(curve, PiecewiseCurve):
         raise TypeError
 
-    def direct_integral(ta: Parameter, tb: Parameter) -> Scalar:
+    def direct_integral(pleft: Parameter, prigh: Parameter) -> Scalar:
         nodes = (1 / 4, 1 / 2, 3 / 4)
         weigs = (2 / 3, -1 / 3, 2 / 3)
         dsvas = map(Math.sqrt, map(ds2fun.eval, nodes))
-        return (tb - ta) * sum(w * ds for w, ds in zip(weigs, dsvas))
+        return (prigh - pleft) * sum(w * ds for w, ds in zip(weigs, dsvas))
 
     def adapt_integral(
-        ta: Parameter, tb: Parameter, tolerance: Scalar
+        pleft: Parameter, prigh: Parameter, tolerance: Scalar
     ) -> Scalar:
-        tm = (ta + tb) / 2
-        midd = direct_integral(ta, tb)
-        left = direct_integral(ta, tm)
-        righ = direct_integral(tm, tb)
-        if abs(left + righ - midd) >= tolerance:
-            left = adapt_integral(ta, tm, tolerance / 2)
-            righ = adapt_integral(tm, tb, tolerance / 2)
-        return left + righ
+        pmidd = (pleft + prigh) / 2
+        imidd = direct_integral(pleft, prigh)
+        ileft = direct_integral(pleft, pmidd)
+        irigh = direct_integral(pmidd, prigh)
+        if abs(ileft + irigh - imidd) >= tolerance:
+            ileft = adapt_integral(pleft, pmidd, tolerance / 2)
+            irigh = adapt_integral(pmidd, prigh, tolerance / 2)
+        return ileft + irigh
 
     lenght = 0
     for i, (xfunc, yfunc) in enumerate(curve.functions):
@@ -251,6 +251,7 @@ def compute_lenght(curve: PiecewiseCurve, tolerance: Scalar = 1e-9) -> Scalar:
     return lenght
 
 
+# pylint: disable=too-many-locals
 def compute_winding(curve: PiecewiseClosedCurve, point: Point2D) -> Scalar:
     """
     Computes the winding number of the given point

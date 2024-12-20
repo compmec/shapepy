@@ -90,6 +90,7 @@ class IParameterCurve(ICurve):
     Defines an abstract class that is parametrized
     """
 
+    @property
     @abstractmethod
     def knots(self) -> Iterable[Parameter]:
         """
