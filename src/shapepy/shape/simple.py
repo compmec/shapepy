@@ -87,9 +87,10 @@ class SimpleShape(IShape):
         nnodes = 64
         unodes = tuple(i / nnodes for i in range(1, nnodes))
         param_curve = curve.param_curve
-        for ka, kb in zip(param_curve.knots, param_curve.knots[1:]):
+        pairs = zip(param_curve.knots, param_curve.knots[1:])
+        for knota, knotb in pairs:
             for unode in unodes:
-                tnode = (1 - unode) * ka + unode * kb
+                tnode = (1 - unode) * knota + unode * knotb
                 if param_curve.eval(tnode, 0) not in self:
                     return False
         return True
@@ -110,8 +111,8 @@ class SimpleShape(IShape):
             return True
         if self.boundary or other.boundary:
             return other.jordan in self and self.jordan not in other
-        self = SimpleShape(self.jordan, True)
-        return other.jordan in self and self.jordan not in other
+        simp = SimpleShape(self.jordan, True)
+        return other.jordan in simp and self.jordan not in other
 
     def __contains__(self, other):
         if not isinstance(other, IObject2D):
@@ -122,7 +123,7 @@ class SimpleShape(IShape):
         if isinstance(other, BoolOr):
             return all(sub in self for sub in other)
         if isinstance(other, BoolAnd):
-            return (~self) in (~other)
+            return ~self in ~other
         if isinstance(other, ICurve):
             return self.__contains_curve(other)
         if isinstance(other, SimpleShape):
