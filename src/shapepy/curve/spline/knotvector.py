@@ -1,14 +1,23 @@
+"""
+File that defines the KnotVector class
+
+It's used to compute the Spline basis functions
+"""
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional
 
 from ...core import Parameter
 
 
 class KnotVector(tuple):
+    """
+    Defines the knotvector, to store knots, degree of the curve, etc
+    """
+
     def __new__(
-        cls, knotvector: Tuple[Parameter, ...], degree: Optional[int] = None
+        cls, knotvector: Iterable[Parameter], degree: Optional[int] = None
     ):
         if isinstance(knotvector, cls):
             return knotvector
@@ -43,16 +52,55 @@ class KnotVector(tuple):
 
     @property
     def degree(self) -> int:
+        """
+        Gives the polynomial degree of the related spline
+        """
         return self.__degree
 
     @property
     def npts(self) -> int:
+        """
+        Gives the quantity of control points used to define the spline
+        """
         return self.__npts
 
     @property
-    def knots(self) -> Tuple[Parameter, ...]:
+    def knots(self) -> Iterable[Parameter]:
+        """
+        Gives the knots of subdivision of the interval
+
+        Parameters
+        ----------
+        return: Iterable[Parameter]
+            The knots values
+
+        Examples
+        --------
+        >>> knotvector = KnotVector([0, 0, 1, 2, 2], 1)
+        >>> knotvector.knots
+        (0, 1, 2)
+        >>> knotvector = KnotVector([0, 0, 0, 1, 1, 2, 2, 2], 2)
+        >>> knotvector.knots
+        (0, 1, 2)
+        """
         return self.__knots
 
     @property
-    def spans(self) -> Tuple[Parameter, ...]:
+    def spans(self) -> Iterable[Parameter]:
+        """
+        Gives the last index of the knotvector, such is equal to the knots
+
+        Parameters
+        ----------
+        return: Iterable[Parameter]
+            The spans values
+
+        Examples
+        --------
+        >>> knotvector = KnotVector([0, 0, 0, 1, 1, 2, 2, 2], 2)
+        >>> knotvector.knots
+        (0, 1, 2)
+        >>> knotvector.spans
+        (2, 4)
+        """
         return self.__spans
