@@ -4,14 +4,9 @@ This file contains the functions to concatenate open curves
 It's used when, for a shape boolean intersection,
 we find segments of differents curves to be used
 """
-from ..analytic import Polynomial
-from .abc import ICurve, IJordanCurve, IOpenCurve, IParameterCurve
-from .piecewise import (
-    JordanPiecewise,
-    PiecewiseClosedCurve,
-    PiecewiseOpenCurve,
-)
-from .polygon import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
+from .abc import IOpenCurve, IParameterCurve
+from .piecewise import PiecewiseOpenCurve
+from .polygon import PolygonOpenCurve
 from .transform import transform_to_piecewise
 
 
@@ -75,3 +70,10 @@ def concatenate_piecewise(*curves: PiecewiseOpenCurve) -> PiecewiseOpenCurve:
     curves = tuple(curves)
     if not all(isinstance(curve, PiecewiseOpenCurve) for curve in curves):
         raise TypeError
+    for leftcurve, righcurve in zip(curves, curves[1:]):
+        if righcurve.vertices[0] != leftcurve.vertices[-1]:
+            raise ValueError("Cannot concatenate")
+    allfunctions = []
+    for curve in curves:
+        allfunctions += list(curve.functions)
+    return PiecewiseOpenCurve(allfunctions)
