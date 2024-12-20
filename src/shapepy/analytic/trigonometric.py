@@ -63,6 +63,7 @@ class Trignomial(BaseAnalytic):
                 values[i] = Fraction(value)
         super().__init__(values)
         self.__freq = frequency
+        self.__roots = None
 
     @property
     def pmax(self) -> int:
@@ -437,7 +438,17 @@ class Trignomial(BaseAnalytic):
         >>> poly.roots(0, 3)
         (0, 1, 2, 3)
         """
-        raise NotImplementedError
+        if self.__roots is None:
+            self.__roots = find_trig_roots(self)
+        if inflim is None and suplim is None:
+            return self.__roots
+        botparam = Math.floor(inflim)
+        topparam = Math.ceil(suplim)
+        roots = set()
+        for i in range(botparam, topparam):
+            roots |= set(i + r for r in self.__roots)
+        roots = tuple(sorted(r for r in roots if inflim <= r <= suplim))
+        return roots
 
     def __call__(self, nodes):
         return self.eval(nodes, 0)
@@ -470,3 +481,31 @@ class Trignomial(BaseAnalytic):
                 msg += "tau*t)"
             msgs.append(msg)
         return " ".join(msgs)
+
+
+def find_trig_roots(trignom: Trignomial) -> Iterable[Parameter]:
+    """
+    Finds the trignometric roots by Newton's method
+    """
+    if trignom.pmax == 0:
+        raise ValueError(f"Cannot compute roots of {trignom}")
+    nroots = 2 * trignom.pmax + 5
+    roots = [i / nroots for i in range(nroots + 1)]
+    for _ in range(3):
+        for i, root in enumerate(roots):
+            for _ in range(10):  # Newton's interation
+                value = trignom.eval(root, 0)
+                dvalu = trignom.eval(root, 1)
+                if dvalu == 0:
+                    root = (2 * root + 1) / 4
+                    continue
+                root -= value / dvalu
+                root = min(1, max(0, root))
+            roots[i] = root
+        values = tuple(abs(trignom.eval(root)) for root in roots)
+        minval = min(values)
+        roots = (r for r, v in zip(roots, values) if abs(v - minval) < 1e-6)
+        roots = list(set(roots))
+    values = tuple(trignom.eval(root) for root in roots)
+    roots = tuple(r for v, r in sorted(zip(values, roots)) if abs(v) < 1e-9)
+    return tuple(sorted(roots))
