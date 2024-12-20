@@ -29,8 +29,9 @@ from typing import Iterable, Tuple, Union
 from ..boolean import BoolOr
 from ..core import Empty, IBoolean2D, IShape, Parameter, Whole
 from ..curve.abc import ICurve, IJordanCurve
-from ..curve.concatenate import concatenate, transform_to_jordan
+from ..curve.concatenate import concatenate
 from ..curve.intersect import curve_and_curve
+from ..curve.transform import transform_to_jordan
 from ..point import Point2D
 from .simple import ConnectedShape, DisjointShape, SimpleShape
 

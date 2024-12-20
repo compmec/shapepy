@@ -4,14 +4,15 @@ This file contains the functions to concatenate open curves
 It's used when, for a shape boolean intersection,
 we find segments of differents curves to be used
 """
-from .abc import (
-    IClosedCurve,
-    ICurve,
-    IJordanCurve,
-    IOpenCurve,
-    IParameterCurve,
+from ..analytic import Polynomial
+from .abc import ICurve, IJordanCurve, IOpenCurve, IParameterCurve
+from .piecewise import (
+    JordanPiecewise,
+    PiecewiseClosedCurve,
+    PiecewiseOpenCurve,
 )
 from .polygon import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve
+from .transform import transform_to_piecewise
 
 
 def concatenate(*curves: IOpenCurve) -> IParameterCurve:
@@ -33,7 +34,8 @@ def concatenate(*curves: IOpenCurve) -> IParameterCurve:
             raise TypeError
     if all(isinstance(curve, PolygonOpenCurve) for curve in curves):
         return concatenate_polygon(*curves)
-    raise NotImplementedError("Not expected get here")
+    curves = map(transform_to_piecewise, curves)
+    return concatenate_piecewise(*curves)
 
 
 def concatenate_polygon(*curves: PolygonOpenCurve) -> PolygonOpenCurve:
@@ -59,45 +61,17 @@ def concatenate_polygon(*curves: PolygonOpenCurve) -> PolygonOpenCurve:
     return final
 
 
-def closes_curve(curve: IOpenCurve) -> IClosedCurve:
+def concatenate_piecewise(*curves: PiecewiseOpenCurve) -> PiecewiseOpenCurve:
     """
-    Transforms an open curve into a closed one
+    Concatenates the piecewise curve into only one polygon curve
 
     Parameters
     ----------
-    curve: IOpenCurve
-        The open curve to be transformed
-    return: IClosedCurve
-        The closed curve
+    curves: Iterable[PolygonOpenCurve]
+        The open curves to be concatenated
+    return: PolygonOpenCurve
+        The concatenated final curve
     """
-    if not isinstance(curve, IOpenCurve):
+    curves = tuple(curves)
+    if not all(isinstance(curve, PiecewiseOpenCurve) for curve in curves):
         raise TypeError
-    if curve.vertices[0] != curve.vertices[-1]:
-        raise ValueError
-    if isinstance(curve, PolygonOpenCurve):
-        return PolygonClosedCurve(curve.vertices[:-1])
-    raise NotImplementedError("Not expected get here")
-
-
-def transform_to_jordan(curve: ICurve) -> IJordanCurve:
-    """
-    Transforms an arbitrary curve into a jordan one
-
-    This function closes the curve if it's open
-
-    Parameters
-    ----------
-    curve: IOpenCurve
-        The open curve to be transformed
-    return: IClosedCurve
-        The closed curve
-    """
-    if not isinstance(curve, ICurve):
-        raise TypeError
-    if isinstance(curve, IJordanCurve):
-        return curve
-    if isinstance(curve, IOpenCurve):
-        curve = closes_curve(curve)
-    if isinstance(curve, PolygonClosedCurve):
-        return JordanPolygon(curve.vertices)
-    raise NotImplementedError("Not expected get here")
