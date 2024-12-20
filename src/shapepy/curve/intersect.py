@@ -1,3 +1,16 @@
+"""
+This file contains functions to computes the intersection
+points of some curves, resulting either in:
+* Empty : If the curves doesn't intersect each other
+* Point2D : If the curves intersect only once
+* ICurve : If there's infinite points between the curves
+    meaning there's a side that is superposed
+* BoolOr : The union of Point2D and ICurve
+    It's used when there's more than one intersection point
+    or if it's a mix of points and pieces of curves
+
+"""
+
 from ..boolean import BoolOr
 from ..core import Empty, IBoolean2D
 from .abc import IClosedCurve, ICurve, IJordanCurve
@@ -5,6 +18,18 @@ from .polygon import PolygonClosedCurve, PolygonOpenCurve
 
 
 def curve_and_curve(curvea: ICurve, curveb: ICurve) -> IBoolean2D:
+    """
+    Computes the intersection of two arbitrary curves
+
+    Parameters
+    ----------
+    curvea: ICurve
+        The first curve
+    curveb: ICurve
+        The second curve
+    return: IBoolean2D
+        Either Empty, Point, ICurve or BoolOr
+    """
     if not isinstance(curvea, ICurve):
         raise TypeError
     if not isinstance(curveb, ICurve):
@@ -21,6 +46,18 @@ def curve_and_curve(curvea: ICurve, curveb: ICurve) -> IBoolean2D:
 def closed_and_closed(
     curvea: IClosedCurve, curveb: IClosedCurve
 ) -> IBoolean2D:
+    """
+    Computes the intersectioon of two closed curves
+
+    Parameters
+    ----------
+    curvea: ICurve
+        The first closed curve
+    curveb: ICurve
+        The second closed curve
+    return: IBoolean2D
+        Either Empty, Point, ICurve or BoolOr
+    """
     if not isinstance(curvea, IClosedCurve):
         raise TypeError
     if not isinstance(curveb, IClosedCurve):
@@ -37,6 +74,18 @@ def closed_and_closed(
 def polygon_and_polygon(
     curvea: PolygonClosedCurve, curveb: PolygonClosedCurve
 ) -> IBoolean2D:
+    """
+    Computes the intersection of two polygon curves
+
+    Parameters
+    ----------
+    curvea: PolygonClosedCurve
+        The first curve
+    curveb: PolygonClosedCurve
+        The second curve
+    return: IBoolean2D
+        Either Empty, Point, ICurve or BoolOr
+    """
     if not isinstance(curvea, PolygonClosedCurve):
         raise TypeError
     if not isinstance(curveb, PolygonClosedCurve):
