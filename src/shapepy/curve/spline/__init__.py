@@ -1,3 +1,2 @@
-from .jordan import JordanSpline
 from .knotvector import KnotVector
-from .spline import SplineClosedCurve, SplineOpenCurve
+from .spline import JordanSpline, SplineClosedCurve, SplineOpenCurve

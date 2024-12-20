@@ -8,6 +8,7 @@ import sympy as sp
 from ...analytic.polynomial import Polynomial
 from ...core import Parameter, Scalar
 from ...point import GeneralPoint, Point2D
+from ..abc import IJordanCurve, IParameterCurve
 from ..piecewise import PiecewiseClosedCurve, PiecewiseOpenCurve
 from .knotvector import KnotVector
 
@@ -143,7 +144,7 @@ def compute_segments(
     return result
 
 
-class Spline:
+class SplineCurve(IParameterCurve):
     """
     Defines a Spline Curve, to be parent of
     SplineOpenCurve and SplineClosedCurve
@@ -154,9 +155,12 @@ class Spline:
     ):
         if not isinstance(knotvector, KnotVector):
             raise TypeError
-        ctrlpoints = tuple(ctrlpoints)
+        ctrlpoints = list(ctrlpoints)
         if knotvector.npts != len(ctrlpoints):
             raise ValueError(f"{knotvector.npts} != {len(ctrlpoints)}")
+        for i, ctrlpt in enumerate(ctrlpoints):
+            if not isinstance(ctrlpt, Point2D):
+                ctrlpoints[i] = Point2D(ctrlpt)
         self.__knotvector = knotvector
         self.__ctrlpoints = ctrlpoints
 
@@ -193,7 +197,7 @@ class Spline:
         return self.__ctrlpoints
 
 
-class SplineOpenCurve(PiecewiseOpenCurve, Spline):
+class SplineOpenCurve(PiecewiseOpenCurve, SplineCurve):
     """
     Defines the Spline Curve that is opened, meaning the
     starting and ending point doesn't need to be the same
@@ -202,18 +206,12 @@ class SplineOpenCurve(PiecewiseOpenCurve, Spline):
     def __init__(
         self, knotvector: KnotVector, ctrlpoints: Iterable[GeneralPoint]
     ):
-        if not isinstance(knotvector, KnotVector):
-            raise TypeError
-        ctrlpoints = list(ctrlpoints)
-        for i, point in enumerate(ctrlpoints):
-            if not isinstance(point, Point2D):
-                ctrlpoints[i] = Point2D(point)
-        xctrlpts = tuple(point[0] for point in ctrlpoints)
-        yctrlpts = tuple(point[1] for point in ctrlpoints)
+        SplineCurve.__init__(self, knotvector, ctrlpoints)
+        xctrlpts = tuple(point[0] for point in self.ctrlpoints)
+        yctrlpts = tuple(point[1] for point in self.ctrlpoints)
         xfuncs = compute_segments(knotvector, xctrlpts)
         yfuncs = compute_segments(knotvector, yctrlpts)
         functions = tuple(zip(xfuncs, yfuncs))
-        Spline.__init__(self, knotvector, ctrlpoints)
         PiecewiseOpenCurve.__init__(self, functions)
 
     def __str__(self) -> str:
@@ -229,7 +227,7 @@ class SplineOpenCurve(PiecewiseOpenCurve, Spline):
         return open_spline_from_piecewise(curve)
 
 
-class SplineClosedCurve(PiecewiseClosedCurve, Spline):
+class SplineClosedCurve(PiecewiseClosedCurve, SplineCurve):
     """
     Defines a Spline closed curve
     """
@@ -237,18 +235,12 @@ class SplineClosedCurve(PiecewiseClosedCurve, Spline):
     def __init__(
         self, knotvector: KnotVector, ctrlpoints: Iterable[GeneralPoint]
     ):
-        if not isinstance(knotvector, KnotVector):
-            raise TypeError
-        ctrlpoints = list(ctrlpoints)
-        for i, point in enumerate(ctrlpoints):
-            if not isinstance(point, Point2D):
-                ctrlpoints[i] = Point2D(point)
-        xctrlpts = tuple(point[0] for point in ctrlpoints)
-        yctrlpts = tuple(point[1] for point in ctrlpoints)
+        SplineCurve.__init__(self, knotvector, ctrlpoints)
+        xctrlpts = tuple(point[0] for point in self.ctrlpoints)
+        yctrlpts = tuple(point[1] for point in self.ctrlpoints)
         xfuncs = compute_segments(knotvector, xctrlpts)
         yfuncs = compute_segments(knotvector, yctrlpts)
         functions = list(zip(xfuncs, yfuncs))
-        Spline.__init__(self, knotvector, ctrlpoints)
         PiecewiseOpenCurve.__init__(self, functions)
 
     def section(
@@ -298,3 +290,24 @@ def open_spline_from_piecewise(curve: PiecewiseOpenCurve) -> SplineOpenCurve:
     ctrlpoints = stiffmatrix.inv() @ forcevector
     ctrlpoints = tuple(map(tuple, ctrlpoints.tolist()))
     return SplineOpenCurve(knotvector, ctrlpoints)
+
+
+class JordanSpline(SplineClosedCurve, IJordanCurve):
+    """
+    Jordan Curve is an arbitrary closed curve which doesn't intersect itself.
+    It stores a list of 'segments', each segment is a bezier curve
+    """
+
+    @property
+    def param_curve(self) -> SplineClosedCurve:
+        return self
+
+    def __str__(self) -> str:
+        degree, npts = self.knotvector.degree, self.knotvector.npts
+        msg = f"Jordan Spline of degree {degree} and {npts} points\n"
+        msg += str(self.vertices)
+        return msg
+
+    def __repr__(self) -> str:
+        degree, npts = self.knotvector.degree, self.knotvector.npts
+        return f"JordanCurve (deg {degree}, {npts})"
