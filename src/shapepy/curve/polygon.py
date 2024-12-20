@@ -1,3 +1,9 @@
+"""
+This file defines the Polygonal curves:
+* PolygonOpenCurve
+* PolygonClosedCurve
+* JordanPolygon
+"""
 from __future__ import annotations
 
 from abc import abstractmethod
@@ -19,6 +25,19 @@ from .abc import (
 
 
 def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
+    """
+    Removes the aligned vertex of the vertices.
+
+    This function does not treat the case which the first point
+    is aligned between the second and the last vertex.
+
+    Parameters
+    ----------
+    vertices: Iterable[Point2D]
+        The vertices to be cleaned
+    return: Iterable[Point2D]
+        The cleaned vertices
+    """
     vertices = list(vertices)
     for i, vertex in enumerate(vertices):
         if not isinstance(vertex, Point2D):
@@ -29,13 +48,18 @@ def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
             continue
         vi0 = vertices[i - 1]
         vi2 = vertices[i + 1]
-        if not (vi1 - vi0).cross(vi2 - vi1):
+        cross = (vi1 - vi0).cross(vi2 - vi1)
+        if not cross:
             keep_vertices[i] = False
     new_vertices = (vertices[i] for i, k in enumerate(keep_vertices) if k)
     return tuple(new_vertices)
 
 
 class PolygonCurve(IParameterCurve):
+    """
+    Defines a general Polygon Curve
+    """
+
     def __init__(self, vertices: Iterable[GeneralPoint]):
         self.__vertices = tuple(clean_open_curve(vertices))
 
@@ -46,6 +70,15 @@ class PolygonCurve(IParameterCurve):
     @property
     @abstractmethod
     def vectors(self) -> Iterable[Point2D]:
+        """
+        Gives the evaluated vectors of the polygon,
+        meaning the difference between two consecutive vertices
+
+        Parameters
+        ----------
+        return: Iterable[Point]
+            The points which were evaluated at knots
+        """
         raise NotImplementedError
 
     @property
@@ -107,14 +140,6 @@ class PolygonCurve(IParameterCurve):
             The unitary angle the be rotated.
         degrees: bool, default = False
             If the angle is mesure in degrees
-
-        Example
-        -------
-        >>> mypoint = Point(2, 3)
-        >>> mypoint.rotate(0.5)  # 180 degrees
-        (-2, -3)
-        >>> mypoint.rotate(90, degrees=True)
-        (-3, 2)
         """
         if degrees:
             uangle = treat_scalar(uangle) / 360
@@ -123,10 +148,10 @@ class PolygonCurve(IParameterCurve):
         )
 
     @property
-    def knots(self) -> Tuple[Parameter, ...]:
+    def knots(self) -> Iterable[Parameter]:
         return tuple(range(len(self.vectors) + 1))
 
-    def projection(self, point: GeneralPoint) -> Tuple[Parameter, ...]:
+    def projection(self, point: GeneralPoint) -> Iterable[Parameter]:
         if not isinstance(point, Point2D):
             point = Point2D(point)
         vertices = tuple(point - vertex for vertex in self.vertices)
@@ -147,11 +172,15 @@ class PolygonCurve(IParameterCurve):
 
 
 class PolygonOpenCurve(PolygonCurve, IOpenCurve):
+    """
+    Class that defines a open Polygonal Curve
+    """
+
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []
-        for vi, vj in zip(self.vertices, self.vertices[1:]):
-            vectors.append(vj - vi)
+        for verti, vertj in zip(self.vertices, self.vertices[1:]):
+            vectors.append(vertj - verti)
         self.__vectors = tuple(vectors)
 
     @property
@@ -202,6 +231,10 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
 
 
 class PolygonClosedCurve(PolygonCurve, IClosedCurve):
+    """
+    Class that defines a Closed Polygonal Curve
+    """
+
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []
@@ -239,7 +272,7 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
     def section(
         self, nodea: Parameter, nodeb: Parameter
     ) -> Union[PolygonOpenCurve, PolygonClosedCurve]:
-        if not (nodea < nodeb):
+        if not nodea < nodeb:
             raise ValueError(f"Invalid interval [{nodea}, {nodeb}]")
         if nodea == 0 and nodeb == len(self.vertices):
             return self
@@ -266,9 +299,10 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
             if not isinstance(proj, int):
                 return 0.5
             nverts = len(self.vertices)
-            v0, v1 = self.vectors[proj - 1], self.vectors[proj]
-            cross = float(v0.cross(v1))
-            inner = float(v0.inner(v1))
+            vertex0 = self.vectors[proj - 1]
+            vertex1 = self.vectors[proj]
+            cross = vertex0.cross(vertex1)
+            inner = vertex0.inner(vertex1)
             wind = uarctan2(cross, -inner)
             return wind % 1
 
@@ -277,8 +311,8 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
         wind = 0
         for i, vertex0 in enumerate(vertices):
             vertex1 = vertices[(i + 1) % nverts]
-            cross = float(vertex0.cross(vertex1))
-            inner = float(vertex0.inner(vertex1))
+            cross = vertex0.cross(vertex1)
+            inner = vertex0.inner(vertex1)
             subwind = uarctan2(cross, inner)
             wind += subwind
 
@@ -305,6 +339,10 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
 
 
 class JordanPolygon(PolygonClosedCurve, IJordanCurve):
+    """
+    CLass that defines a Polygonal Jordan curve
+    """
+
     @property
     def param_curve(self) -> PolygonClosedCurve:
         return self
@@ -344,6 +382,22 @@ class JordanPolygon(PolygonClosedCurve, IJordanCurve):
 def polybidim(
     vertices: Tuple[Tuple[Scalar, Scalar], ...], expx: int, expy: int
 ) -> Scalar:
+    """
+    Computes the bidimensional integral on the area defined by the polygon
+
+        I = int_P x^a * y^b dx dy
+
+    Parameters
+    ----------
+    vertices: Tuple[Tuple[Scalar, Scalar], ...]
+        The vertices of the polygon
+    expx: int
+        The value of the 'a', the exponent of 'x'
+    expy: int
+        The value of the 'b', the exponent of 'y'
+    return: Scalar
+        The integral's value
+    """
     xvalues = tuple(vertex[0] for vertex in vertices)
     yvalues = tuple(vertex[1] for vertex in vertices)
     xvalues = np.array(xvalues, dtype="object")
