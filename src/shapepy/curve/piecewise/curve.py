@@ -94,11 +94,6 @@ class PiecewiseCurve(IParameterCurve):
         )
         return nodes
 
-    def winding(self, point: GeneralPoint) -> Scalar:
-        if not isinstance(point, Point2D):
-            point = Point2D(point)
-        return compute_winding(self, point)
-
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PiecewiseCurve):
             return False
@@ -150,6 +145,10 @@ class PiecewiseCurve(IParameterCurve):
 
 
 class PiecewiseOpenCurve(PiecewiseCurve, IOpenCurve):
+    """
+    A Piecewise Open Curve that doesn't connect its ending points
+    """
+
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
         if node < 0 or self.nsegs < node:
             raise ValueError
@@ -161,12 +160,21 @@ class PiecewiseOpenCurve(PiecewiseCurve, IOpenCurve):
 
 
 class PiecewiseClosedCurve(PiecewiseCurve, IClosedCurve):
+    """
+    A Piecewise Closed Curve defined by analytic functions
+    """
+
     def __init__(self, functions: Tuple[Tuple[IAnalytic]]):
         super().__init__(functions)
         nsegs = self.nsegs
         for fi, fj in zip(functions[0], functions[-1]):
             if fi.eval(0) != fj.eval(nsegs):
                 raise ValueError("Not continous closed curve")
+
+    def winding(self, point: GeneralPoint) -> Scalar:
+        if not isinstance(point, Point2D):
+            point = Point2D(point)
+        return compute_winding(self, point)
 
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
         node %= self.nsegs
@@ -194,6 +202,10 @@ class PiecewiseClosedCurve(PiecewiseCurve, IClosedCurve):
 
 
 class JordanPiecewise(IJordanCurve, PiecewiseClosedCurve):
+    """
+    A Jordan Piecewise Curve that doesn't intersect itself
+    """
+
     @property
     def param_curve(self) -> PiecewiseClosedCurve:
         return self
