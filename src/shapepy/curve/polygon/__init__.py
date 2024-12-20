@@ -1,2 +1,1 @@
-from .curve import PolygonClosedCurve, PolygonOpenCurve
-from .jordan import JordanPolygon
+from .curve import JordanPolygon, PolygonClosedCurve, PolygonOpenCurve

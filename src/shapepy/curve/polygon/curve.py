@@ -3,10 +3,19 @@ from __future__ import annotations
 from abc import abstractmethod
 from typing import Iterable, Tuple, Union
 
-from ...analytic.utils import uarctan2
+import numpy as np
+
+from ...analytic.utils import binom, uarctan2
 from ...core import Math
 from ...point import GeneralPoint, Point2D, treat_scalar
-from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter, Scalar
+from ..abc import (
+    IClosedCurve,
+    IJordanCurve,
+    IOpenCurve,
+    IParameterCurve,
+    Parameter,
+    Scalar,
+)
 
 
 def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
@@ -293,3 +302,68 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
         if not node:
             return self.vertices[index]
         return self.vertices[index] + node * self.vectors[index]
+
+
+class JordanPolygon(PolygonClosedCurve, IJordanCurve):
+    @property
+    def param_curve(self) -> PolygonClosedCurve:
+        return self
+
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, (IClosedCurve, IJordanCurve)):
+            return False
+        if self.area != other.area:
+            return False
+        if abs(self.lenght - other.lenght) > 1e-9:
+            return False
+        if len(self.vertices) != len(other.vertices):
+            return False
+        index = 0
+        for j, vertj in enumerate(other.vertices):
+            if vertj == self.vertices[0]:
+                index = j
+                break
+        nverts = len(self.vertices)
+        for i, verti in enumerate(self.vertices):
+            vertj = other.vertices[(index + i) % nverts]
+            if verti != vertj:
+                return False
+        return True
+
+    def __str__(self) -> str:
+        return f"JordanPolygon({self.area}, {self.lenght})"
+
+    def __repr__(self) -> str:
+        return self.__str__()
+
+    def __invert__(self) -> JordanPolygon:
+        newvertices = tuple(self.vertices[::-1])
+        return self.__class__(newvertices)
+
+
+def polybidim(
+    vertices: Tuple[Tuple[Scalar, Scalar], ...], expx: int, expy: int
+) -> Scalar:
+    xvalues = tuple(vertex[0] for vertex in vertices)
+    yvalues = tuple(vertex[1] for vertex in vertices)
+    xvalues = np.array(xvalues, dtype="object")
+    yvalues = np.array(yvalues, dtype="object")
+    shixvls = np.roll(xvalues, shift=-1, axis=0)
+    shiyvls = np.roll(yvalues, shift=-1, axis=0)
+
+    matrix = [[0] * (expy + 1) for _ in range(expx + 1)]
+    for i in range(expx + 1):
+        for j in range(expy + 1):
+            matrix[i][j] = binom(i + j, i) * binom(
+                expx + expy - i - j, expy - j
+            )
+    cross = xvalues * shiyvls - yvalues * shixvls
+    xvand0 = np.vander(xvalues, expx + 1)
+    xvand1 = np.vander(shixvls, expx + 1, True)
+    yvand0 = np.vander(yvalues, expy + 1)
+    yvand1 = np.vander(shiyvls, expy + 1, True)
+    soma = np.einsum(
+        "k,ki,ki,ij,kj,kj", cross, xvand0, xvand1, matrix, yvand0, yvand1
+    )
+    denom = (expx + expy + 2) * (expx + expy + 1) * binom(expx + expy, expx)
+    return soma / denom

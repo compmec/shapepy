@@ -13,7 +13,7 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from shapepy.curve.polygon.integral import polybidim
+from shapepy.curve.polygon.curve import polybidim
 
 
 @pytest.mark.order(3)

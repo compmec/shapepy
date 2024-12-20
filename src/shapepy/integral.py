@@ -6,7 +6,7 @@ from typing import Tuple
 
 from .core import IShape, Scalar
 from .curve.polygon import JordanPolygon
-from .curve.polygon.integral import polybidim
+from .curve.polygon.curve import polybidim
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 
