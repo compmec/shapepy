@@ -13,6 +13,9 @@ from .knotvector import KnotVector
 
 
 def inner(valsa: Iterable[Any], valsb: Iterable[Any]) -> Any:
+    """
+    Computes the inner product between two lists
+    """
     valsa = tuple(valsa)
     valsb = tuple(valsb)
     soma = valsa[0] * valsb[0]
@@ -37,6 +40,16 @@ def local_speval_matrix(
     which
         - m is the number of segments: len(knots)-1
         - j is the requested degree
+
+    Parameters
+    ----------
+    knotvector: KnotVector
+        The knotvector with the informations of knots, spans, etc
+    reqdegree: Optional[int], default = None
+        The polynomial degree to compute the matrix.
+        If it's None, it uses the knotvector's degree
+    return: numpy.ndarray
+        A numpy array of shape (m, j+1, j+1)
     """
     knotvector = KnotVector(knotvector)
     if reqdegree is None:
@@ -80,7 +93,13 @@ def piecewise_spline_polynomials(
     there are 'm' intervals, given by (len(knots) - 1)
     Then, for each interval 'k', there are 'npts' polynomial functions
 
-    returns a tuple of shape (m, npts) of Polynomial
+    Parameters
+    ----------
+    knotvector: KnotVector
+        The knotvector to compute the basis functions
+    return: Tuple[Tuple[Polynomial]]
+        A matrix of polynomials, of shape (m, npts)
+
     """
     matrix = local_speval_matrix(knotvector, knotvector.degree)
     degree = knotvector.degree
@@ -100,7 +119,18 @@ def piecewise_spline_polynomials(
 
 def compute_segments(
     knotvector: KnotVector, ctrlpoints: Iterable[Scalar]
-) -> Tuple[Polynomial, ...]:
+) -> Iterable[Polynomial]:
+    """
+    Computes the inner product between polynomials and the control points
+
+    Parameters
+    ----------
+    knotvector: KnotVector
+    ctrlpoints: Iterable[Scalar]
+        The points to be multiplied
+    return: Iterable[Polynomial]
+        The piecewise polynomials
+    """
     ctrlpoints = tuple(ctrlpoints)
     if not isinstance(knotvector, KnotVector):
         raise TypeError
@@ -114,7 +144,14 @@ def compute_segments(
 
 
 class Spline:
-    def __init__(self, knotvector: KnotVector, ctrlpoints: Iterable[Any]):
+    """
+    Defines a Spline Curve, to be parent of
+    SplineOpenCurve and SplineClosedCurve
+    """
+
+    def __init__(
+        self, knotvector: KnotVector, ctrlpoints: Iterable[GeneralPoint]
+    ):
         if not isinstance(knotvector, KnotVector):
             raise TypeError
         ctrlpoints = tuple(ctrlpoints)
@@ -125,27 +162,42 @@ class Spline:
 
     @property
     def degree(self) -> int:
+        """
+        Gives the polynomial degree of the curve
+        """
         return self.knotvector.degree
 
     @property
     def npts(self) -> int:
+        """
+        Gives the number of points
+        """
         return self.knotvector.npts
 
     @property
-    def knots(self) -> Tuple[Parameter, ...]:
+    def knots(self) -> Iterable[Parameter]:
         return self.knotvector.knots
 
     @property
     def knotvector(self) -> KnotVector:
+        """
+        Gives the knotvector that defines the spline
+        """
         return self.__knotvector
 
     @property
-    def ctrlpoints(self) -> Tuple[Any, ...]:
+    def ctrlpoints(self) -> Iterable[Point2D]:
+        """
+        Gives the ctrlpoints that defines the Spline curve
+        """
         return self.__ctrlpoints
 
 
 class SplineOpenCurve(PiecewiseOpenCurve, Spline):
-    """ """
+    """
+    Defines the Spline Curve that is opened, meaning the
+    starting and ending point doesn't need to be the same
+    """
 
     def __init__(
         self, knotvector: KnotVector, ctrlpoints: Iterable[GeneralPoint]
@@ -178,7 +230,9 @@ class SplineOpenCurve(PiecewiseOpenCurve, Spline):
 
 
 class SplineClosedCurve(PiecewiseClosedCurve, Spline):
-    """ """
+    """
+    Defines a Spline closed curve
+    """
 
     def __init__(
         self, knotvector: KnotVector, ctrlpoints: Iterable[GeneralPoint]
