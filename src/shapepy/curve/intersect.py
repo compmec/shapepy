@@ -13,8 +13,10 @@ points of some curves, resulting either in:
 
 from ..boolean import BoolOr
 from ..core import Empty, IBoolean2D
-from .abc import IClosedCurve, ICurve, IJordanCurve
-from .polygon import PolygonClosedCurve, PolygonOpenCurve
+from .abc import ICurve
+from .piecewise import PiecewiseCurve
+from .polygon import PolygonCurve, PolygonOpenCurve
+from .transform import transform_to_piecewise
 
 
 def curve_and_curve(curvea: ICurve, curveb: ICurve) -> IBoolean2D:
@@ -34,47 +36,19 @@ def curve_and_curve(curvea: ICurve, curveb: ICurve) -> IBoolean2D:
         raise TypeError
     if not isinstance(curveb, ICurve):
         raise TypeError
-    if isinstance(curvea, IClosedCurve) and isinstance(curveb, IClosedCurve):
-        return closed_and_closed(curvea, curveb)
-    if isinstance(curvea, IJordanCurve) and isinstance(curveb, IJordanCurve):
-        return curve_and_curve(curvea.param_curve, curveb.param_curve)
-    raise NotImplementedError(
-        f"Not expected: {type(curvea)} and {type(curveb)}"
-    )
-
-
-def closed_and_closed(
-    curvea: IClosedCurve, curveb: IClosedCurve
-) -> IBoolean2D:
-    """
-    Computes the intersectioon of two closed curves
-
-    Parameters
-    ----------
-    curvea: ICurve
-        The first closed curve
-    curveb: ICurve
-        The second closed curve
-    return: IBoolean2D
-        Either Empty, Point, ICurve or BoolOr
-    """
-    if not isinstance(curvea, IClosedCurve):
-        raise TypeError
-    if not isinstance(curveb, IClosedCurve):
-        raise TypeError
-    if isinstance(curvea, PolygonClosedCurve) and isinstance(
-        curveb, PolygonClosedCurve
-    ):
+    if isinstance(curvea, PolygonCurve) and isinstance(curveb, PolygonCurve):
         return polygon_and_polygon(curvea, curveb)
-    raise NotImplementedError(
-        f"Not expected: {type(curvea)} and {type(curveb)}"
-    )
+    if not isinstance(curvea, PiecewiseCurve):
+        curvea = transform_to_piecewise(curvea)
+    if not isinstance(curveb, PiecewiseCurve):
+        curveb = transform_to_piecewise(curveb)
+    return piecewise_and_piecewise(curvea, curveb)
 
 
 # pylint: disable=too-many-locals
 # pylint: disable=too-many-branches
 def polygon_and_polygon(
-    curvea: PolygonClosedCurve, curveb: PolygonClosedCurve
+    curvea: PolygonCurve, curveb: PolygonCurve
 ) -> IBoolean2D:
     """
     Computes the intersection of two polygon curves
@@ -88,9 +62,9 @@ def polygon_and_polygon(
     return: IBoolean2D
         Either Empty, Point, ICurve or BoolOr
     """
-    if not isinstance(curvea, PolygonClosedCurve):
+    if not isinstance(curvea, PolygonCurve):
         raise TypeError
-    if not isinstance(curveb, PolygonClosedCurve):
+    if not isinstance(curveb, PolygonCurve):
         raise TypeError
     inters = []
     for i, avect in enumerate(curvea.vectors):
@@ -128,3 +102,27 @@ def polygon_and_polygon(
     if len(inters) == 1:
         return inters[0]
     return BoolOr(inters)
+
+
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches
+def piecewise_and_piecewise(
+    curvea: PiecewiseCurve, curveb: PiecewiseCurve
+) -> IBoolean2D:
+    """
+    Computes the intersection of two piecewise curves
+
+    Parameters
+    ----------
+    curvea: PiecewiseCurve
+        The first curve
+    curveb: PiecewiseCurve
+        The second curve
+    return: IBoolean2D
+        Either Empty, Point, ICurve or BoolOr
+    """
+    if not isinstance(curvea, PiecewiseCurve):
+        raise TypeError
+    if not isinstance(curveb, PiecewiseCurve):
+        raise TypeError
+    raise NotImplementedError
