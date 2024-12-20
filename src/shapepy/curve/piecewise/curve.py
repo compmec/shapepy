@@ -1,3 +1,10 @@
+"""
+This file contains the classes that defines a Piecewise Curve
+
+It's the most generic type of curve, defined by
+piecewise analytic functions
+"""
+
 from __future__ import annotations
 
 from typing import Iterable, Tuple
@@ -5,10 +12,20 @@ from typing import Iterable, Tuple
 from ...analytic.utils import unit_angle
 from ...core import IAnalytic, Math, Scalar
 from ...point import GeneralPoint, Point2D
-from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter
+from ..abc import (
+    IClosedCurve,
+    IJordanCurve,
+    IOpenCurve,
+    IParameterCurve,
+    Parameter,
+)
 
 
 class PiecewiseCurve(IParameterCurve):
+    """
+    A general piecewise curve, that is defined by pairs of analytic functions
+    """
+
     def __init__(self, functions: Iterable[Tuple[IAnalytic, IAnalytic]]):
         functions = tuple(functions)
         for func in functions:
@@ -29,6 +46,9 @@ class PiecewiseCurve(IParameterCurve):
 
     @property
     def nsegs(self) -> int:
+        """
+        Gives the number of segments of the piecewise
+        """
         return len(self.__funcs)
 
     @property
@@ -36,7 +56,10 @@ class PiecewiseCurve(IParameterCurve):
         return tuple(range(self.nsegs + 1))
 
     @property
-    def functions(self) -> Tuple[Tuple[IAnalytic, IAnalytic], ...]:
+    def functions(self) -> Iterable[Tuple[IAnalytic, IAnalytic]]:
+        """
+        Gives all the pairs of analytic functions that defines the curve
+        """
         return self.__funcs
 
     @property
@@ -170,7 +193,21 @@ class PiecewiseClosedCurve(PiecewiseCurve, IClosedCurve):
         return nodes
 
 
+class JordanPiecewise(IJordanCurve, PiecewiseClosedCurve):
+    @property
+    def param_curve(self) -> PiecewiseClosedCurve:
+        return self
+
+
 def compute_lenght(curve: PiecewiseCurve, tolerance: Scalar = 1e-9) -> Scalar:
+    """
+    Computes the lenght of the Piecewise curve
+
+    Adaptative numerical integration is used to compute it
+
+    Some curves that are easier to compute, like a Polygon,
+    does not need integration
+    """
     if not isinstance(curve, PiecewiseCurve):
         raise TypeError
 
@@ -203,6 +240,16 @@ def compute_lenght(curve: PiecewiseCurve, tolerance: Scalar = 1e-9) -> Scalar:
 
 
 def compute_winding(curve: PiecewiseClosedCurve, point: Point2D) -> Scalar:
+    """
+    Computes the winding number of the given point
+
+    Parameters
+    ----------
+    curve: PiecewiseClosedCurve
+        The closed curve that surronds (or not) the point
+    point: Point2D
+        The point to be computed the winding number
+    """
     if not isinstance(curve, PiecewiseClosedCurve):
         raise TypeError
     if not isinstance(point, Point2D):
