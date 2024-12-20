@@ -1,16 +1,10 @@
 from __future__ import annotations
 
-from typing import Iterable
-
-from ...point import GeneralPoint
 from ..abc import IClosedCurve, IJordanCurve
 from .curve import PolygonClosedCurve
 
 
 class JordanPolygon(PolygonClosedCurve, IJordanCurve):
-    def __init__(self, vertices: Iterable[GeneralPoint]):
-        super().__init__(vertices)
-
     @property
     def param_curve(self) -> PolygonClosedCurve:
         return self

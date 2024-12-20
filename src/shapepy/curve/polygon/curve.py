@@ -6,14 +6,7 @@ from typing import Iterable, Tuple, Union
 from ...analytic.utils import uarctan2
 from ...core import Math
 from ...point import GeneralPoint, Point2D, treat_scalar
-from ..abc import (
-    IClosedCurve,
-    ICurve,
-    IOpenCurve,
-    IParameterCurve,
-    Parameter,
-    Scalar,
-)
+from ..abc import IClosedCurve, IOpenCurve, IParameterCurve, Parameter, Scalar
 
 
 def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
@@ -33,7 +26,7 @@ def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
     return tuple(new_vertices)
 
 
-class PolygonCurve(ICurve):
+class PolygonCurve(IParameterCurve):
     def __init__(self, vertices: Iterable[GeneralPoint]):
         self.__vertices = tuple(clean_open_curve(vertices))
 
@@ -120,8 +113,6 @@ class PolygonCurve(ICurve):
             vertex.rotate(uangle) for vertex in self.vertices
         )
 
-
-class ParamPolygonCurve(PolygonCurve, IParameterCurve):
     @property
     def knots(self) -> Tuple[Parameter, ...]:
         return tuple(range(len(self.vectors) + 1))
@@ -146,7 +137,7 @@ class ParamPolygonCurve(PolygonCurve, IParameterCurve):
         return tuple(sorted(params))
 
 
-class PolygonOpenCurve(ParamPolygonCurve, IOpenCurve):
+class PolygonOpenCurve(PolygonCurve, IOpenCurve):
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []
@@ -201,7 +192,7 @@ class PolygonOpenCurve(ParamPolygonCurve, IOpenCurve):
         return PolygonOpenCurve(tuple(newvertices))
 
 
-class PolygonClosedCurve(ParamPolygonCurve, IClosedCurve):
+class PolygonClosedCurve(PolygonCurve, IClosedCurve):
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
         super().__init__(vertices)
         vectors = []
