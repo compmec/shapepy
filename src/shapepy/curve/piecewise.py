@@ -9,10 +9,10 @@ from __future__ import annotations
 
 from typing import Iterable, Tuple
 
-from ...analytic.utils import unit_angle
-from ...core import IAnalytic, Math, Scalar
-from ...point import GeneralPoint, Point2D
-from ..abc import (
+from ..analytic.utils import unit_angle
+from ..core import IAnalytic, Math, Scalar
+from ..point import GeneralPoint, Point2D
+from .abc import (
     IClosedCurve,
     IJordanCurve,
     IOpenCurve,
