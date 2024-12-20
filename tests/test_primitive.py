@@ -117,12 +117,10 @@ class TestPrimitive:
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
-            "TestPrimitive::test_begin",
-            "TestPrimitive::test_creation",
-            "TestPrimitive::test_square",
-            "TestPrimitive::test_regular",
-            "TestPrimitive::test_point",
-        ]
+            "tests/analytic/test_trigonometric.py::test_end",
+            "tests/curve/trigonom/test_circle.py::test_end",
+        ],
+        scope="session",
     )
     def test_circle(self):
         circle = Primitive.circle()
@@ -142,6 +140,7 @@ class TestPrimitive:
             "TestPrimitive::test_square",
             "TestPrimitive::test_regular",
             "TestPrimitive::test_point",
+            "TestPrimitive::test_circle",
         ]
     )
     def test_end(self):
