@@ -1,3 +1,14 @@
+"""
+This file contains the operations that are more complex
+than it's already implemented.
+For example, it's simple computing the intersection of a point and another obj
+then we let it be Point's responsability.
+Otherwise, we use the functions of this file
+
+It also contains the function simplify, which expands
+and simplifies the boolean operations.
+"""
+
 from typing import Any, Iterable, List, Tuple
 
 from .boolean import BoolAnd, BoolNot, BoolOr
@@ -62,18 +73,27 @@ def sorter(items: Iterable[Any], /, *, reverse: bool = False) -> Iterable[int]:
 
 
 class Contains:
+    """
+    Class to store static functions that checks if one
+    object is inside another object
+    """
+
     @staticmethod
     def point_in_curve(curve: ICurve, point: Point2D) -> bool:
+        """
+        Checks if the point is inside the curve
+        """
         if not isinstance(point, Point2D):
             raise TypeError
         if not isinstance(curve, ICurve):
             raise TypeError
         return 0 < curve.winding(point) < 1
 
-
-class BooleanOperate:
     @staticmethod
-    def contains(obje: IBoolean2D, other: IBoolean2D) -> bool:
+    def object_in_object(obje: IBoolean2D, other: IBoolean2D) -> bool:
+        """
+        Checks if one object is inside another object
+        """
         if not isinstance(other, IBoolean2D):
             other = Point2D(other)
             return other in obje
@@ -84,8 +104,24 @@ class BooleanOperate:
             return obje.obje not in other
         raise NotImplementedError(f"Not expected: {type(obje)}, {type(other)}")
 
+
+class BooleanOperate:
+    """
+    Class to store functions responsible to make the boolean operations
+    """
+
+    @staticmethod
+    def contains(obje: IBoolean2D, other: IBoolean2D) -> bool:
+        """
+        Checks if one object is inside another object
+        """
+        return Contains.object_in_object(obje, other)
+
     @staticmethod
     def invert(obje: IBoolean2D) -> IBoolean2D:
+        """
+        Computes the inversion of the object
+        """
         if isinstance(obje, (Empty, Whole, BoolNot)):
             raise NotImplementedError("Not expected get here")
         retorno = BoolNot(obje)
@@ -97,6 +133,9 @@ class BooleanOperate:
 
     @staticmethod
     def union(*objects: IBoolean2D) -> IBoolean2D:
+        """
+        Computes the union of the objects
+        """
         objects = (obj for obj in objects if not isinstance(obj, Empty))
         objects = [
             obj if isinstance(obj, IBoolean2D) else Point2D(obj)
@@ -117,6 +156,9 @@ class BooleanOperate:
 
     @staticmethod
     def intersect(*objects: IBoolean2D) -> IBoolean2D:
+        """
+        Computes the intersection of the objects
+        """
         objects = (obj for obj in objects if not isinstance(obj, Whole))
         objects = [
             obj if isinstance(obj, IBoolean2D) else Point2D(obj)
@@ -137,8 +179,16 @@ class BooleanOperate:
 
 
 class Simplify:
+    """
+    Class responsible to simplify the object, like computing the intersection
+    or the union of the shapes, remove the repeted elements, etc
+    """
+
     @staticmethod
-    def filter_equal(objects: Iterable[IObject2D]) -> Tuple[IObject2D, ...]:
+    def filter_equal(objects: Iterable[IObject2D]) -> Iterable[IObject2D]:
+        """
+        This function remove the equal elements (by id)
+        """
         items: List[IObject2D] = []
         for subobj in objects:
             if not isinstance(subobj, IObject2D):
@@ -151,7 +201,7 @@ class Simplify:
         return tuple(items)
 
     @staticmethod
-    def has_inverse(objects: Tuple[IObject2D, ...]) -> bool:
+    def has_inverse(objects: Iterable[IObject2D]) -> bool:
         """
         Private function used in simplify to know if there's
         the union or intersection of inversed shape.
@@ -193,6 +243,9 @@ class Simplify:
 
     @staticmethod
     def expand_not(obje: BoolNot) -> IObject2D:
+        """
+        This function expands the BoolNot object using Morgan's law
+        """
         if type(obje) is not BoolNot:
             raise TypeError
         invobj = obje.obje
@@ -206,6 +259,9 @@ class Simplify:
 
     @staticmethod
     def expand_and(obje: BoolAnd) -> IObject2D:
+        """
+        This function expands the BoolAnd object using Morgan's law
+        """
         if type(obje) is not BoolAnd:
             raise TypeError
         subobjs = tuple(Simplify.flatten(obje))
@@ -223,6 +279,9 @@ class Simplify:
 
     @staticmethod
     def expand_or(obje: BoolOr) -> IObject2D:
+        """
+        This function expands the BoolOr object using Morgan's law
+        """
         if type(obje) is not BoolOr:
             raise TypeError
         return Simplify.flatten(obje)
@@ -244,14 +303,19 @@ class Simplify:
             raise TypeError
         if type(obje) is BoolNot:
             return Simplify.expand_not(obje)
-        elif type(obje) is BoolAnd:
+        if type(obje) is BoolAnd:
             return Simplify.expand_and(obje)
-        elif type(obje) is BoolOr:
+        if type(obje) is BoolOr:
             return Simplify.expand_or(obje)
         return obje
 
     @staticmethod
     def treat_contains_or(obje: IBoolean2D) -> IBoolean2D:
+        """
+        This function checks if one subobject is inside another subobject
+        If that's the case, remove the internal object, since the bigger
+        object contains the smaller one, remaining only the biggest one
+        """
         if type(obje) is not BoolOr:
             raise TypeError
         subobjs = tuple(obje)[::-1]
@@ -269,6 +333,11 @@ class Simplify:
 
     @staticmethod
     def treat_contains_and(obje: IBoolean2D) -> IBoolean2D:
+        """
+        This function checks if one subobject is inside another subobject
+        If that's the case, remove the external object, since the bigger
+        object contains the smaller one, remaining only the small one
+        """
         if type(obje) is not BoolAnd:
             raise TypeError
         subobjs = tuple(obje)
@@ -286,6 +355,9 @@ class Simplify:
 
     @staticmethod
     def simplify_not(obje: BoolNot) -> IObject2D:
+        """
+        Simplify the BoolNot object
+        """
         if not isinstance(obje, BoolNot):
             raise TypeError
         invobj = obje.obje
@@ -298,8 +370,13 @@ class Simplify:
             return identify_shape(simples)
         raise NotImplementedError(f"Not expected get here: {obje}")
 
+    # pylint: disable=too-many-return-statements
+    # pylint: disable=too-many-branches
     @staticmethod
     def simplify(obje: IObject2D) -> IObject2D:
+        """
+        Simplify the object arbitrary object
+        """
         if not isinstance(obje, IObject2D):
             raise TypeError
         obje = Simplify.expand(obje)
