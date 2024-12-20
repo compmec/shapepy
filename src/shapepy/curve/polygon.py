@@ -379,6 +379,7 @@ class JordanPolygon(PolygonClosedCurve, IJordanCurve):
         return self.__class__(newvertices)
 
 
+# pylint: disable=too-many-locals
 def polybidim(
     vertices: Tuple[Tuple[Scalar, Scalar], ...], expx: int, expy: int
 ) -> Scalar:

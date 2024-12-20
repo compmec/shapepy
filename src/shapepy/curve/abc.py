@@ -45,8 +45,6 @@ class IOpenCurve(ICurve):
     Defines an open curve abstract class, to be inherited
     """
 
-    pass
-
 
 class IClosedCurve(ICurve):
     """

@@ -71,6 +71,8 @@ def closed_and_closed(
     )
 
 
+# pylint: disable=too-many-locals
+# pylint: disable=too-many-branches
 def polygon_and_polygon(
     curvea: PolygonClosedCurve, curveb: PolygonClosedCurve
 ) -> IBoolean2D:
@@ -121,7 +123,7 @@ def polygon_and_polygon(
             pointd = avertex + paramd * avect
             segment = PolygonOpenCurve([pointc, pointd])
             inters.append(segment)
-    if not len(inters):
+    if len(inters) == 0:
         return Empty()
     if len(inters) == 1:
         return inters[0]
