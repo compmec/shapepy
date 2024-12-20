@@ -1,3 +1,9 @@
+"""
+File to contains the classes
+* SplineOpenCurve
+* SplineClosedCurve
+* JordanSpline
+"""
 from __future__ import annotations
 
 from typing import Any, Iterable, Optional, Tuple, Union
@@ -27,6 +33,8 @@ def inner(valsa: Iterable[Any], valsb: Iterable[Any]) -> Any:
     return soma
 
 
+# pylint: disable=invalid-name
+# pylint: disable=too-many-locals
 def local_speval_matrix(
     knotvector: KnotVector, reqdegree: Optional[int] = None
 ) -> np.ndarray:
@@ -241,7 +249,7 @@ class SplineClosedCurve(PiecewiseClosedCurve, SplineCurve):
         xfuncs = compute_segments(knotvector, xctrlpts)
         yfuncs = compute_segments(knotvector, yctrlpts)
         functions = list(zip(xfuncs, yfuncs))
-        PiecewiseOpenCurve.__init__(self, functions)
+        PiecewiseClosedCurve.__init__(self, functions)
 
     def section(
         self, nodea: Parameter, nodeb: Parameter
