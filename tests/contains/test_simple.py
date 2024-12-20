@@ -3,8 +3,8 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from shapepy import ConnectedShape, Empty, Primitive, Whole
-
+from shapepy import Empty, Primitive, Whole
+from shapepy.analytic.utils import usincos
 
 @pytest.mark.order(22)
 @pytest.mark.dependency(
@@ -116,6 +116,22 @@ def test_winding():
             if xval < -2 or 2 < xval or yval < -2 or 2 < yval:
                 break
         assert square.winding((xval, yval)) == 0
+
+    radius = 6
+    circle = Primitive.circle(radius=radius)
+    assert circle.winding((0, 0)) == 1
+    assert circle.winding((radius, 0)) == 0.5
+    assert circle.winding((0, radius)) == 0.5
+    assert circle.winding((-radius, 0)) == 0.5
+    assert circle.winding((0, -radius)) == 0.5
+    assert circle.winding((2*radius, 0)) == 0
+    assert circle.winding((0, 2*radius)) == 0
+    assert circle.winding((-2*radius, 0)) == 0
+    assert circle.winding((0, -2*radius)) == 0
+    for i in range(16+1):
+        uangle = i/16
+        sin, cos = usincos(uangle)
+        assert circle.winding((radius*cos, radius*sin)) == 0.5
 
 
 @pytest.mark.order(22)
@@ -257,6 +273,7 @@ def test_touching():
     ext_rectan = Primitive.square(side=2).scale(1, 2)
     assert int_square in ext_rectan
     assert (~ext_rectan) in (~int_square)
+
 
 
 @pytest.mark.order(22)
