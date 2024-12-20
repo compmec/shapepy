@@ -93,6 +93,7 @@ class Polynomial(BaseAnalytic):
         coefs = tuple(coefs)
         degree = max((i for i, coef in enumerate(coefs) if coef), default=0)
         super().__init__(coefs[: degree + 1])
+        self.__roots = None if self.degree else tuple()
 
     @property
     def degree(self) -> int:
@@ -366,12 +367,14 @@ class Polynomial(BaseAnalytic):
         >>> poly.roots(0, 2)
         (1, 1, 2)
         """
-        nodes = find_roots(self)
+        if self.__roots is None:
+            self.__roots = find_roots(self)
+        roots = self.__roots
         if inflim is not None:
-            nodes = (node for node in nodes if inflim <= node)
+            roots = (r for r in roots if inflim <= r)
         if suplim is not None:
-            nodes = (node for node in nodes if node <= suplim)
-        return tuple(sorted(nodes))
+            roots = (r for r in roots if r <= suplim)
+        return tuple(sorted(roots))
 
 
 def integer_polynomial(poly: Polynomial) -> Polynomial:

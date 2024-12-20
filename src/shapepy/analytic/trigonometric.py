@@ -63,7 +63,7 @@ class Trignomial(BaseAnalytic):
                 values[i] = Fraction(value)
         super().__init__(values)
         self.__freq = frequency
-        self.__roots = None
+        self.__roots = None if self.pmax else tuple()
 
     @property
     def pmax(self) -> int:
@@ -447,8 +447,11 @@ class Trignomial(BaseAnalytic):
         roots = set()
         for i in range(botparam, topparam):
             roots |= set(i + r for r in self.__roots)
-        roots = tuple(sorted(r for r in roots if inflim <= r <= suplim))
-        return roots
+        if inflim is not None:
+            roots = (r for r in roots if inflim <= r)
+        if suplim is not None:
+            roots = (r for r in roots if r <= suplim)
+        return tuple(sorted(roots))
 
     def __call__(self, nodes):
         return self.eval(nodes, 0)
