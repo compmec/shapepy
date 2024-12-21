@@ -8,7 +8,7 @@ import pytest
 from shapepy.core import Empty, Whole
 from shapepy.primitive import Primitive
 from shapepy.shape import ConnectedShape, DisjointShape
-
+from shapepy.shape.boolean import Graph
 
 @pytest.mark.order(31)
 @pytest.mark.dependency(
@@ -42,6 +42,17 @@ class TestTwoCenteredSquares:
     @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
+    def test_graph(self):
+        square_sma = Primitive.square(side=2)
+        square_big = Primitive.square(side=4)
+        jordans = (square_sma.jordan, square_big.jordan)
+        graph = Graph(jordans)
+        str(graph)
+        repr(graph)
+
+    @pytest.mark.order(31)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_graph"])
     def test_or(self):
         square_sma = Primitive.square(side=2)
         square_big = Primitive.square(side=4)
@@ -61,7 +72,7 @@ class TestTwoCenteredSquares:
 
     @pytest.mark.order(31)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
+    @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_graph"])
     def test_and(self):
         square_sma = Primitive.square(side=2)
         square_big = Primitive.square(side=4)

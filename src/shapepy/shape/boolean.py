@@ -24,7 +24,7 @@ walking through the existing edges of the graph
 
 from __future__ import annotations
 
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Union
 
 from ..boolean import BoolOr
 from ..core import Empty, IBoolean2D, Parameter, Scalar
@@ -103,7 +103,7 @@ def remove_wind_edges(
                 continue
             inpta = graph.find_node(i, knota)
             inptb = graph.find_node(i, knotb)
-            graph.remove_edge(i, inpta, inptb)
+            graph.remove_edge((i, inpta, inptb))
     return graph
 
 
@@ -122,8 +122,8 @@ def remove_inverse_edges(graph: Graph) -> Graph:
             edgj = edges[j]
             if edgi[1] != edgj[2] or edgi[2] != edgj[1]:
                 continue
-            graph.remove_edge(edgi[0], edgi[1], edgi[2])
-            graph.remove_edge(edgj[0], edgj[1], edgj[2])
+            graph.remove_edge(edgi)
+            graph.remove_edge(edgj)
     return graph
 
 
@@ -148,8 +148,8 @@ def unite_containers(containers: JordanContainer) -> Iterable[IJordanCurve]:
     graph = Graph(alljordans)
     graph = remove_inverse_edges(graph)
     graph = remove_wind_edges(graph, containers, 1)
-    yield from graph.extract_direct_jordans()
-    yield from graph.extract_mixed_jordans()
+    yield from extract_direct_jordans(graph)
+    yield from extract_mixed_jordans(graph)
 
 
 def intersect_containers(
@@ -175,8 +175,8 @@ def intersect_containers(
     graph = Graph(alljordans)
     graph = remove_inverse_edges(graph)
     graph = remove_wind_edges(graph, containers, 0)
-    yield from graph.extract_direct_jordans()
-    yield from graph.extract_mixed_jordans()
+    yield from extract_direct_jordans(graph)
+    yield from extract_mixed_jordans(graph)
 
 
 def identify_container(
@@ -252,6 +252,88 @@ class Edge(tuple):
         self.first_index = first_index
         self.last_index = last_index
         return self
+
+
+def extract_direct_jordans(graph: Graph) -> Iterable[IJordanCurve]:
+    """
+    Extracts the jordans curves that are not resulted
+    by intersection of the jordans.
+    It means the all/none of the edges are in the final shape
+    """
+    available_jordans = tuple(sorted(set(e[0] for e in graph.edges)))
+    for ijord in available_jordans:
+        jordan = graph.jordans[ijord]
+        if len(graph.allknots[ijord]) != len(jordan.param_curve.knots):
+            continue
+        edges = tuple(e for e in graph.edges if e[0] == ijord)
+        if len(edges) + 1 != len(graph.allknots[ijord]):
+            continue
+        indexpts = set(edge[1] for edge in edges)
+        indexpts |= set(edge[2] for edge in edges)
+        index = 0
+        while index < len(graph.edges):
+            edge = graph.edges[index]
+            if edge.jordan_index == ijord:
+                graph.edges.pop(index)
+            elif edge[1] in indexpts or edge[2] in indexpts:
+                graph.edges.pop(index)
+            else:
+                index += 1
+        yield jordan
+
+
+def extract_sequence(
+    triplets: Iterable[Tuple[int, int, int]]
+) -> Union[None, Iterable[int]]:
+    """
+    This function extract sequences
+    """
+    triplets = tuple(triplets)
+    for i, triplet0 in enumerate(triplets):
+        sequence = [i]
+        lasttri = triplet0
+        while True:
+            if lasttri[2] == triplet0[1]:
+                return tuple(sequence)
+            for j, tripletj in enumerate(triplets):
+                if j in sequence:
+                    continue
+                if tripletj[1] == lasttri[2]:
+                    sequence.append(j)
+                    lasttri = tripletj
+                    break
+            else:
+                break
+    return None
+
+
+def extract_mixed_jordans(graph: Graph) -> Iterable[IJordanCurve]:
+    """
+    This function gives the jordan curves when there's intersection
+    between the jordans, so it's a mix of some jordan curves
+    """
+    while True:
+        sequence = extract_sequence(graph.edges)
+        if sequence is None:
+            break
+        new_edges = tuple(graph.edges[i] for i in sequence)
+        indexpts = set(e[1] for e in new_edges) | set(e[2] for e in new_edges)
+        for edge in tuple(graph.edges):
+            if edge[1] in indexpts or edge[2] in indexpts:
+                graph.remove_edge(edge)
+        segments = []
+        for edge in tuple(new_edges):
+            curve = graph.jordans[edge[0]].param_curve
+            parama = graph.find_param(edge[0], edge[1])
+            paramb = graph.find_param(edge[0], edge[2])
+            if paramb <= parama:
+                if paramb != curve.knots[0]:
+                    raise ValueError("Not expected get here")
+                paramb = curve.knots[-1]
+            segment = curve.section(parama, paramb)
+            segments.append(segment)
+        curve = concatenate(*segments)
+        yield transform_to_jordan(curve)
 
 
 class Graph:
@@ -332,16 +414,16 @@ class Graph:
         self.edges.append(edge)
         self.edges = sorted(self.edges)
 
-    def remove_edge(self, ijordan: int, inodea: int, inodeb: int):
+    def remove_edge(self, edge: Edge):
         """
         Removes given edge from the graph
         """
-        for i, edge in enumerate(self.edges):
-            if edge[0] == ijordan and edge[1] == inodea and edge[2] == inodeb:
+        for i, cedge in enumerate(self.edges):
+            if edge == cedge:
                 self.edges.pop(i)
                 return
         raise ValueError(
-            f"Could not remove edge ({ijordan}, {inodea}, {inodeb})"
+            f"Could not remove edge {edge} from current edges {self.edges}"
         )
 
     def compute_standard_nodes(self):
@@ -400,60 +482,21 @@ class Graph:
                 ptindb = self.find_node(indj, knotb)
                 self.add_edge(indj, ptinda, ptindb)
 
-    def extract_direct_jordans(self) -> Iterable[IJordanCurve]:
-        """
-        Extracts the jordans curves that are not resulted
-        by intersection of the jordans.
-        It means the all/none of the edges are in the final shape
-        """
-        available_jordans = tuple(sorted(set(e[0] for e in self.edges)))
-        for ijord in available_jordans:
-            jordan = self.jordans[ijord]
-            if len(self.allknots[ijord]) != len(jordan.param_curve.knots):
-                continue
-            edges = tuple(e for e in self.edges if e[0] == ijord)
-            if len(edges) + 1 != len(self.allknots[ijord]):
-                continue
-            index = 0
-            while index < len(self.edges):
-                if self.edges[index].jordan_index == ijord:
-                    self.edges.pop(index)
-                else:
-                    index += 1
-            yield jordan
-
-    def extract_mixed_jordans(self) -> Iterable[IJordanCurve]:
-        """
-        This function gives the jordan curves when there's intersection
-        between the jordans, so it's a mix of some jordan curves
-        """
-        available_jordans = tuple(sorted(set(e[0] for e in self.edges)))
-        for ijord in available_jordans:
-            filtedges = sorted(e for e in self.edges if e[0] == ijord)
-            if not filtedges:
-                continue
-            new_edges = [filtedges[0]]
-            while True:
-                if new_edges[-1].last_index == new_edges[0].first_index:
-                    break
-                for cur_edge in self.edges:
-                    if cur_edge.first_index == new_edges[-1].last_index:
-                        new_edges.append(cur_edge)
-                        break
-            segments = []
-            for edge in tuple(new_edges):
-                curve = self.jordans[edge[0]].param_curve
-                parama = self.find_param(edge[0], edge[1])
-                paramb = self.find_param(edge[0], edge[2])
-                if paramb <= parama:
-                    if paramb != curve.knots[0]:
-                        raise ValueError("Not expected get here")
-                    paramb = curve.knots[-1]
-                segment = curve.section(parama, paramb)
-                segments.append(segment)
-                self.remove_edge(edge[0], edge[1], edge[2])
-            curve = concatenate(*segments)
-            yield transform_to_jordan(curve)
+    def __str__(self) -> str:
+        msg = f"Graph with {len(self.jordans)}, "
+        msg += f"{len(self.points)} points, "
+        msg += f"{len(self.nodes)} nodes, "
+        msg += f"{len(self.edges)} edges\n"
+        msg += "Points:\n"
+        for i, point in enumerate(self.points):
+            msg += f"    point {i}: {point}\n"
+        msg += "Nodes:\n"
+        for i, node in enumerate(self.nodes):
+            msg += f"    node {i}: {node}\n"
+        msg += "Edges:\n"
+        for i, edge in enumerate(self.edges):
+            msg += f"    edge {i}: {edge}\n"
+        return msg
 
 
 def extract_points(objs: IBoolean2D) -> Iterable[Point2D]:
