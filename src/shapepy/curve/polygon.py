@@ -354,18 +354,10 @@ class JordanPolygon(PolygonClosedCurve, IJordanCurve):
             return False
         if abs(self.lenght - other.lenght) > 1e-9:
             return False
-        if len(self.vertices) != len(other.vertices):
+        if any(vertex not in other for vertex in self.vertices):
             return False
-        index = 0
-        for j, vertj in enumerate(other.vertices):
-            if vertj == self.vertices[0]:
-                index = j
-                break
-        nverts = len(self.vertices)
-        for i, verti in enumerate(self.vertices):
-            vertj = other.vertices[(index + i) % nverts]
-            if verti != vertj:
-                return False
+        if any(vertex not in self for vertex in other.vertices):
+            return False
         return True
 
     def __str__(self) -> str:

@@ -159,6 +159,15 @@ class IParameterCurve(ICurve):
     def __call__(self, node: Parameter) -> Point2D:
         return self.eval(node, 0)
 
+    def __contains__(self, other):
+        if isinstance(other, Point2D):
+            for param in self.projection(other):
+                point = self.eval(param, 0)
+                if point == other:
+                    return True
+            return False
+        return super().__contains__(other)
+
 
 class IJordanCurve(IClosedCurve):
     """
