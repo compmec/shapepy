@@ -407,13 +407,13 @@ def find_rational_roots(poly: Polynomial) -> Tuple[Fraction, ...]:
     if not isinstance(poly, Polynomial):
         raise TypeError
     if poly.degree == 0:
-        raise ValueError
-    if poly.degree == 1:
-        return (-poly[0] / poly[1],)
-    if not poly[0]:
+        return tuple()
+    if poly[0] == 0:
         poly = Polynomial(tuple(poly)[1:])
         other_roots = find_rational_roots(poly)
-        return tuple(sorted(other_roots + (0,)))
+        return tuple(sorted(other_roots + (Fraction(0),)))
+    if poly.degree == 1:
+        return (-poly[0] / poly[1],)
     if not all(isinstance(coef, (int, Fraction)) for coef in poly):
         return tuple()
     poly = integer_polynomial(poly)
@@ -510,7 +510,7 @@ def find_roots(poly: Polynomial) -> Tuple[Parameter, ...]:
     if not isinstance(poly, Polynomial):
         raise TypeError
     if poly.degree == 0:
-        raise ValueError
+        raise ValueError("Cannot compute root")
     rational_roots = find_rational_roots(poly)
     if rational_roots:
         if len(rational_roots) == poly.degree:

@@ -3,6 +3,7 @@ This file contains some useful functions used to compute analytic functions
 """
 
 import math
+from fractions import Fraction
 from functools import lru_cache
 from typing import Iterable, Tuple
 
@@ -314,6 +315,34 @@ def uarctan2(yval: Scalar, xval: Scalar) -> Scalar:
     if not xval:
         return 0.25 if yval > 0 else -0.25
     return Math.arctan2(float(yval), float(xval)) / Math.tau
+
+
+def uarctan(tanval: Scalar) -> Scalar:
+    """
+    Computes the unitary angle such tangent gives yval.
+
+    The given result is in the interval [-0.5, 0.5]
+
+    Examples
+    --------
+    >>> uarctan(-inf)
+    -0.5
+    >>> uarctan(-1)
+    -0.25
+    >>> uarctan(0)
+    0
+    >>> uarctan2(1)
+    0.25
+    >>> uarctan2(inf)
+    0.5
+    """
+    if tanval == -Math.inf:
+        return -Fraction(1, 2)
+    if tanval == 0:
+        return Fraction(0)
+    if tanval == Math.inf:
+        return Fraction(1, 2)
+    return Math.arctan2(float(tanval), 1) / Math.tau
 
 
 def unit_angle(xval: Scalar, yval: Scalar) -> Scalar:

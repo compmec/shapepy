@@ -22,6 +22,7 @@ class Math:
     sqrt = math.sqrt
     floor = math.floor
     ceil = math.ceil
+    inf = math.inf
 
     # Trigonometric
     tau = math.tau

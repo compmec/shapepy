@@ -507,8 +507,10 @@ def find_trig_roots(trignom: Trignomial) -> Iterable[Parameter]:
             roots[i] = root
         values = tuple(abs(trignom.eval(root)) for root in roots)
         minval = min(values)
-        roots = (r for r, v in zip(roots, values) if abs(v - minval) < 1e-6)
+        roots = (r for r, v in zip(roots, values) if v == minval)
         roots = list(set(roots))
-    values = tuple(trignom.eval(root) for root in roots)
-    roots = tuple(r for v, r in sorted(zip(values, roots)) if abs(v) < 1e-9)
+
+    values = tuple(abs(trignom.eval(root)) for root in roots)
+    minval = min(values)
+    roots = tuple(r for v, r in sorted(zip(values, roots)) if v == minval)
     return tuple(sorted(roots))
