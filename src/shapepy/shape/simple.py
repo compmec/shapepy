@@ -425,6 +425,15 @@ class DisjointShape(IShape, BoolOr):
                 return False
         return not (len(self_subshapes) or len(othe_subshapes))
 
+    def __neg__(self):
+        simples = []
+        for sub in self:
+            if isinstance(sub, SimpleShape):
+                simples.append(-sub)
+            elif isinstance(sub, ConnectedShape):
+                simples += [-s for s in sub]
+        return identify_shape(simples)
+
     def __str__(self) -> str:
         msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self)} subshapes"

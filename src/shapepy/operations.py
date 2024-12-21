@@ -15,7 +15,6 @@ from .boolean import BoolAnd, BoolNot, BoolOr
 from .core import Configuration, Empty, IBoolean2D, IObject2D, IShape, Whole
 from .curve.abc import ICurve
 from .point import Point2D
-from .shape import ConnectedShape, DisjointShape, SimpleShape
 from .shape.simple import intersect_shapes, unite_shapes
 
 
@@ -358,10 +357,8 @@ class Simplify:
         invobj = obje.obje
         if isinstance(invobj, (Point2D, ICurve)):
             return obje
-        if isinstance(invobj, (SimpleShape, ConnectedShape)):
+        if isinstance(invobj, IShape):
             return -invobj
-        if isinstance(invobj, DisjointShape):
-            raise NotImplementedError
         raise NotImplementedError(f"Not expected get here: {obje}")
 
     # pylint: disable=too-many-return-statements
