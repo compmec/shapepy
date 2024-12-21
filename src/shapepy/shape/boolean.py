@@ -24,61 +24,58 @@ walking through the existing edges of the graph
 
 from __future__ import annotations
 
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple
 
 from ..boolean import BoolOr
-from ..core import Empty, IBoolean2D, IShape, Parameter, Whole
+from ..core import Empty, IBoolean2D, Parameter, Scalar
 from ..curve.abc import ICurve, IJordanCurve
 from ..curve.concatenate import concatenate
 from ..curve.intersect import curve_and_curve
 from ..curve.transform import transform_to_jordan
 from ..point import Point2D
-from .simple import ConnectedShape, DisjointShape, SimpleShape
 
 
-def close_shape(shape: IShape) -> IShape:
+class JordanContainer:
     """
-    Gives a new closed shape that contains all the boundaries.
-
-    Parameters
-    ----------
-    shape: IShape
-        The shape to be closed
-    return: IShape:
-        The new closed shape, a new instance
+    A class to store jordan curves that defines
+    Simple, Connected or Disjoint shapes
     """
-    if not isinstance(shape, IShape):
-        raise TypeError
-    if isinstance(shape, SimpleShape):
-        return SimpleShape(shape.jordan, True)
-    return shape.__class__(map(close_shape, shape))
 
+    def __init__(self, alljords: Iterable[Iterable[IJordanCurve]]):
+        alljords = tuple(map(tuple, alljords))
+        for jords in alljords:
+            for jord in jords:
+                if not isinstance(jord, IJordanCurve):
+                    raise TypeError
+        self.alljords = alljords
 
-def flatten2simples(
-    shapes: Union[IShape, Iterable[IShape]]
-) -> Iterable[SimpleShape]:
-    """
-    Transforms a shape or a list of shapes into a list of simple shapes
+    def winding(self, point: Point2D) -> Scalar:
+        """
+        Computes the winding number relative to that shape
+        """
+        if not isinstance(point, Point2D):
+            raise TypeError
+        for jords in self.alljords:
+            for jord in jords:
+                wind = jord.winding(point)
+                if wind == 0:
+                    break
+                if 0 < wind < 1:
+                    return wind
+            else:
+                return 1
+        return 0
 
-    Example
-    -------
-    >>> myshape = SimpleShape(jordan)
-    >>> flatten2simples(myshape)
-    (myshape, )
-    >>> conshap = ConnectedShape([A, B])
-    >>> myshape = DisjointShape([conshap, C])
-    >>> flatten2simples(myshape)
-    (A, B, C)
-    """
-    if isinstance(shapes, SimpleShape):
-        yield shapes
-        return
-    for shape in shapes:
-        yield from flatten2simples(shape)
+    def flatten(self) -> Iterable[IJordanCurve]:
+        """
+        Gives the jordans curves
+        """
+        for jords in self.alljords:
+            yield from jords
 
 
 def remove_wind_edges(
-    graph: Graph, shapes: Iterable[IShape], wind: int
+    graph: Graph, shapes: Iterable[JordanContainer], wind: int
 ) -> Graph:
     """
     This function gets the graph and remove the edges such the winding value
@@ -88,7 +85,7 @@ def remove_wind_edges(
     ----------
     graph: Graph
         The graph with the nodes of the edges of the intersection of jordans
-    shapes: Iterable[IShape]
+    shapes: Iterable[JordanContainer]
         The shapes that originally have generated the graph
     wind: int
         The winding value to be excluded, can be either 0 or 1
@@ -130,42 +127,34 @@ def remove_inverse_edges(graph: Graph) -> Graph:
     return graph
 
 
-def unite_shapes(*shapes: IShape) -> IBoolean2D:
+def unite_containers(containers: JordanContainer) -> Iterable[IJordanCurve]:
     """
     Computes the union of the shapes
 
     Parameters
     ----------
-    shapes: Iterable[IShape]
+    shapes: Iterable[JordanContainer]
         The shapes to be united
     return: IBoolean2D
         The result, can be Whole, Simple, Connected, Disjoint, BoolOr, etc
     """
-    shapes = tuple(shapes)
-    orisimples = tuple(flatten2simples(shapes))  # Original simple shapes
-    jordans = tuple(simple.jordan for simple in orisimples)
-    graph = Graph(jordans)
+    containers = tuple(containers)
+    for container in containers:
+        if not isinstance(container, JordanContainer):
+            raise TypeError(f"Not a JordanContainer, but {type(container)}")
+    alljordans = []
+    for container in containers:
+        alljordans += list(container.flatten())
+    graph = Graph(alljordans)
     graph = remove_inverse_edges(graph)
-    graph = remove_wind_edges(graph, shapes, 1)
-    new_simples = []
-    for jordan in graph.extract_direct_jordans():
-        for simple in orisimples:
-            if id(simple.jordan) == id(jordan):
-                new_simples.append(simple)
-    for jordan in graph.extract_mixed_jordans():
-        curve = jordan.param_curve
-        midcontained = [False] * (len(curve.knots) - 1)
-        for i, (knota, knotb) in enumerate(zip(curve.knots, curve.knots[1:])):
-            midpoint = curve.eval((knota + knotb) / 2, 0)
-            midcontained[i] = any(midpoint in shape for shape in shapes)
-        simple = SimpleShape(jordan, all(midcontained))
-        new_simples.append(simple)
-    if len(new_simples) == 0:
-        return Whole()
-    return identify_shape(new_simples)
+    graph = remove_wind_edges(graph, containers, 1)
+    yield from graph.extract_direct_jordans()
+    yield from graph.extract_mixed_jordans()
 
 
-def intersect_shapes(*shapes: IShape) -> IBoolean2D:
+def intersect_containers(
+    containers: JordanContainer,
+) -> Iterable[IJordanCurve]:
     """
     Computes the intersection of the shapes
 
@@ -176,44 +165,34 @@ def intersect_shapes(*shapes: IShape) -> IBoolean2D:
     return: IBoolean2D
         The result, can be Empty, Simple, Connected, Disjoint, BoolAnd, etc
     """
-    shapes = tuple(shapes)
-    orisimples = tuple(flatten2simples(shapes))  # Original simple shapes
-    jordans = tuple(simple.jordan for simple in orisimples)
-    graph = Graph(jordans)
+    containers = tuple(containers)
+    for container in containers:
+        if not isinstance(container, JordanContainer):
+            raise TypeError(f"Not a JordanContainer, but {type(container)}")
+    alljordans = []
+    for container in containers:
+        alljordans += list(container.flatten())
+    graph = Graph(alljordans)
     graph = remove_inverse_edges(graph)
-    graph = remove_wind_edges(graph, shapes, 0)
-    new_simples = []
-    for jordan in graph.extract_direct_jordans():
-        for simple in orisimples:
-            if id(simple.jordan) == id(jordan):
-                new_simples.append(simple)
-    for jordan in graph.extract_mixed_jordans():
-        curve = jordan.param_curve
-        midcontained = [False] * (len(curve.knots) - 1)
-        for i, (knota, knotb) in enumerate(zip(curve.knots, curve.knots[1:])):
-            midpoint = curve.eval((knota + knotb) / 2, 0)
-            midcontained[i] = all(midpoint in shape for shape in shapes)
-        simple = SimpleShape(jordan, all(midcontained))
-        new_simples.append(simple)
-    if len(new_simples) == 0:
-        return Empty()
-    return identify_shape(new_simples)
+    graph = remove_wind_edges(graph, containers, 0)
+    yield from graph.extract_direct_jordans()
+    yield from graph.extract_mixed_jordans()
 
 
-def identify_shape(
-    simples: Iterable[SimpleShape],
-) -> Union[SimpleShape, ConnectedShape, DisjointShape]:
+def identify_container(
+    simples: Iterable[IJordanCurve],
+) -> JordanContainer:
     """
-    Identify the final shape (Simple, Connected, Disjoint) from the
-    received simple shapes
+    Identify the final container (Simple, Connected, Disjoint) from the
+    received jordan curves
     """
     simples = tuple(simples)
     for simple in simples:
-        if not isinstance(simple, SimpleShape):
+        if not isinstance(simple, IJordanCurve):
             raise TypeError(f"Received {type(simple)}")
 
-    def sorter(simple):
-        return simple.area
+    def sorter(jordan):
+        return jordan.area
 
     simples = sorted(simples, key=sorter)
     disshapes = []
@@ -231,14 +210,8 @@ def identify_shape(
                 connsimples.append(simples.pop(index))
                 index -= 1
             index += 1
-        if len(connsimples) == 1:
-            shape = connsimples[0]
-        else:
-            shape = ConnectedShape(connsimples)
-        disshapes.append(shape)
-    if len(disshapes) == 1:
-        return disshapes[0]
-    return DisjointShape(disshapes)
+        disshapes.append(connsimples)
+    return JordanContainer(disshapes)
 
 
 class Node(tuple):

@@ -5,7 +5,7 @@ This module tests when two shapes have common edges/segments
 import pytest
 
 from shapepy.primitive import Primitive
-from shapepy.shape.boolean import close_shape
+from shapepy.shape.simple import close_shape
 
 
 @pytest.mark.order(33)

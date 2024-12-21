@@ -7,7 +7,7 @@ import pytest
 
 from shapepy.primitive import Primitive
 from shapepy.shape import SimpleShape
-from shapepy.shape.boolean import close_shape
+from shapepy.shape.simple import close_shape
 
 
 @pytest.mark.order(32)

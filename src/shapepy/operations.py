@@ -16,12 +16,7 @@ from .core import Configuration, Empty, IBoolean2D, IObject2D, IShape, Whole
 from .curve.abc import ICurve
 from .point import Point2D
 from .shape import ConnectedShape, DisjointShape, SimpleShape
-from .shape.boolean import (
-    flatten2simples,
-    identify_shape,
-    intersect_shapes,
-    unite_shapes,
-)
+from .shape.simple import intersect_shapes, unite_shapes
 
 
 def permutations(*numbers: int) -> Iterable[Tuple[int, ...]]:
@@ -366,8 +361,7 @@ class Simplify:
         if isinstance(invobj, (SimpleShape, ConnectedShape)):
             return -invobj
         if isinstance(invobj, DisjointShape):
-            simples = (~sub for sub in flatten2simples(invobj))
-            return identify_shape(simples)
+            raise NotImplementedError
         raise NotImplementedError(f"Not expected get here: {obje}")
 
     # pylint: disable=too-many-return-statements

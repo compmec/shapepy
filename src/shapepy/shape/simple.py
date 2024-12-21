@@ -12,9 +12,140 @@ from __future__ import annotations
 from typing import Iterable, Union
 
 from ..boolean import BoolAnd, BoolOr
-from ..core import Empty, IObject2D, IShape, Scalar
+from ..core import Empty, IBoolean2D, IObject2D, IShape, Scalar, Whole
 from ..curve.abc import ICurve, IJordanCurve
 from ..point import GeneralPoint, Point2D
+from .boolean import JordanContainer, intersect_containers, unite_containers
+
+
+def shape_to_container(shape: IShape) -> JordanContainer:
+    if not isinstance(shape, IShape):
+        raise TypeError(f"Not a IShape instance, but {type(shape)}")
+    if isinstance(shape, SimpleShape):
+        alljordans = [(shape.jordan,)]
+    elif isinstance(shape, ConnectedShape):
+        alljordans = [tuple(sub.jordan for sub in shape)]
+    elif isinstance(shape, DisjointShape):
+        alljordans = []
+        for sub in shape:
+            if isinstance(sub, SimpleShape):
+                current = [sub.jordan]
+            elif isinstance(sub, ConnectedShape):
+                current = tuple(s.jordan for s in sub)
+            alljordans.append(current)
+    return JordanContainer(alljordans)
+
+
+def container_to_shape(container: JordanContainer) -> IShape:
+    allconshapes = []
+    for jords in container.alljords:
+        simples = tuple(SimpleShape(jordan) for jordan in jords)
+        conshape = ConnectedShape(simples) if len(simples) > 1 else simples[0]
+        allconshapes.append(conshape)
+    if len(allconshapes) == 1:
+        return allconshapes[0]
+    return DisjointShape(allconshapes)
+
+
+def decide_boundary(
+    jordan: IJordanCurve, controls: Iterable[IShape], union: bool
+) -> IShape:
+    if not isinstance(jordan, IJordanCurve):
+        raise TypeError
+
+    curve = jordan.param_curve
+    knots = curve.knots
+    posmidpts = [True] * (len(knots) - 1)
+    for i, (knota, knotb) in enumerate(zip(knots, knots[1:])):
+        midpoint = curve.eval((knota + knotb) / 2, 0)
+        positions = (midpoint in subctrl for subctrl in controls)
+        posmidpts[i] = any(positions) if union else all(positions)
+    return all(posmidpts)
+
+
+def unite_shapes(*shapes: IShape) -> IBoolean2D:
+    containers = tuple(map(shape_to_container, shapes))
+    new_jordans = tuple(unite_containers(containers))
+    if len(new_jordans) == 0:
+        return Whole()
+    simples = []
+    for jordan in new_jordans:
+        boundary = decide_boundary(jordan, shapes, True)
+        simples.append(SimpleShape(jordan, boundary))
+    shape = identify_shape(simples)
+    return shape
+
+
+def intersect_shapes(*shapes: IShape) -> IBoolean2D:
+    containers = tuple(map(shape_to_container, shapes))
+    new_jordans = tuple(intersect_containers(containers))
+    if len(new_jordans) == 0:
+        return Empty()
+    simples = []
+    for jordan in new_jordans:
+        boundary = decide_boundary(jordan, shapes, False)
+        simples.append(SimpleShape(jordan, boundary))
+    shape = identify_shape(simples)
+    return shape
+
+
+def close_shape(shape: IShape) -> IShape:
+    """
+    Gives a new closed shape that contains all the boundaries.
+
+    Parameters
+    ----------
+    shape: IShape
+        The shape to be closed
+    return: IShape:
+        The new closed shape, a new instance
+    """
+    if not isinstance(shape, IShape):
+        raise TypeError
+    if isinstance(shape, SimpleShape):
+        return SimpleShape(shape.jordan, True)
+    return shape.__class__(map(close_shape, shape))
+
+
+def identify_shape(
+    simples: Iterable[SimpleShape],
+) -> IShape:
+    """
+    Identify the final shape (Simple, Connected, Disjoint) from the
+    received simple shapes
+    """
+    simples = tuple(simples)
+    for simple in simples:
+        if not isinstance(simple, SimpleShape):
+            raise TypeError(f"Received {type(simple)}")
+    if len(simples) == 1:
+        return simples[0]
+
+    def sorter(jordan):
+        return jordan.area
+
+    simples = sorted(simples, key=sorter)
+    disshapes = []
+    while simples:
+        connsimples = [simples.pop(len(simples) - 1)]
+        index = 0
+        while index < len(simples):
+            simple = simples[index]
+            for simplj in connsimples:
+                if simple.jordan not in simplj:
+                    break
+                if simplj.jordan not in simple:
+                    break
+            else:
+                connsimples.append(simples.pop(index))
+                index -= 1
+            index += 1
+        if len(connsimples) == 1:
+            conshape = connsimples[0]
+        else:
+            conshape = ConnectedShape(connsimples)
+        disshapes.append(conshape)
+    return disshapes[0] if len(disshapes) == 1 else DisjointShape(disshapes)
 
 
 class SimpleShape(IShape):
@@ -31,7 +162,7 @@ class SimpleShape(IShape):
         if not isinstance(jordancurve, IJordanCurve):
             raise TypeError
         self.__jordan = jordancurve
-        self.__boundary = bool(boundary)
+        self.boundary = boundary
 
     @property
     def jordan(self) -> IJordanCurve:
@@ -54,6 +185,10 @@ class SimpleShape(IShape):
         Flag that tells if shape contains the boundary or not
         """
         return self.__boundary
+
+    @boundary.setter
+    def boundary(self, newval: bool):
+        self.__boundary = bool(newval)
 
     def __str__(self) -> str:
         msg = f"Simple Shape of area {self.area} with vertices:\n"
