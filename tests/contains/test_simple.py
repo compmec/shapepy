@@ -184,20 +184,20 @@ def test_jordan():
     assert big_square.jordan not in small_square
     assert big_square.jordan in big_square
 
-    assert ~(small_square.jordan) in small_square
-    assert ~(small_square.jordan) in big_square
-    assert ~(big_square.jordan) not in small_square
-    assert ~(big_square.jordan) in big_square
+    assert small_square.jordan.reverse() in small_square
+    assert small_square.jordan.reverse() in big_square
+    assert big_square.jordan.reverse() not in small_square
+    assert big_square.jordan.reverse() in big_square
 
     assert small_square.jordan not in (~small_square)
     assert small_square.jordan not in (~big_square)
     assert big_square.jordan in (~small_square)
     assert big_square.jordan not in (~big_square)
 
-    assert ~(small_square.jordan) not in (~small_square)
-    assert ~(small_square.jordan) not in (~big_square)
-    assert ~(big_square.jordan) in (~small_square)
-    assert ~(big_square.jordan) not in (~big_square)
+    assert small_square.jordan.reverse() not in (~small_square)
+    assert small_square.jordan.reverse() not in (~big_square)
+    assert big_square.jordan.reverse() in (~small_square)
+    assert big_square.jordan.reverse() not in (~big_square)
 
 
 @pytest.mark.order(22)

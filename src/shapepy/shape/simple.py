@@ -212,7 +212,7 @@ class SimpleShape(IShape):
         return self.jordan == other.jordan
 
     def __neg__(self) -> SimpleShape:
-        return self.__class__(~self.jordan, not self.boundary)
+        return self.__class__(self.jordan.reverse(), not self.boundary)
 
     def __contains_curve(self, curve: ICurve) -> bool:
         if not isinstance(curve, ICurve):

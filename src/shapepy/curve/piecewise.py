@@ -213,6 +213,18 @@ class JordanPiecewise(IJordanCurve, PiecewiseClosedCurve):
     def param_curve(self) -> PiecewiseClosedCurve:
         return self
 
+    def reverse(self) -> JordanPiecewise:
+        newfuncs = []
+        for xfunc, yfunc in self.functions:
+            xfunc = xfunc.__class__(
+                -c if i % 2 else c for i, c in enumerate(xfunc)
+            )
+            yfunc = yfunc.__class__(
+                -c if i % 2 else c for i, c in enumerate(yfunc)
+            )
+            newfuncs.append((xfunc, yfunc))
+        return self.__class__(newfuncs)
+
 
 def compute_lenght(curve: PiecewiseCurve, tolerance: Scalar = 1e-9) -> Scalar:
     """

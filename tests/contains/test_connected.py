@@ -120,8 +120,8 @@ def test_jordan():
     assert small_jordan not in connected
     assert big_jordan in connected
 
-    assert (~small_jordan) not in connected
-    assert (~big_jordan) in connected
+    assert small_jordan.reverse() not in connected
+    assert big_jordan.reverse() in connected
 
 
 @pytest.mark.order(23)

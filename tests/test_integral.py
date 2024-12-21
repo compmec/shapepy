@@ -146,8 +146,11 @@ class TestQuadratic:
     def test_area(self):
         shape = TestQuadratic.create_simple_shape()
         test = polynomial(shape, (0, 0))
-        good = 10 / 3
-        assert abs(test - good) < 1e-9
+        assert abs(test - 10 / 3) < 1e-9
+        test = polynomial(~shape, (0, 0))
+        assert abs(test + 10 / 3) < 1e-9
+        
+
 
     @pytest.mark.order(10)
     @pytest.mark.timeout(10)
@@ -213,6 +216,7 @@ class TestCircle:
         for radius in (1, 2, 3, 10):
             circle = Primitive.circle(radius=radius, center=(0, 0))
             assert polynomial(circle, (0, 0)) == math.pi * radius**2
+            assert polynomial(~circle, (0, 0)) == -math.pi * radius**2
 
     @pytest.mark.order(10)
     @pytest.mark.timeout(10)
@@ -222,6 +226,9 @@ class TestCircle:
     def test_first(self):
         for radius in (1, 2, 3, 10):
             circle = Primitive.circle(radius=radius, center=(0, 0))
+            assert polynomial(circle, (1, 0)) == 0
+            assert polynomial(circle, (0, 1)) == 0
+            circle = ~circle
             assert polynomial(circle, (1, 0)) == 0
             assert polynomial(circle, (0, 1)) == 0
 
@@ -240,6 +247,10 @@ class TestCircle:
             assert polynomial(circle, (2, 0)) == math.pi * radius**4 / 4
             assert polynomial(circle, (1, 1)) == 0
             assert polynomial(circle, (0, 2)) == math.pi * radius**4 / 4
+            circle = ~circle
+            assert polynomial(circle, (2, 0)) == -math.pi * radius**4 / 4
+            assert polynomial(circle, (1, 1)) == 0
+            assert polynomial(circle, (0, 2)) == -math.pi * radius**4 / 4
 
     @pytest.mark.order(10)
     @pytest.mark.timeout(10)
@@ -263,6 +274,7 @@ class TestCircle:
                     good *= 2 * math.pi / (expx + expy + 2)
                     good *= TestCircle.sincos_integ(expx, expy)
                     assert abs(test - good) < 1e-6
+            
 
     @pytest.mark.order(10)
     @pytest.mark.timeout(10)

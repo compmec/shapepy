@@ -374,7 +374,7 @@ class JordanPolygon(PolygonClosedCurve, IJordanCurve):
     def __repr__(self) -> str:
         return self.__str__()
 
-    def __invert__(self) -> JordanPolygon:
+    def reverse(self) -> JordanPolygon:
         newvertices = tuple(self.vertices[::-1])
         return self.__class__(newvertices)
 

@@ -123,7 +123,7 @@ class TestJordanPolygon:
         negtri2 = JordanPolygon([(0, 1), (1, 0), (0, 0)])
         for pos in (postri0, postri1, postri2):
             for neg in (negtri0, negtri1, negtri2):
-                assert pos == (~neg)
+                assert pos == neg.reverse()
                 # assert (~pos) == neg
                 # assert ~(~pos) == pos
                 # assert ~(~neg) == neg
@@ -221,10 +221,10 @@ class TestTransformationPolygon:
         assert inve_square != orig_square
         assert test_square == orig_square
         assert test_square != inve_square
-        test_square = ~test_square
+        test_square = test_square.reverse()
         assert test_square != orig_square
         assert test_square == inve_square
-        test_square = ~test_square
+        test_square = test_square.reverse()
         assert test_square == orig_square
         assert test_square != inve_square
 

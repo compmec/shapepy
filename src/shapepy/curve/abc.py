@@ -172,3 +172,12 @@ class IJordanCurve(IClosedCurve):
         Gives the parametrized curve that defines this jordan curve
         """
         raise NotImplementedError
+
+    @abstractmethod
+    def reverse(self) -> IJordanCurve:
+        """
+        Change the jordan's curve orientation.
+
+        Creates a copy of the curve
+        """
+        raise NotImplementedError

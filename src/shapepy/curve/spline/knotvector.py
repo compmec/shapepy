@@ -6,7 +6,7 @@ It's used to compute the Spline basis functions
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import Iterable, Optional
+from typing import Iterable, Optional, Tuple
 
 from ...core import Parameter
 
@@ -17,14 +17,14 @@ class KnotVector(tuple):
     """
 
     def __new__(
-        cls, knotvector: Iterable[Parameter], degree: Optional[int] = None
+        cls, knotvector: Tuple[Parameter, ...], degree: Optional[int] = None
     ):
         if isinstance(knotvector, cls):
             return knotvector
         return super(KnotVector, cls).__new__(cls, tuple(knotvector))
 
     def __init__(
-        self, knotvector: Iterable[Parameter], degree: Optional[int] = None
+        self, knotvector: Tuple[Parameter, ...], degree: Optional[int] = None
     ):
         knotvector = list(knotvector)
         if degree is None:

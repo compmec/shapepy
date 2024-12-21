@@ -319,3 +319,10 @@ class JordanSpline(SplineClosedCurve, IJordanCurve):
     def __repr__(self) -> str:
         degree, npts = self.knotvector.degree, self.knotvector.npts
         return f"JordanCurve (deg {degree}, {npts})"
+
+    def reverse(self) -> JordanSpline:
+        knota = self.knotvector.knots[0]
+        knotb = self.knotvector.knots[-1]
+        vector = (knota + knotb - node for node in self.knotvector[::-1])
+        knotvector = KnotVector(tuple(vector), self.knotvector.degree)
+        return self.__class__(knotvector, self.ctrlpoints[::-1])
