@@ -296,6 +296,9 @@ def compute_winding(curve: PiecewiseClosedCurve, point: Point2D) -> Scalar:
 
     # Getting here, the only possible result is either 0 or 1
     nodes = sorted(set(nodes) | set(curve.knots))
+    for _ in range(4):
+        nodes += list((a + b) / 2 for a, b in zip(nodes, nodes[1:]))
+        nodes = sorted(nodes)
     vertices = tuple(curve.eval(node) - point for node in nodes)
     nverts = len(nodes)
     wind: Scalar = 0
