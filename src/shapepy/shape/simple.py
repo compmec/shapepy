@@ -12,7 +12,15 @@ from __future__ import annotations
 from typing import Iterable, Union
 
 from ..boolean import BoolAnd, BoolOr
-from ..core import Empty, IBoolean2D, IObject2D, IShape, Scalar, Whole
+from ..core import (
+    Configuration,
+    Empty,
+    IBoolean2D,
+    IObject2D,
+    IShape,
+    Scalar,
+    Whole,
+)
 from ..curve.abc import ICurve, IJordanCurve
 from ..point import GeneralPoint, Point2D
 from .boolean import JordanContainer, intersect_containers, unite_containers
@@ -61,6 +69,24 @@ def decide_boundary(
         positions = (midpoint in subctrl for subctrl in controls)
         posmidpts[i] = any(positions) if union else all(positions)
     return all(posmidpts)
+
+
+def invert_shape(shape: IShape) -> IShape:
+    """
+    Computes the inversion of a shape
+    """
+    if isinstance(shape, SimpleShape):
+        return shape.__class__(shape.jordan.reverse(), not shape.boundary)
+    if isinstance(shape, ConnectedShape):
+        return DisjointShape(map(invert_shape, shape))
+
+    simples = []
+    for sub in shape:
+        if isinstance(sub, SimpleShape):
+            simples.append(invert_shape(sub))
+        elif isinstance(sub, ConnectedShape):
+            simples += list(map(invert_shape, sub))
+    return identify_shape(simples)
 
 
 def unite_shapes(*shapes: IShape) -> IBoolean2D:
@@ -148,7 +174,26 @@ def identify_shape(
     return disshapes[0] if len(disshapes) == 1 else DisjointShape(disshapes)
 
 
-class SimpleShape(IShape):
+class BaseShape(IShape):
+    def __or__(self, other: IObject2D):
+        if Configuration.AUTOSIMPLIFY:
+            if isinstance(other, BaseShape):
+                return unite_shapes(self, other)
+        return super().__or__(other)
+
+    def __and__(self, other: IObject2D):
+        if Configuration.AUTOSIMPLIFY:
+            if isinstance(other, BaseShape):
+                return intersect_shapes(self, other)
+        return super().__and__(other)
+
+    def __invert__(self):
+        if Configuration.AUTOSIMPLIFY:
+            return invert_shape(self)
+        return super().__invert__()
+
+
+class SimpleShape(BaseShape):
     """
     SimpleShape class
 
@@ -210,9 +255,6 @@ class SimpleShape(IShape):
         if self.boundary != other.boundary:
             return False
         return self.jordan == other.jordan
-
-    def __neg__(self) -> SimpleShape:
-        return self.__class__(self.jordan.reverse(), not self.boundary)
 
     def __contains_curve(self, curve: ICurve) -> bool:
         if not isinstance(curve, ICurve):
@@ -329,7 +371,7 @@ class SimpleShape(IShape):
         )
 
 
-class ConnectedShape(IShape, BoolAnd):
+class ConnectedShape(BaseShape, BoolAnd):
 
     """
     ConnectedShape Class
@@ -356,9 +398,6 @@ class ConnectedShape(IShape, BoolAnd):
             return False
         return True
 
-    def __neg__(self) -> DisjointShape:
-        return DisjointShape(~simple for simple in self)
-
     @property
     def area(self) -> Scalar:
         return sum(subshape.area for subshape in self)
@@ -384,7 +423,7 @@ class ConnectedShape(IShape, BoolAnd):
         return 1
 
 
-class DisjointShape(IShape, BoolOr):
+class DisjointShape(BaseShape, BoolOr):
     """
     DisjointShape Class
 
@@ -424,15 +463,6 @@ class DisjointShape(IShape, BoolOr):
             else:
                 return False
         return not (len(self_subshapes) or len(othe_subshapes))
-
-    def __neg__(self):
-        simples = []
-        for sub in self:
-            if isinstance(sub, SimpleShape):
-                simples.append(-sub)
-            elif isinstance(sub, ConnectedShape):
-                simples += [-s for s in sub]
-        return identify_shape(simples)
 
     def __str__(self) -> str:
         msg = f"Disjoint shape with total area {self.area} and "
