@@ -7,6 +7,7 @@ piecewise analytic functions
 
 from __future__ import annotations
 
+from fractions import Fraction
 from typing import Iterable, Tuple
 
 from ..analytic.utils import unit_angle
@@ -43,6 +44,7 @@ class PiecewiseCurve(IParameterCurve):
                     raise ValueError(msg)
         self.__funcs = functions
         self.__lenght = compute_lenght(self)
+        self.__knots = tuple(Fraction(i) for i in range(len(functions) + 1))
 
     @property
     def nsegs(self) -> int:
@@ -52,8 +54,8 @@ class PiecewiseCurve(IParameterCurve):
         return len(self.__funcs)
 
     @property
-    def knots(self) -> Tuple[Parameter, ...]:
-        return tuple(range(self.nsegs + 1))
+    def knots(self) -> Iterable[Parameter]:
+        return self.__knots
 
     @property
     def functions(self) -> Iterable[Tuple[IAnalytic, IAnalytic]]:
@@ -92,6 +94,7 @@ class PiecewiseCurve(IParameterCurve):
         nodes = tuple(
             node for node, dist2 in zip(nodes, squares) if dist2 == minsqua
         )
+
         return nodes
 
     def __eq__(self, other: object) -> bool:
