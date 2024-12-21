@@ -47,13 +47,14 @@ def concatenate_polygon(*curves: PolygonOpenCurve) -> PolygonOpenCurve:
     curves = tuple(curves)
     if not all(isinstance(curve, PolygonOpenCurve) for curve in curves):
         raise TypeError
-    final = curves[0]
-    for curve in curves[1:]:
-        if final.vertices[-1] != curve.vertices[0]:
+    for curvea, curveb in zip(curves, curves[1:]):
+        if curveb.vertices[0] != curvea.vertices[-1]:
             raise ValueError
-        vertices = list(final.vertices) + list(curve.vertices[1:])
-        final = PolygonOpenCurve(vertices)
-    return final
+
+    vertices = list(curves[0].vertices)
+    for curve in curves[1:]:
+        vertices += list(curve.vertices[1:])
+    return PolygonOpenCurve(vertices)
 
 
 def concatenate_piecewise(*curves: PiecewiseOpenCurve) -> PiecewiseOpenCurve:
