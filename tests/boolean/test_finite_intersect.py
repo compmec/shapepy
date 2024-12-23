@@ -16,6 +16,7 @@ from shapepy.shape.simple import close_shape
         "tests/test_primitive.py::test_end",
         "tests/test_shape.py::test_end",
         "tests/boolean/test_empty_whole.py::test_end",
+        "tests/boolean/test_and_curves.py::test_end",
         "tests/boolean/test_nobound_intersect.py::test_end",
     ],
     scope="session",
