@@ -45,6 +45,7 @@ class PiecewiseCurve(IParameterCurve):
         self.__funcs = functions
         self.__lenght = compute_lenght(self)
         self.__knots = tuple(Fraction(i) for i in range(len(functions) + 1))
+        self.__vertices = tuple(map(self.eval, self.knots))
 
     @property
     def nsegs(self) -> int:
@@ -67,6 +68,10 @@ class PiecewiseCurve(IParameterCurve):
     @property
     def lenght(self) -> Scalar:
         return self.__lenght
+
+    @property
+    def vertices(self) -> Iterable[Point2D]:
+        return self.__vertices
 
     def eval(self, node: Parameter, derivate: int = 0) -> Point2D:
         index = int(Math.floor(node))
@@ -179,10 +184,6 @@ class PiecewiseOpenCurve(PiecewiseCurve, IOpenCurve):
             raise ValueError
         return super().eval(node, derivate)
 
-    @property
-    def vertices(self) -> Tuple[Point2D, ...]:
-        return tuple(map(self.eval, self.knots))
-
 
 class PiecewiseClosedCurve(PiecewiseCurve, IClosedCurve):
     """
@@ -216,8 +217,8 @@ class PiecewiseClosedCurve(PiecewiseCurve, IClosedCurve):
         return area / 2
 
     @property
-    def vertices(self) -> Tuple[Point2D, ...]:
-        return tuple(map(self.eval, self.knots[:-1]))
+    def vertices(self) -> Iterable[Point2D]:
+        return super().vertices[:-1]
 
     def projection(self, point: GeneralPoint) -> Iterable[Parameter]:
         nodes = tuple(super().projection(point))
