@@ -96,49 +96,16 @@ class PolygonCurve(IParameterCurve):
         return True
 
     def move(self, vector: GeneralPoint) -> Point2D:
-        """
-        Moves the curve in the plane by the given vector
-
-        Parameters
-        ----------
-        vector: Point
-            The pair (x, y) that must be added to the coordinates
-        return: PolygonCurve
-            Gives a polygonal curve, either open, closed or a jordan
-        """
         if not isinstance(vector, Point2D):
             vector = Point2D(vector)
         return self.__class__(vertex.move(vector) for vertex in self.vertices)
 
     def scale(self, xscale: Scalar, yscale: Scalar) -> Point2D:
-        """
-        Scales the curve in the X and Y directions
-
-        Parameters
-        ----------
-        xscale: Scalar
-            The amount to be scaled in the X direction
-        yscale: Scalar
-            The amount to be scaled in the Y direction
-        """
         return self.__class__(
             vertex.scale(xscale, yscale) for vertex in self.vertices
         )
 
     def rotate(self, uangle: Scalar) -> Point2D:
-        """
-        Rotates the point around the origin.
-
-        The angle mesure is unitary:
-        * angle = 1 means 360 degrees rotation
-        * angle = 0.5 means 180 degrees rotation
-        * angle = 0.125 means 45 degrees rotation
-
-        Parameters
-        ----------
-        angle: Scalar
-            The unitary angle the be rotated
-        """
         return self.__class__(
             vertex.rotate(uangle) for vertex in self.vertices
         )
