@@ -13,7 +13,7 @@ import numpy as np
 
 from ..analytic.utils import binom, uarctan2
 from ..core import Math
-from ..point import GeneralPoint, Point2D, treat_scalar
+from ..point import GeneralPoint, Point2D
 from .abc import (
     IClosedCurve,
     IJordanCurve,
@@ -125,7 +125,7 @@ class PolygonCurve(IParameterCurve):
             vertex.scale(xscale, yscale) for vertex in self.vertices
         )
 
-    def rotate(self, uangle: Scalar, degrees: bool = False) -> Point2D:
+    def rotate(self, uangle: Scalar) -> Point2D:
         """
         Rotates the point around the origin.
 
@@ -137,12 +137,8 @@ class PolygonCurve(IParameterCurve):
         Parameters
         ----------
         angle: Scalar
-            The unitary angle the be rotated.
-        degrees: bool, default = False
-            If the angle is mesure in degrees
+            The unitary angle the be rotated
         """
-        if degrees:
-            uangle = treat_scalar(uangle) / 360
         return self.__class__(
             vertex.rotate(uangle) for vertex in self.vertices
         )

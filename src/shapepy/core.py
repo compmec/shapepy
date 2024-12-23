@@ -98,7 +98,7 @@ class IObject2D(ABC):
         """
         raise NotImplementedError
 
-    def rotate(self, uangle: Scalar, degrees: bool = False) -> IObject2D:
+    def rotate(self, uangle: Scalar) -> IObject2D:
         """
         Rotates the object around the origin.
 
@@ -110,16 +110,14 @@ class IObject2D(ABC):
         Parameters
         ----------
         angle: Scalar
-            The unitary angle the be rotated.
-        degrees: bool, default = False
-            Flag that tells if angle is mesure in radians
+            The unitary angle the be rotated
 
         Example
         -------
         >>> mypoint = Point(2, 3)
-        >>> mypoint.rotate(0.5)  # 180 degrees
+        >>> mypoint.rotate(180/360)  # 180 degrees
         (-2, -3)
-        >>> mypoint.rotate(90, degrees=True)
+        >>> mypoint.rotate(90/360)  # 90 degrees
         (-3, 2)
         """
         raise NotImplementedError
@@ -243,7 +241,7 @@ class Empty(IBoolean2D):
     def scale(self, xscale, yscale) -> Empty:
         return self
 
-    def rotate(self, uangle, degrees=False) -> Empty:
+    def rotate(self, uangle) -> Empty:
         return self
 
 
@@ -313,7 +311,7 @@ class Whole(IBoolean2D):
     def scale(self, xscale, yscale) -> Whole:
         return self
 
-    def rotate(self, uangle, degrees=False) -> Whole:
+    def rotate(self, uangle) -> Whole:
         return self
 
 

@@ -350,7 +350,7 @@ class SimpleShape(BaseShape):
         """
         return self.__class__(self.jordan.scale(xscale, yscale), self.boundary)
 
-    def rotate(self, uangle: Scalar, degrees: bool = False) -> Point2D:
+    def rotate(self, uangle: Scalar) -> Point2D:
         """
         Rotates the simple shape around the origin.
 
@@ -363,12 +363,8 @@ class SimpleShape(BaseShape):
         ----------
         angle: Scalar
             The unitary angle the be rotated.
-        degrees: bool, default = False
-            If the angle is mesure in degrees
         """
-        return self.__class__(
-            self.jordan.rotate(uangle, degrees), self.boundary
-        )
+        return self.__class__(self.jordan.rotate(uangle), self.boundary)
 
 
 class ConnectedShape(BaseShape, BoolAnd):

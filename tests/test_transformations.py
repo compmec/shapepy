@@ -61,11 +61,9 @@ class TestSingleton:
         empty = Empty()
         whole = Whole()
         assert empty.rotate(0) is empty
-        assert empty.rotate(0, True) is empty
-        assert empty.rotate(90, True) is empty
+        assert empty.rotate(90 / 360) is empty
         assert whole.rotate(0) is whole
-        assert whole.rotate(0, True) is whole
-        assert whole.rotate(90, True) is whole
+        assert whole.rotate(90 / 360) is whole
 
     @pytest.mark.order(9)
     @pytest.mark.dependency(
@@ -127,14 +125,13 @@ class TestPoint:
     def test_rotate(self):
         point = Point2D((0, 0))
         assert point.rotate(0) == (0, 0)
-        assert point.rotate(0, True) == (0, 0)
-
+        
         point = Point2D((1, 0))
         assert point.rotate(0) == (1, 0)
-        assert point.rotate(90, True) == (0, 1)
-        assert point.rotate(180, True) == (-1, 0)
-        assert point.rotate(270, True) == (0, -1)
-        assert point.rotate(360, True) == (1, 0)
+        assert point.rotate(90 / 360) == (0, 1)
+        assert point.rotate(180 / 360) == (-1, 0)
+        assert point.rotate(270 / 360) == (0, -1)
+        assert point.rotate(1) == (1, 0)
 
     @pytest.mark.order(9)
     @pytest.mark.dependency(
@@ -288,7 +285,7 @@ class TestConnected:
         big_square = Primitive.square(4, (1, 2))
         sma_square = Primitive.square(2, (1, 2))
         con_shape = ConnectedShape([big_square, ~sma_square])
-        test_shape = con_shape.rotate(180, True)
+        test_shape = con_shape.rotate(180 / 360)
 
         big_square = Primitive.square(4, (-1, -2))
         sma_square = Primitive.square(2, (-1, -2))

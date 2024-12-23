@@ -195,9 +195,9 @@ class TestTransformationPolygon:
         test_square = JordanPolygon(test_square_pts)
 
         assert test_square == good_square
-        test_square = test_square.rotate(1 / 12)  # 30 degrees
+        test_square = test_square.rotate(30 / 360)  # 30 degrees
         assert test_square != good_square
-        test_square = test_square.rotate(60, degrees=True)
+        test_square = test_square.rotate(60 / 360)  # 60 degrees
         assert test_square == good_square
 
     @pytest.mark.order(4)

@@ -85,7 +85,7 @@ class Point2D(IBoolean2D):
         """
         return self.__class__(xscale * self[0], yscale * self[1])
 
-    def rotate(self, uangle: Scalar, degrees: bool = False) -> Point2D:
+    def rotate(self, uangle: Scalar) -> Point2D:
         """
         Rotates the point around the origin.
 
@@ -98,19 +98,15 @@ class Point2D(IBoolean2D):
         ----------
         angle: Scalar
             The unitary angle the be rotated.
-        degrees: bool, default = False
-            If the angle is mesure in degrees
 
         Example
         -------
         >>> mypoint = Point(2, 3)
-        >>> mypoint.rotate(0.5)  # 180 degrees
+        >>> mypoint.rotate(180/360)  # 180 degrees
         (-2, -3)
-        >>> mypoint.rotate(90, degrees=True)
+        >>> mypoint.rotate(90/360)
         (-3, 2)
         """
-        if degrees:
-            uangle = treat_scalar(uangle) / 360
         sin, cos = usincos(uangle)
         newx = self[0] * cos - self[1] * sin
         newy = self[0] * sin + self[1] * cos

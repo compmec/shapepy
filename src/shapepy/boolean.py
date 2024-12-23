@@ -69,7 +69,7 @@ class BoolNot(IBoolean2D):
         """
         return self.__class__(self.obje.scale(xscale, yscale))
 
-    def rotate(self, uangle: Scalar, degrees: bool = False) -> BoolOr:
+    def rotate(self, uangle: Scalar) -> BoolOr:
         """
         Rotates the object around the origin.
 
@@ -82,10 +82,8 @@ class BoolNot(IBoolean2D):
         ----------
         angle: Scalar
             The unitary angle the be rotated.
-        degrees: bool, default = False
-            If the angle is mesure in degrees
         """
-        return self.__class__(self.obje.rotate(uangle, degrees))
+        return self.__class__(self.obje.rotate(uangle))
 
 
 class BoolOr(IBoolean2D):
@@ -160,7 +158,7 @@ class BoolOr(IBoolean2D):
         """
         return self.__class__(sub.scale(xscale, yscale) for sub in self)
 
-    def rotate(self, uangle: Scalar, degrees: bool = False) -> BoolOr:
+    def rotate(self, uangle: Scalar) -> BoolOr:
         """
         Rotates the object around the origin.
 
@@ -172,11 +170,9 @@ class BoolOr(IBoolean2D):
         Parameters
         ----------
         angle: Scalar
-            The unitary angle the be rotated.
-        degrees: bool, default = False
-            If the angle is mesure in degrees
+            The unitary angle the be rotated
         """
-        return self.__class__(sub.rotate(uangle, degrees) for sub in self)
+        return self.__class__(sub.rotate(uangle) for sub in self)
 
 
 class BoolAnd(IBoolean2D):
@@ -256,7 +252,7 @@ class BoolAnd(IBoolean2D):
         """
         return self.__class__(sub.scale(xscale, yscale) for sub in self)
 
-    def rotate(self, uangle: Scalar, degrees: bool = False) -> BoolOr:
+    def rotate(self, uangle: Scalar) -> BoolOr:
         """
         Rotates the object around the origin.
 
@@ -268,8 +264,6 @@ class BoolAnd(IBoolean2D):
         Parameters
         ----------
         angle: Scalar
-            The unitary angle the be rotated.
-        degrees: bool, default = False
-            If the angle is mesure in degrees
+            The unitary angle the be rotated
         """
-        return self.__class__(sub.rotate(uangle, degrees) for sub in self)
+        return self.__class__(sub.rotate(uangle) for sub in self)
