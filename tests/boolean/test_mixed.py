@@ -26,6 +26,7 @@ def test_begin():
 
 
 @pytest.mark.order(37)
+@pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
@@ -35,15 +36,8 @@ def test_polygon_circle():
     circle = Primitive.circle(radius=2, center=(1, 0))
     square = Primitive.square(side=2, center=(0, 0))
     shape = square | circle
-
-    jordan = shape.jordan
-    print(type(jordan))
-    for i, (xfunc, yfunc) in enumerate(jordan.functions):
-        print(f"x{i} = {xfunc}")
-        print(f"y{i} = {yfunc}")
     assert shape.area == 2 + Math.tau
 
-    assert False
 
 @pytest.mark.order(37)
 @pytest.mark.dependency(

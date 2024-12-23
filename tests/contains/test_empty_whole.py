@@ -1,6 +1,6 @@
 """
-This file contains the code to test the relative position of an object with respect
-to another
+This file contains the code to test the relative position of
+an object with respect to another
 """
 
 import pytest

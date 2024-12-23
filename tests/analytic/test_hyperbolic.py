@@ -6,7 +6,6 @@ import math
 
 import numpy as np
 import pytest
-import sympy as sp
 
 from shapepy.analytic.hyperbolic import Hypernomial
 
@@ -139,8 +138,6 @@ def test_mult():
     sinh2t = Hypernomial([0, 0, 0, 1, 0])
     cosh2t = Hypernomial([0, 0, 0, 0, 1])
 
-    val = cosht * cosht - sinht * sinht
-    print("1 = ", val)
     assert cosht * cosht - sinht * sinht == 1
     assert cosh2t * cosh2t - sinh2t * sinh2t == 1
     assert 2 * sinht * cosht == sinh2t
@@ -274,8 +271,8 @@ def test_divide_zero():
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_divide_scalar"])
 def test_divide_pmax1():
-    sint = Hypernomial([0, 1, 0])
-    cost = Hypernomial([0, 0, 1])
+    Hypernomial([0, 1, 0])
+    Hypernomial([0, 0, 1])
 
 
 @pytest.mark.order(3)

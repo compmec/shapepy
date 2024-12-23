@@ -8,7 +8,6 @@ import pytest
 from shapepy.analytic.helper import check_shifted_polynomial
 from shapepy.analytic.polynomial import (
     Polynomial,
-    find_numerical_roots,
     find_rational_roots,
     find_roots,
 )

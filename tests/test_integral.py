@@ -149,8 +149,6 @@ class TestQuadratic:
         assert abs(test - 10 / 3) < 1e-9
         test = polynomial(~shape, (0, 0))
         assert abs(test + 10 / 3) < 1e-9
-        
-
 
     @pytest.mark.order(10)
     @pytest.mark.timeout(10)
@@ -274,7 +272,6 @@ class TestCircle:
                     good *= 2 * math.pi / (expx + expy + 2)
                     good *= TestCircle.sincos_integ(expx, expy)
                     assert abs(test - good) < 1e-6
-            
 
     @pytest.mark.order(10)
     @pytest.mark.timeout(10)

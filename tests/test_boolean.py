@@ -90,10 +90,10 @@ def test_general():
     objecta = BoolOr([pointa, pointb])
     objectb = BoolOr([pointa, pointb])
     object = BoolAnd([objecta, objectb])
-    temp = Simplify.expand(object)
+    Simplify.expand(object)
 
     object = BoolNot(object)
-    temp = Simplify.expand(object)
+    Simplify.expand(object)
 
 
 @pytest.mark.order(3)

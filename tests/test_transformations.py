@@ -1,6 +1,6 @@
 """
 Tests related to shape module, more specifically about the class SimpleShape
-Which are in fact positive shapes defined only by one jordan curve 
+Which are in fact positive shapes defined only by one jordan curve
 """
 
 import pytest
@@ -9,8 +9,7 @@ from shapepy.core import Empty, Whole
 from shapepy.curve.polygon import PolygonClosedCurve
 from shapepy.point import Point2D
 from shapepy.primitive import Primitive
-from shapepy.shape import ConnectedShape, DisjointShape, SimpleShape
-from shapepy.shape.simple import identify_shape
+from shapepy.shape import ConnectedShape, DisjointShape
 
 
 @pytest.mark.order(9)
@@ -125,7 +124,7 @@ class TestPoint:
     def test_rotate(self):
         point = Point2D((0, 0))
         assert point.rotate(0) == (0, 0)
-        
+
         point = Point2D((1, 0))
         assert point.rotate(0) == (1, 0)
         assert point.rotate(90 / 360) == (0, 1)

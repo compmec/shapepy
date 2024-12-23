@@ -87,7 +87,6 @@ class TestOpenCurve:
     def test_evaluate_derivate(self):
         vertices = [(0, 0), (1, 0), (1, 1)]
         curve = open_spline(vertices)
-        print(curve.eval(0, 1))
         assert curve.eval(0, 1) == (1, 0)
         assert curve.eval(0.5, 1) == (1, 0)
         assert curve.eval(1, 1) == (0, 1)
@@ -344,7 +343,6 @@ class TestClosedCurve:
         assert curve.winding((1, 0.5)) == 0.5
         assert curve.winding((0.5, 1)) == 0.5
         assert curve.winding((0, 0.5)) == 0.5
-        print("----")
         assert curve.winding((0.5, 0.5)) == 1
         assert curve.winding((0.5, -1)) == 0
 

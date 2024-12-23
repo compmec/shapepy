@@ -1,4 +1,3 @@
-import numpy as np
 import pytest
 
 from shapepy import ConnectedShape, Empty, Primitive, Whole
@@ -166,28 +165,6 @@ def test_connected():
     assert connected in big_square
     assert connected in (~small_square)
     assert connected not in (~big_square)
-
-
-@pytest.mark.order(23)
-@pytest.mark.dependency(
-    depends=[
-        "test_begin",
-        "test_empty",
-        "test_whole",
-        "test_point",
-        "test_jordan",
-        "test_simple",
-    ]
-)
-def test_connected():
-    small_square = Primitive.square(side=2)
-    big_square = Primitive.square(side=4)
-    connected = ConnectedShape([big_square, ~small_square])
-
-    assert (~small_square) in (~small_square)
-    assert (~big_square) in (~small_square)
-    assert (~small_square) not in (~big_square)
-    assert (~big_square) in (~big_square)
 
 
 @pytest.mark.order(23)

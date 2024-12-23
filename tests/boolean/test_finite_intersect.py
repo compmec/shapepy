@@ -6,7 +6,6 @@ Which are in fact positive shapes defined only by one jordan curve
 import pytest
 
 from shapepy.primitive import Primitive
-from shapepy.shape import SimpleShape
 from shapepy.shape.simple import close_shape
 
 

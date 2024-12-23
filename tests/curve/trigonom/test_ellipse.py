@@ -8,8 +8,7 @@ import pytest
 
 from shapepy.analytic import Trignomial
 from shapepy.analytic.utils import usincos
-from shapepy.core import Math
-from shapepy.curve.piecewise import JordanPiecewise, PiecewiseClosedCurve
+from shapepy.curve.piecewise import PiecewiseClosedCurve
 
 
 @pytest.mark.order(4)

@@ -5,10 +5,8 @@ not intersect teach other.
 
 import pytest
 
-from shapepy.core import Empty, Whole
+from shapepy.core import Empty
 from shapepy.point import Point2D
-from shapepy.primitive import Primitive
-from shapepy.shape import ConnectedShape, DisjointShape
 
 
 @pytest.mark.order(32)

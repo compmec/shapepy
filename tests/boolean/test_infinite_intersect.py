@@ -37,7 +37,7 @@ class TestTriangle:
         pass
 
     @pytest.mark.order(33)
-    @pytest.mark.timeout(40)
+    @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestTriangle::test_begin"])
     def test_or_triangles(self):
         vertices0 = [(0, 0), (1, 0), (0, 1)]
@@ -51,7 +51,7 @@ class TestTriangle:
         assert test == good
 
     @pytest.mark.order(33)
-    @pytest.mark.timeout(40)
+    @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
             "TestTriangle::test_begin",
@@ -70,7 +70,7 @@ class TestTriangle:
         assert test == good
 
     @pytest.mark.order(33)
-    @pytest.mark.timeout(40)
+    @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
             "TestTriangle::test_begin",

@@ -10,6 +10,7 @@ from shapepy.primitive import Primitive
 from shapepy.shape import ConnectedShape, DisjointShape
 from shapepy.shape.boolean import Graph
 
+
 @pytest.mark.order(31)
 @pytest.mark.dependency(
     depends=[

@@ -23,6 +23,7 @@ from shapepy.point import Point2D
 def test_begin():
     pass
 
+
 @pytest.mark.order(32)
 @pytest.mark.timeout(2)
 @pytest.mark.dependency(
