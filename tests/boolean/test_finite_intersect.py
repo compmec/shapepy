@@ -9,7 +9,7 @@ from shapepy.primitive import Primitive
 from shapepy.shape.simple import close_shape
 
 
-@pytest.mark.order(32)
+@pytest.mark.order(34)
 @pytest.mark.dependency(
     depends=[
         "tests/test_point.py::test_end",
@@ -31,12 +31,12 @@ class TestIntersectionSimple:
     number of intersection points
     """
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(34)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(34)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestIntersectionSimple::test_begin"])
     def test_or_two_rombos(self):
@@ -50,7 +50,7 @@ class TestIntersectionSimple:
         test_shape = close_shape(square0 | square1)
         assert test_shape == good_shape
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(34)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestIntersectionSimple::test_begin"])
     def test_and_two_rombos(self):
@@ -61,7 +61,7 @@ class TestIntersectionSimple:
         good = Primitive.regular_polygon(nsides=4, radius=1, center=(0, 0))
         assert test == good
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(34)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -81,7 +81,7 @@ class TestIntersectionSimple:
         assert close_shape(square0 - square1) == left_shape
         assert close_shape(square1 - square0) == right_shape
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(34)
     @pytest.mark.dependency(
         depends=[
             "TestIntersectionSimple::test_begin",
@@ -94,7 +94,7 @@ class TestIntersectionSimple:
         pass
 
 
-@pytest.mark.order(32)
+@pytest.mark.order(34)
 @pytest.mark.dependency(
     depends=[
         "TestIntersectionSimple::test_end",

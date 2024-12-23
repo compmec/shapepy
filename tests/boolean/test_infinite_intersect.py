@@ -8,7 +8,7 @@ from shapepy.primitive import Primitive
 from shapepy.shape.simple import close_shape
 
 
-@pytest.mark.order(33)
+@pytest.mark.order(35)
 @pytest.mark.dependency(
     depends=[
         "tests/test_empty_whole.py::test_end",
@@ -28,7 +28,7 @@ def test_begin():
 
 
 class TestTriangle:
-    @pytest.mark.order(33)
+    @pytest.mark.order(35)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -37,7 +37,7 @@ class TestTriangle:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(33)
+    @pytest.mark.order(35)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestTriangle::test_begin"])
     def test_or_triangles(self):
@@ -51,7 +51,7 @@ class TestTriangle:
         good = Primitive.polygon(vertices)
         assert test == good
 
-    @pytest.mark.order(33)
+    @pytest.mark.order(35)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -70,7 +70,7 @@ class TestTriangle:
         good = Primitive.polygon(vertices)
         assert test == good
 
-    @pytest.mark.order(33)
+    @pytest.mark.order(35)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -91,7 +91,7 @@ class TestTriangle:
 
         assert close_shape(test) == good
 
-    @pytest.mark.order(33)
+    @pytest.mark.order(35)
     @pytest.mark.dependency(
         depends=[
             "TestTriangle::test_begin",
@@ -104,7 +104,7 @@ class TestTriangle:
         pass
 
 
-@pytest.mark.order(33)
+@pytest.mark.order(35)
 @pytest.mark.dependency(
     depends=[
         "TestTriangle::test_end",

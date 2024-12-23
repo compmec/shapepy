@@ -91,9 +91,10 @@ class TestPolygonAndTrignomial:
         yfunc = Trignomial([0, 1, 0])
         circle = JordanPiecewise([(xfunc, yfunc)])
 
-        inters = IntersectPoints.curve_and_curve(square, circle)
-        points = [Point2D(-1, 1), Point2D(1, 1)]
-        assert BoolOr(inters) == BoolOr(points)
+        good = BoolOr([Point2D(1, -1), Point2D(1, 1)])
+        test = BoolOr(IntersectPoints.curve_and_curve(square, circle))
+
+        assert test == good
 
     @pytest.mark.order(33)
     @pytest.mark.timeout(10)
