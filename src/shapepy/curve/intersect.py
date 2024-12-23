@@ -160,7 +160,7 @@ class IntersectPoints:
             raise TypeError
         if not isinstance(curveb, PolygonCurve):
             raise TypeError
-        inters = set()
+        paramsa = set()
         for a, vectora in enumerate(curvea.vectors):
             vertexa = curvea.vertices[a]
             for b, vectorb in enumerate(curveb.vectors):
@@ -174,8 +174,7 @@ class IntersectPoints:
                     uparam = vectora.cross(diforigin) / denom
                     if uparam < 0 or 1 < uparam:
                         continue
-                    point = curvea.eval(a + tparam)
-                    inters.add(tuple(point))
+                    paramsa.add(a + tparam)
                     continue
                 if vectora.cross(diforigin):
                     continue  # Not coincident lines
@@ -189,9 +188,14 @@ class IntersectPoints:
                     continue
                 if paramd < paramc:
                     paramc, paramd = paramd, paramc
-                inters.add(tuple(vertexa + paramc * vectora))
-                inters.add(tuple(vertexa + paramd * vectora))
-        return map(Point2D, inters)
+                paramsa.add(a + paramc)
+        paramsa = sorted(paramsa)
+        if len(paramsa) == 0:
+            return tuple()
+        if paramsa[0] == curvea.knots[0] and paramsa[-1] == curvea.knots[-1]:
+            paramsa.pop(-1)
+        points = tuple(map(curvea.eval, paramsa))
+        return points
 
     @staticmethod
     def piecewise_and_piecewise(
@@ -202,21 +206,51 @@ class IntersectPoints:
         if not isinstance(curveb, PiecewiseCurve):
             raise TypeError
 
-        inters = set()
+        candidates = set()
+        for knota in curvea.knots:
+            pointa = curvea.eval(knota)
+            bparams = tuple(curveb.projection(pointa))
+            for paramb in bparams:
+                pointb = curveb.eval(paramb, 0)
+                if pointb == pointa:
+                    candidates.add(knota)
+        for knotb in curveb.knots:
+            pointb = curveb.eval(knotb)
+            aparams = tuple(curvea.projection(pointb))
+            for parama in aparams:
+                pointa = curvea.eval(parama, 0)
+                if pointb == pointa:
+                    candidates.add(parama)
         for a, (axf, ayf) in enumerate(curvea.functions):
             ainf, asup = curvea.knots[a], curvea.knots[a + 1]
             apack = (axf, ayf, ainf, asup)
             for b, (bxf, byf) in enumerate(curveb.functions):
                 binf, bsup = curveb.knots[b], curveb.knots[b + 1]
                 bpack = (bxf, byf, binf, bsup)
-                inters |= IntersectPoints.pack_and_pack(apack, bpack)
-        return map(Point2D, inters)
+                candidates |= IntersectPoints.pack_and_pack(apack, bpack)
+        candidates = sorted(candidates)
+        paramsa = set()
+        for knot in curvea.knots:
+            index = 0
+            while index < len(candidates):
+                if abs(candidates[index] - knot) < 1e-6:
+                    candidates.pop(index)
+                    paramsa.add(knot)
+                else:
+                    index += 1
+        paramsa = sorted(set(candidates) | set(paramsa))
+        if len(paramsa) == 0:
+            return tuple()
+        if paramsa[0] == curvea.knots[0] and paramsa[-1] == curvea.knots[-1]:
+            paramsa.pop(-1)
+        points = tuple(map(curvea.eval, paramsa))
+        return points
 
     @staticmethod
     def pack_and_pack(
         apack: Tuple[IAnalytic, IAnalytic, Parameter, Parameter],
         bpack: Tuple[IAnalytic, IAnalytic, Parameter, Parameter],
-    ) -> Set[Tuple[Scalar, Scalar]]:
+    ) -> Set[Parameter]:
         axf, ayf, ainf, asup = apack
         bxf, byf, binf, bsup = bpack
         otipos = {type(axf), type(ayf), type(bxf), type(byf)}
@@ -246,23 +280,24 @@ class IntersectPoints:
             delb = max(binf + bknot, min(bsup + bknot, delb))
             return dela, delb
 
-        ndivs = 16
-        aknots = tuple(Fraction(i, ndivs) for i in range(ndivs + 1))
-        bknots = tuple(Fraction(i, ndivs) for i in range(ndivs + 1))
-        inters = set()
-        for i in range(ndivs + 1):
+        ndivs = 32
+        divis = tuple(Fraction(i, ndivs) for i in range(1, ndivs))
+        aknots = tuple((1 - divi) * ainf + divi * asup for divi in divis)
+        bknots = tuple((1 - divi) * binf + divi * bsup for divi in divis)
+        paramsa = set()
+        for i in range(ndivs - 1):
             for bknot in bknots:
                 aknot = aknots[i]
-                for _ in range(4):  # Newton iteration
+                for _ in range(6):  # Newton iteration
                     dela, delb = newton(aknot, bknot)
                     if not (dela or delb):
                         break
-                    aknot = max(0, min(1, aknot - dela))
-                    bknot = max(0, min(1, bknot - delb))
+                    aknot -= dela
+                    bknot -= delb
                 axv = axf(aknot)
                 ayv = ayf(aknot)
                 bxv = bxf(bknot)
                 byv = byf(bknot)
                 if (axv - bxv) ** 2 + (ayv - byv) ** 2 < 1e-6:
-                    inters.add((axv, ayv))
-        return inters
+                    paramsa.add(aknot)
+        return paramsa

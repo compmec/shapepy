@@ -152,9 +152,9 @@ class Point2D(IBoolean2D):
         return self.__str__()
 
     def __eq__(self, other: object) -> bool:
-        if not isinstance(other, Point2D):
-            other = self.__class__(other)
-        return max(abs(self[0] - other[0]), abs(self[1] - other[1])) < 1e-9
+        delx = abs(self[0] - other[0])
+        dely = abs(self[1] - other[1])
+        return max(delx, dely) < 1e-6
 
     def __add__(self, other: Union[Point2D, Tuple[Scalar, Scalar]]) -> Point2D:
         if not isinstance(other, Point2D):
