@@ -10,7 +10,7 @@ from __future__ import annotations
 from fractions import Fraction
 from typing import Iterable, Tuple
 
-from ..analytic.utils import unit_angle
+from ..analytic.utils import unit_angle, usincos
 from ..core import IAnalytic, Math, Scalar
 from ..point import GeneralPoint, Point2D
 from .abc import (
@@ -145,6 +145,28 @@ class PiecewiseCurve(IParameterCurve):
             yfunc = yfunc.shift(indexb - indexa)
             secfuncs[-1] = (xfunc, yfunc)
         return PiecewiseOpenCurve(secfuncs)
+
+    def move(self, vector: GeneralPoint) -> Point2D:
+        newfuncs = (
+            (xfunc + vector[0], yfunc + vector[1])
+            for xfunc, yfunc in self.functions
+        )
+        return self.__class__(newfuncs)
+
+    def scale(self, xscale: Scalar, yscale: Scalar) -> Point2D:
+        newfuncs = (
+            (xscale * xfunc, yscale * yfunc) for xfunc, yfunc in self.functions
+        )
+        return self.__class__(newfuncs)
+
+    def rotate(self, uangle: Scalar) -> Point2D:
+        sin, cos = usincos(uangle)
+        newfuncs = []
+        for oldxfunc, oldyfunc in self.functions:
+            newxfunc = oldxfunc * cos - oldyfunc * sin
+            newyfunc = oldxfunc * sin + oldyfunc * cos
+            newfuncs.append((newxfunc, newyfunc))
+        return self.__class__(newfuncs)
 
 
 class PiecewiseOpenCurve(PiecewiseCurve, IOpenCurve):
