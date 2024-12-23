@@ -26,11 +26,10 @@ from __future__ import annotations
 
 from typing import Iterable, Tuple, Union
 
-from ..boolean import BoolOr
-from ..core import Empty, IBoolean2D, Parameter, Scalar
-from ..curve.abc import ICurve, IJordanCurve
+from ..core import Parameter, Scalar
+from ..curve.abc import IJordanCurve
 from ..curve.concatenate import concatenate
-from ..curve.intersect import curve_and_curve
+from ..curve.intersect import IntersectPoints
 from ..curve.transform import transform_to_jordan
 from ..point import Point2D
 
@@ -499,37 +498,6 @@ class Graph:
         return msg
 
 
-def extract_points(objs: IBoolean2D) -> Iterable[Point2D]:
-    """
-    Receives the result of the intersection of two curves
-    and returns only the points that are in this intersection:
-    * If it's a direct point, then it gives only the point
-    * If it's a curve, then it gives the vertices of this curve
-    """
-    if not isinstance(objs, IBoolean2D):
-        raise TypeError
-    if isinstance(objs, BoolOr):
-        objs = tuple(objs)
-    else:
-        objs = (objs,)
-    points = []
-    for obj in objs:
-        if isinstance(obj, Point2D):
-            points.append(obj)
-        elif isinstance(obj, ICurve):
-            points += list(obj.vertices)
-        else:
-            raise NotImplementedError
-    setpts = []
-    for point in points:
-        for setpt in setpts:
-            if point == setpt:
-                break
-        else:
-            setpts.append(point)
-    return setpts
-
-
 def two_curve_inter(
     curvea: IJordanCurve, curveb: IJordanCurve
 ) -> Iterable[Tuple[Parameter, Parameter]]:
@@ -541,13 +509,9 @@ def two_curve_inter(
         raise TypeError
     if not isinstance(curveb, IJordanCurve):
         raise TypeError
-    objs = curve_and_curve(curvea, curveb)
-    if isinstance(objs, Empty):
-        return
     curvea = curvea.param_curve
     curveb = curveb.param_curve
-    setpts = extract_points(objs)
-    for point in setpts:
+    for point in IntersectPoints.curve_and_curve(curvea, curveb):
         parama = curvea.projection(point)[0]
         paramb = curveb.projection(point)[0]
         yield (parama, paramb)
