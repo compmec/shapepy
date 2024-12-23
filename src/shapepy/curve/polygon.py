@@ -6,14 +6,14 @@ This file defines the Polygonal curves:
 """
 from __future__ import annotations
 
-from abc import abstractmethod
+from fractions import Fraction
 from typing import Iterable, Tuple, Union
 
 import numpy as np
 
 from ..analytic.utils import binom, uarctan2
 from ..core import Math
-from ..point import GeneralPoint, Point2D
+from ..point import GeneralPoint, Point2D, treat_points
 from .abc import (
     IClosedCurve,
     IJordanCurve,
@@ -38,10 +38,7 @@ def clean_open_curve(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
     return: Iterable[Point2D]
         The cleaned vertices
     """
-    vertices = list(vertices)
-    for i, vertex in enumerate(vertices):
-        if not isinstance(vertex, Point2D):
-            vertices[i] = Point2D(vertex)
+    vertices = tuple(treat_points(vertices))
     keep_vertices = [True] * len(vertices)
     for i, vi1 in enumerate(vertices):
         if i == 0 or i + 1 == len(vertices):
@@ -61,14 +58,22 @@ class PolygonCurve(IParameterCurve):
     """
 
     def __init__(self, vertices: Iterable[GeneralPoint]):
-        self.__vertices = tuple(clean_open_curve(vertices))
+        vertices = tuple(clean_open_curve(vertices))
+        vectors = tuple(v1 - v0 for v0, v1 in zip(vertices, vertices[1:]))
+        self.__vertices = vertices
+        self.__vectors = vectors
+        self.__lenght = sum(map(abs, vectors))
+        self.__knots = tuple(map(Fraction, range(len(self.vectors) + 1)))
+
+    @property
+    def knots(self) -> Iterable[Parameter]:
+        return self.__knots
 
     @property
     def vertices(self) -> Iterable[Point2D]:
         return self.__vertices
 
     @property
-    @abstractmethod
     def vectors(self) -> Iterable[Point2D]:
         """
         Gives the evaluated vectors of the polygon,
@@ -79,11 +84,11 @@ class PolygonCurve(IParameterCurve):
         return: Iterable[Point]
             The points which were evaluated at knots
         """
-        raise NotImplementedError
+        return self.__vectors
 
     @property
     def lenght(self) -> Scalar:
-        return sum(map(abs, self.vectors))
+        return self.__lenght
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PolygonCurve):
@@ -110,10 +115,6 @@ class PolygonCurve(IParameterCurve):
             vertex.rotate(uangle) for vertex in self.vertices
         )
 
-    @property
-    def knots(self) -> Iterable[Parameter]:
-        return tuple(range(len(self.vectors) + 1))
-
     def projection(self, point: GeneralPoint) -> Iterable[Parameter]:
         if not isinstance(point, Point2D):
             point = Point2D(point)
@@ -138,17 +139,6 @@ class PolygonOpenCurve(PolygonCurve, IOpenCurve):
     """
     Class that defines a open Polygonal Curve
     """
-
-    def __init__(self, vertices: Tuple[GeneralPoint, ...]):
-        super().__init__(vertices)
-        vectors = []
-        for verti, vertj in zip(self.vertices, self.vertices[1:]):
-            vectors.append(vertj - verti)
-        self.__vectors = tuple(vectors)
-
-    @property
-    def vectors(self) -> Tuple[Point2D, ...]:
-        return self.__vectors
 
     def __str__(self) -> str:
         nverts = len(self.vertices)
@@ -199,17 +189,13 @@ class PolygonClosedCurve(PolygonCurve, IClosedCurve):
     """
 
     def __init__(self, vertices: Tuple[GeneralPoint, ...]):
+        vertices = list(treat_points(vertices))
+        vertices.append(vertices[0])
         super().__init__(vertices)
-        vectors = []
-        nverts = len(self.vertices)
-        for i, verti in enumerate(self.vertices):
-            vertj = self.vertices[(i + 1) % nverts]
-            vectors.append(vertj - verti)
-        self.__vectors = tuple(vectors)
 
     @property
-    def vectors(self) -> Tuple[Point2D, ...]:
-        return self.__vectors
+    def vertices(self) -> Iterable[Point2D]:
+        return super().vertices[:-1]
 
     @property
     def area(self) -> Scalar:

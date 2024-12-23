@@ -4,7 +4,7 @@ File that contains only the Point2D object
 from __future__ import annotations
 
 from fractions import Fraction
-from typing import Tuple, Union
+from typing import Iterable, Tuple, Union
 
 from .analytic.utils import usincos
 from .boolean import BoolNot
@@ -183,3 +183,11 @@ class Point2D(IBoolean2D):
 
 
 GeneralPoint = Union[Point2D, Tuple[Scalar, Scalar]]
+
+
+def treat_points(vertices: Iterable[GeneralPoint]) -> Iterable[Point2D]:
+    """
+    Converts points to Point2D instances
+    """
+    for vertex in vertices:
+        yield vertex if isinstance(vertex, Point2D) else Point2D(vertex)
