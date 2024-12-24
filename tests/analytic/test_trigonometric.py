@@ -62,10 +62,13 @@ def test_evaluate_sincos():
 @pytest.mark.dependency(depends=["test_build", "test_evaluate_sincos"])
 def test_evaluate_natural():
     trig = Trignomial([1])  # p(x) = 1
+    unodes = tuple(i / 16 for i in range(16 + 1))
     assert trig.eval(0) == 1
     assert trig.eval(1) == 1
     assert trig.eval(2) == 1
     assert trig.eval(1.0) == 1
+    for unode in unodes:
+        assert trig.eval(unode) == 1
 
     trig = Trignomial([1, 2])  # p(x) = 1 + 2*sin(2*pi*x)
     assert trig.eval(0) == 1
@@ -73,6 +76,9 @@ def test_evaluate_natural():
     assert trig.eval(2) == 1
     assert trig.eval(0.0) == 1
     assert trig.eval(1.0) == 1
+    for unode in unodes:
+        sin, cos = usincos(unode)
+        assert trig.eval(unode) == 1 + 2 * sin
 
     trig = Trignomial([1, 2, 3])  # p(x) = 1 + 2*sin(2*pi*x) + 3*cos(2*pi*x)
     assert trig.eval(0) == 4
@@ -82,6 +88,26 @@ def test_evaluate_natural():
     assert trig.eval(1.0) == 4
 
     assert trig(1.0) == 4
+
+    for unode in unodes:
+        sin, cos = usincos(unode)
+        good = 1 + 2 * sin + 3 * cos
+        test = trig.eval(unode)
+        assert abs(test - good) < 1e-9
+
+    trig = Trignomial([1, 2, 3], 2)
+    for unode in unodes:
+        sin, cos = usincos(2 * unode)
+        good = 1 + 2 * sin + 3 * cos
+        test = trig.eval(unode)
+        assert abs(test - good) < 1e-9
+
+    trig = Trignomial([1, 2, 3], 2)
+    assert trig.eval(0) == 4
+    assert trig.eval(0.5) == 4
+    assert trig.eval(0.125) == 3
+    assert trig.eval(0.25) == -2
+    assert trig.eval(0.375) == -1
 
 
 @pytest.mark.order(3)
@@ -278,16 +304,33 @@ def test_evaluate_derivate():
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_shift():
-    trig = Trignomial([0, 0, 1])  # cost
-    assert trig.shift(0.25) == Trignomial([0, 1])  # sint
+    nodes = tuple(i / 16 for i in range(4 * 16 + 1))
+    even_trig = Trignomial([3, 0, -2, 0, 4, 0, -6])
+    odd_trig = Trignomial([0, 1, 0, -3, 0, 5, 0, -7])
+    for ori_trig in (even_trig, odd_trig):
+        for val in (-2, -1, 0, 1, 2):
+            assert ori_trig.shift(val) == ori_trig
+
+    for ori_trig in (even_trig, odd_trig):
+        for shi_val in (1, 0.5, 0.25, 0.125):
+            shi_trig = ori_trig.shift(shi_val)
+            for node in nodes:
+                good = ori_trig.eval(node - shi_val)
+                test = shi_trig.eval(node)
+                assert abs(test - good) < 1e-9
 
 
 @pytest.mark.order(3)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_scale():
-    trig = Trignomial([1, 2, 3], 1)
-    assert trig.scale(2) == Trignomial([1, 2, 3], 2)
+    oritrig = Trignomial([1, 2, 3], 1)
+    scatrig = oritrig.scale(2)
+    assert scatrig == Trignomial([1, 2, 3], 2)
+
+    nodes = tuple(i / 16 for i in range(4 * 16 + 1))
+    for node in nodes:
+        assert scatrig.eval(node / 2) == oritrig.eval(node)
 
 
 @pytest.mark.order(3)

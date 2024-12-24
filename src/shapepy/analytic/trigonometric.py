@@ -228,9 +228,10 @@ class Trignomial(BaseAnalytic):
         """
         if derivate != 0:
             return self.derivate(derivate).eval(node, 0)
+        node *= self.frequency
         results = self[0]
         for pval in range(1, self.pmax + 1):
-            sin, cos = usincos(node)
+            sin, cos = usincos(pval * node)
             results += self[2 * pval - 1] * sin + self[2 * pval] * cos
         return results
 
@@ -375,6 +376,9 @@ class Trignomial(BaseAnalytic):
         >>> print(new_trig)
         1 - 2*cos(tau*x)
         """
+        amount = (self.frequency * amount) % 1
+        if amount == 0:
+            return self
         newcoefs = [0] * (1 + 2 * self.pmax)
         newcoefs[0] += self[0]
         for pval in range(1, self.pmax + 1):
