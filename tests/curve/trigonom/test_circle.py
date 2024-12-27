@@ -9,7 +9,7 @@ import pytest
 from shapepy.analytic import Trignomial
 from shapepy.analytic.utils import usincos
 from shapepy.core import Math
-from shapepy.curve.piecewise import PiecewiseClosedCurve
+from shapepy.curve.piecewise import PiecewiseClosedCurve, PiecewiseOpenCurve
 
 
 @pytest.mark.order(4)
@@ -94,12 +94,55 @@ def test_winding():
 
 
 @pytest.mark.order(4)
+@pytest.mark.timeout(2)
+@pytest.mark.dependency(depends=["test_create_circle"])
+def test_section():
+    xfunc = Trignomial([0, 0, 1])
+    yfunc = Trignomial([0, 1, 0])
+    fullcurve = PiecewiseClosedCurve([(xfunc, yfunc)])
+    assert fullcurve.section(0, 1) == fullcurve
+
+    nodes = tuple(Fraction(i, 16) for i in range(16))
+    for nodea, nodeb in zip(nodes, nodes[1:]):
+        curve = fullcurve.section(nodea, nodeb)
+        assert len(curve.functions) == 1
+        for xfunc, yfunc in curve.functions:
+            assert isinstance(xfunc, Trignomial)
+            assert isinstance(yfunc, Trignomial)
+            assert xfunc.frequency == 1 / 16
+            assert yfunc.frequency == 1 / 16
+        assert fullcurve.eval(nodea) == curve.vertices[0]
+        assert fullcurve.eval(nodeb) == curve.vertices[-1]
+
+    xfunc = Trignomial([0, 0, 1], 1 / 4)
+    yfunc = Trignomial([0, 1, 0], 1 / 4)
+    curve = PiecewiseOpenCurve([(xfunc, yfunc)])
+    assert fullcurve.section(0, 1 / 4) == curve
+
+    xfunc = Trignomial([0, -1, 0], 1 / 4)
+    yfunc = Trignomial([0, 0, 1], 1 / 4)
+    curve = PiecewiseOpenCurve([(xfunc, yfunc)])
+    assert fullcurve.section(1 / 4, 2 / 4) == curve
+
+    xfunc = Trignomial([0, 0, -1], 1 / 4)
+    yfunc = Trignomial([0, -1, 0], 1 / 4)
+    curve = PiecewiseOpenCurve([(xfunc, yfunc)])
+    assert fullcurve.section(2 / 4, 3 / 4) == curve
+
+    xfunc = Trignomial([0, 1, 0], 1 / 4)
+    yfunc = Trignomial([0, 0, -1], 1 / 4)
+    curve = PiecewiseOpenCurve([(xfunc, yfunc)])
+    assert fullcurve.section(3 / 4, 1) == curve
+
+
+@pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
         "test_create_circle",
         "test_winding",
         "test_projection",
+        "test_section",
     ]
 )
 def test_end():
