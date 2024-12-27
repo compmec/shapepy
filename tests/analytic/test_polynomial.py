@@ -292,18 +292,38 @@ def test_pow():
 @pytest.mark.dependency(depends=["test_compare"])
 def test_shift():
     poly = Polynomial([-1, 3, -3, 1])  # (x-1)^3
-    assert poly.shift(-1) == Polynomial([0, 0, 0, 1])  # x^3
+    good = Polynomial([0, 0, 0, 1])  # x^3
+    test = poly.shift(-1)
+    assert test == good
 
     poly = Polynomial([1, 8, 24, 32, 16])  # (1+2*x)^4
-    assert poly.shift(1 / 2) == Polynomial([0, 0, 0, 0, 16])  # (2*x)^4
+    good = Polynomial([0, 0, 0, 0, 16])
+    test = poly.shift(1 / 2)  # (2*x)^4
+    assert test == good
+
+    nodes = tuple(i / 16 for i in range(4 * 16 + 1))
+    even_poly = Polynomial([2, 0, -4, 0, 6, 0, -8])
+    odd_poly = Polynomial([0, 1, 0, -3, 0, 5, 0, -7])
+    for shi_val in (1, 0.5, 0.25, 0.125):
+        for ori_trig in (even_poly, odd_poly):
+            shi_trig = ori_trig.shift(shi_val)
+            for node in nodes:
+                good = ori_trig.eval(node - shi_val)
+                test = shi_trig.eval(node)
+                assert abs(test - good) < 1e-9
 
 
 @pytest.mark.order(3)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_scale():
-    poly = Polynomial([1, 2, 3])  # 1 + 2*x + 3*x^2
-    assert poly.scale(2) == Polynomial([1, 4, 12])
+    oripoly = Polynomial([1, 2, 3])  # 1 + 2*x + 3*x^2
+    scapoly = oripoly.scale(2)
+    assert scapoly == Polynomial([1, 4, 12])
+
+    nodes = tuple(i / 16 for i in range(4 * 16 + 1))
+    for node in nodes:
+        assert scapoly.eval(node / 2) == oripoly.eval(node)
 
 
 @pytest.mark.order(3)
