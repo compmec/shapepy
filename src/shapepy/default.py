@@ -22,6 +22,8 @@ from fractions import Fraction
 from numbers import Integral, Rational, Real
 from typing import Any, Callable
 
+from .logger import debug
+
 
 def real(number: Any) -> Real:
     """
@@ -57,6 +59,7 @@ def real(number: Any) -> Real:
     return float(number)
 
 
+@debug("shapepy.default", 0)
 def finite(number: Any) -> Real:
     """
     Converts the number to an finite number.
