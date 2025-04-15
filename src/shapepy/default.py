@@ -35,9 +35,9 @@ def real(number: Any) -> Real:
     >>> real("inf")
     inf
     """
-    if isinstance(node, Real):
-        return node
-    return float(node)
+    if isinstance(number, Real):
+        return number
+    return float(number)
 
 
 def finite(number: Any) -> Real:
@@ -70,13 +70,13 @@ def finite(number: Any) -> Real:
     >>> finite(1.5)
     1.5
     """
-    node = real(node)
-    if not isfinite(node):
-        raise ValueError(f"{node} is not finite")
-    return node
+    number = real(number)
+    if not isfinite(number):
+        raise ValueError(f"{number} is not finite")
+    return number
 
 
-def integer(node: number) -> Integral:
+def integer(number: Any) -> Integral:
     """
     Converts the number to an integer.
 
@@ -99,9 +99,9 @@ def integer(node: number) -> Integral:
     >>> integer(1)
     1
     """
-    if isinstance(node, Integral):
-        return node
-    return int(node)
+    if isinstance(number, Integral):
+        return number
+    return int(number)
 
 
 tau: Real = math.tau
@@ -151,7 +151,7 @@ def tursin(angle: Real):
     >>> tursin(1)  # sine of 360 degrees
     0
     """
-    return radsin(tau * node)
+    return radsin(tau * angle)
 
 
 def turcos(angle: Real):
@@ -186,7 +186,7 @@ def turcos(angle: Real):
     >>> turcos(1)  # cossinus of 360 degrees
     1
     """
-    return radcos(tau * node)
+    return radcos(tau * angle)
 
 
 def isreal(value: object) -> bool:
@@ -215,13 +215,13 @@ def isreal(value: object) -> bool:
     return isinstance(value, Real)
 
 
-def isfinite(node: Real) -> bool:
+def isfinite(number: Real) -> bool:
     """
     Check if a number is finite.
 
     Parameters
     ----------
-    node : Real
+    number : Real
         The number to check for being finite
 
     Returns
@@ -236,16 +236,16 @@ def isfinite(node: Real) -> bool:
     >>> isfinite(0)
     True
     """
-    return isreal(node) and math.isfinite(node)
+    return isreal(number) and math.isfinite(number)
 
 
-def isinfinity(node: Real) -> bool:
+def isinfinity(number: Real) -> bool:
     """
     Check if a number is negative or positive infinity.
 
     Parameters
     ----------
-    node : Real
+    number : Real
         The number to check for being infinity
 
     Returns
@@ -262,16 +262,16 @@ def isinfinity(node: Real) -> bool:
     >>> isinfinity(0)
     False
     """
-    return isreal(node) and math.isinf(node)
+    return isreal(number) and math.isinf(number)
 
 
-def isinteger(node: Real) -> bool:
+def isinteger(number: Real) -> bool:
     """
     Check if a number is integer.
 
     Parameters
     ----------
-    node : Real
+    number : Real
         The number to check for being an integer
 
     Returns
@@ -286,16 +286,16 @@ def isinteger(node: Real) -> bool:
     >>> is_rational(1.2)
     False
     """
-    return isinstance(node, Integral)
+    return isinstance(number, Integral)
 
 
-def isrational(node: Real) -> bool:
+def isrational(number: Real) -> bool:
     """
     Check if a number is integer or rational.
 
     Parameters
     ----------
-    node : Real
+    number : Real
         The number to check for rationality
 
     Returns
@@ -311,7 +311,7 @@ def isrational(node: Real) -> bool:
     True
     >>> isrational(0.5)
     """
-    return isreal(node) and isinstance(node, Rational)
+    return isreal(number) and isinstance(number, Rational)
 
 
 def fmod(xcoord: Real, ycoord: Real) -> Real:
