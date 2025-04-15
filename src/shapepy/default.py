@@ -314,15 +314,15 @@ def isrational(number: Real) -> bool:
     return isreal(number) and isinstance(number, Rational)
 
 
-def fmod(xcoord: Real, ycoord: Real) -> Real:
+def fmod(numer: Real, denom: Real) -> Real:
     """
     Returns the floating-point remainder of division x1/x2.
 
     Parameters
     ----------
-    xcoord : float
+    numer : float
         Dividend
-    ycoord : float
+    denom : float
         Divisor
 
     Returns
@@ -339,7 +339,7 @@ def fmod(xcoord: Real, ycoord: Real) -> Real:
     >>> fmod(5.0, -2.0)
     1.0
     """
-    return real(math.fmod(x, y))
+    return real(math.fmod(numer, denom))
 
 
 def hypot(xcoord: Real, ycoord: Real) -> Real:
@@ -365,7 +365,7 @@ def hypot(xcoord: Real, ycoord: Real) -> Real:
     >>> calculate_distance_from_origin(0, 0)
     0.0
     """
-    return real(math.hypot(*coords))
+    return real(math.hypot(xcoord, ycoord))
 
 
 def rational(numerator: Real, denominator: Real) -> Real:
@@ -439,10 +439,10 @@ def atan2(ycoord: Real, xcoord: Real) -> Real:
     >>> arctan2(1, -1)  # 135 degrees = 3π/4 radians
     2.3561944901923448
     """
-    return finite(math.atan2(y, x))
+    return finite(math.atan2(ycoord, xcoord))
 
 
-def degrees(value: Real) -> Real:
+def degrees(angle: Real) -> Real:
     """
     Convert an angle from radians to degrees.
 
@@ -453,12 +453,12 @@ def degrees(value: Real) -> Real:
 
     Parameters
     ----------
-    radians : float
+    angle : Real
         The angle in radians to convert
 
     Returns
     -------
-    float
+    Real
         The equivalent angle in degrees
 
     Examples
@@ -479,4 +479,4 @@ def degrees(value: Real) -> Real:
     Raises:
         TypeError: If the input is not a numeric type
     """
-    return finite(math.degrees(value))
+    return finite(math.degrees(angle))
