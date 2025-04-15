@@ -1,6 +1,8 @@
 
 test:
-	pytest --cov=src/shapepy --cov-report=html tests
+	pytest --cov=src/shapepy --cov-report=xml tests
+	python3-coverage report -m --fail-under 95
+	python3-coverage html
 
 format:
 	isort src
