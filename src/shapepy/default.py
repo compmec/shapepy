@@ -1,3 +1,20 @@
+"""
+This file contains the default functions and constant mathematical values
+that are used as base for the entire package.
+
+All the mathematical functions that are not implemented, like `sin` and `cos`
+are the same from the standard `math` python's package.
+The standard rational number is a instance from `fractions` standard package.
+
+Other libraries offer other options to handle numerical numbers.
+To do such, you need to overwrite these base functions and hence the
+package will use your numerical type.
+Example of use are:
+* `numpy` offers `numpy.float64` instead of float
+* `mpmath` offers the `mpmath.mpf` of arbitrary precision of float
+* `sympy` offers `sympy.core.numbers.Rational` instead of `fractions.Fraction`
+"""
+
 from __future__ import annotations
 
 import math
@@ -111,8 +128,8 @@ radcos: Callable[[Real], Real] = math.cos
 sinh: Callable[[Real], Real] = math.sinh
 cosh: Callable[[Real], Real] = math.cosh
 
-neginf = -math.inf
-posinf = math.inf
+NEGINF = -math.inf
+POSINF = math.inf
 
 binom: Callable[[int, int], int] = math.comb
 factorial: Callable[[int], int] = math.factorial
