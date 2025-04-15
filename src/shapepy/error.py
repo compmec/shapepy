@@ -1,5 +1,5 @@
 """
-Definitions of common exceptions for :mod:`sympy.core` module.
+Definitions of common exceptions for :mod:`shapepy` module.
 """
 
 
