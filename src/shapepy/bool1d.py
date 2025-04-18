@@ -1061,30 +1061,26 @@ class ConverterR1:
         [-10, 0] U {5, 10}
         """
         string = string.strip()
-        result = EmptyR1()
         if "U" in string:
-            for substr in string.split("U"):
-                result |= ConverterR1.from_str(substr)
-            return result
+            return unite(*map(ConverterR1.from_str, string.split("U")))
         if string[0] == "{" and string[-1] == "}":
+            result = EmptyR1()
             for substr in string[1:-1].split(","):
                 if not substr:  # Empty string
                     continue
                 finite = default.finite(substr)
                 result |= SingleValueR1(finite)
-        elif string[0] in "([" and string[-1] in ")]":
-            if string == "(-inf, inf)":
-                return WholeR1()
+            return result
+        if string[0] in "([" and string[-1] in ")]":
             stastr, endstr = string[1:-1].split(",")
             start = default.real(stastr)
             end = default.real(endstr)
+            if start == default.NEGINF and end == default.POSINF:
+                return WholeR1()
             left = string[0] == "["
             right = string[-1] == "]"
-            print(f"start, end = {start}, {end}")
-            result |= IntervalR1(start, end, left, right)
-        else:
-            raise ValueError(f"Cannot parse '{string}' into a subsetR1")
-        return result
+            return IntervalR1(start, end, left, right)
+        raise ValueError(f"Cannot parse '{string}' into a SubSetR1 instance")
 
     @debug("shapepy.bool1d")
     @staticmethod
