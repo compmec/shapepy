@@ -7,7 +7,11 @@ from shapepy.bool1d import (
     IntervalR1,
     SingleValueR1,
     WholeR1,
+    infimum,
+    maximum,
+    minimum,
     subsetR1,
+    supremum,
 )
 
 
@@ -764,3 +768,56 @@ class TestScale:
 
         good = subsetR1(r"[-4, -3) U {4} U (5, 10]")
         assert base.scale(-1) == good
+
+
+@pytest.mark.order(2)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency()
+def test_inf_min_max_sup():
+    subset = r"{}"
+    assert infimum(subset) is None
+    assert minimum(subset) is None
+    assert maximum(subset) is None
+    assert supremum(subset) is None
+
+    subset = r"(-inf, +inf)"
+    assert infimum(subset) == default.NEGINF
+    assert minimum(subset) is None
+    assert maximum(subset) is None
+    assert supremum(subset) == default.POSINF
+
+    subset = r"{1}"
+    assert infimum(subset) == 1
+    assert minimum(subset) == 1
+    assert maximum(subset) == 1
+    assert supremum(subset) == 1
+
+    subset = r"{1, 3}"
+    assert infimum(subset) == 1
+    assert minimum(subset) == 1
+    assert maximum(subset) == 3
+    assert supremum(subset) == 3
+
+    subset = r"[-10, 10]"
+    assert infimum(subset) == -10
+    assert minimum(subset) == -10
+    assert maximum(subset) == 10
+    assert supremum(subset) == 10
+
+    subset = r"(-10, 10]"
+    assert infimum(subset) == -10
+    assert minimum(subset) is None
+    assert maximum(subset) == 10
+    assert supremum(subset) == 10
+
+    subset = r"[-10, 10)"
+    assert infimum(subset) == -10
+    assert minimum(subset) == -10
+    assert maximum(subset) is None
+    assert supremum(subset) == 10
+
+    subset = r"(-10, 10)"
+    assert infimum(subset) == -10
+    assert minimum(subset) is None
+    assert maximum(subset) is None
+    assert supremum(subset) == 10
