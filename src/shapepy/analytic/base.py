@@ -24,7 +24,10 @@ class IAnalytic1D(ABC):
     @abstractmethod
     def domain(self) -> SubSetR1:
         """
-        Gives the domain of the analytic function
+        Gives the domain of validity of this analytic function
+
+        :getter: Returns the domain of the function
+        :type: SubSetR1
         """
         raise NotImplementedError
 
@@ -187,9 +190,6 @@ class IAnalytic1D(ABC):
     def __add__(self, other: Union[IAnalytic1D, Real]) -> IAnalytic1D:
         raise NotImplementedError
 
-    def __sub__(self, other: Union[IAnalytic1D, Real]) -> IAnalytic1D:
-        return self.__add__(-other)
-
     @abstractmethod
     def __mul__(self, other: Union[IAnalytic1D, Real]) -> IAnalytic1D:
         raise NotImplementedError
@@ -197,3 +197,15 @@ class IAnalytic1D(ABC):
     @abstractmethod
     def __truediv__(self, other: Real) -> IAnalytic1D:
         raise NotImplementedError
+
+    def __sub__(self, other: Union[IAnalytic1D, Real]) -> IAnalytic1D:
+        return self.__add__(-other)
+
+    def __rsub__(self, other):
+        return (-self).__add__(other)
+
+    def __radd__(self, other):
+        return self.__add__(other)
+
+    def __rmul__(self, other):
+        return self.__mul__(other)
