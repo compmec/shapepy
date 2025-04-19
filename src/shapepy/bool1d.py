@@ -1041,7 +1041,7 @@ class ConverterR1:
             return ConverterR1.from_tuple(obj)
         if isinstance(obj, list):
             return ConverterR1.from_list(obj)
-        raise NotImplementedError
+        raise NotExpectedError(f"Received object {type(obj)} = {obj}")
 
     @debug("shapepy.bool1d")
     @staticmethod
