@@ -43,3 +43,31 @@ def polynomial(coefs: Iterable[Real]) -> IAnalytic1D:
     for i, coef in enumerate(coefs):
         expr += coef * vart**i
     return SympyAnalytic1D(expr)
+
+
+@debug("shapepy.analytic.elementar")
+def piecewise(analytics: Iterable[IAnalytic1D], knots: Iterable[Real]) -> IAnalytic1D:
+    """
+    Gives a piecewise analytical function that is the combination
+    from the received analytics and the knots points
+
+    Parameters
+    ----------
+    analytics: Iterable[IAnalytic1D]
+        The parts of the analyticals
+    knots: Iterable[Real]
+        The divisions between the analytics
+
+    Return
+    ------
+    IAnalytic1D
+        The piecewise analytic function
+
+    Example
+    -------
+    >>> polya = polynomial([1, 2])
+    >>> polyb = polynomial([5, -1])
+    >>> knots = ("-inf", 1, "+inf")
+    >>> pieceana = piecewise([polya, polyb], knots)
+    """
+    raise NotImplementedError
