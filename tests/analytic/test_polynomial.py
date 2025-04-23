@@ -367,53 +367,46 @@ def test_definite_integral():
 @pytest.mark.dependency(depends=["test_build"])
 def test_find_roots():
     poly = polynomial([0])
-    assert poly.roots(EmptyR1()) == EmptyR1()
-    assert poly.roots(WholeR1()) == WholeR1()
-    assert poly.roots() == WholeR1()
+    assert poly.where(0, EmptyR1()) == EmptyR1()
+    assert poly.where(0, WholeR1()) == WholeR1()
+    assert poly.where(0) == WholeR1()
 
     poly = polynomial([-1, 1])
-    assert poly.roots() == {1}
+    assert poly.where(0) == {1}
     poly = polynomial([-3, 1])
-    assert poly.roots() == {3}
+    assert poly.where(0) == {3}
 
     poly = polynomial([1, -2, 1])
-    assert poly.roots() == {1}
+    assert poly.where(0) == {1}
     poly = polynomial([-1, 3, -3, 1])
-    assert poly.roots() == {1}
+    assert poly.where(0) == {1}
 
     poly = polynomial([3, -4, 1])
-    assert poly.roots() == {1, 3}
+    assert poly.where(0) == {1, 3}
 
     poly = polynomial([-2, 0, 1])
-    assert poly.roots() == {-default.sqrt(2), +default.sqrt(2)}
+    assert poly.where(0) == {-default.sqrt(2), +default.sqrt(2)}
 
 
 @pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build"])
 def test_inf_sup_values():
     poly = polynomial([1])
-    assert poly.infimum() == 1
-    assert poly.supremum() == 1
+    assert poly.image() == {1}
 
     poly = polynomial([1, 1])
-    assert poly.infimum() == default.NEGINF
-    assert poly.supremum() == default.POSINF
+    assert poly.image() == WholeR1()
 
     interv = IntervalR1(-1, 1)
-    assert poly.infimum(interv) == 0
-    assert poly.supremum(interv) == 2
+    assert poly.image(interv) == [0, 2]
 
     poly = polynomial([1, 0, -1])
-    assert poly.infimum() == default.NEGINF
-    assert poly.supremum() == 1
-    assert poly.infimum(interv) == 0
-    assert poly.supremum(interv) == 1
+    assert poly.image() == [default.NEGINF, 1]
+    assert poly.image(interv) == [0, 1]
 
     poly = polynomial([1, 0, 1])
-    assert poly.infimum() == 1
-    assert poly.supremum() == default.POSINF
-    assert poly.infimum(interv) == 1
-    assert poly.supremum(interv) == 2
+    assert poly.image() == [1, default.POSINF]
+    assert poly.image(interv) == [1, 2]
 
 
 @pytest.mark.order(3)
