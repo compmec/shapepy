@@ -117,66 +117,47 @@ class IAnalytic1D(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def roots(self, domain: Optional[SubSetR1] = None) -> SubSetR1:
+    def image(self, domain: Optional[SubSetR1] = None) -> SubSetR1:
         """
-        Find the roots in the given domain
+        Gives the counter-domain (or image) of the function
 
         The function's domain is considered if no domain is given
 
         Parameters
         ----------
         domain: Optional[SubSetR1], default = None
-            The domain to search for the roots.
+            The domain to compute the image.
             If no domain is given, function's domain is taken
 
         Return
         ------
         SubSetR1
-            The values 't' which 'f(t)' is zero
+            The union of all f(t) for every t in the given domain
         """
         raise NotImplementedError
 
     @abstractmethod
-    def infimum(self, domain: Optional[SubSetR1] = None) -> Real:
+    def where(
+        self, value: Real, domain: Optional[SubSetR1] = None
+    ) -> SubSetR1:
         """
-        Find the infimum of the function.
-
-        For closed and bounded domains, it's equal to the minimum value.
+        Finds all the values of t in the given domain
+        such f(t) is equal to the given value
 
         The function's domain is considered if no domain is given
 
         Parameters
         ----------
+        value: Real
+            The value 'a' to search for f(t) = a
         domain: Optional[SubSetR1], default = None
-            The domain to search for the infimum.
+            The domain to search for the solutions.
             If no domain is given, function's domain is taken
 
         Return
         ------
         Real
-            The supremum value of the function in the domain
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def supremum(self, domain: Optional[SubSetR1] = None) -> Real:
-        """
-        Find the supremum of the function.
-
-        For closed and bounded domains, it's equal to the maximum value.
-
-        The function's domain is considered if no domain is given
-
-        Parameters
-        ----------
-        domain: Optional[SubSetR1], default = None
-            The domain to search for the supremum.
-            If no domain is given, function's domain is taken
-
-        Return
-        ------
-        Real
-            The supremum value of the function in the domain
+            All the values of 't' such f(t) is equal to given value
         """
         raise NotImplementedError
 
