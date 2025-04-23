@@ -127,13 +127,16 @@ class SympyAnalytic1D(IAnalytic1D):
         return default.real(result)
 
     @debug("shapepy.analytic.spanalytic")
-    def roots(self, domain: Optional[SubSetR1] = None) -> SubSetR1:
+    def where(
+        self, value: Real, domain: Optional[SubSetR1] = None
+    ) -> SubSetR1:
+        value = default.finite(value)
         domain = self.domain if domain is None else (self.domain & domain)
         if self.expression == 0:
             return domain
         all_roots = EmptyR1()
         try:
-            roots = sp.real_roots(self.expression)
+            roots = sp.real_roots(self.expression - value)
         except sp.polys.polyerrors.PolynomialError as e:  # pragma: no cover
             raise e and NotExpectedError("Should work for all polynomials")
 
@@ -145,7 +148,7 @@ class SympyAnalytic1D(IAnalytic1D):
         return all_roots
 
     @debug("shapepy.analytic.spanalytic")
-    def infimum(self, domain: Optional[SubSetR1] = None) -> Real:
+    def image(self, domain: Optional[SubSetR1] = None) -> SubSetR1:
         domain = self.domain if domain is None else (self.domain & domain)
         if isinstance(domain, WholeR1):
             sta, end = default.NEGINF, default.POSINF
@@ -154,19 +157,17 @@ class SympyAnalytic1D(IAnalytic1D):
         else:
             raise NotImplementedError
         interval = sp.Interval(sta, end)
-        return sp.calculus.util.minimum(self.expression, self.var, interval)
-
-    @debug("shapepy.analytic.spanalytic")
-    def supremum(self, domain: Optional[SubSetR1] = None) -> Real:
-        domain = self.domain if domain is None else (self.domain & domain)
-        if isinstance(domain, WholeR1):
-            sta, end = default.NEGINF, default.POSINF
-        elif isinstance(domain, IntervalR1):
-            sta, end = domain[0], domain[1]
-        else:
-            raise NotImplementedError
-        interval = sp.Interval(sta, end)
-        return sp.calculus.util.maximum(self.expression, self.var, interval)
+        minvalue = sp.calculus.util.minimum(
+            self.expression, self.var, interval
+        )
+        maxvalue = sp.calculus.util.maximum(
+            self.expression, self.var, interval
+        )
+        if minvalue == maxvalue:
+            return SingleValueR1(minvalue)
+        if minvalue == default.NEGINF and maxvalue == default.POSINF:
+            return WholeR1()
+        return IntervalR1(minvalue, maxvalue)
 
     def __str__(self):
         tau = sp.symbols("tau", real=True, positive=True, constant=True)
