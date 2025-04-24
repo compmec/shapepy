@@ -390,7 +390,7 @@ def test_find_roots():
 
 @pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build"])
-def test_inf_sup_values():
+def test_image():
     poly = polynomial([1])
     assert poly.image() == {1}
 
@@ -423,7 +423,6 @@ def test_inf_sup_values():
         "test_sub",
         "test_mul",
         "test_div",
-        "test_pow",
         "test_shift",
         "test_scale",
         "test_print",
@@ -431,7 +430,7 @@ def test_inf_sup_values():
         "test_wrong_type",
         "test_definite_integral",
         "test_find_roots",
-        "test_inf_sup_values",
+        "test_image",
     ]
 )
 def test_all():
