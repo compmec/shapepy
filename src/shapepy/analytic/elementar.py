@@ -6,8 +6,10 @@ from numbers import Real
 from typing import Iterable
 
 from .. import default
+from ..bool1d import IntervalR1
 from ..logger import debug
 from .base import IAnalytic1D
+from .piecewise import PiecewiseAnalytic1D
 from .sympyana import SympyAnalytic1D
 
 
@@ -46,7 +48,9 @@ def polynomial(coefs: Iterable[Real]) -> IAnalytic1D:
 
 
 @debug("shapepy.analytic.elementar")
-def piecewise(analytics: Iterable[IAnalytic1D], knots: Iterable[Real]) -> IAnalytic1D:
+def piecewise(
+    analytics: Iterable[IAnalytic1D], knots: Iterable[Real]
+) -> IAnalytic1D:
     """
     Gives a piecewise analytical function that is the combination
     from the received analytics and the knots points
@@ -70,4 +74,9 @@ def piecewise(analytics: Iterable[IAnalytic1D], knots: Iterable[Real]) -> IAnaly
     >>> knots = ("-inf", 1, "+inf")
     >>> pieceana = piecewise([polya, polyb], knots)
     """
-    raise NotImplementedError
+    knots = tuple(map(default.real, knots))
+    parameters = {}
+    for i, analytic in enumerate(analytics):
+        subset = IntervalR1(knots[i], knots[i + 1])
+        parameters[subset] = analytic
+    return PiecewiseAnalytic1D(parameters)
