@@ -856,3 +856,20 @@ def test_inf_min_max_sup():
     assert minimum(subset) is None
     assert maximum(subset) is None
     assert supremum(subset) == 10
+
+
+@pytest.mark.order(2)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency()
+def test_hash():
+    hash(EmptyR1())
+    hash(WholeR1())
+    for value in (-10, -1, 0, 1, 10):
+        hash(SingleValueR1(value))
+
+    hash(IntervalR1.lower(0))
+    hash(IntervalR1.bigger(0))
+    hash(IntervalR1(-10, 10))
+
+    string = r"(-inf, -20) U [-10, -5] U [0, 5) U (10, 15] U (20, 25) U {30, 31, 33}"
+    hash(subsetR1(string))

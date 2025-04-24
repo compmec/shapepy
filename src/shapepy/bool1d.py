@@ -227,6 +227,10 @@ class SubSetR1(ABC):
     """
 
     @abstractmethod
+    def __hash__(self):
+        raise NotImplementedError
+
+    @abstractmethod
     def __eq__(self, other):
         raise NotImplementedError
 
@@ -363,6 +367,9 @@ class EmptyR1(SubSetR1):
     def __eq__(self, other):
         return self is ConverterR1.from_any(other)
 
+    def __hash__(self):
+        return 0
+
 
 class WholeR1(SubSetR1):
     """
@@ -417,6 +424,9 @@ class WholeR1(SubSetR1):
 
     def __eq__(self, other):
         return self is ConverterR1.from_any(other)
+
+    def __hash__(self):
+        return 1
 
 
 class SingleValueR1(SubSetR1):
@@ -479,6 +489,9 @@ class SingleValueR1(SubSetR1):
     def __and__(self, other: SubSetR1):
         other = ConverterR1.from_any(other)
         return self if other.__contains__(self) else EmptyR1()
+
+    def __hash__(self):
+        return hash(self.internal)
 
 
 class IntervalR1(SubSetR1):
@@ -663,6 +676,9 @@ class IntervalR1(SubSetR1):
         """
         return self.__right
 
+    def __hash__(self):
+        return hash((self[0], self[1]))
+
 
 class DisjointR1(SubSetR1):
     """
@@ -820,6 +836,9 @@ class DisjointR1(SubSetR1):
         ) != len(other.intervals):
             return False
         return all(subs == subo for subs, subo in zip(self, other))
+
+    def __hash__(self):
+        return hash(tuple(map(hash, self)))
 
 
 def infimum(subset: SubSetR1) -> Union[Real, None]:
