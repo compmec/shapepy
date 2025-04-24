@@ -325,6 +325,8 @@ class EmptyR1(SubSetR1):
         return cls.instance
 
     def __contains__(self, other) -> bool:
+        if default.isreal(other):
+            return False
         return ConverterR1.from_any(other) is self
 
     def shift(self, amount: Real) -> SubSetR1:
@@ -377,6 +379,8 @@ class WholeR1(SubSetR1):
         return cls.instance
 
     def __contains__(self, other) -> bool:
+        if default.isreal(other):
+            return True
         ConverterR1.from_any(other)
         return True
 
@@ -452,6 +456,8 @@ class SingleValueR1(SubSetR1):
         return f"SingleValueR1({self.__internal})"
 
     def __contains__(self, other):
+        if default.isinfinity(other):
+            return False
         other = ConverterR1.from_any(other)
         return isinstance(other, EmptyR1) or self == other
 
@@ -561,6 +567,8 @@ class IntervalR1(SubSetR1):
     # pylint: disable=too-many-return-statements
     @debug("shapepy.bool1d.interval")
     def __contains__(self, other):
+        if default.isinfinity(other):
+            return self[0] == other or other == self[1]
         other = ConverterR1.from_any(other)
         if isinstance(other, SingleValueR1):
             other = other.internal
@@ -720,6 +728,8 @@ class DisjointR1(SubSetR1):
         yield from self.__intervs
 
     def __contains__(self, other):
+        if default.isinfinity(other):
+            return any(other in sub for sub in self)
         other = ConverterR1.from_any(other)
         if isinstance(other, DisjointR1):
             return all(sub in self for sub in other)

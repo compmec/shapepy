@@ -475,6 +475,41 @@ class TestContains:
         assert EmptyR1() in disjoint
         assert WholeR1() not in disjoint
 
+    @pytest.mark.order(2)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency()
+    def test_infinity(self):
+        empty = EmptyR1()
+        assert default.NEGINF not in empty
+        assert default.POSINF not in empty
+
+        whole = WholeR1()
+        assert default.NEGINF in whole
+        assert default.POSINF in whole
+
+        for value in (-10, -1, 0, 1, 10):
+            assert default.NEGINF not in SingleValueR1(value)
+            assert default.POSINF not in SingleValueR1(value)
+
+        interval = IntervalR1.lower(0)
+        assert default.NEGINF in interval
+        assert default.POSINF not in interval
+
+        interval = IntervalR1.bigger(0)
+        assert default.NEGINF not in interval
+        assert default.POSINF in interval
+
+        interval = IntervalR1(-10, 10)
+        assert default.NEGINF not in interval
+        assert default.POSINF not in interval
+
+        string = r"(-inf, -20) U [-10, -5] U [0, 5) U (10, 15] U (20, 25) U {30, 31, 33}"
+        disjoint = subsetR1(string)
+        assert isinstance(disjoint, DisjointR1)
+
+        assert default.NEGINF in disjoint
+        assert default.POSINF not in disjoint
+
 
 class TestInversion:
 
