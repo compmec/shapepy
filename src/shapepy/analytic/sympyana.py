@@ -40,6 +40,8 @@ class SympyAnalytic1D(IAnalytic1D):
     var = sp.symbols("t", real=True)
 
     def __init__(self, expression, domain: Optional[SubSetR1] = None):
+        if isinstance(expression, IAnalytic1D):
+            raise TypeError
         if domain is None:  # TODO: Find domain from expression
             domain = WholeR1()
         elif not isinstance(domain, SubSetR1):
@@ -178,11 +180,13 @@ class SympyAnalytic1D(IAnalytic1D):
         return f"SympyAnalytic1D({self}, {self.domain})"
 
     def __eq__(self, other):
-        if not isinstance(other, SympyAnalytic1D):
+        if not isinstance(other, IAnalytic1D):
             try:
                 other = self.__class__(other)
             except ValueError:
                 return NotImplemented
+        elif not isinstance(other, SympyAnalytic1D):
+            return NotImplemented
         diff = self.expression - other.expression
         diff = sp.simplify(sp.expand(diff))
         return (self.domain == other.domain) & (diff == 0)
