@@ -80,6 +80,7 @@ def piecewise(
     knots = tuple(map(default.real, knots))
     parameters = {}
     for i, analytic in enumerate(analytics):
-        subset = IntervalR1(knots[i], knots[i + 1])
-        parameters[subset] = analytic
+        right = i + 1 == len(analytics)
+        subset = IntervalR1(knots[i], knots[i + 1], True, right)
+        parameters[subset] = analytic.section(subset)
     return PiecewiseAnalytic1D(parameters)

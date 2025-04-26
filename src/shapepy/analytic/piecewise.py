@@ -26,12 +26,16 @@ class PiecewiseAnalytic1D(IAnalytic1D):
     ):
         if len(analytics) < 2:
             raise ValueError(f"Too few analytics: {len(analytics)} < 2")
-        for subdomain in tuple(analytics.keys()):
-            analytic = analytics[subdomain]
-            if not isinstance(analytic, IAnalytic1D):
-                raise TypeError
-            if not isinstance(subdomain, SubSetR1):
-                raise TypeError
+        keys = tuple(analytics.keys())
+        for i, key in enumerate(keys):
+            for j in range(i + 1, len(keys)):
+                if key & keys[j] != EmptyR1():
+                    raise ValueError(
+                        f"All the subdomains must be disjoints: {keys}"
+                    )
+        analytics = {
+            key: value.section(key) for key, value in analytics.items()
+        }
         self.__analytics = analytics
         self.__domain = unite(*tuple(analytics.keys()))
         knots = set(map(supremum, analytics.keys()))
