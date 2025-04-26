@@ -42,7 +42,7 @@ class SympyAnalytic1D(IAnalytic1D):
     def __init__(self, expression, domain: Optional[SubSetR1] = None):
         if isinstance(expression, IAnalytic1D):
             raise TypeError
-        if domain is None:  # TODO: Find domain from expression
+        if domain is None:
             domain = WholeR1()
         elif not isinstance(domain, SubSetR1):
             raise TypeError

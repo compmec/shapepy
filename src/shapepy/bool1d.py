@@ -581,7 +581,7 @@ class IntervalR1(SubSetR1):
     @debug("shapepy.bool1d.interval")
     def __contains__(self, other):
         if default.isinfinity(other):
-            return self[0] == other or other == self[1]
+            return other in (self[0], self[1])
         other = ConverterR1.from_any(other)
         if isinstance(other, SingleValueR1):
             other = other.internal
