@@ -1,4 +1,5 @@
 [MAIN]
 
 disable=
-    too-many-lines,  
+    too-many-lines,
+    duplicate-code,

@@ -1,3 +1,7 @@
+"""
+Defines the class PiecewiseAnalytic1D
+"""
+
 from __future__ import annotations
 
 from numbers import Real
@@ -10,6 +14,11 @@ from .base import IAnalytic1D
 
 
 class PiecewiseAnalytic1D(IAnalytic1D):
+    """
+    A class representing a piecewise analytic function,
+    allowing the concatenation of some analytic functions
+    over different intervals of the domain
+    """
 
     def __init__(
         self,
