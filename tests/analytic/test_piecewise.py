@@ -45,9 +45,20 @@ def test_evaluate_natural():
 
 
 @pytest.mark.order(4)
-@pytest.mark.dependency()
-def test_compare(depends=["test_build"]):
-    pass
+@pytest.mark.timeout(3)
+@pytest.mark.dependency(depends=["test_build"])
+def test_compare():
+
+    t = polynomial([0, 1])
+    knots = ("-inf", 1, "+inf")
+    piece1 = piecewise([1 + 2 * t, 5 - 2 * t], knots)
+    assert piece1 == piece1
+
+    piece2 = piecewise([1 - 2 * t, 3 + 4 * t], knots)
+    assert piece1 != piece2
+
+    assert piece1 != t
+    assert piece1 != 5
 
 
 @pytest.mark.order(4)
@@ -85,35 +96,68 @@ def test_evaluate_derivate():
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_add():
-    polya = polynomial([1, 2, 3, 4])
-    polyb = polynomial([5, -2, 7, -9])
-    knots = ("-inf", 0, "+inf")
-    piece = piecewise([polya, polyb], knots)
+    t = polynomial([0, 1])
+    poly11 = 1 - 2 * t
+    poly12 = 1 + 5 * t
+    poly21 = -4 + t
+    poly22 = 1 + 4 * t
+    piece1 = piecewise([poly11, poly12], ("-inf", 0, "+inf"))
+    piece2 = piecewise([poly21, poly22], ("-inf", -1, "+inf"))
 
-    piece + piece
+    good = piecewise(
+        [poly11 + poly21, poly11 + poly22, poly12 + poly22],
+        ("-inf", -1, 0, "+inf"),
+    )
+    assert piece1 + piece2 == good
+
+    const = 5
+    good = piecewise([const + poly11, const + poly12], ("-inf", 0, "+inf"))
+    assert const + piece1 == good
 
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_sub():
-    polya = polynomial([1, 2, 3, 4])
-    polyb = polynomial([5, -2, 7, -9])
-    knots = ("-inf", 0, "+inf")
-    piece = piecewise([polya, polyb], knots)
+    t = polynomial([0, 1])
+    poly11 = 1 - 2 * t
+    poly12 = 1 + 5 * t
+    poly21 = -4 + t
+    poly22 = 1 + 4 * t
+    piece1 = piecewise([poly11, poly12], ("-inf", 0, "+inf"))
+    piece2 = piecewise([poly21, poly22], ("-inf", -1, "+inf"))
 
-    piece - piece
+    good = piecewise(
+        [poly11 - poly21, poly11 - poly22, poly12 - poly22],
+        ("-inf", -1, 0, "+inf"),
+    )
+    assert piece1 - piece2 == good
+
+    const = 5
+    good = piecewise([poly11 - const, poly12 - const], ("-inf", 0, "+inf"))
+    assert piece1 - const == good
 
 
 @pytest.mark.order(4)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_mul():
-    polya = polynomial([1, 2, 3, 4])
-    polyb = polynomial([5, -2, 7, -9])
-    knots = ("-inf", 0, "+inf")
-    piece = piecewise([polya, polyb], knots)
+    t = polynomial([0, 1])
+    poly11 = 1 - 2 * t
+    poly12 = 1 + 5 * t
+    poly21 = -4 + t
+    poly22 = 1 + 4 * t
+    piece1 = piecewise([poly11, poly12], ("-inf", 0, "+inf"))
+    piece2 = piecewise([poly21, poly22], ("-inf", -1, "+inf"))
 
-    piece * piece
+    good = piecewise(
+        [poly11 * poly21, poly11 * poly22, poly12 * poly22],
+        ("-inf", -1, 0, "+inf"),
+    )
+    assert piece1 * piece2 == good
+
+    const = 5
+    good = piecewise([const * poly11, const * poly12], ("-inf", 0, "+inf"))
+    assert const * piece1 == good
 
 
 @pytest.mark.order(4)
