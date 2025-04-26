@@ -410,6 +410,20 @@ def test_image():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_build"])
+def test_section():
+    poly = polynomial([1])
+
+    assert poly.section() == poly
+    assert id(poly.section()) != id(poly)
+
+    domain = (-1, 1)
+    test = poly.section(domain)
+    good = polynomial([1], domain)
+    assert test == good
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
@@ -431,6 +445,7 @@ def test_image():
         "test_definite_integral",
         "test_find_roots",
         "test_image",
+        "test_section",
     ]
 )
 def test_all():

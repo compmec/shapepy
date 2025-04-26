@@ -161,6 +161,26 @@ class IAnalytic1D(ABC):
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def section(self, subdomain: Optional[SubSetR1] = None) -> IAnalytic1D:
+        """
+        Gives a copy of a new function with restricted domain
+
+        If no subdomain is given, only returns a copy
+
+        Parameters
+        ----------
+        subdomain: Optional[SubSetR1], default = None
+            The subdomain to search for the solutions.
+            A copy is returned if no subdomain is given
+
+        Return
+        ------
+        IAnalytic1D
+            A copy of the analytic with restriced domain
+        """
+        raise NotImplementedError
+
     def __call__(self, node: Real) -> Real:
         return self.eval(node, 0)
 

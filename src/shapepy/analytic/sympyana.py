@@ -8,6 +8,8 @@ as an optional dependency in the future.
 Fow now, calling polynomials gives a SympyAnalytic1D instance
 """
 
+from __future__ import annotations
+
 from numbers import Real
 from typing import Optional
 
@@ -170,6 +172,11 @@ class SympyAnalytic1D(IAnalytic1D):
         if minvalue == default.NEGINF and maxvalue == default.POSINF:
             return WholeR1()
         return IntervalR1(minvalue, maxvalue)
+
+    def section(self, subdomain: Optional[SubSetR1] = None) -> SympyAnalytic1D:
+        if subdomain is None:
+            return self.__class__(self.expression, self.domain)
+        return self.__class__(self.expression, self.domain & subdomain)
 
     def __str__(self):
         tau = sp.symbols("tau", real=True, positive=True, constant=True)

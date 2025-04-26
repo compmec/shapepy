@@ -8,7 +8,7 @@ from numbers import Real
 from typing import Dict, Iterable, Optional, Tuple
 
 from .. import default
-from ..bool1d import EmptyR1, SubSetR1, infimum, supremum, unite
+from ..bool1d import EmptyR1, SubSetR1, WholeR1, infimum, supremum, unite
 from ..logger import debug
 from .base import IAnalytic1D
 
@@ -126,6 +126,16 @@ class PiecewiseAnalytic1D(IAnalytic1D):
         for subset, analytic in self:
             result |= analytic.image(subset & domain)
         return result
+
+    def section(
+        self, subdomain: Optional[SubSetR1] = None
+    ) -> PiecewiseAnalytic1D:
+        if subdomain is None:
+            subdomain = WholeR1()
+        new_analytics = {
+            key & subdomain: value for key, value in self.analytics.items()
+        }
+        return self.__class__(new_analytics)
 
     def __str__(self):
         msgs = []

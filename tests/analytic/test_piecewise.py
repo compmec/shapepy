@@ -254,6 +254,18 @@ def test_image():
     assert piece.image() == [default.NEGINF, 1]
 
 
+@pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_build"])
+def test_section():
+    polya = polynomial([1, 1])
+    polyb = polynomial([1, -1])
+
+    knots = (-1, 0, 1)
+    piece = piecewise([polya, polyb], knots)
+
+    assert piece.section() == piece
+
+
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():
@@ -272,6 +284,7 @@ def test_print():
         "test_begin",
         "test_build",
         "test_evaluate_natural",
+        "test_section",
     ]
 )
 def test_all():
