@@ -366,8 +366,8 @@ class BoundingBox:
             return ((value > 0) + (value >= 0)) / 2
 
         point = geometric_point(point)
-        xwind = step(point.x - self.__bot[0]) * step(self.__top[0] - point.x)
-        ywind = step(point.x - self.__bot[0]) * step(self.__top[0] - point.x)
+        xwind = step(point.x - self.__bot.x) * step(self.__top.x - point.x)
+        ywind = step(point.y - self.__bot.y) * step(self.__top.y - point.y)
         return xwind * ywind
 
     def __contains__(self, point: GeometricPoint) -> bool:

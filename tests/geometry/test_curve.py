@@ -11,6 +11,7 @@ from shapepy.geometry import ClosedCurve, ContinuousCurve, JordanCurve, reverse
     depends=[
         "tests/analytic/test_polynomial.py::test_all",
         "tests/geometry/test_point.py::test_all",
+        "tests/geometry/test_bound.py::test_all",
     ],
     scope="session",
 )
