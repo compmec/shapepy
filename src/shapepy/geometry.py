@@ -168,9 +168,26 @@ class ContinuousCurve:
         self.__xfunc: IAnalytic1D = xfunc
         self.__yfunc: IAnalytic1D = yfunc
         self.__lenght: Optional[Real] = None
+        self.__box: Optional[BoundingBox] = None
 
     def __getitem__(self, index) -> IAnalytic1D:
         return self.__yfunc if index else self.__xfunc
+
+    @property
+    def box(self) -> BoundingBox:
+        """
+        Gives the minimum box that contains entirely the curve
+
+        :getter: Returns the box that contains the curve
+        :type: BoundingBox
+        """
+        if self.__box is None:
+            ximage = self[0].image()
+            yimage = self[1].image()
+            botpt = (infimum(ximage), infimum(yimage))
+            toppt = (supremum(ximage), supremum(yimage))
+            self.__box = BoundingBox(botpt, toppt)
+        return self.__box
 
     @property
     def lenght(self) -> Real:
@@ -363,7 +380,7 @@ class BoundingBox:
             >>> step(2)
             1
             """
-            return ((value > 0) + (value >= 0)) / 2
+            return 0 if value < 0 else 1 if value > 0 else 0.5
 
         point = geometric_point(point)
         xwind = step(point.x - self.__bot.x) * step(self.__top.x - point.x)
