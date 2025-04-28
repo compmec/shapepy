@@ -25,7 +25,7 @@ from ..bool1d import (
     WholeR1,
 )
 from ..error import NotExpectedError
-from ..logger import debug
+from ..loggers import debug
 from .base import IAnalytic1D
 
 

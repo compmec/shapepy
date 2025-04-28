@@ -28,7 +28,7 @@ from . import default
 from .analytic import IAnalytic1D
 from .angle import Angle
 from .bool1d import SubSetR1, infimum, supremum
-from .logger import debug
+from .loggers import debug
 from .quadrature import chebyshev
 
 

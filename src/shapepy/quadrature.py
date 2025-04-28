@@ -11,7 +11,7 @@ from numbers import Real
 from typing import Callable, Iterable, Tuple
 
 from . import default
-from .logger import debug
+from .loggers import debug
 
 
 class Quadrature:

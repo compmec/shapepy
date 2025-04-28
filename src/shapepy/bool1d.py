@@ -23,7 +23,7 @@ from typing import Any, Callable, Dict, Iterable, List, Set, Tuple, Union
 
 from . import default
 from .error import NotExpectedError
-from .logger import debug
+from .loggers import debug
 
 
 @debug("shapepy.bool1d")

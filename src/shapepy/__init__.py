@@ -18,9 +18,9 @@ See the webpage for more information and documentation:
 
 __version__ = "2.0.0"
 
-from .logger import get_logger, set_level
+from .loggers import get_logger, set_level
 
-log = get_logger()
+logger = get_logger("shapepy")
 set_level("INFO")
 
 if __name__ == "__main__":

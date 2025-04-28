@@ -7,7 +7,7 @@ from typing import Iterable, Optional
 
 from .. import default
 from ..bool1d import ConverterR1, IntervalR1, SubSetR1, WholeR1
-from ..logger import debug
+from ..loggers import debug
 from .base import IAnalytic1D
 from .piecewise import PiecewiseAnalytic1D
 from .sympyana import SympyAnalytic1D

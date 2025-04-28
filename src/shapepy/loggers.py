@@ -65,7 +65,7 @@ def get_logger(
     logger = IndentingLoggerAdapter.instances[name]
     if level is not None:
         logger.setLevel(level)
-    return level
+    return logger
 
 
 def setup_logger(name, level=logging.INFO):

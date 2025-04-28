@@ -9,7 +9,7 @@ from typing import Dict, Iterable, Optional, Tuple
 
 from .. import default
 from ..bool1d import EmptyR1, SubSetR1, WholeR1, infimum, supremum, unite
-from ..logger import debug
+from ..loggers import debug
 from .base import IAnalytic1D
 
 

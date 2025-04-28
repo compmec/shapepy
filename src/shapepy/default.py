@@ -22,7 +22,7 @@ from fractions import Fraction
 from numbers import Integral, Rational, Real
 from typing import Any, Callable
 
-from .logger import debug
+from .loggers import debug
 
 
 def real(number: Any) -> Real:
