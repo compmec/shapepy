@@ -33,7 +33,27 @@ class IndentingLoggerAdapter(logging.LoggerAdapter):
         return f"{indent_str}{msg}", kwargs
 
 
-def get_logger(name: Optional[str] = None) -> IndentingLoggerAdapter:
+def set_level(level: logging._Level):
+    """
+    Sets the level of all the shapepy loggers into given level
+
+    Parameters
+    ----------
+    level: logging._Level
+        One from 'DEBUG', 'INFO', 'WARNING', 'ERROR' and 'CRITICAL'
+
+    Example
+    -------
+    >>> set_level("INFO")
+    >>> set_level("ERROR")
+    """
+    for logger in IndentingLoggerAdapter.instances.values():
+        logger.setLevel(level)
+
+
+def get_logger(
+    name: Optional[str] = None, level: Optional[logging._Level] = None
+) -> IndentingLoggerAdapter:
     """
     Equivalent to `logging.getLogger`, but gives the standard
     `shapepy` logger if no name is given
@@ -42,7 +62,10 @@ def get_logger(name: Optional[str] = None) -> IndentingLoggerAdapter:
         name = "shapepy"
     if name not in IndentingLoggerAdapter.instances:
         setup_logger(name)
-    return IndentingLoggerAdapter.instances[name]
+    logger = IndentingLoggerAdapter.instances[name]
+    if level is not None:
+        logger.setLevel(level)
+    return level
 
 
 def setup_logger(name, level=logging.INFO):
@@ -58,8 +81,8 @@ def setup_logger(name, level=logging.INFO):
         "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
     )
     formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
-    formatter = logging.Formatter("%(asctime)s - %(message)s")
-    formatter = logging.Formatter("%(message)s")
+    # formatter = logging.Formatter("%(asctime)s - %(message)s")
+    # formatter = logging.Formatter("%(message)s")
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(level)
