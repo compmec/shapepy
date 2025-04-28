@@ -26,10 +26,11 @@ from typing import Optional, Tuple, Union
 
 from . import default
 from .analytic import IAnalytic1D
+from .analytic.piecewise import PiecewiseAnalytic1D
 from .angle import Angle
 from .bool1d import SubSetR1, infimum, supremum
 from .loggers import debug
-from .quadrature import chebyshev
+from .quadrature import chebyshev, open_newton
 
 
 class GeometricPoint:
@@ -291,15 +292,41 @@ class ClosedCurve(ContinuousCurve):
             self.__area = compute_area(self)
         return self.__area
 
-    @debug("shapepy.geometry.curve")
-    def winding(self, point: GeometricPoint) -> Real:
+    @debug("shapepy.geometry.curve", 2)
+    def winding(self, point: GeometricPoint, tolerance: Real = 1e-1) -> Real:
         """
         Computes the winding number with respect to a point.
         It gives a real value that depends
 
         For this function, we consider that
         """
-        return point.radius
+        point = geometric_point(point)
+        if point not in self.box:
+            return 0 if self.area > 0 else 1
+
+        deltax = self[0] - point.x
+        deltay = self[1] - point.y
+        radius_square = deltax * deltax + deltay * deltay
+        image = radius_square.image()
+        if infimum(image) == 0:
+            raise NotImplementedError
+
+        cross = deltax * deltay.derivate() - deltay * deltax.derivate()
+
+        def dtheta(t):
+            return cross(t) / radius_square(t)
+
+        if isinstance(cross, PiecewiseAnalytic1D):
+            knots = cross.knots
+        else:
+            knots = (infimum(cross.domain()), supremum(cross.domain()))
+
+        quad = open_newton(3)
+        total = 0
+        for knota, knotb in zip(knots, knots[1:]):
+            total += quad.adaptative(dtheta, knota, knotb, tolerance)
+        wind = round(total / default.tau)
+        return wind if self.area > 0 else 1 + wind
 
 
 class JordanCurve(ClosedCurve):
