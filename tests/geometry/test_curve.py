@@ -185,6 +185,30 @@ class TestSquare:
 @pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_polynomial"])
+def test_compare():
+    domain = IntervalR1(-1, 1)
+    xfunc = polynomial((1, 2), domain)
+    yfunc = polynomial((3, -2), domain)
+    curvea = ContinuousCurve(xfunc, yfunc)
+
+    xfunc = polynomial((1, 2), domain)
+    yfunc = polynomial((3, -2), domain)
+    curveb = ContinuousCurve(xfunc, yfunc)
+
+    xfunc = polynomial((3, 2), domain)
+    yfunc = polynomial((1, -2), domain)
+    curvec = ContinuousCurve(xfunc, yfunc)
+
+    assert curvea == curveb
+    assert curvea != curvec
+
+    assert curvea != 0
+    assert curvea != {0, 1, 2}
+
+
+@pytest.mark.order(15)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_build_polynomial"])
 def test_evaluate():
     domain = IntervalR1(-1, 1)
     xfunc = polynomial((1, 2), domain)

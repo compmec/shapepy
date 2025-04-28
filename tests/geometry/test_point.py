@@ -40,6 +40,19 @@ def test_build_polar():
 @pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
+def test_compare():
+    pointa = GeometricPoint.cartesian(0, 1)
+    pointb = GeometricPoint.polar(1, Angle.degrees(90))
+
+    assert pointa == pointb
+    assert pointa == (0, 1)
+
+    assert pointa != 1
+
+
+@pytest.mark.order(14)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_extract_cartesians():
     coords = (default.NEGINF, -1, 0, 1, default.POSINF)
     for xval in coords:

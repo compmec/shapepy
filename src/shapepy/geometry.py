@@ -143,10 +143,11 @@ class GeometricPoint:
         return "GeomPt" + str(self)
 
     def __eq__(self, other: object):
-        other = geometric_point(other)
-        if isinstance(other, GeometricPoint):
+        try:
+            other = geometric_point(other)
             return self.x == other.x and self.y == other.y
-        return NotImplemented
+        except (TypeError, IndexError):
+            return NotImplemented
 
 
 class ContinuousCurve:
@@ -262,8 +263,8 @@ class ContinuousCurve:
 
     def __eq__(self, other: object):
         if not isinstance(other, ContinuousCurve):
-            raise NotImplementedError
-        return self.lenght == other.lenght
+            return NotImplemented
+        return self[0] == other[0] and self[1] == other[1]
 
 
 class ClosedCurve(ContinuousCurve):
