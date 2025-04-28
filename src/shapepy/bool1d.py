@@ -64,11 +64,13 @@ def general_doer(
     for subset in subsets:
         set_all_knots |= set(extract_knots(subset))
     all_knots: List[Real] = sorted(set_all_knots)
-    set_all_knots.add(all_knots[0] - 1)
-    set_all_knots.add(all_knots[-1] + 1)
-    for knota, knotb in zip(all_knots, all_knots[1:]):
-        set_all_knots.add((knota + knotb) / 2)
-    eval_knots = sorted(set_all_knots)
+    eval_knots: List[Real] = [0] * (2 * len(all_knots) + 1)
+    eval_knots[0] = all_knots[0] - 1
+    eval_knots[-1] = all_knots[-1] + 1
+    for i, knot in enumerate(all_knots):
+        eval_knots[2 * i + 1] = knot
+    for i, (knota, knotb) in enumerate(zip(all_knots, all_knots[1:])):
+        eval_knots[2 * i + 2] = (knota + knotb) / 2
     return general_subset(all_knots, map(function, eval_knots))
 
 
