@@ -588,6 +588,7 @@ def rotate_point(point: GeometricPoint, angle: Angle) -> GeometricPoint:
     GeometricPoint
         The rotated point
     """
+    point = geometric_point(point)
     if not isinstance(angle, Angle):
         raise TypeError
     cos, sin = angle.cos(), angle.sin()

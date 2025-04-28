@@ -2,7 +2,12 @@ import pytest
 
 from shapepy import default
 from shapepy.angle import Angle
-from shapepy.geometry import GeometricPoint
+from shapepy.geometry import (
+    GeometricPoint,
+    move_point,
+    rotate_point,
+    scale_point,
+)
 
 
 @pytest.mark.order(14)
@@ -111,12 +116,54 @@ def test_extract_polar():
 
 
 @pytest.mark.order(14)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
+def test_move_point():
+    assert move_point((0, 0), (1, 0)) == (1, 0)
+
+
+@pytest.mark.order(14)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
+def test_scale_point():
+    assert scale_point((3, 4), 1) == (3, 4)
+    assert scale_point((3, 4), 3) == (9, 12)
+    assert scale_point((3, 4), (3, 4)) == (9, 16)
+
+
+@pytest.mark.order(14)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
+def test_rotate_point():
+    angle = Angle.degrees(90)
+    assert rotate_point((1, 0), angle) == (0, 1)
+    assert rotate_point((0, 1), angle) == (-1, 0)
+
+
+@pytest.mark.order(14)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
+def test_print():
+    point = GeometricPoint.cartesian(0, 0)
+    str(point)
+    repr(point)
+
+    point = GeometricPoint.polar(1, Angle.degrees(45))
+    str(point)
+    repr(point)
+
+
+@pytest.mark.order(14)
 @pytest.mark.dependency(
     depends=[
         "test_build_cartesian",
         "test_build_polar",
         "test_extract_cartesians",
         "test_extract_polar",
+        "test_move_point",
+        "test_scale_point",
+        "test_rotate_point",
+        "test_print",
     ]
 )
 def test_all():
