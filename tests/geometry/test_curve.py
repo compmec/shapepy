@@ -1,8 +1,20 @@
 import pytest
 
 from shapepy.analytic.elementar import piecewise, polynomial
+from shapepy.angle import Angle
 from shapepy.bool1d import IntervalR1
-from shapepy.geometry import ClosedCurve, ContinuousCurve, JordanCurve, reverse
+from shapepy.geometry import (
+    ClosedCurve,
+    ContinuousCurve,
+    JordanCurve,
+    move_curve,
+    move_point,
+    reverse,
+    rotate_curve,
+    rotate_point,
+    scale_curve,
+    scale_point,
+)
 
 
 @pytest.mark.order(15)
@@ -94,6 +106,65 @@ class TestSquare:
         assert test == good
 
     @pytest.mark.order(15)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestSquare::test_build"])
+    def test_move(self):
+        xfunc, yfunc = TestSquare.square_analytics()
+        curve = ContinuousCurve(xfunc, yfunc)
+        vector = (5, -7)
+        moved = move_curve(curve, vector)
+
+        tvalues = (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
+        for tval in tvalues:
+            good = move_point(curve.eval(tval), vector)
+            assert moved.eval(tval) == good
+
+    @pytest.mark.order(15)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestSquare::test_build"])
+    def test_scale(self):
+        xfunc, yfunc = TestSquare.square_analytics()
+        curve = ContinuousCurve(xfunc, yfunc)
+        vector = (5, -7)
+        scaled = scale_curve(curve, vector)
+
+        tvalues = (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
+        for tval in tvalues:
+            good = scale_point(curve.eval(tval), vector)
+            assert scaled.eval(tval) == good
+
+    @pytest.mark.order(15)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestSquare::test_build"])
+    def test_rotate(self):
+        xfunc, yfunc = TestSquare.square_analytics()
+        curve = ContinuousCurve(xfunc, yfunc)
+        angle = Angle.degrees(90)
+        rotated = rotate_curve(curve, angle)
+
+        tvalues = (0, 0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4)
+        for tval in tvalues:
+            good = rotate_point(curve.eval(tval), angle)
+            assert rotated.eval(tval) == good
+
+    @pytest.mark.order(15)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(depends=["TestSquare::test_build"])
+    def test_print(self):
+        xfunc, yfunc = TestSquare.square_analytics()
+        curve = ContinuousCurve(xfunc, yfunc)
+        str(curve)
+        repr(curve)
+
+        curve = ClosedCurve(xfunc, yfunc)
+        str(curve)
+        repr(curve)
+
+        curve = JordanCurve(xfunc, yfunc)
+        str(curve)
+        repr(curve)
+
+    @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
             "TestSquare::test_build",
@@ -101,6 +172,10 @@ class TestSquare:
             "TestSquare::test_area",
             "TestSquare::test_winding",
             "TestSquare::test_projection",
+            "TestSquare::test_move",
+            "TestSquare::test_scale",
+            "TestSquare::test_rotate",
+            "TestSquare::test_print",
         ]
     )
     def test_all(self):
@@ -151,10 +226,9 @@ def test_reverse():
 @pytest.mark.dependency(
     depends=[
         "test_build_polynomial",
-        "test_build_piecewise_square",
+        "TestSquare::test_all",
         "test_evaluate",
         "test_reverse",
-        "TestProjection::test_square",
     ]
 )
 def test_all():
