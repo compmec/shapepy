@@ -90,8 +90,11 @@ class TestSquare:
         for point in [(-2, -2), (-2, 2), (2, 2), (2, -2)]:
             assert curve.winding(point) == 0
         # Interior points
-        for point in [(0, 0)]:
-            assert curve.winding(point) == 1
+        coords = (-0.5, 0.5)
+        for xcoord in coords:
+            for ycoord in coords:
+                point = (xcoord, ycoord)
+                assert curve.winding(point) == 1
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)

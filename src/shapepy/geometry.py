@@ -30,7 +30,7 @@ from .analytic.piecewise import PiecewiseAnalytic1D
 from .angle import Angle
 from .bool1d import SubSetR1, infimum, supremum
 from .loggers import debug
-from .quadrature import chebyshev, open_newton
+from .quadrature import chebyshev
 
 
 class GeometricPoint:
@@ -294,7 +294,7 @@ class ClosedCurve(ContinuousCurve):
         return self.__area
 
     @debug("shapepy.geometry.curve", 2)
-    def winding(self, point: GeometricPoint, tolerance: Real = 1e-1) -> Real:
+    def winding(self, point: GeometricPoint) -> Real:
         """
         Computes the winding number with respect to a point.
         It gives a real value that depends
@@ -312,21 +312,27 @@ class ClosedCurve(ContinuousCurve):
         if infimum(image) == 0:
             raise NotImplementedError
 
-        cross = deltax * deltay.derivate() - deltay * deltax.derivate()
+        def uatan2(yval: Real, xval: Real) -> Real:
+            return default.atan2(yval, xval) / default.tau
 
-        def dtheta(t):
-            return cross(t) / radius_square(t)
+        def windin(knota: Real, knotb: Real) -> Real:
+            pointa = self.eval(knota)
+            pointb = self.eval(knotb)
+            wind = uatan2(cross(pointa, pointb), inner(pointa, pointb))
+            if abs(wind) > 0.25:
+                knotm = (knota + knotb) / 2
+                wind = windin(knota, knotm) + windin(knotm, knotb)
+            return wind
 
-        if isinstance(cross, PiecewiseAnalytic1D):
-            knots = cross.knots
+        if isinstance(radius_square, PiecewiseAnalytic1D):
+            knots = radius_square.knots
         else:
-            knots = (infimum(cross.domain()), supremum(cross.domain()))
+            knots = (
+                infimum(radius_square.domain),
+                supremum(radius_square.domain),
+            )
 
-        quad = open_newton(3)
-        total = 0
-        for knota, knotb in zip(knots, knots[1:]):
-            total += quad.adaptative(dtheta, knota, knotb, tolerance)
-        wind = round(total / default.tau)
+        wind = round(sum(windin(ta, tb) for ta, tb in zip(knots, knots[1:])))
         return wind if self.area > 0 else 1 + wind
 
 
@@ -420,6 +426,62 @@ class BoundingBox:
 
 
 quadrature = chebyshev(5)
+
+
+def inner(pointa: GeometricPoint, pointb: GeometricPoint) -> Real:
+    """
+    Computes the inner product between two points
+
+    Parameters
+    ----------
+    pointa: GeometricPoint
+        The point A to compute <A, B>
+    pointb: GeometricPoint
+        The point B to compute <A, B>
+
+    Return
+    ------
+    Real
+        The value of the inner product
+
+    Example
+    -------
+    >>> pointa = (3, 4)
+    >>> pointb = (5, 2)
+    >>> inner(pointa, pointb)
+    23
+    """
+    pointa = geometric_point(pointa)
+    pointb = geometric_point(pointb)
+    return pointa.x * pointb.x + pointa.y * pointb.y
+
+
+def cross(pointa: GeometricPoint, pointb: GeometricPoint) -> Real:
+    """
+    Computes the cross product between two points
+
+    Parameters
+    ----------
+    pointa: GeometricPoint
+        The point A to compute A x B
+    pointb: GeometricPoint
+        The point B to compute A x B
+
+    Return
+    ------
+    Real
+        The value of the cross product
+
+    Example
+    -------
+    >>> pointa = (3, 4)
+    >>> pointb = (5, 2)
+    >>> cross(pointa, pointb)
+    -14
+    """
+    pointa = geometric_point(pointa)
+    pointb = geometric_point(pointb)
+    return pointa.x * pointb.y - pointa.y * pointb.x
 
 
 @debug("shapepy.geometry.curve")
