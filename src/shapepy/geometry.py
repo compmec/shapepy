@@ -329,14 +329,12 @@ class ClosedCurve(ContinuousCurve):
                 wind = windin(knota, knotm) + windin(knotm, knotb)
             return wind
 
+        knots = set(extract_knots(roots))
+        knots.add(infimum(radius_square.domain))
+        knots.add(supremum(radius_square.domain))
         if isinstance(radius_square, PiecewiseAnalytic1D):
-            knots = radius_square.knots
-        else:
-            knots = (
-                infimum(radius_square.domain),
-                supremum(radius_square.domain),
-            )
-
+            knots |= set(radius_square.knots)
+        knots = sorted(knots)
         wind = round(sum(windin(ta, tb) for ta, tb in zip(knots, knots[1:])))
         return wind if self.area > 0 else 1 + wind
 
