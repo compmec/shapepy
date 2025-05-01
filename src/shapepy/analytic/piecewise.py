@@ -8,7 +8,7 @@ from numbers import Real
 from typing import Dict, Iterable, Optional, Tuple
 
 from .. import default
-from ..bool1d import EmptyR1, SubSetR1, WholeR1, infimum, supremum, unite
+from ..bool1d import EmptyR1, IntervalR1, SubSetR1, WholeR1, unite
 from ..loggers import debug
 from .base import IAnalytic1D
 
@@ -20,27 +20,49 @@ class PiecewiseAnalytic1D(IAnalytic1D):
     over different intervals of the domain
     """
 
+    @classmethod
+    def from_dict(cls, parameters: Dict[SubSetR1, IAnalytic1D]):
+        """
+        Initialize a PiecewiseAnalytic1D by a dictionary
+        """
+        intervals = tuple(parameters.keys())
+        functions = tuple(parameters[interval] for interval in intervals)
+        return cls(intervals, functions)
+
     def __init__(
-        self,
-        analytics: Dict[SubSetR1, IAnalytic1D],
+        self, intervals: Iterable[IntervalR1], analytics: Iterable[IAnalytic1D]
     ):
-        if len(analytics) < 2:
-            raise ValueError(f"Too few analytics: {len(analytics)} < 2")
-        keys = tuple(analytics.keys())
-        for i, key in enumerate(keys):
-            for j in range(i + 1, len(keys)):
-                if key & keys[j] != EmptyR1():
-                    raise ValueError(
-                        f"All the subdomains must be disjoints: {keys}"
-                    )
-        analytics = {
-            key: value.section(key) for key, value in analytics.items()
-        }
+        intervals = tuple(intervals)
+        analytics = tuple(analytics)
+        if len(analytics) < 2 or len(intervals) != len(analytics):
+            raise ValueError(
+                f"Invalid lengths! {len(intervals)}, {len(analytics)}"
+            )
+        for interval in intervals:
+            if not isinstance(interval, IntervalR1):
+                raise TypeError(
+                    f"Must be an IntervalR1, received {type(interval)}"
+                )
+        middles = tuple(
+            middle_knot(interval[0], interval[1]) for interval in intervals
+        )
+        intervals = tuple(
+            interval for _, interval in sorted(zip(middles, intervals))
+        )
+        analytics = tuple(
+            analytic for _, analytic in sorted(zip(middles, analytics))
+        )
+        for i in range(len(intervals) - 1):
+            if (intervals[i] & intervals[i + 1]) != EmptyR1():
+                raise ValueError("The intervals must be disjoint")
+
+        self.__intervals = intervals
         self.__analytics = analytics
-        self.__domain = unite(*tuple(analytics.keys()))
-        knots = set(map(supremum, analytics.keys()))
-        knots |= set(map(infimum, analytics.keys()))
+
+        knots = set(interval[0] for interval in intervals)
+        knots |= set(interval[1] for interval in intervals)
         self.__knots = tuple(sorted(knots))
+        self.__domain = unite(*intervals)
 
     @property
     def domain(self) -> SubSetR1:
@@ -50,7 +72,14 @@ class PiecewiseAnalytic1D(IAnalytic1D):
         return self.__domain
 
     @property
-    def analytics(self) -> Dict[SubSetR1, IAnalytic1D]:
+    def intervals(self) -> Tuple[SubSetR1, ...]:
+        """
+        Gives the functions that defines the piecewise
+        """
+        return self.__intervals
+
+    @property
+    def analytics(self) -> Tuple[IAnalytic1D, ...]:
         """
         Gives the functions that defines the piecewise
         """
@@ -64,42 +93,56 @@ class PiecewiseAnalytic1D(IAnalytic1D):
         return self.__knots
 
     def __iter__(self) -> Iterable[SubSetR1, IAnalytic1D]:
-        yield from self.analytics.items()
+        yield from zip(self.intervals, self.analytics)
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, PiecewiseAnalytic1D):
             return NotImplemented
         return self.knots == other.knots and self.analytics == other.analytics
 
-    def eval(self, node: Real, derivate: int = 0) -> Real:
-        for subset, analytic in self:
+    def span(self, node: Real) -> int:
+        """
+        Finds the index such the given node is on interval
+
+        Parameters
+        ----------
+        node: Real
+            The node
+
+        Return
+        ------
+        int
+            The index
+        """
+        for i, subset in enumerate(self.__intervals):
             if node in subset:
-                return analytic.eval(node, derivate)
+                return i
         raise ValueError(
             f"Given node {node} is not inside the domain {self.domain}"
         )
 
+    def eval(self, node: Real, derivate: int = 0) -> Real:
+        analytic = self.analytics[self.span(node)]
+        return analytic.eval(node, derivate)
+
     @debug("shapepy.analytic.piecewise")
     def derivate(self, times=1):
-        return PiecewiseAnalytic1D(
-            {subset: analytic.derivate(times) for subset, analytic in self}
-        )
+        new_analytics = (ana.derivate(times) for ana in self.analytics)
+        return PiecewiseAnalytic1D(self.intervals, new_analytics)
 
     @debug("shapepy.analytic.piecewise")
     def shift(self, amount):
         amount = default.finite(amount)
-        new_analytics = {}
-        for subset, analytic in self:
-            new_analytics[subset.shift(amount)] = analytic.shift(amount)
-        return PiecewiseAnalytic1D(new_analytics)
+        new_intervals = (inter.shift(amount) for inter in self.intervals)
+        new_analytics = (analy.shift(amount) for analy in self.analytics)
+        return PiecewiseAnalytic1D(new_intervals, new_analytics)
 
     @debug("shapepy.analytic.piecewise")
     def scale(self, amount):
         amount = default.finite(amount)
-        new_analytics = {}
-        for subset, analytic in self:
-            new_analytics[subset.scale(amount)] = analytic.shift(amount)
-        return PiecewiseAnalytic1D(new_analytics)
+        new_intervals = (inter.scale(amount) for inter in self.intervals)
+        new_analytics = (analy.scale(amount) for analy in self.analytics)
+        return PiecewiseAnalytic1D(new_intervals, new_analytics)
 
     @debug("shapepy.analytic.piecewise")
     def integrate(
@@ -136,10 +179,9 @@ class PiecewiseAnalytic1D(IAnalytic1D):
     ) -> PiecewiseAnalytic1D:
         if subdomain is None:
             subdomain = WholeR1()
-        new_analytics = {
-            key & subdomain: value for key, value in self.analytics.items()
-        }
-        return self.__class__(new_analytics)
+        new_intervals = (inter & subdomain for inter in self.intervals)
+        new_analytics = (analy.section(subdomain) for analy in self.analytics)
+        return PiecewiseAnalytic1D(new_intervals, new_analytics)
 
     def __str__(self):
         msgs = []
@@ -156,36 +198,57 @@ class PiecewiseAnalytic1D(IAnalytic1D):
     @debug("shapepy.analytic.piecewise")
     def __add__(self, other: IAnalytic1D) -> IAnalytic1D:
         if not isinstance(other, PiecewiseAnalytic1D):
-            return PiecewiseAnalytic1D(
-                {subset: analytic + other for subset, analytic in self}
-            )
-        new_analytics = {}
+            new_analytics = (analy + other for analy in self.analytics)
+            return PiecewiseAnalytic1D(self.intervals, new_analytics)
+        new_params = {}
         for self_subset, self_analytic in self:
             for other_subset, other_analytic in other:
                 new_subset = self_subset & other_subset
                 if new_subset == EmptyR1():
                     continue
-                new_analytics[new_subset] = self_analytic + other_analytic
-        return PiecewiseAnalytic1D(new_analytics)
+                new_params[new_subset] = self_analytic + other_analytic
+        return PiecewiseAnalytic1D.from_dict(new_params)
 
     @debug("shapepy.analytic.piecewise")
     def __mul__(self, other: IAnalytic1D) -> IAnalytic1D:
         if not isinstance(other, PiecewiseAnalytic1D):
-            return PiecewiseAnalytic1D(
-                {subset: analytic * other for subset, analytic in self}
-            )
-        new_analytics = {}
+            new_analytics = (analy * other for analy in self.analytics)
+            return PiecewiseAnalytic1D(self.intervals, new_analytics)
+        new_params = {}
         for self_subset, self_analytic in self:
             for other_subset, other_analytic in other:
                 new_subset = self_subset & other_subset
                 if new_subset == EmptyR1():
                     continue
-                new_analytics[new_subset] = self_analytic * other_analytic
-        return PiecewiseAnalytic1D(new_analytics)
+                new_params[new_subset] = self_analytic * other_analytic
+        return PiecewiseAnalytic1D.from_dict(new_params)
 
     @debug("shapepy.analytic.piecewise")
     def __truediv__(self, other: Real) -> IAnalytic1D:
         other = default.finite(other)
-        return PiecewiseAnalytic1D(
-            {subset: analytic / other for subset, analytic in self}
-        )
+        new_analytics = (analy / other for analy in self.analytics)
+        return PiecewiseAnalytic1D(self.intervals, new_analytics)
+
+
+def middle_knot(left: Real, right: Real) -> Real:
+    """
+    Computes the middle point of the interval [left, right]
+
+    If one of them is infinity, we only shift by 1 unit:
+
+    Example
+    -------
+    >>> middle_knot(-1, 1)
+    0
+    >>> middle_knot(0, 2)
+    1
+    >>> middle_knot(-inf, 10)
+    9
+    >>> middle_knot(10, +inf)
+    11
+    """
+    if default.isinfinity(left):
+        return right - 1
+    if default.isinfinity(right):
+        return left + 1
+    return (left + right) / 2

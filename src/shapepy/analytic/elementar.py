@@ -83,4 +83,4 @@ def piecewise(
         right = i + 1 == len(analytics)
         subset = IntervalR1(knots[i], knots[i + 1], True, right)
         parameters[subset] = analytic.section(subset)
-    return PiecewiseAnalytic1D(parameters)
+    return PiecewiseAnalytic1D.from_dict(parameters)
