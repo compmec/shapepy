@@ -200,28 +200,42 @@ class PiecewiseAnalytic1D(IAnalytic1D):
         if not isinstance(other, PiecewiseAnalytic1D):
             new_analytics = (analy + other for analy in self.analytics)
             return PiecewiseAnalytic1D(self.intervals, new_analytics)
-        new_params = {}
-        for self_subset, self_analytic in self:
-            for other_subset, other_analytic in other:
-                new_subset = self_subset & other_subset
-                if new_subset == EmptyR1():
-                    continue
-                new_params[new_subset] = self_analytic + other_analytic
-        return PiecewiseAnalytic1D.from_dict(new_params)
+        knots = sorted(set(self.knots) | set(other.knots))
+        middles = tuple(
+            middle_knot(ta, tb) for ta, tb in zip(knots, knots[1:])
+        )
+
+        new_intervals = []
+        new_analytics = []
+        for knot in middles:
+            sespan = self.span(knot)
+            otspan = other.span(knot)
+            new_interval = self.intervals[sespan] & other.intervals[otspan]
+            new_analytic = self.analytics[sespan] + other.analytics[otspan]
+            new_intervals.append(new_interval)
+            new_analytics.append(new_analytic)
+        return PiecewiseAnalytic1D(new_intervals, new_analytics)
 
     @debug("shapepy.analytic.piecewise")
     def __mul__(self, other: IAnalytic1D) -> IAnalytic1D:
         if not isinstance(other, PiecewiseAnalytic1D):
             new_analytics = (analy * other for analy in self.analytics)
             return PiecewiseAnalytic1D(self.intervals, new_analytics)
-        new_params = {}
-        for self_subset, self_analytic in self:
-            for other_subset, other_analytic in other:
-                new_subset = self_subset & other_subset
-                if new_subset == EmptyR1():
-                    continue
-                new_params[new_subset] = self_analytic * other_analytic
-        return PiecewiseAnalytic1D.from_dict(new_params)
+        knots = sorted(set(self.knots) | set(other.knots))
+        middles = tuple(
+            middle_knot(ta, tb) for ta, tb in zip(knots, knots[1:])
+        )
+
+        new_intervals = []
+        new_analytics = []
+        for knot in middles:
+            sespan = self.span(knot)
+            otspan = other.span(knot)
+            new_interval = self.intervals[sespan] & other.intervals[otspan]
+            new_analytic = self.analytics[sespan] * other.analytics[otspan]
+            new_intervals.append(new_interval)
+            new_analytics.append(new_analytic)
+        return PiecewiseAnalytic1D(new_intervals, new_analytics)
 
     @debug("shapepy.analytic.piecewise")
     def __truediv__(self, other: Real) -> IAnalytic1D:
