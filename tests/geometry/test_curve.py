@@ -102,6 +102,10 @@ class TestSquare:
             assert curve.winding((coord, 1)) == 0.5
             assert curve.winding((coord, -1)) == 0.5
 
+        # Vertices of the square
+        for vertex in [(-1, -1), (-1, 1), (1, 1), (1, -1)]:
+            assert curve.winding(vertex) == 0.25
+
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])

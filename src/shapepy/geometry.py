@@ -311,7 +311,10 @@ class ClosedCurve(ContinuousCurve):
         roots = radius_square.where(0)
         if roots != EmptyR1():
             wind = 0
-            for root in extract_knots(roots):
+            roots = set(extract_knots(roots))
+            # Remove the last point, cause the first one is already included
+            roots -= {supremum(self[0].domain)}
+            for root in roots:
                 pointa = limit_closed(self, root, True, 1)
                 pointb = limit_closed(self, root, False, 1)
                 wind += uatan2(cross(pointa, pointb), -inner(pointa, pointb))
@@ -793,7 +796,6 @@ def reverse(curve: ContinuousCurve) -> ContinuousCurve:
     return curve.__class__(newxfunc, newyfunc)
 
 
-@debug("shapepy.geometry.point")
 def geometric_point(
     point: Union[GeometricPoint, Tuple[Real, Real]]
 ) -> GeometricPoint:
