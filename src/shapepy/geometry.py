@@ -28,7 +28,7 @@ from . import default
 from .analytic import IAnalytic1D
 from .analytic.piecewise import PiecewiseAnalytic1D
 from .angle import Angle
-from .bool1d import SubSetR1, infimum, supremum
+from .bool1d import EmptyR1, SubSetR1, extract_knots, infimum, supremum
 from .loggers import debug
 from .quadrature import chebyshev
 
@@ -308,12 +308,14 @@ class ClosedCurve(ContinuousCurve):
         deltax = self[0] - point.x
         deltay = self[1] - point.y
         radius_square = deltax * deltax + deltay * deltay
-        image = radius_square.image()
-        if infimum(image) == 0:
-            raise NotImplementedError
-
-        def uatan2(yval: Real, xval: Real) -> Real:
-            return default.atan2(yval, xval) / default.tau
+        roots = radius_square.where(0)
+        if roots != EmptyR1():
+            wind = 0
+            for root in extract_knots(roots):
+                pointa = limit_closed(self, root, True, 1)
+                pointb = limit_closed(self, root, False, 1)
+                wind += uatan2(cross(pointa, pointb), -inner(pointa, pointb))
+            return wind
 
         def windin(knota: Real, knotb: Real) -> Real:
             pointa = self.eval(knota)
@@ -426,6 +428,87 @@ class BoundingBox:
 
 
 quadrature = chebyshev(5)
+
+
+def limit_curve(
+    curve: ContinuousCurve, node: Real, left: bool, derivate: int = 0
+) -> GeometricPoint:
+    """
+    Computes the limit of given curve
+    """
+    xvalue = limit_analytic(curve[0], node, left, derivate)
+    yvalue = limit_analytic(curve[1], node, left, derivate)
+    return GeometricPoint.cartesian(xvalue, yvalue)
+
+
+def limit_analytic(
+    analytic: IAnalytic1D, node: Real, left: bool, derivate: int = 0
+) -> Real:
+    """
+    Computes the limit for an analytic function
+    """
+    if not isinstance(analytic, PiecewiseAnalytic1D):
+        return analytic.eval(node, derivate)
+    try:
+        index = analytic.knots.index(node)
+    except ValueError:
+        return analytic.eval(node, derivate)
+
+    if left:
+        analytic = analytic.analytics[index - 1]
+    else:
+        analytic = analytic.analytics[index]
+
+    return analytic.eval(node, derivate)
+
+
+def limit_closed(
+    curve: ClosedCurve, node: Real, left: bool, derivate: int = 0
+) -> GeometricPoint:
+    """
+    Computes the limit for a closed curve
+    """
+    inf = infimum(curve[0].domain)
+    sup = supremum(curve[0].domain)
+    if left and node == inf:
+        node = sup
+    elif not left and node == sup:
+        node = inf
+    return limit_curve(curve, node, left, derivate)
+
+
+def uatan2(yval: Real, xval: Real) -> Real:
+    """
+    Computes the unitary arctan2, returning an angle in turns
+
+    It's equivalent to arctan2(yval, xval)/tau
+
+    Parameters
+    ----------
+    yval: Real
+        The y coordinate
+    xval: Real
+        The x coordinate
+
+    Return
+    ------
+    Real
+        A value in the interval (-0.5, 0.5]
+
+    Example
+    -------
+    >>> uatan2(0, 0)
+    0
+    >>> uatan2(0, 1)
+    0
+    >>> uatan2(0, -1)
+    0.5
+    >>> uatan2(1, 0)
+    0.25
+    >>> uatan2(-1, 0)
+    -0.25
+    """
+    return default.atan2(yval, xval) / default.tau
 
 
 def inner(pointa: GeometricPoint, pointb: GeometricPoint) -> Real:
