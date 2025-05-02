@@ -1,7 +1,7 @@
 import pytest
 
 from shapepy.bool2d.base import EmptyR2, WholeR2
-from shapepy.bool2d.bool2d import contains, invert
+from shapepy.bool2d.bool2d import contains, intersect, invert, unite
 from shapepy.bool2d.container import ContainerNot, expand
 from shapepy.bool2d.simplify import simplify
 from shapepy.bool2d.singles import SinglePointR2
@@ -108,6 +108,53 @@ def test_contains():
             assert not contains(pointi, ~pointj)
             assert contains(~pointi, pointj)
             assert not contains(~pointi, ~pointj)
+
+
+@pytest.mark.order(25)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency()
+def test_self_operation():
+    empty = EmptyR2()
+    whole = WholeR2()
+
+    points = [(0, 0), (1, 1), (-1, -1)]
+    points = map(SinglePointR2, points)
+    for subset in points:
+        assert subset | subset == subset
+        assert subset & subset == subset
+        assert subset ^ subset == empty
+        assert subset - subset == empty
+        assert subset + subset == subset
+        assert subset * subset == subset
+        assert unite(subset, subset, subset) == subset
+        assert intersect(subset, subset, subset) == subset
+
+        assert subset | (~subset) == whole
+        assert subset & (~subset) == empty
+        assert subset ^ (~subset) == whole
+        assert subset - (~subset) == subset
+        assert subset + (~subset) == whole
+        assert subset * (~subset) == empty
+        assert unite(subset, ~subset) == whole
+        assert intersect(subset, ~subset) == empty
+
+        assert (~subset) | subset == whole
+        assert (~subset) & subset == empty
+        assert (~subset) ^ subset == whole
+        assert (~subset) - subset == ~subset
+        assert (~subset) + subset == whole
+        assert (~subset) * subset == empty
+        assert unite(~subset, subset) == whole
+        assert intersect(~subset, subset) == empty
+
+        assert (~subset) | (~subset) == ~subset
+        assert (~subset) & (~subset) == ~subset
+        assert (~subset) ^ (~subset) == empty
+        assert (~subset) - (~subset) == empty
+        assert (~subset) + (~subset) == ~subset
+        assert (~subset) * (~subset) == ~subset
+        assert unite(~subset, ~subset) == ~subset
+        assert intersect(~subset, ~subset) == ~subset
 
 
 @pytest.mark.order(25)
