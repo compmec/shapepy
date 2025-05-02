@@ -8,6 +8,7 @@ from typing import Tuple, Union
 
 from ..angle import Angle
 from .base import EmptyR2, SubSetR2, WholeR2
+from .container import ContainerAnd, ContainerNot, ContainerOr
 
 
 def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
@@ -33,6 +34,10 @@ def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
     """
     if isinstance(subset, (EmptyR2, WholeR2)):
         return subset
+    if isinstance(subset, ContainerNot):
+        return subset.__class__(move(~subset, vector))
+    if isinstance(subset, (ContainerAnd, ContainerOr)):
+        return subset.__class__(move(sub, vector) for sub in subset)
     raise NotImplementedError
 
 
@@ -65,6 +70,10 @@ def scale(
     """
     if isinstance(subset, (EmptyR2, WholeR2)):
         return subset
+    if isinstance(subset, ContainerNot):
+        return subset.__class__(scale(~subset, amount))
+    if isinstance(subset, (ContainerAnd, ContainerOr)):
+        return subset.__class__(scale(sub, amount) for sub in subset)
     raise NotImplementedError
 
 
@@ -92,4 +101,8 @@ def rotate(subset: SubSetR2, angle: Angle) -> SubSetR2:
     """
     if isinstance(subset, (EmptyR2, WholeR2)):
         return subset
+    if isinstance(subset, ContainerNot):
+        return subset.__class__(rotate(~subset, angle))
+    if isinstance(subset, (ContainerAnd, ContainerOr)):
+        return subset.__class__(rotate(sub, angle) for sub in subset)
     raise NotImplementedError
