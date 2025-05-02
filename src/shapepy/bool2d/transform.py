@@ -7,7 +7,7 @@ from numbers import Real
 from typing import Tuple, Union
 
 from ..angle import Angle
-from .base import SubSetR2
+from .base import EmptyR2, SubSetR2, WholeR2
 
 
 def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
@@ -31,6 +31,8 @@ def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
     >>> subset = primitive.square()
     >>> move(subset, (3, 4))
     """
+    if isinstance(subset, (EmptyR2, WholeR2)):
+        return subset
     raise NotImplementedError
 
 
@@ -61,6 +63,8 @@ def scale(
     >>> scale(subset, 3)  # Area is 9 times bigger
     >>> scale(subset, (5, 2))  # Scale x by 5 times, y by 2 times
     """
+    if isinstance(subset, (EmptyR2, WholeR2)):
+        return subset
     raise NotImplementedError
 
 
@@ -86,4 +90,6 @@ def rotate(subset: SubSetR2, angle: Angle) -> SubSetR2:
     >>> angle = Angle.degrees(90)
     >>> rotate(subset, angle)
     """
+    if isinstance(subset, (EmptyR2, WholeR2)):
+        return subset
     raise NotImplementedError

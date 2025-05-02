@@ -5,7 +5,8 @@ between the SubSetR2 instances
 
 from __future__ import annotations
 
-from .base import SubSetR2
+from .base import EmptyR2, SubSetR2, WholeR2
+from .converter import from_any
 
 
 def unite(*subsets: SubSetR2) -> SubSetR2:
@@ -22,6 +23,14 @@ def unite(*subsets: SubSetR2) -> SubSetR2:
     SubSetR2
         The united subset
     """
+    subsets = map(from_any, subsets)
+    subsets = tuple(sub for sub in subsets if not isinstance(sub, EmptyR2))
+    if len(subsets) == 0:
+        return EmptyR2()
+    if len(subsets) == 1:
+        return subsets[0]
+    if any(isinstance(subset, WholeR2) for subset in subsets):
+        return WholeR2()
     raise NotImplementedError
 
 
@@ -39,6 +48,14 @@ def intersect(*subsets: SubSetR2) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
+    subsets = map(from_any, subsets)
+    subsets = tuple(sub for sub in subsets if not isinstance(sub, WholeR2))
+    if len(subsets) == 0:
+        return WholeR2()
+    if len(subsets) == 1:
+        return subsets[0]
+    if any(isinstance(subset, EmptyR2) for subset in subsets):
+        return EmptyR2()
     raise NotImplementedError
 
 
@@ -56,7 +73,7 @@ def invert(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The inverted subset
     """
-    raise NotImplementedError
+    return ~subset
 
 
 def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
@@ -82,4 +99,4 @@ def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     >>> contains(WholeR2(), EmptyR2())
     True
     """
-    raise NotImplementedError
+    return subsetb in subseta
