@@ -110,51 +110,146 @@ def test_contains():
             assert not contains(~pointi, ~pointj)
 
 
-@pytest.mark.order(25)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_self_operation():
-    empty = EmptyR2()
-    whole = WholeR2()
+class TestSelfOperation:
 
-    points = [(0, 0), (1, 1), (-1, -1)]
-    points = map(SinglePointR2, points)
-    for subset in points:
-        assert subset | subset == subset
-        assert subset & subset == subset
-        assert subset ^ subset == empty
-        assert subset - subset == empty
-        assert subset + subset == subset
-        assert subset * subset == subset
-        assert unite(subset, subset, subset) == subset
-        assert intersect(subset, subset, subset) == subset
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency()
+    def test_or(self):
+        empty = EmptyR2()
+        whole = WholeR2()
 
-        assert subset | (~subset) == whole
-        assert subset & (~subset) == empty
-        assert subset ^ (~subset) == whole
-        assert subset - (~subset) == subset
-        assert subset + (~subset) == whole
-        assert subset * (~subset) == empty
-        assert unite(subset, ~subset) == whole
-        assert intersect(subset, ~subset) == empty
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert subset | subset == subset
+            assert simplify(subset | (~subset)) == whole
+            assert simplify((~subset) | subset) == whole
+            assert (~subset) | (~subset) == ~subset
 
-        assert (~subset) | subset == whole
-        assert (~subset) & subset == empty
-        assert (~subset) ^ subset == whole
-        assert (~subset) - subset == ~subset
-        assert (~subset) + subset == whole
-        assert (~subset) * subset == empty
-        assert unite(~subset, subset) == whole
-        assert intersect(~subset, subset) == empty
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency()
+    def test_and(self):
+        empty = EmptyR2()
+        whole = WholeR2()
 
-        assert (~subset) | (~subset) == ~subset
-        assert (~subset) & (~subset) == ~subset
-        assert (~subset) ^ (~subset) == empty
-        assert (~subset) - (~subset) == empty
-        assert (~subset) + (~subset) == ~subset
-        assert (~subset) * (~subset) == ~subset
-        assert unite(~subset, ~subset) == ~subset
-        assert intersect(~subset, ~subset) == ~subset
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert subset & subset == subset
+            assert simplify(subset & (~subset)) == empty
+            assert simplify((~subset) & subset) == empty
+            assert (~subset) & (~subset) == ~subset
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(
+        depends=["TestSelfOperation::test_or", "TestSelfOperation::test_and"]
+    )
+    def test_xor(self):
+        empty = EmptyR2()
+        whole = WholeR2()
+
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert subset ^ subset == empty
+            assert subset ^ (~subset) == whole
+            assert (~subset) ^ subset == whole
+            assert (~subset) ^ (~subset) == empty
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
+    def test_sub(self):
+        empty = EmptyR2()
+        whole = WholeR2()
+
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert subset - subset == empty
+            assert subset - (~subset) == subset
+            assert (~subset) - subset == ~subset
+            assert (~subset) - (~subset) == empty
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestSelfOperation::test_or"])
+    def test_add(self):
+        empty = EmptyR2()
+        whole = WholeR2()
+
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert subset + subset == subset
+            assert subset + (~subset) == whole
+            assert (~subset) + subset == whole
+            assert (~subset) + (~subset) == ~subset
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
+    def test_mul(self):
+        empty = EmptyR2()
+        whole = WholeR2()
+
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert subset * subset == subset
+            assert subset * (~subset) == empty
+            assert (~subset) * subset == empty
+            assert (~subset) * (~subset) == ~subset
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestSelfOperation::test_or"])
+    def test_unite(self):
+        empty = EmptyR2()
+        whole = WholeR2()
+
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert unite(subset, subset) == subset
+            assert simplify(unite(subset, ~subset)) == whole
+            assert simplify(unite(~subset, subset)) == whole
+            assert unite(~subset, ~subset) == ~subset
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
+    def test_intersect(self):
+        empty = EmptyR2()
+        whole = WholeR2()
+
+        points = [(0, 0), (1, 1), (-1, -1)]
+        points = map(SinglePointR2, points)
+        for subset in points:
+            assert intersect(subset, subset) == subset
+            assert intersect(~subset, ~subset) == ~subset
+            assert simplify(intersect(subset, ~subset)) == empty
+            assert simplify(intersect(~subset, subset)) == empty
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(
+        depends=[
+            "TestSelfOperation::test_or",
+            "TestSelfOperation::test_and",
+            "TestSelfOperation::test_xor",
+            "TestSelfOperation::test_sub",
+            "TestSelfOperation::test_add",
+            "TestSelfOperation::test_mul",
+            "TestSelfOperation::test_unite",
+            "TestSelfOperation::test_intersect",
+        ]
+    )
+    def test_all(self):
+        pass
 
 
 @pytest.mark.order(25)
@@ -177,6 +272,7 @@ def test_print():
         "test_expand",
         "test_simplify",
         "test_print",
+        "TestSelfOperation::test_all",
     ]
 )
 def test_all():
