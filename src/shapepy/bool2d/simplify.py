@@ -3,8 +3,12 @@ Defines the function 'simplify' that is used to simplify a boolean
 expression of the planar SubSetR2 instances
 """
 
-from .base import SubSetR2
+from typing import Iterable
+
+from .base import EmptyR2, SubSetR2
+from .bool2d import intersect
 from .container import ContainerAnd, ContainerNot, ContainerOr, expand
+from .singles import SinglePointR2
 
 
 def simplify(subset: SubSetR2) -> SubSetR2:
@@ -28,4 +32,24 @@ def simplify(subset: SubSetR2) -> SubSetR2:
         return subset
     if not isinstance(subset, (ContainerAnd, ContainerOr)):
         return subset
-    return subset.__class__(map(simplify, subset))
+    isunion = isinstance(subset, ContainerOr)
+    if isunion:
+        subset = expand(~subset)
+    subset = intersect(*map(simplify, subset))
+    if isinstance(subset, ContainerAnd):
+        subset = simplify_intersection(subset)
+    return (-subset) if isunion else subset
+
+
+def simplify_intersection(subsets: Iterable[SubSetR2]) -> SubSetR2:
+    """
+    Simplify the intersection of the given subsets
+    """
+    subsets = frozenset(subsets)
+    for sub in subsets:
+        if isinstance(sub, SinglePointR2):
+            for subj in subsets:
+                if sub not in subj:
+                    return EmptyR2()
+            return sub
+    return intersect(*subsets)
