@@ -147,7 +147,11 @@ class SubSetR2(ABC):
 
     def __eq__(self, other: object) -> bool:
         if not isinstance(other, SubSetR2):
-            return self.__eq__(Future.convert(other))
+            try:
+                other = Future.convert(other)
+            except (ValueError, TypeError):
+                return NotImplemented
+            return self.__eq__(other)
         return NotImplemented
 
     @abstractmethod

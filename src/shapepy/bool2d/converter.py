@@ -31,7 +31,7 @@ def from_any(obj: Any) -> SubSetR2:
         return from_set(obj)
     if isinstance(obj, dict):
         return from_dict(obj)
-    raise NotImplementedError(f"Unsupported type {type(obj)}")
+    raise NotImplementedError(f"Unsupported type {type(obj)}: {obj}")
 
 
 def from_str(obj: str) -> SubSetR2:

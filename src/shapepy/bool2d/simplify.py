@@ -4,6 +4,7 @@ expression of the planar SubSetR2 instances
 """
 
 from .base import SubSetR2
+from .container import ContainerAnd, ContainerNot, ContainerOr, expand
 
 
 def simplify(subset: SubSetR2) -> SubSetR2:
@@ -22,4 +23,9 @@ def simplify(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The simplified subset
     """
-    return subset
+    subset = expand(subset)
+    if isinstance(subset, ContainerNot):
+        return subset
+    if not isinstance(subset, (ContainerAnd, ContainerOr)):
+        return subset
+    return subset.__class__(map(simplify, subset))
