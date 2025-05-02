@@ -6,6 +6,7 @@ between the SubSetR2 instances
 from __future__ import annotations
 
 from .base import EmptyR2, SubSetR2, WholeR2
+from .container import ContainerAnd, ContainerNot, ContainerOr
 from .converter import from_any
 
 
@@ -73,7 +74,9 @@ def invert(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The inverted subset
     """
-    return ~subset
+    if isinstance(subset, (EmptyR2, WholeR2)):
+        return ~subset
+    return ContainerNot(subset)
 
 
 def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
@@ -99,4 +102,11 @@ def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     >>> contains(WholeR2(), EmptyR2())
     True
     """
-    return subsetb in subseta
+    subseta = from_any(subseta)
+    subsetb = from_any(subsetb)
+
+    if isinstance(subseta, (EmptyR2, WholeR2, ContainerAnd)):
+        return subsetb in subseta
+    if isinstance(subsetb, ContainerOr):
+        return all(contains(subseta, sub) for sub in subsetb)
+    raise NotImplementedError(f"Types {type(subseta)} and {type(subsetb)}")
