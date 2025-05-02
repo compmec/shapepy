@@ -8,6 +8,7 @@ from __future__ import annotations
 from .base import EmptyR2, SubSetR2, WholeR2
 from .container import ContainerAnd, ContainerNot, ContainerOr
 from .converter import from_any
+from .singles import SinglePointR2
 
 
 def unite(*subsets: SubSetR2) -> SubSetR2:
@@ -25,14 +26,14 @@ def unite(*subsets: SubSetR2) -> SubSetR2:
         The united subset
     """
     subsets = map(from_any, subsets)
-    subsets = tuple(sub for sub in subsets if not isinstance(sub, EmptyR2))
+    subsets = frozenset(sub for sub in subsets if not isinstance(sub, EmptyR2))
     if len(subsets) == 0:
         return EmptyR2()
     if len(subsets) == 1:
-        return subsets[0]
+        return tuple(subsets)[0]
     if any(isinstance(subset, WholeR2) for subset in subsets):
         return WholeR2()
-    raise NotImplementedError
+    return ContainerOr(subsets)
 
 
 def intersect(*subsets: SubSetR2) -> SubSetR2:
@@ -50,14 +51,14 @@ def intersect(*subsets: SubSetR2) -> SubSetR2:
         The intersection subset
     """
     subsets = map(from_any, subsets)
-    subsets = tuple(sub for sub in subsets if not isinstance(sub, WholeR2))
+    subsets = frozenset(sub for sub in subsets if not isinstance(sub, WholeR2))
     if len(subsets) == 0:
         return WholeR2()
     if len(subsets) == 1:
-        return subsets[0]
+        return tuple(subsets)[0]
     if any(isinstance(subset, EmptyR2) for subset in subsets):
         return EmptyR2()
-    raise NotImplementedError
+    return ContainerAnd(subsets)
 
 
 def invert(subset: SubSetR2) -> SubSetR2:
@@ -74,7 +75,7 @@ def invert(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The inverted subset
     """
-    if isinstance(subset, (EmptyR2, WholeR2)):
+    if isinstance(subset, (EmptyR2, WholeR2, ContainerNot)):
         return ~subset
     return ContainerNot(subset)
 
@@ -104,9 +105,13 @@ def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     """
     subseta = from_any(subseta)
     subsetb = from_any(subsetb)
-
-    if isinstance(subseta, (EmptyR2, WholeR2, ContainerAnd)):
+    if isinstance(subseta, (EmptyR2, WholeR2, ContainerAnd, SinglePointR2)):
         return subsetb in subseta
     if isinstance(subsetb, ContainerOr):
         return all(contains(subseta, sub) for sub in subsetb)
+    if isinstance(subseta, ContainerNot):
+        if isinstance(subsetb, ContainerNot):
+            return contains(~subsetb, ~subseta)
+        if isinstance(~subseta, SinglePointR2):
+            return not contains(subsetb, ~subseta)
     raise NotImplementedError(f"Types {type(subseta)} and {type(subsetb)}")
