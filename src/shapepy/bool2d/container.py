@@ -31,7 +31,15 @@ def expand(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The expanded subset
     """
-    return subset
+    if not isinstance(subset, (ContainerAnd, ContainerOr, ContainerNot)):
+        return subset
+    if isinstance(subset, ContainerNot):
+        if isinstance(~subset, ContainerOr):
+            return expand(ContainerAnd(~sub for sub in ~subset))
+        if isinstance(~subset, ContainerAnd):
+            return expand(ContainerOr(~sub for sub in ~subset))
+        return subset
+    return subset.__class__(map(expand, subset))
 
 
 class ContainerNot(SubSetR2):
