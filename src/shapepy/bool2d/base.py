@@ -145,9 +145,10 @@ class SubSetR2(ABC):
     to compute the planar boolean operations
     """
 
-    @abstractmethod
-    def __eq__(self, other) -> bool:
-        raise NotImplementedError
+    def __eq__(self, other: object) -> bool:
+        if not isinstance(other, SubSetR2):
+            return self.__eq__(Future.convert(other))
+        return NotImplemented
 
     @abstractmethod
     def __hash__(self) -> int:
@@ -289,7 +290,9 @@ class EmptyR2(SubSetR2):
         return "EmptyR2"
 
     def __eq__(self, other):
-        return self is Future.convert(other)
+        if isinstance(other, SubSetR2):
+            return self is other
+        return super().__eq__(other)
 
     def __hash__(self):
         return 0
@@ -330,7 +333,9 @@ class WholeR2(SubSetR2):
         return "WholeR2"
 
     def __eq__(self, other):
-        return self is Future.convert(other)
+        if isinstance(other, SubSetR2):
+            return self is other
+        return super().__eq__(other)
 
     def __hash__(self):
         return 1
