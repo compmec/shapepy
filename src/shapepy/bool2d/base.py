@@ -24,7 +24,7 @@ class Future:
     Although the classes EmptyR2 and WholeR2 don't need the
     child classes to make the union/intersection, or to verify
     if a SubSetR2 instance is inside WholeR2 for example,
-    the command bellow 
+    the command bellow
     >>> (0, 0) in WholeR2()
     that checks if a point is inside WholeR2, needs the conversion
     to a SinglePoint instance, which is not defined in this file
@@ -195,7 +195,7 @@ class SubSetR2(ABC):
         ----------
         vector: Tuple[Real, Real]
             The coordinates (x, y) of the vector
-        
+
         Return
         ------
         SubSetR2
@@ -218,9 +218,8 @@ class SubSetR2(ABC):
         Parameters
         ----------
         amount: Union[Real, Tuple[Real, Real]]
-
             The coordinates (x, y) of the vector
-        
+
         Return
         ------
         SubSetR2
@@ -242,7 +241,7 @@ class SubSetR2(ABC):
         ----------
         angle: Angle
             The angle to rotate
-        
+
         Return
         ------
         SubSetR2
