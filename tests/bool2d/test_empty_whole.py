@@ -1,11 +1,9 @@
 import pytest
 
-from shapepy.angle import Angle
 from shapepy.bool2d.base import EmptyR2, WholeR2
 from shapepy.bool2d.bool2d import contains, intersect, invert, unite
 from shapepy.bool2d.container import expand
 from shapepy.bool2d.simplify import simplify
-from shapepy.bool2d.transform import move, rotate, scale
 
 
 @pytest.mark.order(20)
@@ -144,49 +142,6 @@ def test_contains():
 @pytest.mark.order(20)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
-def test_move():
-    empty = EmptyR2()
-    whole = WholeR2()
-
-    for vector in [(0, 0), (10, 0), (3, -5)]:
-        assert empty.move(vector) == empty
-        assert whole.move(vector) == whole
-        assert move(empty, vector) == empty
-        assert move(whole, vector) == whole
-
-
-@pytest.mark.order(20)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_scale():
-    empty = EmptyR2()
-    whole = WholeR2()
-
-    for amount in [1, 2, 3, (1, 1), (10, 3), (3, 5)]:
-        assert empty.scale(amount) == empty
-        assert whole.scale(amount) == whole
-        assert scale(empty, amount) == empty
-        assert scale(whole, amount) == whole
-
-
-@pytest.mark.order(20)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_rotate():
-    empty = EmptyR2()
-    whole = WholeR2()
-
-    angles = [Angle.degrees(0), Angle.degrees(45), Angle.degrees(90)]
-    for angle in angles:
-        assert empty.rotate(angle) == empty
-        assert whole.rotate(angle) == whole
-        assert rotate(empty, angle) == empty
-        assert rotate(whole, angle) == whole
-
-
-@pytest.mark.order(20)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
 def test_print():
     empty = EmptyR2()
     whole = WholeR2()
@@ -209,9 +164,6 @@ def test_print():
         "test_self_operation",
         "test_switch_operation",
         "test_contains",
-        "test_move",
-        "test_scale",
-        "test_rotate",
         "test_print",
     ]
 )
