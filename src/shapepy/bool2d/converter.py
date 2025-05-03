@@ -10,7 +10,6 @@ import re
 from typing import Any, Dict, Iterable, Set, Tuple
 
 from .. import geometry
-from ..error import NotExpectedError
 from .base import EmptyR2, Future, SubSetR2
 from .singles import SinglePointR2
 
@@ -54,7 +53,7 @@ def from_str(text: str) -> SubSetR2:
     solution = re.findall(pattern, text)
     if solution:
         if len(solution) != 1:
-            raise NotExpectedError(f"Invalid conversion from: '{text}'")
+            raise ValueError(f"Invalid conversion from: '{text}'")
         key, middle = solution[0]
         if key == "NOT":
             return Future.invert(from_str(middle))
@@ -63,16 +62,16 @@ def from_str(text: str) -> SubSetR2:
             return Future.intersect(*internals)
         if key == "OR":
             return Future.unite(*internals)
-        raise NotExpectedError(f"Invalid key {key}")
+        raise ValueError(f"Invalid key {key}")
     if "[" in text or "]" in text:
-        raise NotExpectedError(f"Invalid string '{text}'")
+        raise ValueError(f"Invalid string '{text}'")
     if text[0] == "{" and text[-1] == "}":
         internals = map(from_str, smart_divide(text[1:-1]))
         return Future.unite(*internals)
     if text[0] == "(" and text[-1] == ")":
         point = geometry.from_str(text)
         return SinglePointR2(point)
-    raise NotExpectedError(f"Invalid string '{text}'")
+    raise ValueError(f"Invalid string '{text}'")
 
 
 def from_set(obj: Set) -> SubSetR2:
@@ -88,7 +87,7 @@ def from_dict(obj: Dict) -> SubSetR2:
     """
     if len(obj.keys()) == 0:
         return EmptyR2()
-    raise NotExpectedError(str(obj))
+    raise ValueError(str(obj))
 
 
 def from_tuple(obj: Tuple) -> SubSetR2:
