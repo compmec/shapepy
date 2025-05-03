@@ -84,3 +84,58 @@ def piecewise(
         subset = IntervalR1(knots[i], knots[i + 1], True, right)
         parameters[subset] = analytic.section(subset)
     return PiecewiseAnalytic1D.from_dict(parameters)
+
+
+@debug("shapepy.analytic.elementar")
+def linear_piecewise(
+    values: Iterable[Real], knots: Optional[Iterable[Real]] = None
+) -> IAnalytic1D:
+    """
+    Gives a linear piecewise analytical function
+
+    Parameters
+    ----------
+    values: Iterable[Real]
+        The values of the function at knots
+    knots: Iterable[Real]
+        The divisions between the analytics
+
+    Return
+    ------
+    IAnalytic1D
+        The piecewise analytic function
+
+    Example
+    -------
+    >>> knots = (0, 1, 3)
+    >>> values = (1, -2, 2)
+    >>> piece = linear_piecewise(values, knots)
+    >>> piece.eval(0)
+    1
+    >>> piece.eval(1)
+    -2
+    >>> piece.eval(2)
+    0
+    >>> piece.eval(3)
+    2
+    """
+    values = tuple(map(default.finite, values))
+    if knots is None:
+        knots = range(len(values))
+    knots = tuple(map(default.finite, knots))
+    pairs = tuple(zip(knots, values))
+
+    analytics = []
+    for (knota, valuea), (knotb, valueb) in zip(pairs, pairs[1:]):
+        linear = default.rational(valueb - valuea, knotb - knota)
+        constant = knotb * valuea - knota * valueb
+        constant = default.rational(constant, knotb - knota)
+        analytic = polynomial((constant, linear))
+        analytics.append(analytic)
+
+    intervals = []
+    for i, (knota, knotb) in enumerate(zip(knots, knots[1:])):
+        closed_right = i + 1 == len(analytics)
+        interval = IntervalR1(knota, knotb, True, closed_right)
+        intervals.append(interval)
+    return PiecewiseAnalytic1D(intervals, analytics)
