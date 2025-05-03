@@ -6,8 +6,16 @@ Defines the most intuitive classes boolean classes:
 
 from __future__ import annotations
 
+from numbers import Real
+
 from .. import default
-from ..geometry import ContinuousCurve, GeometricPoint, geometric_point
+from ..geometry import (
+    ContinuousCurve,
+    GeometricPoint,
+    JordanCurve,
+    geometric_point,
+    reverse,
+)
 from .base import EmptyR2, SubSetR2
 
 
@@ -77,3 +85,49 @@ class CurveR2(SubSetR2):
 
     def __hash__(self):
         return hash(self.internal.lenght)
+
+
+class ShapeR2(SubSetR2):
+    """
+    Class that defines a closed region on the plane.
+
+    It's defined by a jordan curve, which is the boundary of it
+    The flag boundary means if the Shape actually includes its
+    boundary or if it's an open set
+    """
+
+    def __init__(self, jordan: JordanCurve, boundary: bool = True):
+        if not isinstance(jordan, JordanCurve):
+            raise TypeError
+        self.__jordan = jordan
+        self.__boundary = bool(boundary)
+
+    @property
+    def internal(self) -> JordanCurve:
+        """
+        The jordan curve that defines the boundary of the simple shape
+        """
+        return self.__jordan
+
+    @property
+    def boundary(self) -> bool:
+        """
+        A flag that tells if the shape includes the boundary or not
+        """
+        return self.__boundary
+
+    @property
+    def area(self) -> Real:
+        """
+        Gives the internal area defined by the jordan curve
+
+        * The area is positive if the jordan curve is counter-clockwise
+        * otherwise, it's negative but with the same magnitude
+        """
+        return self.internal.area
+
+    def __neg__(self):
+        return ShapeR2(reverse(self.internal), not self.boundary)
+
+    def __hash__(self):
+        return hash(self.area) if self.area > 0 else (-hash(-self.area))
