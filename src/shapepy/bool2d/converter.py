@@ -3,7 +3,7 @@ Define somes functions that converts some basic objects to SubSetR2 instances
 
 The easier example is from string:
 * "{}" represents a empty set, so returns the EmptyR2 instance
-* "{(-1, 1)}" represents a point, returns SinglePointR2 instance
+* "{(-1, 1)}" represents a point, returns PointR2 instance
 """
 
 import re
@@ -11,7 +11,7 @@ from typing import Any, Dict, Iterable, Set, Tuple
 
 from .. import geometry
 from .base import EmptyR2, Future, SubSetR2
-from .singles import SinglePointR2
+from .singles import PointR2
 
 
 def from_any(obj: Any) -> SubSetR2:
@@ -70,7 +70,7 @@ def from_str(text: str) -> SubSetR2:
         return Future.unite(*internals)
     if text[0] == "(" and text[-1] == ")":
         point = geometry.from_str(text)
-        return SinglePointR2(point)
+        return PointR2(point)
     raise ValueError(f"Invalid string '{text}'")
 
 
@@ -97,7 +97,7 @@ def from_tuple(obj: Tuple) -> SubSetR2:
     if len(obj) != 2:
         raise ValueError("Only tuples of length 2 are permited")
     point = geometry.GeometricPoint.cartesian(obj[0], obj[1])
-    return SinglePointR2(point)
+    return PointR2(point)
 
 
 def smart_divide(text: str) -> Iterable[str]:

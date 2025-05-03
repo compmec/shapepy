@@ -2,7 +2,7 @@ import pytest
 
 from shapepy.bool2d.base import EmptyR2, WholeR2
 from shapepy.bool2d.bool2d import intersect, invert, unite
-from shapepy.bool2d.singles import SinglePointR2
+from shapepy.bool2d.singles import PointR2
 
 
 class TestStr:
@@ -40,7 +40,7 @@ class TestStr:
         scope="session",
     )
     def test_single_point(self):
-        point = SinglePointR2((-1, 1))
+        point = PointR2((-1, 1))
         assert str(point) == "{(-1, 1)}"
 
     @pytest.mark.order(50)
@@ -52,7 +52,7 @@ class TestStr:
         scope="session",
     )
     def test_not_point(self):
-        point = ~SinglePointR2((-1, 1))
+        point = ~PointR2((-1, 1))
         assert str(point) == "NOT[{(-1, 1)}]"
 
     @pytest.mark.order(50)
@@ -65,7 +65,7 @@ class TestStr:
     )
     def test_or_point(self):
         points = [(-1, -1), (1, 1)]
-        subset = unite(*map(SinglePointR2, points))
+        subset = unite(*map(PointR2, points))
         assert str(subset) == "OR[{(1, 1)}, {(-1, -1)}]"
 
     @pytest.mark.order(50)
@@ -78,7 +78,7 @@ class TestStr:
     )
     def test_and_not_point(self):
         points = [(-1, -1), (1, 1)]
-        subset = intersect(*map(invert, map(SinglePointR2, points)))
+        subset = intersect(*map(invert, map(PointR2, points)))
         assert str(subset) == "AND[NOT[{(-1, -1)}], NOT[{(1, 1)}]]"
 
 
@@ -117,8 +117,8 @@ class TestRepr:
         scope="session",
     )
     def test_single_point(self):
-        point = SinglePointR2((-1, 1))
-        assert repr(point) == "SinglePointR2((-1, 1))"
+        point = PointR2((-1, 1))
+        assert repr(point) == "PointR2((-1, 1))"
 
     @pytest.mark.order(50)
     @pytest.mark.timeout(1)
@@ -129,8 +129,8 @@ class TestRepr:
         scope="session",
     )
     def test_not_point(self):
-        point = ~SinglePointR2((-1, 1))
-        assert repr(point) == "NOT[SinglePointR2((-1, 1))]"
+        point = ~PointR2((-1, 1))
+        assert repr(point) == "NOT[PointR2((-1, 1))]"
 
     @pytest.mark.order(50)
     @pytest.mark.timeout(1)
@@ -142,8 +142,8 @@ class TestRepr:
     )
     def test_or_point(self):
         points = [(-1, -1), (1, 1)]
-        subset = unite(*map(SinglePointR2, points))
-        good = "OR[SinglePointR2((1, 1)), SinglePointR2((-1, -1))]"
+        subset = unite(*map(PointR2, points))
+        good = "OR[PointR2((1, 1)), PointR2((-1, -1))]"
         assert repr(subset) == good
 
     @pytest.mark.order(50)
@@ -156,8 +156,8 @@ class TestRepr:
     )
     def test_and_not_point(self):
         points = [(-1, -1), (1, 1)]
-        subset = intersect(*map(invert, map(SinglePointR2, points)))
-        good = "AND[NOT[SinglePointR2((-1, -1))], NOT[SinglePointR2((1, 1))]]"
+        subset = intersect(*map(invert, map(PointR2, points)))
+        good = "AND[NOT[PointR2((-1, -1))], NOT[PointR2((1, 1))]]"
         assert repr(subset) == good
 
 

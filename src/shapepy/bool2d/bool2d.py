@@ -8,7 +8,7 @@ from __future__ import annotations
 from .base import EmptyR2, SubSetR2, WholeR2
 from .container import ContainerAnd, ContainerNot, ContainerOr
 from .converter import from_any
-from .singles import SinglePointR2
+from .singles import PointR2
 
 
 def unite(*subsets: SubSetR2) -> SubSetR2:
@@ -105,16 +105,16 @@ def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     """
     subseta = from_any(subseta)
     subsetb = from_any(subsetb)
-    if isinstance(subseta, (EmptyR2, WholeR2, ContainerAnd, SinglePointR2)):
+    if isinstance(subseta, (EmptyR2, WholeR2, ContainerAnd, PointR2)):
         return subsetb in subseta
     if isinstance(subsetb, ContainerOr):
         return all(contains(subseta, sub) for sub in subsetb)
     if isinstance(subseta, ContainerNot):
         if isinstance(subsetb, ContainerNot):
             return contains(~subsetb, ~subseta)
-        if isinstance(~subseta, SinglePointR2):
+        if isinstance(~subseta, PointR2):
             return not contains(subsetb, ~subseta)
-    if isinstance(subsetb, SinglePointR2):
+    if isinstance(subsetb, PointR2):
         if isinstance(subseta, ContainerOr):
             return any(subsetb in sub for sub in subseta)
     raise NotImplementedError(f"Types {type(subseta)} and {type(subsetb)}")

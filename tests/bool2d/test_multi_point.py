@@ -5,7 +5,7 @@ from shapepy.bool2d.bool2d import contains, intersect, invert, unite
 from shapepy.bool2d.container import ContainerNot, expand
 from shapepy.bool2d.converter import from_any
 from shapepy.bool2d.simplify import simplify
-from shapepy.bool2d.singles import SinglePointR2
+from shapepy.bool2d.singles import PointR2
 
 
 @pytest.mark.order(26)
@@ -18,7 +18,7 @@ from shapepy.bool2d.singles import SinglePointR2
 )
 def test_build():
     points = [(-10, 0), (3, 4), (-3, -4), (5, 6)]
-    singles = tuple(map(SinglePointR2, points))
+    singles = tuple(map(PointR2, points))
     unite(*singles)
     intersect(*map(invert, singles))
 
@@ -28,7 +28,7 @@ def test_build():
 @pytest.mark.dependency(depends=["test_build"])
 def test_hash():
     points = [(-10, 0), (3, 4), (-3, -4), (5, 6)]
-    singles = tuple(map(SinglePointR2, points))
+    singles = tuple(map(PointR2, points))
     union = unite(*singles)
     inter = intersect(*map(invert, singles))
 
@@ -40,7 +40,7 @@ def test_hash():
 @pytest.mark.dependency(depends=["test_build"])
 def test_contains():
     points = [(-10, 0), (3, 4), (-3, -4), (5, 6)]
-    singles = tuple(map(SinglePointR2, points))
+    singles = tuple(map(PointR2, points))
     union = unite(*singles)
     inter = intersect(*map(invert, singles))
 
@@ -61,7 +61,7 @@ def test_contains():
 @pytest.mark.dependency(depends=["test_build"])
 def test_expand():
     points = [(-10, 0), (3, 4), (-3, -4), (5, 6)]
-    singles = tuple(map(SinglePointR2, points))
+    singles = tuple(map(PointR2, points))
     union = unite(*singles)
     inter = intersect(*map(invert, singles))
 
@@ -77,7 +77,7 @@ def test_expand():
 @pytest.mark.dependency(depends=["test_build"])
 def test_simplify():
     points = [(-10, 0), (3, 4), (-3, -4), (5, 6)]
-    singles = tuple(map(SinglePointR2, points))
+    singles = tuple(map(PointR2, points))
     union = unite(*singles)
     inter = intersect(*map(invert, singles))
 
@@ -93,7 +93,7 @@ def test_simplify():
 @pytest.mark.dependency(depends=["test_build"])
 def test_weird_compare():
     points = [(-10, 0), (3, 4), (-3, -4), (5, 6)]
-    singles = tuple(map(SinglePointR2, points))
+    singles = tuple(map(PointR2, points))
     union = unite(*singles)
     inter = intersect(*map(invert, singles))
 

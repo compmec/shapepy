@@ -8,7 +8,7 @@ from typing import Iterable
 from .base import EmptyR2, SubSetR2
 from .bool2d import intersect
 from .container import ContainerAnd, ContainerNot, ContainerOr, expand
-from .singles import SinglePointR2
+from .singles import PointR2
 
 
 def simplify(subset: SubSetR2) -> SubSetR2:
@@ -47,7 +47,7 @@ def simplify_intersection(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     subsets = frozenset(subsets)
     for sub in subsets:
-        if isinstance(sub, SinglePointR2):
+        if isinstance(sub, PointR2):
             for subj in subsets:
                 if sub not in subj:
                     return EmptyR2()

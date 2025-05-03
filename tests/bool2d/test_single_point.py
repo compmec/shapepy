@@ -5,24 +5,24 @@ from shapepy.bool2d.bool2d import contains, intersect, invert, unite
 from shapepy.bool2d.container import ContainerNot, expand
 from shapepy.bool2d.converter import from_any
 from shapepy.bool2d.simplify import simplify
-from shapepy.bool2d.singles import SinglePointR2
+from shapepy.bool2d.singles import PointR2
 
 
 @pytest.mark.order(25)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_build():
-    SinglePointR2((0, 0))
-    SinglePointR2((1, 1))
+    PointR2((0, 0))
+    PointR2((1, 1))
 
 
 @pytest.mark.order(25)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_direct_compare():
-    pointa = SinglePointR2((0, 0))
-    pointb = SinglePointR2((0, 0))
-    pointc = SinglePointR2((1, 1))
+    pointa = PointR2((0, 0))
+    pointb = PointR2((0, 0))
+    pointc = PointR2((1, 1))
 
     assert pointa == pointb
     assert pointc != pointa
@@ -34,7 +34,7 @@ def test_direct_compare():
 def test_empty_whole():
     empty = EmptyR2()
     whole = WholeR2()
-    point = SinglePointR2((0, 0))
+    point = PointR2((0, 0))
 
     assert point != empty
     assert point != whole
@@ -51,7 +51,7 @@ def test_empty_whole():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_direct_compare"])
 def test_expand():
-    point = SinglePointR2((0, 0))
+    point = PointR2((0, 0))
     assert expand(point) == point
 
 
@@ -59,7 +59,7 @@ def test_expand():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_simplify():
-    point = SinglePointR2((0, 0))
+    point = PointR2((0, 0))
     assert simplify(point) == point
 
 
@@ -67,7 +67,7 @@ def test_simplify():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_invert():
-    point = SinglePointR2((0, 0))
+    point = PointR2((0, 0))
     assert ~point == ContainerNot(point)
     assert -point == ContainerNot(point)
     assert invert(point) == ContainerNot(point)
@@ -82,8 +82,8 @@ def test_invert():
     ]
 )
 def test_compare():
-    pointa = SinglePointR2((-1, 1))
-    pointb = SinglePointR2((2, 0))
+    pointa = PointR2((-1, 1))
+    pointb = PointR2((2, 0))
 
     assert pointa == pointa
     assert pointa != pointb
@@ -104,7 +104,7 @@ def test_compare():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_weird_compare():
-    point = SinglePointR2((-1, 1))
+    point = PointR2((-1, 1))
 
     weirds = ["(])"]
     for weird in weirds:
@@ -118,9 +118,9 @@ def test_weird_compare():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_contains():
-    pointa = SinglePointR2((0, 0))
-    pointb = SinglePointR2((10, -10))
-    pointc = SinglePointR2((-3, 7))
+    pointa = PointR2((0, 0))
+    pointb = PointR2((10, -10))
+    pointc = PointR2((-3, 7))
     points = (pointa, pointb, pointc)
 
     for point in points:
@@ -161,7 +161,7 @@ class TestSelfOperation:
         whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert subset | subset == subset
             assert simplify(subset | (~subset)) == whole
@@ -175,7 +175,7 @@ class TestSelfOperation:
         empty = EmptyR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert subset & subset == subset
             assert simplify(subset & (~subset)) == empty
@@ -192,7 +192,7 @@ class TestSelfOperation:
         whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert subset ^ subset == empty
             assert subset ^ (~subset) == whole
@@ -206,7 +206,7 @@ class TestSelfOperation:
         empty = EmptyR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert subset - subset == empty
             assert subset - (~subset) == subset
@@ -220,7 +220,7 @@ class TestSelfOperation:
         whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert subset + subset == subset
             assert subset + (~subset) == whole
@@ -234,7 +234,7 @@ class TestSelfOperation:
         empty = EmptyR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert subset * subset == subset
             assert subset * (~subset) == empty
@@ -248,7 +248,7 @@ class TestSelfOperation:
         whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert unite(subset, subset) == subset
             assert simplify(unite(subset, ~subset)) == whole
@@ -262,7 +262,7 @@ class TestSelfOperation:
         empty = EmptyR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
-        points = map(SinglePointR2, points)
+        points = map(PointR2, points)
         for subset in points:
             assert intersect(subset, subset) == subset
             assert intersect(~subset, ~subset) == ~subset
@@ -291,7 +291,7 @@ class TestSelfOperation:
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_print():
-    origin = SinglePointR2((0, 0))
+    origin = PointR2((0, 0))
 
     str(origin)
     repr(origin)
@@ -306,7 +306,7 @@ class TestConvert:
         obj = r"{(-10, 10)}"
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
-        assert isinstance(subset, SinglePointR2)
+        assert isinstance(subset, PointR2)
         assert subset.internal == (-10, 10)
 
     @pytest.mark.order(25)
@@ -316,7 +316,7 @@ class TestConvert:
         obj = {(-10, 10)}
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
-        assert isinstance(subset, SinglePointR2)
+        assert isinstance(subset, PointR2)
         assert subset.internal == (-10, 10)
 
     @pytest.mark.order(25)
@@ -329,7 +329,7 @@ class TestConvert:
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
         for point in [(-10, 10), (10, -10)]:
-            assert SinglePointR2(point) in subset
+            assert PointR2(point) in subset
 
     @pytest.mark.order(25)
     @pytest.mark.timeout(1)
@@ -339,7 +339,7 @@ class TestConvert:
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
         for point in [(-10, 10), (10, -10)]:
-            assert SinglePointR2(point) in subset
+            assert PointR2(point) in subset
 
     @pytest.mark.order(25)
     @pytest.mark.timeout(1)
@@ -349,7 +349,7 @@ class TestConvert:
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
         assert isinstance(subset, ContainerNot)
-        assert isinstance(~subset, SinglePointR2)
+        assert isinstance(~subset, PointR2)
 
     @pytest.mark.order(25)
     @pytest.mark.timeout(1)
@@ -359,7 +359,7 @@ class TestConvert:
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
         for point in [(-10, 10), (10, -10)]:
-            point = SinglePointR2(point)
+            point = PointR2(point)
             assert point in subset
 
     @pytest.mark.order(25)
@@ -370,7 +370,7 @@ class TestConvert:
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
         for point in [(-10, 10), (10, -10)]:
-            point = SinglePointR2(point)
+            point = PointR2(point)
             assert point not in subset
 
 

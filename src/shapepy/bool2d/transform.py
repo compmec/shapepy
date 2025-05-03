@@ -10,7 +10,7 @@ from .. import geometry
 from ..angle import Angle, to_angle
 from .base import EmptyR2, SubSetR2, WholeR2
 from .container import ContainerAnd, ContainerNot, ContainerOr
-from .singles import SinglePointR2
+from .singles import PointR2
 
 
 def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
@@ -40,7 +40,7 @@ def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
         return subset.__class__(move(~subset, vector))
     if isinstance(subset, (ContainerAnd, ContainerOr)):
         return subset.__class__(move(sub, vector) for sub in subset)
-    if isinstance(subset, SinglePointR2):
+    if isinstance(subset, PointR2):
         return subset.__class__(geometry.move_point(subset.internal, vector))
     raise NotImplementedError
 
@@ -78,7 +78,7 @@ def scale(
         return subset.__class__(scale(~subset, amount))
     if isinstance(subset, (ContainerAnd, ContainerOr)):
         return subset.__class__(scale(sub, amount) for sub in subset)
-    if isinstance(subset, SinglePointR2):
+    if isinstance(subset, PointR2):
         return subset.__class__(geometry.scale_point(subset.internal, amount))
     raise NotImplementedError
 
@@ -112,6 +112,6 @@ def rotate(subset: SubSetR2, angle: Angle) -> SubSetR2:
         return subset.__class__(rotate(~subset, angle))
     if isinstance(subset, (ContainerAnd, ContainerOr)):
         return subset.__class__(rotate(sub, angle) for sub in subset)
-    if isinstance(subset, SinglePointR2):
+    if isinstance(subset, PointR2):
         return subset.__class__(geometry.rotate_point(subset.internal, angle))
     raise NotImplementedError
