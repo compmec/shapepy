@@ -55,3 +55,16 @@ def test_trigonometric():
 
     assert default.degrees(0) == 0
     assert default.degrees(default.tau / 4) == 90
+
+
+@pytest.mark.order(1)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(
+    depends=[
+        "test_constants",
+        "test_numbers",
+        "test_trigonometric",
+    ]
+)
+def test_all():
+    pass
