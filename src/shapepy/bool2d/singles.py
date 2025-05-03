@@ -33,7 +33,7 @@ class SinglePointR2(SubSetR2):
         return "{" + str(self.internal) + "}"
 
     def __repr__(self):
-        return "SinglePointR2" + str(self.internal)
+        return f"SinglePointR2({self.internal})"
 
     def __hash__(self):
         return hash((4, self.internal.x, self.internal.y))
