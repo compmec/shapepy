@@ -10,15 +10,12 @@ from shapepy.bool2d.singles import PointR2
 
 @pytest.mark.order(52)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_build():
-    PointR2((0, 0))
-    PointR2((1, 1))
-
-
-@pytest.mark.order(52)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency(depends=["test_build"])
+@pytest.mark.dependency(
+    depends=[
+        "tests/bool2d/test_build.py::test_point",
+    ],
+    scope="session",
+)
 def test_direct_compare():
     pointa = PointR2((0, 0))
     pointb = PointR2((0, 0))
@@ -30,7 +27,13 @@ def test_direct_compare():
 
 @pytest.mark.order(52)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/bool2d/test_empty_whole.py::test_all",
+        "tests/bool2d/test_single_point.py::test_direct_compare",
+    ],
+    scope="session",
+)
 def test_empty_whole():
     empty = EmptyR2()
     whole = WholeR2()
@@ -49,28 +52,37 @@ def test_empty_whole():
 
 @pytest.mark.order(52)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency(depends=["test_direct_compare"])
-def test_expand():
-    point = PointR2((0, 0))
-    assert expand(point) == point
-
-
-@pytest.mark.order(52)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_simplify():
-    point = PointR2((0, 0))
-    assert simplify(point) == point
-
-
-@pytest.mark.order(52)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/bool2d/test_build.py::test_container_not",
+        "tests/bool2d/test_single_point.py::test_direct_compare",
+    ],
+    scope="session",
+)
 def test_invert():
     point = PointR2((0, 0))
     assert ~point == ContainerNot(point)
     assert -point == ContainerNot(point)
+
     assert invert(point) == ContainerNot(point)
+
+
+@pytest.mark.order(52)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_direct_compare", "test_invert"])
+def test_expand():
+    point = PointR2((0, 0))
+    assert expand(point) == point
+    assert expand(~point) == ~point
+
+
+@pytest.mark.order(52)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_direct_compare", "test_invert"])
+def test_simplify():
+    point = PointR2((0, 0))
+    assert simplify(point) == point
+    assert simplify(~point) == ~point
 
 
 @pytest.mark.order(52)
@@ -116,7 +128,7 @@ def test_weird_compare():
 
 @pytest.mark.order(52)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency(depends=["test_compare"])
+@pytest.mark.dependency(depends=["test_compare", "test_empty_whole"])
 def test_contains():
     pointa = PointR2((0, 0))
     pointb = PointR2((10, -10))
@@ -156,7 +168,7 @@ class TestSelfOperation:
 
     @pytest.mark.order(52)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(depends=["test_compare", "test_contains"])
     def test_or(self):
         whole = WholeR2()
 
@@ -170,7 +182,7 @@ class TestSelfOperation:
 
     @pytest.mark.order(52)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(depends=["test_compare", "test_contains"])
     def test_and(self):
         empty = EmptyR2()
 
@@ -291,7 +303,7 @@ class TestConvert:
 
     @pytest.mark.order(52)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency(depends=["test_build"])
+    @pytest.mark.dependency(depends=["test_compare"])
     def test_single_from_string(self):
         obj = r"{(-10, 10)}"
         subset = from_any(obj)
@@ -301,7 +313,7 @@ class TestConvert:
 
     @pytest.mark.order(52)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency(depends=["test_build"])
+    @pytest.mark.dependency(depends=["test_compare"])
     def test_single_from_set(self):
         obj = {(-10, 10)}
         subset = from_any(obj)
@@ -368,12 +380,6 @@ class TestConvert:
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
-        "test_build",
-        "test_compare",
-        "test_empty_whole",
-        "test_expand",
-        "test_simplify",
-        "test_print",
         "TestSelfOperation::test_all",
     ]
 )
