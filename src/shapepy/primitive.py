@@ -105,6 +105,8 @@ def square(side: Real = 1, center: GeometricPoint = (0, 0)) -> ShapeR2:
 
     """
     half_side = default.finite(side) / 2
+    if half_side <= 0:
+        raise ValueError(f"The side must be positive! {side} invalid")
     center = geometric_point(center)
     vertices = [
         (half_side, half_side),
@@ -150,6 +152,10 @@ def regular_polygon(
     nsides = default.integer(nsides)
     radius = default.finite(radius)
     center = geometric_point(center)
+    if nsides < 3:
+        raise ValueError(f"The nsides={nsides} must be at least 3!")
+    if radius <= 0:
+        raise ValueError(f"The radius must be positive! {radius} invalid")
 
     vertices = []
     for i in range(nsides):
