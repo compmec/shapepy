@@ -6,9 +6,13 @@ The easier example is from string:
 * "{(-1, 1)}" represents a point, returns SinglePointR2 instance
 """
 
-from typing import Any, Dict, Set
+import re
+from typing import Any, Dict, Iterable, Set, Tuple
 
-from .base import EmptyR2, SubSetR2
+from .. import geometry
+from ..error import NotExpectedError
+from .base import EmptyR2, Future, SubSetR2
+from .singles import SinglePointR2
 
 
 def from_any(obj: Any) -> SubSetR2:
@@ -31,25 +35,51 @@ def from_any(obj: Any) -> SubSetR2:
         return from_set(obj)
     if isinstance(obj, dict):
         return from_dict(obj)
+    if isinstance(obj, tuple):
+        return from_tuple(obj)
     raise NotImplementedError(f"Unsupported type {type(obj)}: {obj}")
 
 
-def from_str(obj: str) -> SubSetR2:
+def from_str(text: str) -> SubSetR2:
     """
     Converts a string to a SubSetR2 instance
     """
-    if obj == r"{}":
+    if not isinstance(text, str):
+        raise TypeError
+    text = text.strip()
+    if text == r"{}":
         return EmptyR2()
-    raise NotImplementedError(str(obj))
+    # Check if exists OR[...], AND[...] or NOT[...]
+    pattern = r"([ANDORT]+)\[(.+)\]"
+    solution = re.findall(pattern, text)
+    if solution:
+        if len(solution) != 1:
+            raise NotExpectedError(f"Invalid conversion from: '{text}'")
+        key, middle = solution[0]
+        if key == "NOT":
+            return Future.invert(from_str(middle))
+        internals = map(from_str, smart_divide(middle))
+        if key == "AND":
+            return Future.intersect(*internals)
+        if key == "OR":
+            return Future.unite(*internals)
+        raise NotExpectedError(f"Invalid key {key}")
+    if "[" in text or "]" in text:
+        raise NotExpectedError(f"Invalid string '{text}'")
+    if text[0] == "{" and text[-1] == "}":
+        internals = map(from_str, smart_divide(text[1:-1]))
+        return Future.unite(*internals)
+    if text[0] == "(" and text[-1] == ")":
+        point = geometry.from_str(text)
+        return SinglePointR2(point)
+    raise NotExpectedError(f"Invalid string '{text}'")
 
 
 def from_set(obj: Set) -> SubSetR2:
     """
     Converts a string to a SubSetR2 instance
     """
-    if len(obj) == 0:
-        return EmptyR2()
-    raise NotImplementedError(str(obj))
+    return Future.unite(*map(from_any, obj))
 
 
 def from_dict(obj: Dict) -> SubSetR2:
@@ -58,4 +88,41 @@ def from_dict(obj: Dict) -> SubSetR2:
     """
     if len(obj.keys()) == 0:
         return EmptyR2()
-    raise NotImplementedError(str(obj))
+    raise NotExpectedError(str(obj))
+
+
+def from_tuple(obj: Tuple) -> SubSetR2:
+    """
+    Converts a tuple to a SubSetR2 instance
+    """
+    if len(obj) != 2:
+        raise ValueError("Only tuples of length 2 are permited")
+    point = geometry.GeometricPoint.cartesian(obj[0], obj[1])
+    return SinglePointR2(point)
+
+
+def smart_divide(text: str) -> Iterable[str]:
+    """
+    Divides a string using the divisor ',' and
+    based on the quantity of the chars '[]'
+
+    Example
+    -------
+    >>> text = "NOT[{(-10, 10)}], NOT[{(10, -10)}]"
+    >>> tuple(smart_divide(text))
+    ("NOT[{(-10, 10)}]", "NOT[{(10, -10)}]")
+    """
+    pairs = ("[]", "()", r"{}")
+    retorno = ""
+    for subtext in text.split(","):
+        if retorno != "":
+            retorno += ","
+        retorno += subtext
+        for left, righ in pairs:
+            if retorno.count(left) != retorno.count(righ):
+                break
+        else:
+            yield retorno.strip()
+            retorno = ""
+    if retorno != "":
+        yield retorno.strip()

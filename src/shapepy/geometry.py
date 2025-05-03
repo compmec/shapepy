@@ -58,6 +58,8 @@ class GeometricPoint:
         GeometricPoint
             The created point from given cartesian coordinates
         """
+        x = default.real(x)
+        y = default.real(y)
         radius = default.hypot(x, y)
         angle = Angle.arg(x, y)
         return cls(x, y, radius, angle)
@@ -825,3 +827,20 @@ def geometric_point(
         if isinstance(point, GeometricPoint)
         else GeometricPoint.cartesian(point[0], point[1])
     )
+
+
+def from_str(text: str) -> GeometricPoint:
+    """
+    Converts a string into a Geometric Point
+    """
+    if not isinstance(text, str):
+        raise TypeError
+    text = text.strip()
+    if text[0] != "(" or text[-1] != ")":
+        raise ValueError(f"Invalid string: {text}")
+    if "," in text:
+        items = tuple(sub.strip() for sub in text[1:-1].split(","))
+        if len(items) != 2:
+            raise ValueError(f"Invalid convert to point: '{text}' -> {items}")
+        return GeometricPoint.cartesian(items[0], items[1])
+    raise NotImplementedError
