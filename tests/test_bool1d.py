@@ -144,17 +144,19 @@ class TestPrinting:
         interv2 = IntervalR1(-20, 20)
         singles = list(map(SingleValueR1, [-30, -25, 25, 30, 40]))
         disjoint = DisjointR1([interv0, interv1, interv2] + singles)
-        assert (
-            str(disjoint)
-            == "(-inf, -50] U {-30, -25} U [-20, 20] U {25, 30, 40} U [50, inf)"
-        )
+        blocks = [
+            "(-inf, -50]",
+            "{-30, -25}",
+            "[-20, 20]",
+            "{25, 30, 40}",
+            "[50, inf)",
+        ]
+        assert str(disjoint) == " U ".join(blocks)
         repr(disjoint)
 
         disjoint = DisjointR1([interv0, interv2] + singles)
-        assert (
-            str(disjoint)
-            == "(-inf, -50] U {-30, -25} U [-20, 20] U {25, 30, 40}"
-        )
+        blocks = ["(-inf, -50]", "{-30, -25}", "[-20, 20]", "{25, 30, 40}"]
+        assert str(disjoint) == " U ".join(blocks)
         repr(disjoint)
 
         disjoint = DisjointR1(singles)
@@ -451,7 +453,15 @@ class TestContains:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency()
     def test_disjoint_contains_object(self):
-        string = r"(-inf, -20) U [-10, -5] U [0, 5) U (10, 15] U (20, 25) U {30, 31, 33}"
+        blocks = [
+            "(-inf, -20)",
+            "[-10, -5]",
+            "[0, 5)",
+            "(10, 15]",
+            "(20, 25)",
+            "{30, 31, 33}",
+        ]
+        string = " U ".join(blocks)
         disjoint = subsetR1(string)
         assert isinstance(disjoint, DisjointR1)
 
@@ -503,7 +513,15 @@ class TestContains:
         assert default.NEGINF not in interval
         assert default.POSINF not in interval
 
-        string = r"(-inf, -20) U [-10, -5] U [0, 5) U (10, 15] U (20, 25) U {30, 31, 33}"
+        blocks = [
+            "(-inf, -20)",
+            "[-10, -5]",
+            "[0, 5)",
+            "(10, 15]",
+            "(20, 25)",
+            "{30, 31, 33}",
+        ]
+        string = " U ".join(blocks)
         disjoint = subsetR1(string)
         assert isinstance(disjoint, DisjointR1)
 
@@ -871,5 +889,13 @@ def test_hash():
     hash(IntervalR1.bigger(0))
     hash(IntervalR1(-10, 10))
 
-    string = r"(-inf, -20) U [-10, -5] U [0, 5) U (10, 15] U (20, 25) U {30, 31, 33}"
+    blocks = [
+        "(-inf, -20)",
+        "[-10, -5]",
+        "[0, 5)",
+        "(10, 15]",
+        "(20, 25)",
+        "{30, 31, 33}",
+    ]
+    string = " U ".join(blocks)
     hash(subsetR1(string))

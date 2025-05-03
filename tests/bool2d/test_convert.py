@@ -1,6 +1,6 @@
 import pytest
 
-from shapepy.bool2d.base import EmptyR2, WholeR2
+from shapepy.bool2d.base import EmptyR2
 from shapepy.bool2d.converter import from_any
 
 

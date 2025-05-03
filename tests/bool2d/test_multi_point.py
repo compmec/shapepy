@@ -1,9 +1,7 @@
 import pytest
 
-from shapepy.bool2d.base import EmptyR2, SubSetR2, WholeR2
 from shapepy.bool2d.bool2d import contains, intersect, invert, unite
-from shapepy.bool2d.container import ContainerNot, expand
-from shapepy.bool2d.converter import from_any
+from shapepy.bool2d.container import expand
 from shapepy.bool2d.simplify import simplify
 from shapepy.bool2d.singles import PointR2
 

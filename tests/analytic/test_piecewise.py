@@ -204,12 +204,6 @@ def test_scale():
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build"])
-def test_print():
-    pass
-
-
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build"])
 def test_divide_zero():
     polya = polynomial([1, 2, 3, 4])
     polyb = polynomial([5, -2, 7, -9])

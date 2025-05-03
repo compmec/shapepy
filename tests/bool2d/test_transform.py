@@ -4,7 +4,7 @@ from shapepy import primitive
 from shapepy.angle import Angle
 from shapepy.bool2d.base import EmptyR2, WholeR2
 from shapepy.bool2d.bool2d import intersect, invert, unite
-from shapepy.bool2d.singles import CurveR2, PointR2, ShapeR2
+from shapepy.bool2d.singles import CurveR2, PointR2
 from shapepy.bool2d.transform import move, rotate, scale
 
 

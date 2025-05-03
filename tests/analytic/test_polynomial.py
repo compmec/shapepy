@@ -8,13 +8,7 @@ import pytest
 
 from shapepy import default
 from shapepy.analytic.elementar import polynomial
-from shapepy.bool1d import (
-    DisjointR1,
-    EmptyR1,
-    IntervalR1,
-    SingleValueR1,
-    WholeR1,
-)
+from shapepy.bool1d import EmptyR1, IntervalR1, WholeR1
 
 
 @pytest.mark.order(3)

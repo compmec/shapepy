@@ -160,7 +160,10 @@ def test_adaptative():
         for nptsinteg in range(1, 4):
             quad = quadfunc(nptsinteg)
             for degree in range(nptsinteg + 1):
-                function = lambda x: x**degree
+
+                def function(x):
+                    return x**degree
+
                 good = 1 / (1 + degree)
                 test = quad.adaptative(function, 0, 1, 1e-9)
                 assert abs(test - good) < 1e-8
