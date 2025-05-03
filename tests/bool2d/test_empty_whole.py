@@ -8,8 +8,14 @@ from shapepy.bool2d.simplify import simplify
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_build():
+@pytest.mark.dependency(
+    depends=[
+        "tests/bool2d/test_build.py::test_empty",
+        "tests/bool2d/test_build.py::test_whole",
+    ],
+    scope="session",
+)
+def test_compare():
     empty = EmptyR2()
     whole = WholeR2()
 
@@ -21,18 +27,7 @@ def test_build():
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_hash():
-    empty = EmptyR2()
-    whole = WholeR2()
-
-    assert hash(empty) == 0
-    assert hash(whole) == 1
-
-
-@pytest.mark.order(50)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["test_compare"])
 def test_expand():
     empty = EmptyR2()
     whole = WholeR2()
@@ -42,7 +37,7 @@ def test_expand():
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["test_compare", "test_expand"])
 def test_simplify():
     empty = EmptyR2()
     whole = WholeR2()
@@ -52,7 +47,7 @@ def test_simplify():
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency(depends=["test_build"])
+@pytest.mark.dependency(depends=["test_compare"])
 def test_inverse():
     empty = EmptyR2()
     whole = WholeR2()
@@ -67,9 +62,9 @@ def test_inverse():
     assert invert(whole) == empty
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency(depends=["test_build"])
+@pytest.mark.dependency(depends=["test_compare"])
 def test_weird_compare():
     empty = EmptyR2()
     whole = WholeR2()
@@ -84,7 +79,7 @@ def test_weird_compare():
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["test_compare"])
 def test_self_operation():
     empty = EmptyR2()
     whole = WholeR2()
@@ -113,7 +108,7 @@ def test_self_operation():
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["test_compare"])
 def test_switch_operation():
     empty = EmptyR2()
     whole = WholeR2()
@@ -138,7 +133,7 @@ def test_switch_operation():
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["test_compare"])
 def test_contains():
     empty = EmptyR2()
     whole = WholeR2()
@@ -156,30 +151,15 @@ def test_contains():
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_print():
-    empty = EmptyR2()
-    whole = WholeR2()
-
-    str(empty)
-    str(whole)
-    repr(empty)
-    repr(whole)
-
-
-@pytest.mark.order(50)
-@pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
-        "test_build",
-        "test_hash",
+        "test_compare",
         "test_expand",
         "test_simplify",
         "test_inverse",
         "test_self_operation",
         "test_switch_operation",
         "test_contains",
-        "test_print",
     ]
 )
 def test_all():
