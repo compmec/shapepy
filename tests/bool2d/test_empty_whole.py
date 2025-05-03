@@ -67,6 +67,21 @@ def test_inverse():
     assert invert(whole) == empty
 
 
+@pytest.mark.order(25)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_build"])
+def test_weird_compare():
+    empty = EmptyR2()
+    whole = WholeR2()
+
+    weirds = ["(])"]
+    for weird in weirds:
+        assert empty != weird
+        assert whole != weird
+        assert weird != empty
+        assert weird != whole
+
+
 @pytest.mark.order(20)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
