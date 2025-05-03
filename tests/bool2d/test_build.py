@@ -1,7 +1,10 @@
 import pytest
 
+from shapepy.analytic.elementar import linear_piecewise
 from shapepy.bool2d.base import EmptyR2, SubSetR2, WholeR2
-from shapepy.bool2d.singles import PointR2
+from shapepy.bool2d.container import recipe_and, recipe_not, recipe_or
+from shapepy.bool2d.singles import CurveR2, PointR2, ShapeR2
+from shapepy.geometry import ContinuousCurve, JordanCurve
 
 
 @pytest.mark.order(50)
@@ -30,6 +33,9 @@ def test_point():
     point = PointR2((10, 1))
     assert isinstance(point, SubSetR2)
 
+    PointR2((0, 0))
+    PointR2((1, 1))
+
 
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
@@ -38,7 +44,13 @@ def test_point():
     scope="session",
 )
 def test_curve():
-    pass
+    # Create a square
+    xfunc = linear_piecewise((-1, 1, 1, -1, -1))
+    yfunc = linear_piecewise((-1, -1, 1, 1, -1))
+    curve = ContinuousCurve(xfunc, yfunc)
+    CurveR2(curve)
+    curve = JordanCurve(xfunc, yfunc)
+    CurveR2(curve)
 
 
 @pytest.mark.order(50)
@@ -48,7 +60,12 @@ def test_curve():
     scope="session",
 )
 def test_shape():
-    pass
+    # Create a square
+    xfunc = linear_piecewise((-1, 1, 1, -1, -1))
+    yfunc = linear_piecewise((-1, -1, 1, 1, -1))
+    curve = JordanCurve(xfunc, yfunc)
+    ShapeR2(curve, True)
+    ShapeR2(curve, False)
 
 
 @pytest.mark.order(50)
@@ -63,7 +80,8 @@ def test_shape():
     ]
 )
 def test_container_not():
-    pass
+    point = PointR2((0, 0))
+    recipe_not(point)
 
 
 @pytest.mark.order(50)
@@ -78,7 +96,9 @@ def test_container_not():
     ]
 )
 def test_container_and():
-    pass
+    pointa = PointR2((0, 0))
+    pointb = PointR2((10, 10))
+    recipe_and((pointa, pointb))
 
 
 @pytest.mark.order(50)
@@ -93,7 +113,9 @@ def test_container_and():
     ]
 )
 def test_container_or():
-    pass
+    pointa = PointR2((0, 0))
+    pointb = PointR2((10, 10))
+    recipe_or((pointa, pointb))
 
 
 @pytest.mark.order(50)
@@ -113,7 +135,7 @@ def test_container_or():
 def test_hash():
     assert hash(EmptyR2()) == 0
     assert hash(WholeR2()) == 1
-    hash(PointR2)
+    hash(PointR2((10, 0)))
 
 
 @pytest.mark.order(50)
