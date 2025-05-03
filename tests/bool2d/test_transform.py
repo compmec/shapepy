@@ -9,7 +9,18 @@ class TestEmpty:
 
     @pytest.mark.order(20)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(
+        depends=[
+            "tests/bool2d/test_empty_whole.py::test_all",
+        ],
+        scope="session",
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(20)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestEmpty::test_begin"])
     def test_move(self):
         empty = EmptyR2()
 
@@ -19,7 +30,7 @@ class TestEmpty:
 
     @pytest.mark.order(20)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(depends=["TestEmpty::test_begin"])
     def test_scale(self):
         empty = EmptyR2()
 
@@ -29,7 +40,7 @@ class TestEmpty:
 
     @pytest.mark.order(20)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(depends=["TestEmpty::test_begin"])
     def test_rotate(self):
         empty = EmptyR2()
 
@@ -43,7 +54,18 @@ class TestWhole:
 
     @pytest.mark.order(20)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(
+        depends=[
+            "tests/bool2d/test_empty_whole.py::test_all",
+        ],
+        scope="session",
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(20)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestWhole::test_begin"])
     def test_move(self):
         whole = WholeR2()
 
@@ -53,7 +75,7 @@ class TestWhole:
 
     @pytest.mark.order(20)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(depends=["TestWhole::test_begin"])
     def test_scale(self):
         whole = WholeR2()
 
@@ -63,7 +85,7 @@ class TestWhole:
 
     @pytest.mark.order(20)
     @pytest.mark.timeout(1)
-    @pytest.mark.dependency()
+    @pytest.mark.dependency(depends=["TestWhole::test_begin"])
     def test_rotate(self):
         whole = WholeR2()
 
