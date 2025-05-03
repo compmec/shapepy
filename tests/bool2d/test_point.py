@@ -19,7 +19,7 @@ def test_build():
 @pytest.mark.order(25)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
-def test_compare():
+def test_direct_compare():
     pointa = SinglePointR2((0, 0))
     pointb = SinglePointR2((0, 0))
     pointc = SinglePointR2((1, 1))
@@ -49,7 +49,7 @@ def test_empty_whole():
 
 @pytest.mark.order(25)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(depends=["test_direct_compare"])
 def test_expand():
     point = SinglePointR2((0, 0))
     assert expand(point) == point
@@ -75,7 +75,48 @@ def test_invert():
 
 @pytest.mark.order(25)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "test_direct_compare",
+        "test_invert",
+    ]
+)
+def test_compare():
+    pointa = SinglePointR2((-1, 1))
+    pointb = SinglePointR2((2, 0))
+
+    assert pointa == pointa
+    assert pointa != pointb
+    assert ~pointa != pointa
+    assert ~pointa != pointb
+    assert ~pointa == ~pointa
+    assert ~pointa != ~pointb
+    assert pointa != ~pointa
+    assert pointa != ~pointb
+
+    assert pointa == {(-1, 1)}
+    assert {(-1, 1)} == pointa
+    assert pointa != {(2, 0)}
+    assert {(2, 0)} != pointa
+
+
+@pytest.mark.order(25)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_compare"])
+def test_weird_compare():
+    point = SinglePointR2((-1, 1))
+
+    weirds = ["(])"]
+    for weird in weirds:
+        assert point != weird
+        assert ~point != weird
+        assert weird != point
+        assert weird != ~point
+
+
+@pytest.mark.order(25)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(depends=["test_compare"])
 def test_contains():
     pointa = SinglePointR2((0, 0))
     pointb = SinglePointR2((10, -10))
