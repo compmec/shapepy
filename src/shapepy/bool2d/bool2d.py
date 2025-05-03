@@ -114,4 +114,7 @@ def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
             return contains(~subsetb, ~subseta)
         if isinstance(~subseta, SinglePointR2):
             return not contains(subsetb, ~subseta)
+    if isinstance(subsetb, SinglePointR2):
+        if isinstance(subseta, ContainerOr):
+            return any(subsetb in sub for sub in subseta)
     raise NotImplementedError(f"Types {type(subseta)} and {type(subsetb)}")
