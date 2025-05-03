@@ -35,7 +35,6 @@ def test_hash():
     assert hash(union) + hash(inter) == 0
 
 
-
 @pytest.mark.order(26)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
@@ -51,6 +50,12 @@ def test_contains():
         assert contains(union, single)
         assert not contains(inter, single)
 
+        assert union not in single
+        assert inter not in single
+        assert not contains(single, union)
+        assert not contains(single, inter)
+
+
 @pytest.mark.order(26)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
@@ -65,7 +70,6 @@ def test_expand():
 
     assert expand(~union) == inter
     assert expand(~inter) == union
-
 
 
 @pytest.mark.order(26)
