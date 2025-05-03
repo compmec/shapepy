@@ -103,7 +103,7 @@ class TestSinglePointR2:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -162,7 +162,7 @@ class TestNotSinglePointR2:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -221,7 +221,7 @@ class TestOrSinglePointR2:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -280,7 +280,7 @@ class TestAndNotSinglePointR2:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )

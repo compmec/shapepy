@@ -35,11 +35,11 @@ class TestStr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
-    def test_point(self):
+    def test_single_point(self):
         point = SinglePointR2((-1, 1))
         assert str(point) == "{(-1, 1)}"
 
@@ -47,7 +47,7 @@ class TestStr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -59,7 +59,7 @@ class TestStr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -72,7 +72,7 @@ class TestStr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -112,11 +112,11 @@ class TestRepr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
-    def test_point(self):
+    def test_single_point(self):
         point = SinglePointR2((-1, 1))
         assert repr(point) == "SinglePointR2((-1, 1))"
 
@@ -124,7 +124,7 @@ class TestRepr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -136,7 +136,7 @@ class TestRepr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -150,7 +150,7 @@ class TestRepr:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/bool2d/test_point.py::test_all",
+            "tests/bool2d/test_single_point.py::test_all",
         ],
         scope="session",
     )
@@ -167,13 +167,13 @@ class TestRepr:
     depends=[
         "TestStr::test_empty",
         "TestStr::test_whole",
-        "TestStr::test_point",
+        "TestStr::test_single_point",
         "TestStr::test_not_point",
         "TestStr::test_or_point",
         "TestStr::test_and_not_point",
         "TestRepr::test_empty",
         "TestRepr::test_whole",
-        "TestRepr::test_point",
+        "TestRepr::test_single_point",
         "TestRepr::test_not_point",
         "TestRepr::test_or_point",
         "TestRepr::test_and_not_point",
