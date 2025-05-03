@@ -38,7 +38,7 @@ def simplify(subset: SubSetR2) -> SubSetR2:
     subset = intersect(*map(simplify, subset))
     if isinstance(subset, ContainerAnd):
         subset = simplify_intersection(subset)
-    return (-subset) if isunion else subset
+    return expand(~subset) if isunion else expand(subset)
 
 
 def simplify_intersection(subsets: Iterable[SubSetR2]) -> SubSetR2:
