@@ -7,6 +7,7 @@ It is an abstraction that to not handle float angle measured in radians
 
 from __future__ import annotations
 
+import re
 from numbers import Integral, Real
 
 from . import default
@@ -80,6 +81,7 @@ class Angle:
         >>> Angle.degrees(720)
         0 deg
         """
+        value = default.finite(value)
         value %= 360
         value = (
             default.rational(value, 360)
@@ -118,6 +120,7 @@ class Angle:
         >>> Angle.turns(2)
         0 deg
         """
+        value = default.finite(value)
         quad, part = divmod(4 * value, 1)
         return cls(int(quad), part)
 
@@ -288,3 +291,34 @@ class Angle:
         if 0 < self.quad < 3:
             result *= -1
         return result
+
+
+def angle(obj: object) -> Angle:
+    """
+    Converts an object to an Angle instance
+
+    * If it's already an angle, gives the same instance
+    * If it's a string, decides depending on the content:
+        * "10deg" -> Angle.degrees(10)
+        * "0.25tur" -> Angle.turns(0.25)
+        * "2.1rad" -> Angle.radians(2.1)
+    * If it's any another type, converts to a number, and gives it in radians
+
+    Example
+    -------
+    >>> angle("10deg")
+    >>> angle("0.25tur")
+    >>> angle("2.1rad")
+    >>> angle(1.25)
+    """
+    if isinstance(obj, Angle):
+        return obj
+    if isinstance(obj, str):
+        tipo = re.findall(r"([a-zA-Z]+)$", obj)[0]
+        value = default.finite(obj.replace(tipo, ""))
+        if "deg" in tipo:
+            return Angle.degrees(value)
+        if "tur" in tipo:
+            return Angle.turns(value)
+        return Angle.radians(value)
+    return Angle.radians(obj)
