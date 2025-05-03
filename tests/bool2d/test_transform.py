@@ -1,9 +1,10 @@
 import pytest
 
+from shapepy import primitive
 from shapepy.angle import Angle
 from shapepy.bool2d.base import EmptyR2, WholeR2
 from shapepy.bool2d.bool2d import intersect, invert, unite
-from shapepy.bool2d.singles import PointR2
+from shapepy.bool2d.singles import CurveR2, PointR2, ShapeR2
 from shapepy.bool2d.transform import move, rotate, scale
 
 
@@ -333,6 +334,103 @@ class TestAndNotPointR2:
         assert rotate(test, angle) == good
 
 
+class TestCurveR2:
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(
+        depends=[
+            "tests/test_primitive.py::test_square",
+        ],
+        scope="session",
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestCurveR2::test_begin"])
+    def test_move(self):
+        shape = primitive.square(10)
+        curve = CurveR2(shape.internal)
+        for vector in [(10, -3), (0, 0), (3, -7)]:
+            curve.move(vector)
+            move(curve, vector)
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestCurveR2::test_begin"])
+    def test_scale(self):
+        shape = primitive.square(10)
+        curve = CurveR2(shape.internal)
+        for amount in [1, 3, (3, 2), (5, 3)]:
+            curve.scale(amount)
+            scale(curve, amount)
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestCurveR2::test_begin"])
+    def test_rotate(self):
+        shape = primitive.square(10)
+        curve = CurveR2(shape.internal)
+
+        angles = [
+            Angle.degrees(0),
+            Angle.degrees(45),
+            Angle.degrees(90),
+        ]
+        for angle in angles:
+            curve.rotate(angle)
+            rotate(curve, angle)
+
+
+class TestShapeR2:
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(
+        depends=[
+            "tests/test_primitive.py::test_square",
+        ],
+        scope="session",
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestShapeR2::test_begin"])
+    def test_move(self):
+        shape = primitive.square(10)
+        for vector in [(10, -3), (0, 0), (3, -7)]:
+            shape.move(vector)
+            move(shape, vector)
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestShapeR2::test_begin"])
+    def test_scale(self):
+        shape = primitive.square(10)
+        for amount in [1, 3, (3, 2), (5, 3)]:
+            shape.scale(amount)
+            scale(shape, amount)
+
+    @pytest.mark.order(50)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestShapeR2::test_begin"])
+    def test_rotate(self):
+        shape = primitive.square(10)
+
+        angles = [
+            Angle.degrees(0),
+            Angle.degrees(45),
+            Angle.degrees(90),
+        ]
+        for angle in angles:
+            shape.rotate(angle)
+            rotate(shape, angle)
+
+
 @pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
@@ -343,6 +441,8 @@ class TestAndNotPointR2:
         "TestNotPointR2::test_move",
         "TestOrPointR2::test_move",
         "TestAndNotPointR2::test_move",
+        "TestCurveR2::test_move",
+        "TestShapeR2::test_move",
     ]
 )
 def test_move():
@@ -359,6 +459,8 @@ def test_move():
         "TestNotPointR2::test_scale",
         "TestOrPointR2::test_scale",
         "TestAndNotPointR2::test_scale",
+        "TestCurveR2::test_scale",
+        "TestShapeR2::test_scale",
     ]
 )
 def test_scale():
@@ -375,6 +477,8 @@ def test_scale():
         "TestNotPointR2::test_rotate",
         "TestOrPointR2::test_rotate",
         "TestAndNotPointR2::test_rotate",
+        "TestCurveR2::test_rotate",
+        "TestShapeR2::test_rotate",
     ]
 )
 def test_rotate():
