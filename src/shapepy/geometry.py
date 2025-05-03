@@ -27,7 +27,7 @@ from typing import Optional, Tuple, Union
 from . import default
 from .analytic import IAnalytic1D
 from .analytic.piecewise import PiecewiseAnalytic1D
-from .angle import Angle
+from .angle import Angle, to_angle
 from .bool1d import EmptyR1, SubSetR1, extract_knots, infimum, supremum
 from .loggers import debug
 from .quadrature import chebyshev
@@ -81,6 +81,7 @@ class GeometricPoint:
         GeometricPoint
             The created point from given polar coordinates
         """
+        angle = to_angle(angle)
         sinval, cosval = angle.sin(), angle.cos()
         if radius < 0:
             raise ValueError(f"Cannot have radius = {radius} < 0")
@@ -88,11 +89,11 @@ class GeometricPoint:
         y = default.finite(0) if sinval == 0 else radius * sinval
         return cls(x, y, radius, angle)
 
-    def __init__(self, x: Real, y: Real, radius: Real, angle: Real):
+    def __init__(self, x: Real, y: Real, radius: Real, angle: Angle):
         self.__x = x
         self.__y = y
         self.__radius = radius
-        self.__angle = angle
+        self.__angle = to_angle(angle)
 
     @property
     def x(self) -> Real:
@@ -737,6 +738,7 @@ def rotate_point(point: GeometricPoint, angle: Angle) -> GeometricPoint:
     GeometricPoint
         The rotated point
     """
+    angle = to_angle(angle)
     point = geometric_point(point)
     if not isinstance(angle, Angle):
         raise TypeError
@@ -763,9 +765,7 @@ def rotate_curve(curve: ContinuousCurve, angle: Angle) -> ContinuousCurve:
     ContinuousCurve
         The rotated curve
     """
-    if not isinstance(angle, Angle):
-        raise TypeError
-
+    angle = to_angle(angle)
     cos, sin = angle.cos(), angle.sin()
     xfunc = cos * curve[0] - sin * curve[1]
     yfunc = sin * curve[0] + cos * curve[1]
@@ -780,8 +780,6 @@ def reverse(curve: ContinuousCurve) -> ContinuousCurve:
     Parameters
     ----------
     curve: ContinuousCurve
-        -
-    angle: Angle
         -
 
     Return
@@ -805,8 +803,6 @@ def geometric_point(
     Parameters
     ----------
     point: ContinuousCurve
-        -
-    angle: Angle
         -
 
     Return

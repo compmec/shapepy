@@ -293,7 +293,7 @@ class Angle:
         return result
 
 
-def angle(obj: object) -> Angle:
+def to_angle(obj: object) -> Angle:
     """
     Converts an object to an Angle instance
 

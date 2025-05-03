@@ -6,7 +6,7 @@ like translating, scaling and rotating the SubSetR2 instances on the plane
 from numbers import Real
 from typing import Tuple, Union
 
-from ..angle import Angle
+from ..angle import Angle, to_angle
 from .base import EmptyR2, SubSetR2, WholeR2
 from .container import ContainerAnd, ContainerNot, ContainerOr
 
@@ -99,6 +99,7 @@ def rotate(subset: SubSetR2, angle: Angle) -> SubSetR2:
     >>> angle = Angle.degrees(90)
     >>> rotate(subset, angle)
     """
+    angle = to_angle(angle)
     if isinstance(subset, (EmptyR2, WholeR2)):
         return subset
     if isinstance(subset, ContainerNot):

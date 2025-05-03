@@ -4,7 +4,7 @@ import random
 import pytest
 
 from shapepy import default
-from shapepy.angle import Angle, angle
+from shapepy.angle import Angle, to_angle
 
 
 @pytest.mark.order(2)
@@ -225,14 +225,14 @@ def test_evaluate_operations():
 @pytest.mark.dependency()
 def test_convert():
 
-    assert angle("90deg") == Angle.degrees(90)
-    assert angle("0.25tur") == Angle.turns(0.25)
-    assert angle("1.25rad") == Angle.radians(1.25)
+    assert to_angle("90deg") == Angle.degrees(90)
+    assert to_angle("0.25tur") == Angle.turns(0.25)
+    assert to_angle("1.25rad") == Angle.radians(1.25)
 
-    assert angle(1.25) == Angle.radians(1.25)
+    assert to_angle(1.25) == Angle.radians(1.25)
 
     anglea = Angle.degrees(30)
-    assert angle(anglea) is anglea
+    assert to_angle(anglea) is anglea
 
 
 @pytest.mark.order(2)
