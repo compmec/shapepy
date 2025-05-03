@@ -152,7 +152,7 @@ class SubSetR2(ABC):
             except (ValueError, TypeError):
                 return NotImplemented
             return self.__eq__(other)
-        return NotImplemented
+        return hash(self) == hash(other) and NotImplemented
 
     @abstractmethod
     def __hash__(self) -> int:

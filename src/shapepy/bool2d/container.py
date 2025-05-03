@@ -98,7 +98,7 @@ class ContainerOr(SubSetR2):
         yield from self.__internals
 
     def __hash__(self):
-        return hash(self.__internals)
+        return sum(map(hash, self.__internals))
 
     def __str__(self):
         return "OR[" + ", ".join(map(str, self)) + "]"
@@ -134,7 +134,7 @@ class ContainerAnd(SubSetR2):
         yield from self.__internals
 
     def __hash__(self):
-        return hash(self.__internals)
+        return sum(map(hash, self.__internals))
 
     def __str__(self):
         return "AND[" + ", ".join(map(str, self)) + "]"
