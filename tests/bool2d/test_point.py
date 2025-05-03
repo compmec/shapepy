@@ -1,8 +1,9 @@
 import pytest
 
-from shapepy.bool2d.base import EmptyR2, WholeR2
+from shapepy.bool2d.base import EmptyR2, SubSetR2, WholeR2
 from shapepy.bool2d.bool2d import contains, intersect, invert, unite
 from shapepy.bool2d.container import ContainerNot, expand
+from shapepy.bool2d.converter import from_any
 from shapepy.bool2d.simplify import simplify
 from shapepy.bool2d.singles import SinglePointR2
 
@@ -116,7 +117,6 @@ class TestSelfOperation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency()
     def test_or(self):
-        empty = EmptyR2()
         whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
@@ -132,7 +132,6 @@ class TestSelfOperation:
     @pytest.mark.dependency()
     def test_and(self):
         empty = EmptyR2()
-        whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
         points = map(SinglePointR2, points)
@@ -164,7 +163,6 @@ class TestSelfOperation:
     @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
     def test_sub(self):
         empty = EmptyR2()
-        whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
         points = map(SinglePointR2, points)
@@ -178,7 +176,6 @@ class TestSelfOperation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSelfOperation::test_or"])
     def test_add(self):
-        empty = EmptyR2()
         whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
@@ -194,7 +191,6 @@ class TestSelfOperation:
     @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
     def test_mul(self):
         empty = EmptyR2()
-        whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
         points = map(SinglePointR2, points)
@@ -208,7 +204,6 @@ class TestSelfOperation:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSelfOperation::test_or"])
     def test_unite(self):
-        empty = EmptyR2()
         whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
@@ -224,7 +219,6 @@ class TestSelfOperation:
     @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
     def test_intersect(self):
         empty = EmptyR2()
-        whole = WholeR2()
 
         points = [(0, 0), (1, 1), (-1, -1)]
         points = map(SinglePointR2, points)
@@ -260,6 +254,83 @@ def test_print():
 
     str(origin)
     repr(origin)
+
+
+class TestConvert:
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["test_build"])
+    def test_single_from_string(self):
+        obj = r"{(-10, 10)}"
+        subset = from_any(obj)
+        assert isinstance(subset, SubSetR2)
+        assert isinstance(subset, SinglePointR2)
+        assert subset.internal == (-10, 10)
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["test_build"])
+    def test_single_from_set(self):
+        obj = {(-10, 10)}
+        subset = from_any(obj)
+        assert isinstance(subset, SubSetR2)
+        assert isinstance(subset, SinglePointR2)
+        assert subset.internal == (-10, 10)
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(
+        depends=["test_contains", "TestConvert::test_single_from_string"]
+    )
+    def test_disjoint_from_string(self):
+        obj = r"{(-10, 10), (10, -10)}"
+        subset = from_any(obj)
+        assert isinstance(subset, SubSetR2)
+        for point in [(-10, 10), (10, -10)]:
+            assert SinglePointR2(point) in subset
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestConvert::test_single_from_set"])
+    def test_disjoint_from_set(self):
+        obj = {(-10, 10), (10, -10)}
+        subset = from_any(obj)
+        assert isinstance(subset, SubSetR2)
+        for point in [(-10, 10), (10, -10)]:
+            assert SinglePointR2(point) in subset
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestConvert::test_single_from_string"])
+    def test_container_not(self):
+        obj = r"NOT[{(-10, 10)}]"
+        subset = from_any(obj)
+        assert isinstance(subset, SubSetR2)
+        assert isinstance(subset, ContainerNot)
+        assert isinstance(~subset, SinglePointR2)
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestConvert::test_single_from_string"])
+    def test_container_or(self):
+        obj = r"OR[{(-10, 10)}, {(10, -10)}]"
+        subset = from_any(obj)
+        assert isinstance(subset, SubSetR2)
+        for point in [(-10, 10), (10, -10)]:
+            point = SinglePointR2(point)
+            assert point in subset
+
+    @pytest.mark.order(25)
+    @pytest.mark.timeout(1)
+    @pytest.mark.dependency(depends=["TestConvert::test_single_from_string"])
+    def test_container_and(self):
+        obj = r"AND[NOT[{(-10, 10)}], NOT[{(10, -10)}]]"
+        subset = from_any(obj)
+        assert isinstance(subset, SubSetR2)
+        for point in [(-10, 10), (10, -10)]:
+            point = SinglePointR2(point)
+            assert point not in subset
 
 
 @pytest.mark.order(25)
