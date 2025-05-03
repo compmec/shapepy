@@ -8,9 +8,10 @@ from typing import Tuple, Union
 
 from .. import geometry
 from ..angle import Angle, to_angle
+from ..error import NotExpectedError
 from .base import EmptyR2, SubSetR2, WholeR2
 from .container import ContainerAnd, ContainerNot, ContainerOr
-from .singles import PointR2
+from .singles import CurveR2, PointR2, ShapeR2
 
 
 def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
@@ -42,7 +43,12 @@ def move(subset: SubSetR2, vector: Tuple[Real, Real]) -> SubSetR2:
         return subset.__class__(move(sub, vector) for sub in subset)
     if isinstance(subset, PointR2):
         return subset.__class__(geometry.move_point(subset.internal, vector))
-    raise NotImplementedError
+    if isinstance(subset, CurveR2):
+        return subset.__class__(geometry.move_curve(subset.internal, vector))
+    if isinstance(subset, ShapeR2):
+        new_jordan = geometry.move_curve(subset.internal, vector)
+        return subset.__class__(new_jordan, subset.boundary)
+    raise NotExpectedError(f"Missing typo? {type(subset)}")
 
 
 def scale(
@@ -80,7 +86,12 @@ def scale(
         return subset.__class__(scale(sub, amount) for sub in subset)
     if isinstance(subset, PointR2):
         return subset.__class__(geometry.scale_point(subset.internal, amount))
-    raise NotImplementedError
+    if isinstance(subset, CurveR2):
+        return subset.__class__(geometry.scale_curve(subset.internal, amount))
+    if isinstance(subset, ShapeR2):
+        new_jordan = geometry.scale_curve(subset.internal, amount)
+        return subset.__class__(new_jordan, subset.boundary)
+    raise NotExpectedError(f"Missing typo? {type(subset)}")
 
 
 def rotate(subset: SubSetR2, angle: Angle) -> SubSetR2:
@@ -114,4 +125,9 @@ def rotate(subset: SubSetR2, angle: Angle) -> SubSetR2:
         return subset.__class__(rotate(sub, angle) for sub in subset)
     if isinstance(subset, PointR2):
         return subset.__class__(geometry.rotate_point(subset.internal, angle))
-    raise NotImplementedError
+    if isinstance(subset, CurveR2):
+        return subset.__class__(geometry.rotate_curve(subset.internal, angle))
+    if isinstance(subset, ShapeR2):
+        new_jordan = geometry.rotate_curve(subset.internal, angle)
+        return subset.__class__(new_jordan, subset.boundary)
+    raise NotExpectedError(f"Missing typo? {type(subset)}")
