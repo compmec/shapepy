@@ -2,7 +2,7 @@ import pytest
 
 from shapepy.bool2d.base import EmptyR2, SubSetR2, WholeR2
 from shapepy.bool2d.bool2d import contains, intersect, invert, unite
-from shapepy.bool2d.container import ContainerNot, expand
+from shapepy.bool2d.container import expand, recipe_not
 from shapepy.bool2d.converter import from_any
 from shapepy.bool2d.simplify import simplify
 from shapepy.bool2d.singles import PointR2
@@ -61,10 +61,10 @@ def test_empty_whole():
 )
 def test_invert():
     point = PointR2((0, 0))
-    assert ~point == ContainerNot(point)
-    assert -point == ContainerNot(point)
+    assert ~point == recipe_not(point)
+    assert -point == recipe_not(point)
 
-    assert invert(point) == ContainerNot(point)
+    assert invert(point) == recipe_not(point)
 
 
 @pytest.mark.order(52)
@@ -350,7 +350,6 @@ class TestConvert:
         obj = r"NOT[{(-10, 10)}]"
         subset = from_any(obj)
         assert isinstance(subset, SubSetR2)
-        assert isinstance(subset, ContainerNot)
         assert isinstance(~subset, PointR2)
 
     @pytest.mark.order(52)

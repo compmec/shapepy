@@ -6,7 +6,14 @@ between the SubSetR2 instances
 from __future__ import annotations
 
 from .base import EmptyR2, SubSetR2, WholeR2
-from .container import ContainerAnd, ContainerNot, ContainerOr
+from .container import (
+    ContainerAnd,
+    ContainerNot,
+    ContainerOr,
+    recipe_and,
+    recipe_not,
+    recipe_or,
+)
 from .converter import from_any
 from .singles import PointR2
 
@@ -33,7 +40,7 @@ def unite(*subsets: SubSetR2) -> SubSetR2:
         return tuple(subsets)[0]
     if any(isinstance(subset, WholeR2) for subset in subsets):
         return WholeR2()
-    return ContainerOr(subsets)
+    return recipe_or(subsets)
 
 
 def intersect(*subsets: SubSetR2) -> SubSetR2:
@@ -58,7 +65,7 @@ def intersect(*subsets: SubSetR2) -> SubSetR2:
         return tuple(subsets)[0]
     if any(isinstance(subset, EmptyR2) for subset in subsets):
         return EmptyR2()
-    return ContainerAnd(subsets)
+    return recipe_and(subsets)
 
 
 def invert(subset: SubSetR2) -> SubSetR2:
@@ -77,7 +84,7 @@ def invert(subset: SubSetR2) -> SubSetR2:
     """
     if isinstance(subset, (EmptyR2, WholeR2, ContainerNot)):
         return ~subset
-    return ContainerNot(subset)
+    return recipe_not(subset)
 
 
 def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:

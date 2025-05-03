@@ -35,9 +35,9 @@ def expand(subset: SubSetR2) -> SubSetR2:
         return subset
     if isinstance(subset, ContainerNot):
         if isinstance(~subset, ContainerOr):
-            return expand(ContainerAnd(~sub for sub in ~subset))
+            return expand(recipe_and(~sub for sub in ~subset))
         if isinstance(~subset, ContainerAnd):
-            return expand(ContainerOr(~sub for sub in ~subset))
+            return expand(recipe_or(~sub for sub in ~subset))
         return subset
     return subset.__class__(map(expand, subset))
 
@@ -48,10 +48,6 @@ class ContainerNot(SubSetR2):
     """
 
     def __init__(self, subset: SubSetR2):
-        if not isinstance(subset, SubSetR2):
-            raise TypeError(f"Must be SubSetR2 instance, not {type(subset)}")
-        if isinstance(subset, (EmptyR2, WholeR2, ContainerNot)):
-            raise TypeError(f"Invalid type: {type(subset)}")
         self.__internal = subset
 
     def __invert__(self):
@@ -83,16 +79,7 @@ class ContainerOr(SubSetR2):
     """
 
     def __init__(self, subsets: Iterable[SubSetR2]):
-        subsets = frozenset(subsets)
-        if len(subsets) < 2:
-            raise ValueError("Less than 2 elements")
-        if not all(isinstance(sub, SubSetR2) for sub in subsets):
-            raise TypeError("Only SubSetR2 instances allowed")
-        if any(
-            isinstance(sub, (ContainerOr, EmptyR2, WholeR2)) for sub in subsets
-        ):
-            raise TypeError
-        self.__internals = subsets
+        self.__internals = frozenset(subsets)
 
     def __iter__(self):
         yield from self.__internals
@@ -118,17 +105,7 @@ class ContainerAnd(SubSetR2):
     """
 
     def __init__(self, subsets: Iterable[SubSetR2]):
-        subsets = frozenset(subsets)
-        if len(subsets) < 2:
-            raise ValueError("Less than 2 elements")
-        if not all(isinstance(sub, SubSetR2) for sub in subsets):
-            raise TypeError("Only SubSetR2 instances allowed")
-        if any(
-            isinstance(sub, (ContainerAnd, EmptyR2, WholeR2))
-            for sub in subsets
-        ):
-            raise TypeError
-        self.__internals = subsets
+        self.__internals = frozenset(subsets)
 
     def __iter__(self):
         yield from self.__internals
@@ -149,3 +126,52 @@ class ContainerAnd(SubSetR2):
         if isinstance(other, ContainerAnd):
             return frozenset(self) == frozenset(other)
         return super().__eq__(other)
+
+
+def recipe_not(subset: SubSetR2) -> ContainerNot:
+    """
+    Creates an instance of ContainerNot
+
+    This function should not be used without proper input
+    """
+    if not isinstance(subset, SubSetR2):
+        raise TypeError(f"Must be SubSetR2 instance, not {type(subset)}")
+    if isinstance(subset, (EmptyR2, WholeR2, ContainerNot)):
+        raise TypeError(f"Invalid type: {type(subset)}")
+    return ContainerNot(subset)
+
+
+def recipe_or(subsets: Iterable[SubSetR2]) -> ContainerOr:
+    """
+    Creates an instance of ContainerOr.
+
+    This function should not be used without proper input
+    """
+    subsets = frozenset(subsets)
+    if len(subsets) < 2:
+        raise ValueError("Less than 2 elements")
+    if not all(isinstance(sub, SubSetR2) for sub in subsets):
+        raise TypeError("Only SubSetR2 instances allowed")
+    if any(
+        isinstance(sub, (ContainerOr, EmptyR2, WholeR2)) for sub in subsets
+    ):
+        raise TypeError
+    return ContainerOr(subsets)
+
+
+def recipe_and(subsets: Iterable[SubSetR2]) -> ContainerAnd:
+    """
+    Creates an instance of ContainerOr.
+
+    This function should not be used without proper input
+    """
+    subsets = frozenset(subsets)
+    if len(subsets) < 2:
+        raise ValueError("Less than 2 elements")
+    if not all(isinstance(sub, SubSetR2) for sub in subsets):
+        raise TypeError("Only SubSetR2 instances allowed")
+    if any(
+        isinstance(sub, (ContainerAnd, EmptyR2, WholeR2)) for sub in subsets
+    ):
+        raise TypeError
+    return ContainerAnd(subsets)
