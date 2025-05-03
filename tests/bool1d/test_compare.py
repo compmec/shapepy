@@ -4,7 +4,7 @@ from shapepy import default
 from shapepy.bool1d import EmptyR1, IntervalR1, SingleValueR1, WholeR1
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -17,7 +17,7 @@ def test_begin():
     pass
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_empty():
@@ -28,7 +28,7 @@ def test_empty():
     assert empty == r"{}"
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_whole():
@@ -48,7 +48,7 @@ def test_whole():
     assert whole == r"(-inf, inf)"
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_empty", "test_whole"])
 def test_singletons():
@@ -66,7 +66,7 @@ def test_singletons():
     assert not whole != whole
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_singletons"])
 def test_singles():
@@ -91,7 +91,7 @@ def test_singles():
         assert not whole == single
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_singletons", "test_singles"])
 def test_intervals():
@@ -160,7 +160,7 @@ def test_intervals():
         assert (sta, end) == interv
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

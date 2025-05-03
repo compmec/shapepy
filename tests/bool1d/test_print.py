@@ -9,7 +9,7 @@ from shapepy.bool1d import (
 )
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -22,7 +22,7 @@ def test_begin():
     pass
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_empty():
@@ -31,7 +31,7 @@ def test_empty():
     assert repr(empty) == r"EmptyR1"
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_whole():
@@ -40,7 +40,7 @@ def test_whole():
     assert repr(whole) == r"WholeR1"
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_single():
@@ -57,7 +57,7 @@ def test_single():
     assert repr(value) == r"SingleValueR1(10)"
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_interval():
@@ -86,7 +86,7 @@ def test_interval():
     assert str(interval) == r"(-10, inf)"
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_disjoint():
@@ -119,7 +119,7 @@ def test_disjoint():
     repr(disjoint)
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(14)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

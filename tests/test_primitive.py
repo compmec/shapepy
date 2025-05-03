@@ -9,7 +9,7 @@ import pytest
 from shapepy import primitive
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(51)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[
@@ -39,7 +39,7 @@ def test_square():
     assert abs(square.area - area) < 1e-9
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(51)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[
@@ -69,7 +69,7 @@ def test_triangle():
     assert abs(square.area - area) < 1e-9
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(51)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[
@@ -101,7 +101,7 @@ def test_regular_polygon():
         assert abs(polygon.area - area) < 1e-9
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(51)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[
@@ -121,7 +121,7 @@ def test_polygon():
     assert abs(triangle.area - area) < 1e-9
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(51)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[

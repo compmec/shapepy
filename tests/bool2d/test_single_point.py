@@ -8,7 +8,7 @@ from shapepy.bool2d.simplify import simplify
 from shapepy.bool2d.singles import PointR2
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_build():
@@ -16,7 +16,7 @@ def test_build():
     PointR2((1, 1))
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_direct_compare():
@@ -28,7 +28,7 @@ def test_direct_compare():
     assert pointc != pointa
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_empty_whole():
@@ -47,7 +47,7 @@ def test_empty_whole():
     assert whole not in point
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_direct_compare"])
 def test_expand():
@@ -55,7 +55,7 @@ def test_expand():
     assert expand(point) == point
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_simplify():
@@ -63,7 +63,7 @@ def test_simplify():
     assert simplify(point) == point
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_invert():
@@ -73,7 +73,7 @@ def test_invert():
     assert invert(point) == ContainerNot(point)
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -100,7 +100,7 @@ def test_compare():
     assert {(2, 0)} != pointa
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_weird_compare():
@@ -114,7 +114,7 @@ def test_weird_compare():
         assert weird != ~point
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_contains():
@@ -154,7 +154,7 @@ def test_contains():
 
 class TestSelfOperation:
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency()
     def test_or(self):
@@ -168,7 +168,7 @@ class TestSelfOperation:
             assert simplify((~subset) | subset) == whole
             assert (~subset) | (~subset) == ~subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency()
     def test_and(self):
@@ -182,7 +182,7 @@ class TestSelfOperation:
             assert simplify((~subset) & subset) == empty
             assert (~subset) & (~subset) == ~subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=["TestSelfOperation::test_or", "TestSelfOperation::test_and"]
@@ -199,7 +199,7 @@ class TestSelfOperation:
             assert (~subset) ^ subset == whole
             assert (~subset) ^ (~subset) == empty
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
     def test_sub(self):
@@ -213,7 +213,7 @@ class TestSelfOperation:
             assert (~subset) - subset == ~subset
             assert (~subset) - (~subset) == empty
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSelfOperation::test_or"])
     def test_add(self):
@@ -227,7 +227,7 @@ class TestSelfOperation:
             assert (~subset) + subset == whole
             assert (~subset) + (~subset) == ~subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
     def test_mul(self):
@@ -241,7 +241,7 @@ class TestSelfOperation:
             assert (~subset) * subset == empty
             assert (~subset) * (~subset) == ~subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSelfOperation::test_or"])
     def test_unite(self):
@@ -255,7 +255,7 @@ class TestSelfOperation:
             assert simplify(unite(~subset, subset)) == whole
             assert unite(~subset, ~subset) == ~subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSelfOperation::test_and"])
     def test_intersect(self):
@@ -269,7 +269,7 @@ class TestSelfOperation:
             assert simplify(intersect(subset, ~subset)) == empty
             assert simplify(intersect(~subset, subset)) == empty
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -287,7 +287,7 @@ class TestSelfOperation:
         pass
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_print():
@@ -299,7 +299,7 @@ def test_print():
 
 class TestConvert:
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_build"])
     def test_single_from_string(self):
@@ -309,7 +309,7 @@ class TestConvert:
         assert isinstance(subset, PointR2)
         assert subset.internal == (-10, 10)
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_build"])
     def test_single_from_set(self):
@@ -319,7 +319,7 @@ class TestConvert:
         assert isinstance(subset, PointR2)
         assert subset.internal == (-10, 10)
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=["test_contains", "TestConvert::test_single_from_string"]
@@ -331,7 +331,7 @@ class TestConvert:
         for point in [(-10, 10), (10, -10)]:
             assert PointR2(point) in subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestConvert::test_single_from_set"])
     def test_disjoint_from_set(self):
@@ -341,7 +341,7 @@ class TestConvert:
         for point in [(-10, 10), (10, -10)]:
             assert PointR2(point) in subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestConvert::test_single_from_string"])
     def test_container_not(self):
@@ -351,7 +351,7 @@ class TestConvert:
         assert isinstance(subset, ContainerNot)
         assert isinstance(~subset, PointR2)
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestConvert::test_single_from_string"])
     def test_container_or(self):
@@ -362,7 +362,7 @@ class TestConvert:
             point = PointR2(point)
             assert point in subset
 
-    @pytest.mark.order(25)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestConvert::test_single_from_string"])
     def test_container_and(self):
@@ -374,7 +374,7 @@ class TestConvert:
             assert point not in subset
 
 
-@pytest.mark.order(25)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

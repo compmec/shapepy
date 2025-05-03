@@ -10,7 +10,7 @@ from shapepy.bool2d.transform import move, rotate, scale
 
 class TestEmpty:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -21,7 +21,7 @@ class TestEmpty:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestEmpty::test_begin"])
     def test_move(self):
@@ -31,7 +31,7 @@ class TestEmpty:
             assert empty.move(vector) == empty
             assert move(empty, vector) == empty
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestEmpty::test_begin"])
     def test_scale(self):
@@ -41,7 +41,7 @@ class TestEmpty:
             assert empty.scale(amount) == empty
             assert scale(empty, amount) == empty
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestEmpty::test_begin"])
     def test_rotate(self):
@@ -55,7 +55,7 @@ class TestEmpty:
 
 class TestWhole:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -66,7 +66,7 @@ class TestWhole:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestWhole::test_begin"])
     def test_move(self):
@@ -76,7 +76,7 @@ class TestWhole:
             assert whole.move(vector) == whole
             assert move(whole, vector) == whole
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestWhole::test_begin"])
     def test_scale(self):
@@ -86,7 +86,7 @@ class TestWhole:
             assert whole.scale(amount) == whole
             assert scale(whole, amount) == whole
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestWhole::test_begin"])
     def test_rotate(self):
@@ -100,7 +100,7 @@ class TestWhole:
 
 class TestPointR2:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -111,7 +111,7 @@ class TestPointR2:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestPointR2::test_begin"])
     def test_move(self):
@@ -125,7 +125,7 @@ class TestPointR2:
                 assert single.move(vector) == good
                 assert move(single, vector) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestPointR2::test_begin"])
     def test_scale(self):
@@ -142,7 +142,7 @@ class TestPointR2:
         assert single.scale((3, 4)) == PointR2((9, 16))
         assert scale(single, (3, 4)) == PointR2((9, 16))
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestPointR2::test_begin"])
     def test_rotate(self):
@@ -159,7 +159,7 @@ class TestPointR2:
 
 class TestNotPointR2:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -170,7 +170,7 @@ class TestNotPointR2:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestNotPointR2::test_begin"])
     def test_move(self):
@@ -184,7 +184,7 @@ class TestNotPointR2:
                 assert subset.move(vector) == good
                 assert move(subset, vector) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestNotPointR2::test_begin"])
     def test_scale(self):
@@ -201,7 +201,7 @@ class TestNotPointR2:
         assert subset.scale((3, 4)) == ~PointR2((9, 16))
         assert scale(subset, (3, 4)) == ~PointR2((9, 16))
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestNotPointR2::test_begin"])
     def test_rotate(self):
@@ -218,7 +218,7 @@ class TestNotPointR2:
 
 class TestOrPointR2:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -229,7 +229,7 @@ class TestOrPointR2:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestOrPointR2::test_begin"])
     def test_move(self):
@@ -244,7 +244,7 @@ class TestOrPointR2:
         assert test.move(vector) == good
         assert move(test, vector) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestOrPointR2::test_begin"])
     def test_scale(self):
@@ -259,7 +259,7 @@ class TestOrPointR2:
         assert test.scale(amount) == good
         assert scale(test, amount) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestOrPointR2::test_begin"])
     def test_rotate(self):
@@ -277,7 +277,7 @@ class TestOrPointR2:
 
 class TestAndNotPointR2:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -288,7 +288,7 @@ class TestAndNotPointR2:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestAndNotPointR2::test_begin"])
     def test_move(self):
@@ -303,7 +303,7 @@ class TestAndNotPointR2:
         assert test.move(vector) == good
         assert move(test, vector) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestAndNotPointR2::test_begin"])
     def test_scale(self):
@@ -318,7 +318,7 @@ class TestAndNotPointR2:
         assert test.scale(amount) == good
         assert scale(test, amount) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestAndNotPointR2::test_begin"])
     def test_rotate(self):
@@ -336,7 +336,7 @@ class TestAndNotPointR2:
 
 class TestCurveR2:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -347,7 +347,7 @@ class TestCurveR2:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestCurveR2::test_begin"])
     def test_move(self):
@@ -357,7 +357,7 @@ class TestCurveR2:
             curve.move(vector)
             move(curve, vector)
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestCurveR2::test_begin"])
     def test_scale(self):
@@ -367,7 +367,7 @@ class TestCurveR2:
             curve.scale(amount)
             scale(curve, amount)
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestCurveR2::test_begin"])
     def test_rotate(self):
@@ -386,7 +386,7 @@ class TestCurveR2:
 
 class TestShapeR2:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -397,7 +397,7 @@ class TestShapeR2:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestShapeR2::test_begin"])
     def test_move(self):
@@ -406,7 +406,7 @@ class TestShapeR2:
             shape.move(vector)
             move(shape, vector)
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestShapeR2::test_begin"])
     def test_scale(self):
@@ -415,7 +415,7 @@ class TestShapeR2:
             shape.scale(amount)
             scale(shape, amount)
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(55)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestShapeR2::test_begin"])
     def test_rotate(self):
@@ -431,7 +431,7 @@ class TestShapeR2:
             rotate(shape, angle)
 
 
-@pytest.mark.order(50)
+@pytest.mark.order(55)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -449,7 +449,7 @@ def test_move():
     pass
 
 
-@pytest.mark.order(50)
+@pytest.mark.order(55)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -467,7 +467,7 @@ def test_scale():
     pass
 
 
-@pytest.mark.order(50)
+@pytest.mark.order(55)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -485,7 +485,7 @@ def test_rotate():
     pass
 
 
-@pytest.mark.order(50)
+@pytest.mark.order(55)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_move", "test_scale", "test_rotate"])
 def test_all():

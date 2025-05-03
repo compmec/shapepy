@@ -4,7 +4,7 @@ from shapepy import default
 from shapepy.bool1d import infimum, maximum, minimum, supremum
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(17)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

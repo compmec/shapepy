@@ -3,7 +3,7 @@ import pytest
 from shapepy.bool1d import EmptyR1, IntervalR1, SingleValueR1, WholeR1
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(12)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -15,7 +15,7 @@ def test_begin():
     pass
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(12)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_empty():
@@ -27,7 +27,7 @@ def test_empty():
     hash(empty1)
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(12)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_whole():
@@ -39,7 +39,7 @@ def test_whole():
     hash(whole1)
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(12)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_single():
@@ -59,7 +59,7 @@ def test_single():
     hash(SingleValueR1(10))
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(12)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_interval():
@@ -72,14 +72,14 @@ def test_interval():
     hash(IntervalR1(-10, 10))
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(12)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_disjoint():
     pass
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(12)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

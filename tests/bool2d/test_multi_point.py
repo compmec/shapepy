@@ -6,7 +6,7 @@ from shapepy.bool2d.simplify import simplify
 from shapepy.bool2d.singles import PointR2
 
 
-@pytest.mark.order(26)
+@pytest.mark.order(57)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -21,7 +21,7 @@ def test_build():
     intersect(*map(invert, singles))
 
 
-@pytest.mark.order(26)
+@pytest.mark.order(57)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_hash():
@@ -33,7 +33,7 @@ def test_hash():
     assert hash(union) + hash(inter) == 0
 
 
-@pytest.mark.order(26)
+@pytest.mark.order(57)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_contains():
@@ -54,7 +54,7 @@ def test_contains():
         assert not contains(single, inter)
 
 
-@pytest.mark.order(26)
+@pytest.mark.order(57)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_expand():
@@ -70,7 +70,7 @@ def test_expand():
     assert expand(~inter) == union
 
 
-@pytest.mark.order(26)
+@pytest.mark.order(57)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_simplify():
@@ -86,7 +86,7 @@ def test_simplify():
     assert simplify(~inter) == union
 
 
-@pytest.mark.order(26)
+@pytest.mark.order(57)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_weird_compare():
@@ -103,7 +103,7 @@ def test_weird_compare():
         assert weird != inter
 
 
-@pytest.mark.order(26)
+@pytest.mark.order(57)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

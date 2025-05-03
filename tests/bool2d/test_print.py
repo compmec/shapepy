@@ -8,7 +8,7 @@ from shapepy.primitive import square
 
 class TestStr:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -20,7 +20,7 @@ class TestStr:
         empty = EmptyR2()
         assert str(empty) == "EmptyR2"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -32,7 +32,7 @@ class TestStr:
         whole = WholeR2()
         assert str(whole) == "WholeR2"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -44,7 +44,7 @@ class TestStr:
         point = PointR2((-1, 1))
         assert str(point) == "{(-1, 1)}"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -56,7 +56,7 @@ class TestStr:
         point = ~PointR2((-1, 1))
         assert str(point) == "NOT[{(-1, 1)}]"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -69,7 +69,7 @@ class TestStr:
         subset = unite(*map(PointR2, points))
         assert str(subset) == "OR[{(1, 1)}, {(-1, -1)}]"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -82,7 +82,7 @@ class TestStr:
         subset = intersect(*map(invert, map(PointR2, points)))
         assert str(subset) == "AND[NOT[{(-1, -1)}], NOT[{(1, 1)}]]"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -95,7 +95,7 @@ class TestStr:
         curve = CurveR2(shape.internal)
         str(curve)
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -110,7 +110,7 @@ class TestStr:
 
 class TestRepr:
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -122,7 +122,7 @@ class TestRepr:
         empty = EmptyR2()
         assert repr(empty) == "EmptyR2"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -134,7 +134,7 @@ class TestRepr:
         whole = WholeR2()
         assert repr(whole) == "WholeR2"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -146,7 +146,7 @@ class TestRepr:
         point = PointR2((-1, 1))
         assert repr(point) == "PointR2((-1, 1))"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -158,7 +158,7 @@ class TestRepr:
         point = ~PointR2((-1, 1))
         assert repr(point) == "NOT[PointR2((-1, 1))]"
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -172,7 +172,7 @@ class TestRepr:
         good = "OR[PointR2((1, 1)), PointR2((-1, -1))]"
         assert repr(subset) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -186,7 +186,7 @@ class TestRepr:
         good = "AND[NOT[PointR2((-1, -1))], NOT[PointR2((1, 1))]]"
         assert repr(subset) == good
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -199,7 +199,7 @@ class TestRepr:
         curve = CurveR2(shape.internal)
         repr(curve)
 
-    @pytest.mark.order(50)
+    @pytest.mark.order(52)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -212,7 +212,7 @@ class TestRepr:
         repr(shape)
 
 
-@pytest.mark.order(50)
+@pytest.mark.order(52)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

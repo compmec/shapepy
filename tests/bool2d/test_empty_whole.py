@@ -6,7 +6,7 @@ from shapepy.bool2d.container import expand
 from shapepy.bool2d.simplify import simplify
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_build():
@@ -19,7 +19,7 @@ def test_build():
     assert whole == whole
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_hash():
@@ -30,7 +30,7 @@ def test_hash():
     assert hash(whole) == 1
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_expand():
@@ -40,7 +40,7 @@ def test_expand():
     assert expand(whole) == whole
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_simplify():
@@ -50,7 +50,7 @@ def test_simplify():
     assert simplify(whole) == whole
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build"])
 def test_inverse():
@@ -82,7 +82,7 @@ def test_weird_compare():
         assert weird != whole
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_self_operation():
@@ -111,7 +111,7 @@ def test_self_operation():
         assert intersect(subset, ~subset) == empty
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_switch_operation():
@@ -136,7 +136,7 @@ def test_switch_operation():
     assert intersect(empty, whole) == empty
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_contains():
@@ -154,7 +154,7 @@ def test_contains():
     assert contains(whole, whole)
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_print():
@@ -167,7 +167,7 @@ def test_print():
     repr(whole)
 
 
-@pytest.mark.order(20)
+@pytest.mark.order(50)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

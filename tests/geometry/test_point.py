@@ -10,9 +10,14 @@ from shapepy.geometry import (
 )
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/test_default.py::test_all",
+    ],
+    scope="session",
+)
 def test_build_cartesian():
     coords = (default.NEGINF, -1, 0, 1, default.POSINF)
     for xval in coords:
@@ -20,9 +25,15 @@ def test_build_cartesian():
             GeometricPoint.cartesian(xval, yval)
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/test_default.py::test_all",
+        "tests/test_angle.py::test_all",
+    ],
+    scope="session",
+)
 def test_build_polar():
     angles = tuple(map(Angle.degrees, range(0, 360, 15)))
     radius = (0, 1, 10, default.POSINF)
@@ -37,7 +48,7 @@ def test_build_polar():
         GeometricPoint.polar(default.NEGINF, Angle())
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_compare():
@@ -50,7 +61,7 @@ def test_compare():
     assert pointa != 1
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_extract_cartesians():
@@ -98,7 +109,7 @@ def test_extract_cartesians():
     assert point.angle == Angle.atan2(4, 3)
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_extract_polar():
@@ -128,14 +139,14 @@ def test_extract_polar():
             assert point.y == default.NEGINF
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_move_point():
     assert move_point((0, 0), (1, 0)) == (1, 0)
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_scale_point():
@@ -144,7 +155,7 @@ def test_scale_point():
     assert scale_point((3, 4), (3, 4)) == (9, 16)
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_rotate_point():
@@ -153,7 +164,7 @@ def test_rotate_point():
     assert rotate_point((0, 1), angle) == (-1, 0)
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_cartesian", "test_build_polar"])
 def test_print():
@@ -166,7 +177,7 @@ def test_print():
     repr(point)
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(31)
 @pytest.mark.dependency(
     depends=[
         "test_build_cartesian",

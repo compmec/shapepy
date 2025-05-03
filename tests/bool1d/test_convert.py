@@ -9,7 +9,7 @@ from shapepy.bool1d import (
 )
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(13)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -23,19 +23,19 @@ def test_begin():
 
 class TestFromString:
 
-    @pytest.mark.order(3)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_empty(self):
         assert subsetR1("{}") == EmptyR1()
 
-    @pytest.mark.order(3)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_whole(self):
         assert subsetR1("(-inf, inf)") == WholeR1()
 
-    @pytest.mark.order(3)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_single(self):
@@ -44,7 +44,7 @@ class TestFromString:
         assert subsetR1(r"{10}") == SingleValueR1(10)
         assert subsetR1(r"{+10}") == SingleValueR1(10)
 
-    @pytest.mark.order(3)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_interval(self):
@@ -58,13 +58,13 @@ class TestFromString:
         assert subsetR1(r"[-10, inf)") == IntervalR1.bigger(-10, True)
         assert subsetR1(r"(-10, inf)") == IntervalR1.bigger(-10, False)
 
-    @pytest.mark.order(3)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_disjoint(self):
         pass
 
-    @pytest.mark.order(3)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -80,7 +80,7 @@ class TestFromString:
         pass
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(13)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

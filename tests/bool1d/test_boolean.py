@@ -9,7 +9,7 @@ from shapepy.bool1d import (
 )
 
 
-@pytest.mark.order(6)
+@pytest.mark.order(16)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -26,7 +26,7 @@ def test_begin():
 
 class TestInversion:
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_singletion(self):
@@ -36,7 +36,7 @@ class TestInversion:
         assert ~empty == whole
         assert ~whole == empty
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_single(self):
@@ -44,7 +44,7 @@ class TestInversion:
         assert ~SingleValueR1(-10) == "(-inf, -10) U (-10, inf)"
         assert ~SingleValueR1(+10) == "(-inf, 10) U (10, inf)"
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_interval(self):
@@ -56,7 +56,7 @@ class TestInversion:
 
         assert ~subsetR1("[-10, 10]") == "(-inf, -10) U (10, inf)"
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_disjoint(self):
@@ -68,7 +68,7 @@ class TestInversion:
 
         assert ~subsetR1("(-inf, -10) U (-10, 10) U (10, inf)") == {-10, 10}
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -85,7 +85,7 @@ class TestInversion:
 
 class TestAndOr:
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_singleton(self):
@@ -112,7 +112,7 @@ class TestAndOr:
         assert empty ^ whole == whole
         assert whole ^ whole == empty
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_single_singleton(self):
@@ -152,7 +152,7 @@ class TestAndOr:
             assert empty | single == single
             assert whole | single == whole
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_single_single(self):
@@ -193,7 +193,7 @@ class TestAndOr:
                     assert {vali} - singj == singi
                     assert {vali} ^ singj == {vali, valj}
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_interval_contains_disjoint(self):
@@ -201,7 +201,7 @@ class TestAndOr:
         disjoint = subsetR1(string)
         assert disjoint in IntervalR1(-50, 50)
 
-    @pytest.mark.order(6)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -215,7 +215,7 @@ class TestAndOr:
         pass
 
 
-@pytest.mark.order(6)
+@pytest.mark.order(16)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

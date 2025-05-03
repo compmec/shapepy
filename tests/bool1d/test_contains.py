@@ -11,7 +11,7 @@ from shapepy.bool1d import (
 )
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -25,7 +25,7 @@ def test_begin():
     pass
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_singleton_in_singleton():
@@ -39,7 +39,7 @@ def test_singleton_in_singleton():
     assert whole in whole
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_singleton_contains_object():
@@ -74,7 +74,7 @@ def test_singleton_contains_object():
         assert interval in whole
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_interval_contains_interval():
@@ -130,7 +130,7 @@ def test_interval_contains_interval():
     )
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_disjoint_contains_object():
@@ -167,7 +167,7 @@ def test_disjoint_contains_object():
     assert WholeR1() not in disjoint
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_infinity():
@@ -211,7 +211,7 @@ def test_infinity():
     assert default.POSINF not in disjoint
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(15)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

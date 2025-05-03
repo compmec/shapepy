@@ -11,13 +11,21 @@ from shapepy.analytic.elementar import polynomial
 from shapepy.bool1d import EmptyR1, IntervalR1, WholeR1
 
 
-@pytest.mark.order(3)
-@pytest.mark.dependency()
+@pytest.mark.order(20)
+@pytest.mark.dependency(
+    depends=[
+        "tests/bool1d/test_compare.py::test_all",
+        "tests/bool1d/test_contains.py::test_all",
+        "tests/bool1d/test_boolean.py::test_all",
+        "tests/bool1d/test_transform.py::test_all",
+    ],
+    scope="session",
+)
 def test_begin():
     pass
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_build():
     polynomial([1])  # p(t) = 1
@@ -27,7 +35,7 @@ def test_build():
     polynomial([1.0, 2.0, 3.0])
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_evaluate_natural():
     poly = polynomial([1])  # p(t) = 1
@@ -53,10 +61,8 @@ def test_evaluate_natural():
     assert poly(1.0) == 6
 
 
-@pytest.mark.order(3)
-@pytest.mark.dependency(
-    depends=["test_evaluate_natural", "test_evaluate_derivate"]
-)
+@pytest.mark.order(20)
+@pytest.mark.dependency(depends=["test_build", "test_evaluate_natural"])
 def test_keep_type():
     coefs = [3, 5, -4, 3, 2]
     poly = polynomial(coefs)
@@ -92,8 +98,8 @@ def test_keep_type():
             assert isinstance(val, Real)
 
 
-@pytest.mark.order(3)
-@pytest.mark.dependency()
+@pytest.mark.order(20)
+@pytest.mark.dependency(depends=["test_build", "test_evaluate_natural"])
 def test_compare():
     coefs = [3, 5, -4, 3, 2]
     polya = polynomial(coefs)
@@ -121,7 +127,7 @@ def test_compare():
     assert poly == 2
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_derivate():
     coefs = [3, 5, -4, 3, 2]
@@ -140,7 +146,7 @@ def test_derivate():
     assert test == good
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_evaluate_natural", "test_derivate"])
 def test_evaluate_derivate():
     poly = polynomial([1])  # p(t) = 1
@@ -171,7 +177,7 @@ def test_evaluate_derivate():
     assert poly.eval(0.0, 3) == 0
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_add():
     polya = polynomial([1, 3])
@@ -195,7 +201,7 @@ def test_add():
     assert polya - polyb == polynomial([-2, 0, 2, 7])
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_sub():
     polya = polynomial([1, 3])
@@ -203,7 +209,7 @@ def test_sub():
     assert 3 - polya == polynomial([2, -3])
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_mul():
@@ -228,7 +234,7 @@ def test_mul():
     assert polya * polyb == polynomial([1, 4, 6, 4, 1])
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_div():
@@ -236,7 +242,7 @@ def test_div():
     assert polynomial([1, 1]) / 1 == polynomial([1, 1])
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_shift():
@@ -262,7 +268,7 @@ def test_shift():
                 assert abs(test - good) < 1e-9
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_scale():
@@ -275,7 +281,7 @@ def test_scale():
         assert scapoly.eval(node / 2) == oripoly.eval(node)
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():
     poly = polynomial([0])
@@ -307,7 +313,7 @@ def test_print():
     repr(poly)
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_divide_zero():
     numer = polynomial([1])
@@ -316,7 +322,7 @@ def test_divide_zero():
         numer / denom
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_wrong_type():
     assert polynomial([0]) != "asd"
@@ -330,7 +336,7 @@ def test_wrong_type():
         "asd" - polynomial([0])
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_definite_integral():
     domain = IntervalR1(0, 1)
@@ -357,7 +363,7 @@ def test_definite_integral():
     assert poly.integrate(EmptyR1()) == 0
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_find_roots():
     poly = polynomial([0])
@@ -382,7 +388,7 @@ def test_find_roots():
     assert poly.where(0) == {-default.sqrt(2), +default.sqrt(2)}
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_image():
     poly = polynomial([1])
@@ -403,7 +409,7 @@ def test_image():
     assert poly.image(interv) == [1, 2]
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(depends=["test_build"])
 def test_section():
     poly = polynomial([1])
@@ -417,7 +423,7 @@ def test_section():
     assert test == good
 
 
-@pytest.mark.order(3)
+@pytest.mark.order(20)
 @pytest.mark.dependency(
     depends=[
         "test_begin",

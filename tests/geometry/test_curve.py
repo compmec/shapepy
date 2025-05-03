@@ -17,7 +17,7 @@ from shapepy.geometry import (
 )
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[
@@ -55,7 +55,7 @@ class TestSquare:
         yfunc = piecewise(ypolys, range(5))
         return xfunc, yfunc
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_build_polynomial"])
     def test_build(self):
@@ -64,7 +64,7 @@ class TestSquare:
         ClosedCurve(xfunc, yfunc)
         JordanCurve(xfunc, yfunc)
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_length(self):
@@ -72,7 +72,7 @@ class TestSquare:
         curve = ContinuousCurve(xfunc, yfunc)
         assert curve.lenght == 8
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_area(self):
@@ -80,7 +80,7 @@ class TestSquare:
         curve = ClosedCurve(xfunc, yfunc)
         assert curve.area == 4
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(5)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_winding(self):
@@ -106,7 +106,7 @@ class TestSquare:
         for vertex in [(-1, -1), (-1, 1), (1, 1), (1, -1)]:
             assert curve.winding(vertex) == 0.25
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_projection(self):
@@ -118,7 +118,7 @@ class TestSquare:
         good = {0.5, 1.5, 2.5, 3.5}
         assert test == good
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_move(self):
@@ -132,7 +132,7 @@ class TestSquare:
             good = move_point(curve.eval(tval), vector)
             assert moved.eval(tval) == good
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_scale(self):
@@ -146,7 +146,7 @@ class TestSquare:
             good = scale_point(curve.eval(tval), vector)
             assert scaled.eval(tval) == good
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_rotate(self):
@@ -160,7 +160,7 @@ class TestSquare:
             good = rotate_point(curve.eval(tval), angle)
             assert rotated.eval(tval) == good
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestSquare::test_build"])
     def test_print(self):
@@ -177,7 +177,7 @@ class TestSquare:
         str(curve)
         repr(curve)
 
-    @pytest.mark.order(15)
+    @pytest.mark.order(32)
     @pytest.mark.dependency(
         depends=[
             "TestSquare::test_build",
@@ -195,7 +195,7 @@ class TestSquare:
         pass
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_polynomial"])
 def test_compare():
@@ -219,7 +219,7 @@ def test_compare():
     assert curvea != {0, 1, 2}
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_polynomial"])
 def test_evaluate():
@@ -232,7 +232,7 @@ def test_evaluate():
     assert curve.eval(1) == (3, 1)
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_build_polynomial"])
 def test_reverse():
@@ -259,7 +259,7 @@ def test_reverse():
     assert rcurve.eval(1) == ocurve.eval(0)
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.dependency(
     depends=[
         "test_build_polynomial",

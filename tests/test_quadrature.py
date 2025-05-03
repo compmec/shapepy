@@ -4,9 +4,14 @@ import pytest
 from shapepy.quadrature import chebyshev, closed_newton, gauss, open_newton
 
 
-@pytest.mark.order(1)
+@pytest.mark.order(2)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/test_default.py::test_all",
+    ],
+    scope="session",
+)
 def test_open_newton():
     """
     Tests if the given nodes and weights integrates exactly
@@ -41,9 +46,14 @@ def test_open_newton():
             assert diff < 1e-15
 
 
-@pytest.mark.order(1)
+@pytest.mark.order(2)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/test_default.py::test_all",
+    ],
+    scope="session",
+)
 def test_closed_newton():
     """
     Tests if the given nodes and weights integrates exactly
@@ -78,9 +88,14 @@ def test_closed_newton():
             assert diff < 1e-15
 
 
-@pytest.mark.order(1)
+@pytest.mark.order(2)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/test_default.py::test_all",
+    ],
+    scope="session",
+)
 def test_chebyshev():
     """
     Tests if the given nodes and weights integrates exactly
@@ -115,9 +130,14 @@ def test_chebyshev():
             assert diff < 1e-15
 
 
-@pytest.mark.order(1)
+@pytest.mark.order(2)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/test_default.py::test_all",
+    ],
+    scope="session",
+)
 def test_gauss():
     """
     Tests if the given nodes and weights integrates exactly
@@ -152,9 +172,15 @@ def test_gauss():
             assert diff < 1e-9
 
 
-@pytest.mark.order(1)
+@pytest.mark.order(2)
 @pytest.mark.timeout(1)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "test_open_newton",
+        "test_chebyshev",
+        "test_gauss",
+    ]
+)
 def test_adaptative():
     for quadfunc in (open_newton, chebyshev, gauss):
         for nptsinteg in range(1, 4):
@@ -169,7 +195,7 @@ def test_adaptative():
                 assert abs(test - good) < 1e-8
 
 
-@pytest.mark.order(1)
+@pytest.mark.order(2)
 @pytest.mark.dependency(
     depends=[
         "test_open_newton",

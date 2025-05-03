@@ -9,7 +9,7 @@ from shapepy.bool1d import (
 )
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(17)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[
@@ -26,7 +26,7 @@ def test_begin():
 
 class TestShift:
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_empty(self):
@@ -35,7 +35,7 @@ class TestShift:
         assert empty.shift(0) == empty
         assert empty.shift(1) == empty
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_whole(self):
@@ -44,7 +44,7 @@ class TestShift:
         assert whole.shift(0) == whole
         assert whole.shift(1) == whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_single(self):
@@ -63,7 +63,7 @@ class TestShift:
             with pytest.raises(ValueError):
                 single.shift(float("inf"))
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_interval(self):
@@ -72,7 +72,7 @@ class TestShift:
         good = IntervalR1(-15, 5)
         assert test == good
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_disjoint(self):
@@ -81,7 +81,7 @@ class TestShift:
         good = subsetR1(r"[-15, -10) U {-9} U (-2, -1]")
         assert test == good
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -98,7 +98,7 @@ class TestShift:
 
 class TestScale:
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_empty(self):
@@ -106,7 +106,7 @@ class TestScale:
         assert empty.scale(-1) == empty
         assert empty.scale(1) == empty
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_whole(self):
@@ -114,7 +114,7 @@ class TestScale:
         assert whole.scale(-1) == whole
         assert whole.scale(1) == whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_single(self):
@@ -135,7 +135,7 @@ class TestScale:
             with pytest.raises(ValueError):
                 single.scale(float("inf"))
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_interval(self):
@@ -154,7 +154,7 @@ class TestScale:
         assert base.scale(2) == subsetR1("[-20, 10)")
         assert base.scale(-1) == subsetR1("(-5, 10]")
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_disjoint(self):
@@ -167,7 +167,7 @@ class TestScale:
         good = subsetR1(r"[-4, -3) U {4} U (5, 10]")
         assert base.scale(-1) == good
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(17)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -182,7 +182,7 @@ class TestScale:
         pass
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(17)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(
     depends=[

@@ -3,7 +3,7 @@ import pytest
 from shapepy.geometry import BoundingBox
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(
     depends=[
@@ -15,7 +15,7 @@ def test_build():
     BoundingBox((0, 0), (1, 1))
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(depends=["test_build"])
 def test_winding():
@@ -34,7 +34,7 @@ def test_winding():
         assert box.winding(point) == 0
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(depends=["test_build", "test_winding"])
 def test_contains():
@@ -53,7 +53,7 @@ def test_contains():
         assert point not in box
 
 
-@pytest.mark.order(15)
+@pytest.mark.order(32)
 @pytest.mark.dependency(
     depends=[
         "test_build",

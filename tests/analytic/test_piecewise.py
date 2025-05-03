@@ -8,7 +8,7 @@ from shapepy import default
 from shapepy.analytic.elementar import piecewise, polynomial
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(
     depends=[
         "tests/analytic/test_polynomial.py::test_all",
@@ -19,7 +19,7 @@ def test_begin():
     pass
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_build():
     polya = polynomial([1, 2])  # p(t) = 1 + 2*t
@@ -28,7 +28,7 @@ def test_build():
     piecewise([polya, polyb], knots)
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_build"])
 def test_evaluate_natural():
     polya = polynomial([1, 2])  # p(t) = 1 + 2*t
@@ -44,7 +44,7 @@ def test_evaluate_natural():
         assert piece.eval(node) == polyb.eval(node)
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_build"])
 def test_compare():
@@ -61,7 +61,7 @@ def test_compare():
     assert piece1 != 5
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_derivate():
     polya = polynomial([1, 2])  # p(t) = 1 + 2*t
@@ -77,7 +77,7 @@ def test_derivate():
         assert test == good
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_evaluate_natural", "test_derivate"])
 def test_evaluate_derivate():
     polya = polynomial([1, 2, 3, 4])
@@ -93,7 +93,7 @@ def test_evaluate_derivate():
             assert piece.eval(node, nder) == polyb.eval(node, nder)
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_add():
     t = polynomial([0, 1])
@@ -115,7 +115,7 @@ def test_add():
     assert const + piece1 == good
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_sub():
     t = polynomial([0, 1])
@@ -137,7 +137,7 @@ def test_sub():
     assert piece1 - const == good
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_mul():
@@ -160,7 +160,7 @@ def test_mul():
     assert const * piece1 == good
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_div():
@@ -172,7 +172,7 @@ def test_div():
     piece / 10
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_shift():
@@ -190,7 +190,7 @@ def test_shift():
     piece.shift(1)
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.timeout(3)
 @pytest.mark.dependency(depends=["test_compare"])
 def test_scale():
@@ -202,7 +202,7 @@ def test_scale():
     assert piece.scale(2).knots == (-2, 0, 2)
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_build"])
 def test_divide_zero():
     polya = polynomial([1, 2, 3, 4])
@@ -213,7 +213,7 @@ def test_divide_zero():
         piece / 0
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_build"])
 def test_definite_integral():
     polya = polynomial([1, 1])
@@ -223,7 +223,7 @@ def test_definite_integral():
     assert piece.integrate([-1, 1]) == 1
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_build"])
 def test_find_roots():
     polya = polynomial([1, 1])
@@ -233,7 +233,7 @@ def test_find_roots():
     assert piece.where(0) == {-1, 1}
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_build"])
 def test_image():
     polya = polynomial([1, 1])
@@ -260,7 +260,7 @@ def test_section():
     assert piece.section() == piece
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():
     polya = polynomial([1, 1])
@@ -272,7 +272,7 @@ def test_print():
     repr(piece)
 
 
-@pytest.mark.order(4)
+@pytest.mark.order(21)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
