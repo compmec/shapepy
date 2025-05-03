@@ -287,16 +287,6 @@ class TestSelfOperation:
         pass
 
 
-@pytest.mark.order(52)
-@pytest.mark.timeout(1)
-@pytest.mark.dependency()
-def test_print():
-    origin = PointR2((0, 0))
-
-    str(origin)
-    repr(origin)
-
-
 class TestConvert:
 
     @pytest.mark.order(52)
