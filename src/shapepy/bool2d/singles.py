@@ -9,6 +9,7 @@ from __future__ import annotations
 from numbers import Real
 
 from .. import default
+from ..error import NotExpectedError
 from ..geometry import (
     ContinuousCurve,
     GeometricPoint,
@@ -17,7 +18,7 @@ from ..geometry import (
     reverse,
 )
 from .base import EmptyR2, SubSetR2, WholeR2
-from .container import ContainerNot
+from .container import ContainerAnd, ContainerNot, ContainerOr
 
 
 class PointR2(SubSetR2):
@@ -143,7 +144,11 @@ class ShapeR2(SubSetR2):
             if isinstance(other, ContainerNot):
                 # pylint: disable=superfluous-parens
                 return (-self) in (~other)
-            return super().__contains__(other)
+            if isinstance(other, ContainerOr):
+                return all(sub in self for sub in other)
+            if isinstance(other, ContainerAnd):
+                return False  # Not possible evaluate yet
+            raise NotExpectedError(f"Should not arrive here: {type(other)}")
         if isinstance(other, GeometricPoint):
             wind = self.internal.winding(other)
             return wind > 0 if self.boundary else wind == 1
