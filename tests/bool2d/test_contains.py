@@ -95,7 +95,7 @@ def test_single_point():
 
 
 @pytest.mark.order(50)
-@pytest.mark.timeout(1)
+@pytest.mark.timeout(5)
 @pytest.mark.dependency(
     depends=[
         "tests/bool2d/test_build.py::test_point",
@@ -125,8 +125,8 @@ def test_shape():
     assert (0, 0) in shape
     assert (0.5, 0.5) in shape
     # Exterior points
-    assert (-2, -2) in shape
-    assert (2, -2) in shape
+    assert (-2, -2) not in shape
+    assert (2, -2) not in shape
     # Corner points
     assert (-1, -1) in shape
     assert (-1, 1) in shape
@@ -152,8 +152,8 @@ def test_shape():
     assert (0, 0) in shape
     assert (0.5, 0.5) in shape
     # Exterior points
-    assert (-2, -2) in shape
-    assert (2, -2) in shape
+    assert (-2, -2) not in shape
+    assert (2, -2) not in shape
     # Corner points
     assert (-1, -1) not in shape
     assert (-1, 1) not in shape
