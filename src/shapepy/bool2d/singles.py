@@ -16,7 +16,8 @@ from ..geometry import (
     geometric_point,
     reverse,
 )
-from .base import EmptyR2, SubSetR2
+from .base import EmptyR2, SubSetR2, WholeR2
+from .container import ContainerNot
 
 
 class PointR2(SubSetR2):
@@ -125,6 +126,26 @@ class ShapeR2(SubSetR2):
         * otherwise, it's negative but with the same magnitude
         """
         return self.internal.area
+
+    def __contains__(self, other: object) -> bool:
+        if isinstance(other, SubSetR2):
+            if isinstance(other, PointR2):
+                return other.internal in self
+            if isinstance(other, EmptyR2):
+                return True
+            if isinstance(other, WholeR2):
+                return False
+            if isinstance(other, CurveR2):
+                raise NotImplementedError
+            if isinstance(other, ShapeR2):
+                raise NotImplementedError
+            if isinstance(other, ContainerNot):
+                return (-self) in (~other)
+            return super().__contains__(other)
+        if isinstance(other, GeometricPoint):
+            wind = self.internal.winding(other)
+            return wind > 0 if self.boundary else wind == 1
+        return super().__contains__(other)
 
     def __neg__(self):
         return ShapeR2(reverse(self.internal), not self.boundary)

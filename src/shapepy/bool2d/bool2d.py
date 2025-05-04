@@ -15,7 +15,7 @@ from .container import (
     recipe_or,
 )
 from .converter import from_any
-from .singles import PointR2
+from .singles import CurveR2, PointR2, ShapeR2
 
 
 def unite(*subsets: SubSetR2) -> SubSetR2:
@@ -87,6 +87,7 @@ def invert(subset: SubSetR2) -> SubSetR2:
     return recipe_not(subset)
 
 
+# pylint: disable=too-many-return-statements
 def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     """
     Checks if the subset B is contained by the subset A
@@ -111,9 +112,10 @@ def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     True
     """
     subseta = from_any(subseta)
-    subsetb = from_any(subsetb)
-    if isinstance(subseta, (EmptyR2, WholeR2, ContainerAnd, PointR2)):
+    priori = (EmptyR2, WholeR2, ContainerAnd, PointR2, CurveR2, ShapeR2)
+    if isinstance(subseta, priori):
         return subsetb in subseta
+    subsetb = from_any(subsetb)
     if isinstance(subsetb, ContainerOr):
         return all(contains(subseta, sub) for sub in subsetb)
     if isinstance(subseta, ContainerNot):
