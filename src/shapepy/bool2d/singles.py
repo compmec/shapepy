@@ -127,6 +127,7 @@ class ShapeR2(SubSetR2):
         """
         return self.internal.area
 
+    # pylint: disable=too-many-return-statements
     def __contains__(self, other: object) -> bool:
         if isinstance(other, SubSetR2):
             if isinstance(other, PointR2):
@@ -140,6 +141,7 @@ class ShapeR2(SubSetR2):
             if isinstance(other, ShapeR2):
                 raise NotImplementedError
             if isinstance(other, ContainerNot):
+                # pylint: disable=superfluous-parens
                 return (-self) in (~other)
             return super().__contains__(other)
         if isinstance(other, GeometricPoint):
