@@ -132,15 +132,15 @@ class ShapeR2(SubSetR2):
     def __contains__(self, other: object) -> bool:
         if isinstance(other, SubSetR2):
             if isinstance(other, PointR2):
-                return other.internal in self
+                return self.__contains_geompoint(other.internal)
             if isinstance(other, EmptyR2):
                 return True
             if isinstance(other, WholeR2):
                 return False
             if isinstance(other, CurveR2):
-                raise NotImplementedError
+                return self.__contains_geomcurve(other.internal)
             if isinstance(other, ShapeR2):
-                raise NotImplementedError
+                return self.__contains_shape(other)
             if isinstance(other, ContainerNot):
                 # pylint: disable=superfluous-parens
                 return (-self) in (~other)
@@ -150,8 +150,9 @@ class ShapeR2(SubSetR2):
                 return False  # Not possible evaluate yet
             raise NotExpectedError(f"Should not arrive here: {type(other)}")
         if isinstance(other, GeometricPoint):
-            wind = self.internal.winding(other)
-            return wind > 0 if self.boundary else wind == 1
+            return self.__contains_geompoint(other)
+        if isinstance(other, ContinuousCurve):
+            return self.__contains_geomcurve(other)
         return super().__contains__(other)
 
     def __neg__(self):
@@ -159,3 +160,36 @@ class ShapeR2(SubSetR2):
 
     def __hash__(self):
         return hash(self.area) if self.area > 0 else (-hash(-self.area))
+
+    def __contains_geompoint(self, other: GeometricPoint) -> bool:
+        """
+        Private method to checks if given point is inside the shape.
+        """
+        wind = self.internal.winding(other)
+        return wind > 0 if self.boundary else wind == 1
+
+    def __contains_geomcurve(self, other: ContinuousCurve) -> bool:
+        """
+        Private method to checks if given curve is inside the shape.
+
+        This function is not intelligent: It just samples the curve
+        and checks if every point is inside the shape
+        """
+        raise NotImplementedError
+
+    # pylint: disable=chained-comparison
+    def __contains_shape(self, other: ShapeR2) -> bool:
+        """
+        Private method to checks if given shape is inside this shape
+        """
+        if self.area > 0 and other.area < 0:
+            # Bounded shape cannot contains unbounded shape
+            return False
+        # pylint: disable=superfluous-parens
+        if not (self.internal.box & other.internal.box):
+            # The boxes are disjoint, so the jordans don't intersect
+            return self.area < 0 and other.area > 0
+        if self.area < 0 and other.area > 0:
+            # Unbounded shape contains bounded shape if
+            return other.internal in self and self.internal not in other
+        raise NotImplementedError
