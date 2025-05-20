@@ -6,7 +6,7 @@ It only includes the most used classes and functions
 
 from .cage import BoxCage
 from .curve import ClosedCurve, ContinuousCurve, JordanCurve
-from .point import GeometricPoint, geometric_point
+from .point import GeometricPoint, any2point, cartesian, polar
 from .transform import (
     move_curve,
     move_point,

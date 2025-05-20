@@ -8,7 +8,7 @@ from __future__ import annotations
 from numbers import Real
 from typing import Union
 
-from .point import GeometricPoint, geometric_point
+from .point import GeometricPoint, any2point
 
 
 class BoxCage:
@@ -18,8 +18,8 @@ class BoxCage:
     """
 
     def __init__(self, bot_point: GeometricPoint, top_point: GeometricPoint):
-        self.bot = geometric_point(bot_point)
-        self.top = geometric_point(top_point)
+        self.bot = any2point(bot_point)
+        self.top = any2point(top_point)
 
     def winding(self, point: GeometricPoint) -> Real:
         """
@@ -82,7 +82,7 @@ class BoxCage:
             """
             return 0 if value < 0 else 1 if value > 0 else 0.5
 
-        point = geometric_point(point)
+        point = any2point(point)
         xwind = step(point.x - self.bot.x) * step(self.top.x - point.x)
         ywind = step(point.y - self.bot.y) * step(self.top.y - point.y)
         return xwind * ywind

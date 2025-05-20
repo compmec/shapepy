@@ -23,7 +23,7 @@ from ..loggers import debug
 from ..quadrature import chebyshev
 from .abc import IClosedCurve, IContinuousCurve, IJordanCurve
 from .cage import BoxCage
-from .point import GeometricPoint, cross, geometric_point, inner
+from .point import GeometricPoint, any2point, cartesian, cross, inner
 
 
 class ContinuousCurve(IContinuousCurve):
@@ -84,11 +84,11 @@ class ContinuousCurve(IContinuousCurve):
     def eval(self, node: Real, derivate: int = 0) -> GeometricPoint:
         xcoord = self[0].eval(node, derivate)
         ycoord = self[1].eval(node, derivate)
-        return GeometricPoint.cartesian(xcoord, ycoord)
+        return cartesian(xcoord, ycoord)
 
     @debug("shapepy.geometry.curve")
     def projection(self, point: GeometricPoint) -> SubSetR1:
-        point = geometric_point(point)
+        point = any2point(point)
         deltax: IAnalytic1D = self[0] - point.x
         deltay: IAnalytic1D = self[1] - point.y
         dist2: IAnalytic1D = deltax * deltax + deltay * deltay
@@ -127,7 +127,7 @@ class ClosedCurve(ContinuousCurve, IClosedCurve):
 
     @debug("shapepy.geometry.curve", 2)
     def winding(self, point: GeometricPoint) -> Real:
-        point = geometric_point(point)
+        point = any2point(point)
         if point not in self.cage:
             return 0 if self.area > 0 else 1
 
@@ -200,7 +200,7 @@ def limit_curve(
     """
     xvalue = anatools.limit(curve[0], node, left, derivate)
     yvalue = anatools.limit(curve[1], node, left, derivate)
-    return GeometricPoint.cartesian(xvalue, yvalue)
+    return cartesian(xvalue, yvalue)
 
 
 def limit_closed(

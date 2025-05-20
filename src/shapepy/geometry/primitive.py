@@ -9,14 +9,14 @@ from .. import default
 from ..analytic.elementar import linear_piecewise
 from .abc import IJordanCurve
 from .curve import JordanCurve
-from .point import GeometricPoint, geometric_point
+from .point import GeometricPoint, any2point
 
 
 def polygon(vertices: Iterable[GeometricPoint]) -> IJordanCurve:
     """
     Gives the polygonal curve defined by given vertices
     """
-    vertices = tuple(map(geometric_point, vertices))
+    vertices = tuple(map(any2point, vertices))
     knots = tuple(map(default.finite, range(len(vertices) + 1)))
     xvalues = list(vertex.x for vertex in vertices)
     yvalues = list(vertex.y for vertex in vertices)

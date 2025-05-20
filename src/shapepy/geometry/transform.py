@@ -14,7 +14,7 @@ from ..angle import Angle, to_angle
 from ..bool1d import infimum, supremum
 from ..loggers import debug
 from .curve import ContinuousCurve
-from .point import GeometricPoint, geometric_point
+from .point import GeometricPoint, any2point, cartesian
 
 
 @debug("shapepy.geometry.transform")
@@ -36,9 +36,9 @@ def move_point(
     GeometricPoint
         The moved point
     """
-    point = geometric_point(point)
-    vector = geometric_point(vector)
-    return GeometricPoint.cartesian(point.x + vector.x, point.y + vector.y)
+    point = any2point(point)
+    vector = any2point(vector)
+    return cartesian(point.x + vector.x, point.y + vector.y)
 
 
 @debug("shapepy.geometry.transform")
@@ -62,8 +62,8 @@ def scale_point(
     """
     xamount = amount if default.isfinite(amount) else amount[0]
     yamount = amount if default.isfinite(amount) else amount[1]
-    point = geometric_point(point)
-    return GeometricPoint.cartesian(xamount * point.x, yamount * point.y)
+    point = any2point(point)
+    return cartesian(xamount * point.x, yamount * point.y)
 
 
 @debug("shapepy.geometry.transform")
@@ -84,13 +84,13 @@ def rotate_point(point: GeometricPoint, angle: Angle) -> GeometricPoint:
         The rotated point
     """
     angle = to_angle(angle)
-    point = geometric_point(point)
+    point = any2point(point)
     if not isinstance(angle, Angle):
         raise TypeError
     cos, sin = angle.cos(), angle.sin()
     xval = cos * point.x - sin * point.y
     yval = sin * point.x + cos * point.y
-    return GeometricPoint.cartesian(xval, yval)
+    return cartesian(xval, yval)
 
 
 @debug("shapepy.geometry.transform")
@@ -112,7 +112,7 @@ def move_curve(
     ContinuousCurve
         The moved curve
     """
-    vector = geometric_point(vector)
+    vector = any2point(vector)
     new_xfunc = curve[0] + vector.x
     new_yfunc = curve[1] + vector.y
     return curve.__class__(new_xfunc, new_yfunc)
