@@ -7,7 +7,9 @@ from shapepy.bool1d import (
     IntervalR1,
     SingleValueR1,
     WholeR1,
-    subsetR1,
+    bigger,
+    from_any,
+    lower,
 )
 
 
@@ -143,7 +145,7 @@ def test_disjoint_contains_object():
         "{30, 31, 33}",
     ]
     string = " U ".join(blocks)
-    disjoint = subsetR1(string)
+    disjoint = from_any(string)
     assert isinstance(disjoint, DisjointR1)
 
     inside = {-25, -10, -7, -5, 0, 2, 12, 15, 22, 30, 31, 33}
@@ -183,11 +185,11 @@ def test_infinity():
         assert default.NEGINF not in SingleValueR1(value)
         assert default.POSINF not in SingleValueR1(value)
 
-    interval = IntervalR1.lower(0)
+    interval = lower(0)
     assert default.NEGINF in interval
     assert default.POSINF not in interval
 
-    interval = IntervalR1.bigger(0)
+    interval = bigger(0)
     assert default.NEGINF not in interval
     assert default.POSINF in interval
 
@@ -204,7 +206,7 @@ def test_infinity():
         "{30, 31, 33}",
     ]
     string = " U ".join(blocks)
-    disjoint = subsetR1(string)
+    disjoint = from_any(string)
     assert isinstance(disjoint, DisjointR1)
 
     assert default.NEGINF in disjoint
