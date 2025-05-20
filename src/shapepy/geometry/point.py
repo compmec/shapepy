@@ -173,7 +173,10 @@ class GeometricPoint:
     def __eq__(self, other: object):
         if isinstance(other, GeometricPoint):
             return self.x == other.x and self.y == other.y
-        return NotImplemented
+        try:
+            return self.x == other[0] and self.y == other[1]
+        except (IndexError, TypeError):
+            return NotImplemented
 
 
 def inner(pointa: GeometricPoint, pointb: GeometricPoint) -> Real:
