@@ -122,7 +122,7 @@ class SubSetR1(ABC):
 
     @abstractmethod
     def __eq__(self, other):
-        raise NotImplemented
+        raise NotImplementedError
 
     @abstractmethod
     def __contains__(self, other):
