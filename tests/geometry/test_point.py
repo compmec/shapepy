@@ -3,8 +3,9 @@ import pytest
 from shapepy import default
 from shapepy.angle import Angle
 from shapepy.geometry import (
-    GeometricPoint,
+    cartesian,
     move_point,
+    polar,
     rotate_point,
     scale_point,
 )
