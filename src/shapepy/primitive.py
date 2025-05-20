@@ -10,9 +10,9 @@ from typing import Iterable
 from shapepy.bool2d.singles import ShapeR2
 
 from . import default
-from .analytic.elementar import linear_piecewise
 from .angle import Angle
-from .geometry import GeometricPoint, JordanCurve, geometric_point
+from .geometry import primitive as geomprim
+from .geometry.point import GeometricPoint, any2point, polar
 
 
 def polygon(vertices: Iterable[GeometricPoint]) -> ShapeR2:
@@ -38,15 +38,7 @@ def polygon(vertices: Iterable[GeometricPoint]) -> ShapeR2:
     .. image:: ../img/primitive/diamond.svg
 
     """
-    vertices = tuple(map(geometric_point, vertices))
-    knots = tuple(map(default.finite, range(len(vertices) + 1)))
-    xvalues = list(vertex.x for vertex in vertices)
-    yvalues = list(vertex.y for vertex in vertices)
-    xvalues.append(xvalues[0])
-    yvalues.append(yvalues[0])
-    xanalytic = linear_piecewise(xvalues, knots)
-    yanalytic = linear_piecewise(yvalues, knots)
-    jordan_curve = JordanCurve(xanalytic, yanalytic)
+    jordan_curve = geomprim.polygon(vertices)
     return ShapeR2(jordan_curve)
 
 
@@ -75,7 +67,7 @@ def triangle(side: float = 1, center: GeometricPoint = (0, 0)) -> ShapeR2:
 
     """
     side = default.finite(side)
-    center = geometric_point(center)
+    center = any2point(center)
     vertices = [(0, 0), (side, 0), (0, side)]
     return polygon(vertices).move(center)
 
@@ -107,7 +99,7 @@ def square(side: Real = 1, center: GeometricPoint = (0, 0)) -> ShapeR2:
     half_side = default.finite(side) / 2
     if half_side <= 0:
         raise ValueError(f"The side must be positive! {side} invalid")
-    center = geometric_point(center)
+    center = any2point(center)
     vertices = [
         (half_side, half_side),
         (-half_side, half_side),
@@ -151,7 +143,7 @@ def regular_polygon(
     """
     nsides = default.integer(nsides)
     radius = default.finite(radius)
-    center = geometric_point(center)
+    center = any2point(center)
     if nsides < 3:
         raise ValueError(f"The nsides={nsides} must be at least 3!")
     if radius <= 0:
@@ -160,6 +152,6 @@ def regular_polygon(
     vertices = []
     for i in range(nsides):
         angle = Angle.turns(default.rational(i, nsides))
-        vertex = GeometricPoint.polar(radius, angle)
+        vertex = polar(radius, angle)
         vertices.append(vertex)
     return polygon(vertices).move(center)
