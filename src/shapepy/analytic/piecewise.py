@@ -133,7 +133,7 @@ class PiecewiseAnalytic1D(IAnalytic1D):
     @debug("shapepy.analytic.piecewise")
     def shift(self, amount):
         amount = default.finite(amount)
-        new_intervals = (inter.shift(amount) for inter in self.intervals)
+        new_intervals = (inter.move(amount) for inter in self.intervals)
         new_analytics = (analy.shift(amount) for analy in self.analytics)
         return PiecewiseAnalytic1D(new_intervals, new_analytics)
 

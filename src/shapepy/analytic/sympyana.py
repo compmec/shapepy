@@ -89,7 +89,7 @@ class SympyAnalytic1D(IAnalytic1D):
     def shift(self, amount: Real) -> IAnalytic1D:
         expr, var = self.expression, self.var
         expr = expr.subs(var, var - amount)
-        domain = self.domain.shift(amount)
+        domain = self.domain.move(amount)
         return self.__class__(expr, domain)
 
     @debug("shapepy.analytic.spanalytic")

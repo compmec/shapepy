@@ -21,9 +21,9 @@ def from_any(obj: Any) -> SubSetR2:
 
     Example
     -------
-    >>> ConverterR1.from_any("{}")
+    >>> from_any("{}")
     {}
-    >>> ConverterR1.from_any("(-inf, +inf)")
+    >>> from_any("(-inf, +inf)")
     (-inf, +inf)
     """
     if isinstance(obj, SubSetR2):
