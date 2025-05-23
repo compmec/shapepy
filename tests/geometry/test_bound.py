@@ -1,6 +1,6 @@
 import pytest
 
-from shapepy.geometry import BoundingBox
+from shapepy.geometry import BoxCage
 
 
 @pytest.mark.order(32)
@@ -12,14 +12,14 @@ from shapepy.geometry import BoundingBox
     scope="session",
 )
 def test_build():
-    BoundingBox((0, 0), (1, 1))
+    BoxCage((0, 0), (1, 1))
 
 
 @pytest.mark.order(32)
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(depends=["test_build"])
 def test_winding():
-    box = BoundingBox((-1, -1), (1, 1))
+    box = BoxCage((-1, -1), (1, 1))
     # Points at vertex of the box
     for vertex in [(-1, -1), (-1, 1), (1, 1), (1, -1)]:
         assert box.winding(vertex) == 0.25
@@ -38,7 +38,7 @@ def test_winding():
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(depends=["test_build", "test_winding"])
 def test_contains():
-    box = BoundingBox((-1, -1), (1, 1))
+    box = BoxCage((-1, -1), (1, 1))
     # Points at vertex of the box
     for vertex in [(-1, -1), (-1, 1), (1, 1), (1, -1)]:
         assert vertex in box

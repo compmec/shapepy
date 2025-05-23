@@ -10,13 +10,9 @@ from numbers import Real
 
 from .. import default
 from ..error import NotExpectedError
-from ..geometry import (
-    ContinuousCurve,
-    GeometricPoint,
-    JordanCurve,
-    geometric_point,
-    reverse,
-)
+from ..geometry.abc import IContinuousCurve, IJordanCurve
+from ..geometry.point import GeometricPoint, any2point
+from ..geometry.transform import reverse
 from .base import EmptyR2, SubSetR2, WholeR2
 from .container import ContainerAnd, ContainerNot, ContainerOr
 
@@ -27,7 +23,7 @@ class PointR2(SubSetR2):
     """
 
     def __init__(self, point: GeometricPoint):
-        point = geometric_point(point)
+        point = any2point(point)
         if not default.isfinite(point.radius):
             raise ValueError("Cannot receive an infinity point")
         self.__point = point
@@ -66,13 +62,13 @@ class CurveR2(SubSetR2):
     Class that defines a group of points that are inside the curve
     """
 
-    def __init__(self, curve: ContinuousCurve):
-        if not isinstance(curve, ContinuousCurve):
+    def __init__(self, curve: IContinuousCurve):
+        if not isinstance(curve, IContinuousCurve):
             raise TypeError
         self.__internal = curve
 
     @property
-    def internal(self) -> ContinuousCurve:
+    def internal(self) -> IContinuousCurve:
         """
         Gives the geometric, continuous curve which is used
         to evaluate the points
@@ -98,14 +94,14 @@ class ShapeR2(SubSetR2):
     boundary or if it's an open set
     """
 
-    def __init__(self, jordan: JordanCurve, boundary: bool = True):
-        if not isinstance(jordan, JordanCurve):
+    def __init__(self, jordan: IJordanCurve, boundary: bool = True):
+        if not isinstance(jordan, IJordanCurve):
             raise TypeError
         self.__jordan = jordan
         self.__boundary = bool(boundary)
 
     @property
-    def internal(self) -> JordanCurve:
+    def internal(self) -> IJordanCurve:
         """
         The jordan curve that defines the boundary of the simple shape
         """
@@ -151,7 +147,7 @@ class ShapeR2(SubSetR2):
             raise NotExpectedError(f"Should not arrive here: {type(other)}")
         if isinstance(other, GeometricPoint):
             return self.__contains_geompoint(other)
-        if isinstance(other, ContinuousCurve):
+        if isinstance(other, IContinuousCurve):
             return self.__contains_geomcurve(other)
         return super().__contains__(other)
 
@@ -168,7 +164,7 @@ class ShapeR2(SubSetR2):
         wind = self.internal.winding(other)
         return wind > 0 if self.boundary else wind == 1
 
-    def __contains_geomcurve(self, other: ContinuousCurve) -> bool:
+    def __contains_geomcurve(self, other: IContinuousCurve) -> bool:
         """
         Private method to checks if given curve is inside the shape.
 
@@ -186,7 +182,7 @@ class ShapeR2(SubSetR2):
             # Bounded shape cannot contains unbounded shape
             return False
         # pylint: disable=superfluous-parens
-        if not (self.internal.box & other.internal.box):
+        if not (self.internal.cage & other.internal.cage):
             # The boxes are disjoint, so the jordans don't intersect
             return self.area < 0 and other.area > 0
         if self.area < 0 and other.area > 0:

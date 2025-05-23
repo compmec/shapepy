@@ -10,6 +10,7 @@ import re
 from typing import Any, Dict, Iterable, Set, Tuple
 
 from .. import geometry
+from ..geometry.point import str2point
 from .base import EmptyR2, Future, SubSetR2
 from .singles import PointR2
 
@@ -69,7 +70,7 @@ def from_str(text: str) -> SubSetR2:
         internals = map(from_str, smart_divide(text[1:-1]))
         return Future.unite(*internals)
     if text[0] == "(" and text[-1] == ")":
-        point = geometry.from_str(text)
+        point = str2point(text)
         return PointR2(point)
     raise ValueError(f"Invalid string '{text}'")
 
@@ -96,7 +97,7 @@ def from_tuple(obj: Tuple) -> SubSetR2:
     """
     if len(obj) != 2:
         raise ValueError("Only tuples of length 2 are permited")
-    point = geometry.GeometricPoint.cartesian(obj[0], obj[1])
+    point = geometry.cartesian(obj[0], obj[1])
     return PointR2(point)
 
 
