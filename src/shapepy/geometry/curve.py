@@ -40,9 +40,9 @@ class ContinuousCurve(IContinuousCurve):
             raise TypeError
         domain = xfunc.domain & yfunc.domain
         if not anatools.is_continuous(xfunc, domain):
-            raise ValueError
+            raise ValueError(f"xana {xfunc} is not continuous on {domain}")
         if not anatools.is_continuous(yfunc, domain):
-            raise ValueError
+            raise ValueError(f"yana {yfunc} is not continuous on {domain}")
 
         self.__domain = domain
         self.__xfunc = xfunc.section(domain)
