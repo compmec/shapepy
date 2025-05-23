@@ -6,8 +6,10 @@ from numbers import Real
 from typing import Optional, Tuple
 
 from ..bool1d import SubSetR1, infimum, supremum
+from ..error import NotExpectedError
 from .base import IAnalytic1D
 from .piecewise import PiecewiseAnalytic1D
+from .sympyana import SympyAnalytic1D
 
 
 def extract_knots(analytic: IAnalytic1D) -> Tuple[Real, ...]:
@@ -33,7 +35,18 @@ def is_continuous(
     """
     if not isinstance(analytic, IAnalytic1D):
         raise TypeError
-    return True
+    subanalytic = analytic.section(subdomain)
+    if isinstance(subanalytic, SympyAnalytic1D):
+        return True
+    if isinstance(subanalytic, PiecewiseAnalytic1D):
+        knots = subanalytic.knots
+        for i, knot in enumerate(knots[1:-1]):
+            left = subanalytic.analytics[i].eval(knot)
+            right = subanalytic.analytics[i + 1].eval(knot)
+            if abs(left - right) > 1e-9:
+                return False
+        return True
+    raise NotExpectedError
 
 
 def limit(
