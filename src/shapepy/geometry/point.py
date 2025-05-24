@@ -178,6 +178,9 @@ class GeometricPoint:
         except (IndexError, TypeError):
             return NotImplemented
 
+    def __hash__(self):
+        return hash((self.x, self.y))
+
 
 def inner(pointa: GeometricPoint, pointb: GeometricPoint) -> Real:
     """
