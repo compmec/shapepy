@@ -6,6 +6,8 @@ from shapepy.bool1d import (
     IntervalR1,
     SingleValueR1,
     WholeR1,
+    bigger,
+    lower,
 )
 
 
@@ -73,16 +75,16 @@ def test_interval():
     interval = IntervalR1(-10, 10, False, False)
     assert str(interval) == r"(-10, 10)"
 
-    interval = IntervalR1.lower(10, True)
+    interval = lower(10, True)
     assert str(interval) == r"(-inf, 10]"
 
-    interval = IntervalR1.lower(10, False)
+    interval = lower(10, False)
     assert str(interval) == r"(-inf, 10)"
 
-    interval = IntervalR1.bigger(-10, True)
+    interval = bigger(-10, True)
     assert str(interval) == r"[-10, inf)"
 
-    interval = IntervalR1.bigger(-10, False)
+    interval = bigger(-10, False)
     assert str(interval) == r"(-10, inf)"
 
 
@@ -90,8 +92,8 @@ def test_interval():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_disjoint():
-    interv0 = IntervalR1.lower(-50)
-    interv1 = IntervalR1.bigger(50)
+    interv0 = lower(-50)
+    interv1 = bigger(50)
     disjoint = DisjointR1([interv0, interv1])
     assert str(disjoint) == "(-inf, -50] U [50, inf)"
     repr(disjoint)

@@ -6,7 +6,7 @@ from numbers import Real
 from typing import Iterable, Optional
 
 from .. import default
-from ..bool1d import ConverterR1, IntervalR1, SubSetR1, WholeR1
+from ..bool1d import IntervalR1, SubSetR1, WholeR1, from_any
 from ..loggers import debug
 from .base import IAnalytic1D
 from .piecewise import PiecewiseAnalytic1D
@@ -41,7 +41,7 @@ def polynomial(
     >>> polynomial([1, 2, 3])
     1 + 2 * t + 3 * t^2
     """
-    domain = WholeR1() if domain is None else ConverterR1.from_any(domain)
+    domain = WholeR1() if domain is None else from_any(domain)
     coefs = map(default.finite, coefs)
     vart = SympyAnalytic1D.var
     expr = default.finite(0)

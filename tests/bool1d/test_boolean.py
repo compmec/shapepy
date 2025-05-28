@@ -5,7 +5,9 @@ from shapepy.bool1d import (
     IntervalR1,
     SingleValueR1,
     WholeR1,
-    subsetR1,
+    bigger,
+    from_any,
+    lower,
 )
 
 
@@ -49,24 +51,24 @@ class TestInversion:
     @pytest.mark.dependency(depends=["test_begin"])
     def test_interval(self):
 
-        assert ~IntervalR1.lower(0, True) == IntervalR1.bigger(0, False)
-        assert ~IntervalR1.lower(0, False) == IntervalR1.bigger(0, True)
-        assert ~IntervalR1.bigger(0, True) == IntervalR1.lower(0, False)
-        assert ~IntervalR1.bigger(0, False) == IntervalR1.lower(0, True)
+        assert ~lower(0, True) == bigger(0, False)
+        assert ~lower(0, False) == bigger(0, True)
+        assert ~bigger(0, True) == lower(0, False)
+        assert ~bigger(0, False) == lower(0, True)
 
-        assert ~subsetR1("[-10, 10]") == "(-inf, -10) U (10, inf)"
+        assert ~from_any("[-10, 10]") == "(-inf, -10) U (10, inf)"
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_disjoint(self):
-        assert ~subsetR1("(-inf, -10) U (10, inf)") == "[-10, 10]"
+        assert ~from_any("(-inf, -10) U (10, inf)") == "[-10, 10]"
 
-        assert ~subsetR1("(-inf, 0) U (0, inf)") == {0}
-        assert ~subsetR1("(-inf, -10) U (-10, inf)") == {-10}
-        assert ~subsetR1("(-inf, +10) U (+10, inf)") == {10}
+        assert ~from_any("(-inf, 0) U (0, inf)") == {0}
+        assert ~from_any("(-inf, -10) U (-10, inf)") == {-10}
+        assert ~from_any("(-inf, +10) U (+10, inf)") == {10}
 
-        assert ~subsetR1("(-inf, -10) U (-10, 10) U (10, inf)") == {-10, 10}
+        assert ~from_any("(-inf, -10) U (-10, 10) U (10, inf)") == {-10, 10}
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(1)
@@ -198,7 +200,7 @@ class TestAndOr:
     @pytest.mark.dependency(depends=["test_begin"])
     def test_interval_contains_disjoint(self):
         string = "{-30, -25} U [-20, 20] U {25, 30, 40}"
-        disjoint = subsetR1(string)
+        disjoint = from_any(string)
         assert disjoint in IntervalR1(-50, 50)
 
     @pytest.mark.order(16)
