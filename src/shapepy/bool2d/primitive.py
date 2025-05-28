@@ -9,10 +9,10 @@ from typing import Iterable
 
 from shapepy.bool2d.singles import ShapeR2
 
-from . import default
-from .angle import Angle
-from .geometry import primitive as geomprim
-from .geometry.point import GeometricPoint, any2point, polar
+from .. import default
+from ..angle import Angle
+from ..geometry import primitive as geomprim
+from ..geometry.point import GeometricPoint, any2point, polar
 
 
 def polygon(vertices: Iterable[GeometricPoint]) -> ShapeR2:

@@ -1,7 +1,7 @@
 import pytest
 
-from shapepy import primitive
 from shapepy.angle import Angle
+from shapepy.bool2d import primitive
 from shapepy.bool2d.base import EmptyR2, WholeR2
 from shapepy.bool2d.bool2d import intersect, invert, unite
 from shapepy.bool2d.singles import CurveR2, PointR2
@@ -340,7 +340,7 @@ class TestCurveR2:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/test_primitive.py::test_square",
+            "tests/bool2d/test_primitive.py::test_square",
         ],
         scope="session",
     )
@@ -390,7 +390,7 @@ class TestShapeR2:
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
-            "tests/test_primitive.py::test_square",
+            "tests/bool2d/test_primitive.py::test_square",
         ],
         scope="session",
     )

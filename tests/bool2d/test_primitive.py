@@ -6,7 +6,7 @@ import math
 
 import pytest
 
-from shapepy import primitive
+from shapepy.bool2d import primitive
 
 
 @pytest.mark.order(51)

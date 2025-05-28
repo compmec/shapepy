@@ -2,8 +2,8 @@ import pytest
 
 from shapepy.bool2d.base import EmptyR2, WholeR2
 from shapepy.bool2d.bool2d import intersect, invert, unite
+from shapepy.bool2d.primitive import square
 from shapepy.bool2d.singles import CurveR2, PointR2
-from shapepy.primitive import square
 
 
 class TestStr:
