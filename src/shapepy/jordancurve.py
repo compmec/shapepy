@@ -15,6 +15,10 @@ from shapepy.polygon import Box, Point2D
 
 
 class IntegrateJordan:
+    """
+    Defines functions to integrate over the internal area
+    defined by the jordan curve.
+    """
     @staticmethod
     def vertical(
         jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
@@ -429,7 +433,7 @@ class JordanCurve:
         points = list(new_segments[-1].ctrlpoints)
         points[-1] = segment.ctrlpoints[-1]
         new_segments[-1].ctrlpoints = points
-        for i, node in enumerate(nodes):
+        for i in range(len(nodes)):
             points = list(new_segments[i + 1].ctrlpoints)
             points[0] = new_segments[i].ctrlpoints[-1]
             new_segments[i + 1].ctrlpoints = points
@@ -711,8 +715,8 @@ class JordanCurve:
 
     def __abs__(self) -> JordanCurve:
         """Returns the same curve, but in positive direction"""
-        copy = self.__copy__()
-        return copy if float(self) > 0 else copy.invert()
+        curve = self.__copy__()
+        return curve if float(self) > 0 else curve.invert()
 
     def __intersection(
         self, other: JordanCurve
@@ -814,7 +818,7 @@ class JordanCurve:
                     intersections.remove((ai, bi, ui, vi))
         if not end_points:
             for ai, bi, ui, vi in tuple(intersections):
-                if ui is None or (0 < ui and ui < 1) or (0 < vi and vi < 1):
+                if ui is None or (0 < ui < 1) or (0 < vi < 1):
                     continue
                 intersections.remove((ai, bi, ui, vi))
         return tuple(sorted(intersections))
