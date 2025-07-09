@@ -40,18 +40,18 @@ class IntegrateShape:
     def polynomial(
         shape: BaseShape, expx: int, expy: int, nnodes: Optional[int] = None
     ) -> float:
-        """
+        r"""
         Computes the integral
 
         .. math::
-            I = \\int_D x^a \\cdot y^b \\cdot dA
+            I = \int_D x^a \cdot y^b \cdot dA
 
         Which :math:`D` is the region defined by shape
 
         We transform this integral into a boundary integral
 
         .. math::
-            I = \dfrac{1}{a+1} \\cdot \\int_C x^{a+ 1} \\cdot y^b \\cdot dy
+            I = \dfrac{1}{a+1} \cdot \int_C x^{a+ 1} \cdot y^b \cdot dy
 
         Parameters
         ----------
