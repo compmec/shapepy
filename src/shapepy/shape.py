@@ -1021,7 +1021,10 @@ class ConnectedShape(DefinedShape):
         for value in values:
             assert isinstance(value, SimpleShape)
         areas = map(float, values)
-        algori = lambda pair: pair[0]
+
+        def algori(pair):
+            return pair[0]
+
         values = sorted(zip(areas, values), key=algori, reverse=True)
         values = tuple(val[1] for val in values)
         self.__subshapes = tuple(values)
@@ -1185,7 +1188,10 @@ class DisjointShape(DefinedShape):
             assert isinstance(value, (SimpleShape, ConnectedShape))
         areas = map(float, values)
         lenghts = map(float, [val.jordans[0] for val in values])
-        algori = lambda triple: triple[:2]
+
+        def algori(triple):
+            return triple[:2]
+
         values = sorted(zip(areas, lenghts, values), key=algori, reverse=True)
         values = tuple(val[2] for val in values)
         self.__subshapes = tuple(values)
