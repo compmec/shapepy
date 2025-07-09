@@ -1,3 +1,8 @@
+"""
+Module that defines the basic geometric classes used for the package
+
+They are used to encapsulate some commands
+"""
 from __future__ import annotations
 
 import fractions
@@ -8,6 +13,10 @@ import numpy as np
 
 
 class Point2D(object):
+    """
+    Defines a Point in the plane, that has 2 coordinates (x, y)
+    """
+
     def __new__(cls, *point: Tuple[float]):
         if isinstance(point[0], cls):
             return point[0]
@@ -46,6 +55,9 @@ class Point2D(object):
         return self[0] * other[1] - self[1] * other[0]
 
     def norm2(self) -> float:
+        """
+        Computes the L2 norm square = <point, point>
+        """
         return self.inner(self)
 
     def __abs__(self) -> float:
@@ -194,6 +206,9 @@ class Point2D(object):
         return self
 
     def scale(self, xscale: float, yscale: float) -> Point2D:
+        """
+        Gives the new point (xscale * x0, yscale * y0)
+        """
         float(xscale)
         float(yscale)
         self._x *= xscale
