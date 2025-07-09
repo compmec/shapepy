@@ -12,7 +12,7 @@ from typing import Tuple, Union
 import numpy as np
 
 
-class Point2D(object):
+class Point2D:
     """
     Defines a Point in the plane, that has 2 coordinates (x, y)
     """
@@ -23,11 +23,7 @@ class Point2D(object):
         return super().__new__(cls)
 
     def __init__(self, *point: Tuple[float]):
-        try:
-            x, y = point if len(point) == 2 else point[0]
-        except ValueError:
-            error_msg = f"Invalid input for point: {point}"
-            raise ValueError(error_msg)
+        x, y = point if len(point) == 2 else point[0]
         if isinstance(x, str) or isinstance(y, str):
             raise TypeError
         float(x)
@@ -93,7 +89,7 @@ class Point2D(object):
 
     def __getitem__(self, index: int):
         assert isinstance(index, int)
-        assert index == 0 or index == 1
+        assert index in {0, 1}
         return self._x if index == 0 else self._y
 
     def __str__(self) -> str:
@@ -115,7 +111,7 @@ class Point2D(object):
             )
         else:
             ymsg = str(self._y)
-        return "(%s, %s)" % (xmsg, ymsg)
+        return f"({xmsg}, {ymsg})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -254,7 +250,7 @@ class Box:
             return False
         if self.toppt[0] + self.dx < point[0]:
             return False
-        return not (self.toppt[1] + self.dy < point[1])
+        return not self.toppt[1] + self.dy < point[1]
 
     def __or__(self, other: Box) -> Box:
         xmin = min(self.lowpt[0], other.lowpt[0])
