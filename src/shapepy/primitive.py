@@ -24,7 +24,8 @@ class Primitive:
     Primitive class with functions to create classical shapes such as
     `circle`, `triangle`, `square`, `regular_polygon` and a generic `polygon`
 
-    .. note:: This class also contains ``empty`` and ``whole`` instances to easy access
+    .. note:: This class also contains ``empty`` and ``whole``
+        instances to easy access
 
     """
 
@@ -212,8 +213,9 @@ class Primitive:
         .. note::
 
             We represent the circle by many quadratic segments.
-            NURBS are not implemented in this code to represent exactly circles.
-            You can choose the number of quadratic terms by changing ``ndivangle``.
+            NURBS are not implemented in this code to represent
+            exactly circles. You can choose the number of quadratic
+            terms by changing ``ndivangle``.
 
         """
         try:

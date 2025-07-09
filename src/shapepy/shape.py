@@ -506,7 +506,8 @@ class WholeShape(SingletonShape):
 
 class DefinedShape(BaseShape):
     """
-    DefinedShape is the base class for SimpleShape, ConnectedShape and DisjointShape
+    DefinedShape is the base class for SimpleShape,
+    ConnectedShape and DisjointShape
 
     """
 
@@ -679,7 +680,8 @@ class DefinedShape(BaseShape):
         point : Point2D
             The point to verify if is inside
         boundary : bool, default = True
-            The flag to decide if a boundary point is considered inside or outside.
+            The flag to decide if a boundary point is considered
+            inside or outside.
             If ``True``, then a boundary point is considered inside.
 
         :return: Whether the point is inside or not
@@ -714,7 +716,8 @@ class DefinedShape(BaseShape):
         jordan : JordanCurve
             The jordan curve to verify
         boundary : bool, default = True
-            The flag to check if jordan is inside a closed (True) or open (False) set
+            The flag to check if jordan is inside a closed (True)
+            or open (False) set
 
         :return: Whether the jordan is inside or not
         :rtype: bool

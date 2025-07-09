@@ -203,12 +203,13 @@ class Point2D(object):
 
 class Box:
     """
-    Box class, which speeds up the evaluation of
-    ``__contains__`` in classes like ``PlanarCurve``, ``JordanCurve`` and ``SimpleShape``.
+    Box class, which speeds up the evaluation of ``__contains__``
+    in classes like ``PlanarCurve``, ``JordanCurve`` and ``SimpleShape``.
 
-    Since it's faster to evaluate if a point is in a rectangle (this box), we avoid some
-    computations like projecting the point on a curve and verifying if the distance is
-    big enough to consider whether the point is the object
+    Since it's faster to evaluate if a point is in a rectangle (this box),
+    we avoid some computations like projecting the point on a curve and
+    verifying if the distance is big enough to consider whether the point
+    is the object
 
     """
 
