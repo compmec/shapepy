@@ -352,7 +352,7 @@ class FollowPath:
         return new_jordans
 
 
-class BaseShape(metaclass=SuperclassMeta):
+class BaseShape(object, metaclass=SuperclassMeta):
     """
     Class which allows operations like:
      - move
