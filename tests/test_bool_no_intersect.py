@@ -116,7 +116,9 @@ class TestTwoCenteredSquares:
     """
 
     @pytest.mark.order(9)
-    @pytest.mark.dependency(depends=["test_begin", "TestEqualSquare::test_end"])
+    @pytest.mark.dependency(
+        depends=["test_begin", "TestEqualSquare::test_end"]
+    )
     def test_begin(self):
         pass
 
@@ -336,7 +338,10 @@ class TestEqualHollowSquare:
     @pytest.mark.order(9)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
-        depends=["TestEqualHollowSquare::test_begin", "TestEqualHollowSquare::test_or"]
+        depends=[
+            "TestEqualHollowSquare::test_begin",
+            "TestEqualHollowSquare::test_or",
+        ]
     )
     def test_and(self):
         big = Primitive.square(side=2, center=(0, 0))

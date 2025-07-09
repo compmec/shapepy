@@ -184,7 +184,9 @@ class TestObjectsInJordan:
     """
 
     @pytest.mark.order(7)
-    @pytest.mark.dependency(depends=["test_begin", "TestObjectsInEmptyWhole::test_end"])
+    @pytest.mark.dependency(
+        depends=["test_begin", "TestObjectsInEmptyWhole::test_end"]
+    )
     def test_begin(self):
         pass
 
