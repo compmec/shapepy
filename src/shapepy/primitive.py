@@ -9,6 +9,7 @@ This file contains functions to create primitive shapes such as:
 import math
 from copy import copy
 from fractions import Fraction
+from numbers import Real
 from typing import Tuple
 
 import numpy as np
@@ -66,14 +67,15 @@ class Primitive:
         .. image:: ../img/primitive/regular5.svg
 
         """
-        try:
-            assert isinstance(nsides, int)
-            assert nsides >= 3
-            float(radius)
-            assert radius > 0
-            center = Point2D(center)
-        except (ValueError, TypeError, AssertionError):
-            raise ValueError("Input invalid")
+        if not isinstance(nsides, int):
+            raise ValueError
+        if nsides < 3:
+            raise ValueError
+        if not isinstance(radius, Real):
+            raise ValueError
+        if radius <= 0:
+            raise ValueError
+        center = Point2D(center)
         if nsides == 4:
             vertices = [(radius, 0), (0, radius), (-radius, 0), (0, -radius)]
             vertices = tuple([center + Point2D(vertex) for vertex in vertices])
