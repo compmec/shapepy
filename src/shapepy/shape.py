@@ -920,6 +920,7 @@ class SimpleShape(DefinedShape):
                 return False
         return True
 
+    # pylint: disable=chained-comparison
     def __contains_simple(self, other: SimpleShape) -> bool:
         assert isinstance(other, SimpleShape)
         areaa = float(other)
