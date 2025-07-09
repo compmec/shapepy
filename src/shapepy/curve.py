@@ -125,22 +125,7 @@ class Math:
         )
 
 
-class BaseCurve(object):
-    """
-    Defines a parent class of BezierCurve and PlanarCurve
-    """
-
-    def __call__(
-        self, nodes: Union[float, Tuple[float]]
-    ) -> Union[Any, Tuple[Any]]:
-        try:
-            iter(nodes)
-            return self.eval(nodes)
-        except TypeError:
-            return self.eval((nodes,))[0]
-
-
-class BezierCurve(BaseCurve):
+class BezierCurve:
     """BezierCurve object"""
 
     def __init__(self, ctrlpoints: Tuple[Any]):
@@ -244,7 +229,7 @@ class BezierCurve(BaseCurve):
                 break
             times += 1
         if times == 0:
-            return
+            return self
         mattrans, _ = Operations.degree_decrease(degree, times)
         self.ctrlpoints = tuple(np.dot(mattrans, points))
         return self
@@ -260,7 +245,7 @@ class BezierCurve(BaseCurve):
         return planars
 
 
-class PlanarCurve(BaseCurve):
+class PlanarCurve:
     """
     Defines a planar curve in the plane,
     that contains a bezier curve inside it
@@ -321,13 +306,13 @@ class PlanarCurve(BaseCurve):
             return tuple()
         if self.degree == 1 and other.degree == 1:
             params = Intersection.lines(self, other)
-            return (params,) if len(params) else tuple()
+            return (params,) if len(params) != 0 else tuple()
         usample = list(Math.closed_linspace(self.npts + 3))
         vsample = list(Math.closed_linspace(other.npts + 3))
         pairs = []
-        for i, ui in enumerate(usample):
+        for ui in usample:
             pairs += [(ui, vj) for vj in vsample]
-        for k in range(3):
+        for _ in range(3):
             pairs = Intersection.bezier_and_bezier(self, other, pairs)
             pairs.insert(0, (0, 0))
             pairs.insert(0, (0, 1))
@@ -370,6 +355,16 @@ class PlanarCurve(BaseCurve):
             if dist < 1e-6:  # Tolerance
                 return True
         return False
+
+
+    def __call__(
+        self, nodes: Union[float, Tuple[float]]
+    ) -> Union[Any, Tuple[Any]]:
+        try:
+            iter(nodes)
+            return self.eval(nodes)
+        except TypeError:
+            return self.eval((nodes,))[0]
 
     @property
     def degree(self) -> int:
@@ -557,7 +552,7 @@ class Intersection:
         ddcurveb = dcurveb.derivate()
 
         # Start newton iteration
-        for k in range(20):  # Number of newton iteration
+        for _ in range(20):  # Number of newton iteration
             new_pairs = set()
             for u, v in pairs:
                 ssu = curvea(u)
