@@ -131,7 +131,6 @@ class BezierCurve:
     def __init__(self, ctrlpoints: Tuple[Any]):
         self.ctrlpoints = ctrlpoints
 
-
     @property
     def degree(self) -> int:
         """
@@ -345,7 +344,6 @@ class PlanarCurve:
                 return True
         return False
 
-
     def __call__(
         self, nodes: Union[float, Tuple[float]]
     ) -> Union[Any, Tuple[Any]]:
@@ -457,11 +455,12 @@ class PlanarCurve:
         return planars
 
 
-#pylint: disable=too-few-public-methods
+# pylint: disable=too-few-public-methods
 class Operations:
     """
     Defines the operation of over the bezier curves
     """
+
     __degree_decre = {}
 
     @staticmethod
@@ -500,6 +499,7 @@ class Intersection:
     """
     Defines the methods used to compute the intersection between curves
     """
+
     tol_du = 1e-9  # tolerance convergence
     tol_norm = 1e-9  # tolerance convergence
     max_denom = math.ceil(1 / tol_du)
@@ -528,7 +528,7 @@ class Intersection:
             return tuple()  # Parallel, but not colinear
         return tuple()
 
-    #pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals
     @staticmethod
     def bezier_and_bezier(
         curvea: PlanarCurve, curveb: PlanarCurve, pairs: Tuple[Tuple[float]]
@@ -584,7 +584,7 @@ class Intersection:
     ) -> Tuple[Tuple[float]]:
         """
         Filter the pairs values, since the intersection pair
-        (0.5, 1) is almost the same as (1e-6, 0.99999) 
+        (0.5, 1) is almost the same as (1e-6, 0.99999)
         """
         pairs = list(pairs)
         index = 0
@@ -624,6 +624,7 @@ class Projection:
     """
     Defines the methods used to find the projection of a point into a curve
     """
+
     @staticmethod
     def point_on_curve(point: Point2D, curve: PlanarCurve) -> float:
         """Finds parameter u* such abs(C(u*)) is minimal
@@ -651,7 +652,7 @@ class Projection:
                 params.append(usample[i])
         return tuple(params)
 
-    #pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals
     @staticmethod
     def newton_iteration(
         point: Point2D, curve: PlanarCurve, usample: Tuple[float]
@@ -688,6 +689,7 @@ class Derivate:
     """
     Defines the functions to derivate the bezier curve
     """
+
     __non_rat_bezier_once = {}
 
     @staticmethod

@@ -139,7 +139,7 @@ class ShapePloter:
             return self.plot_shape(args[0], kwargs=kwargs)
         return self.gca().plot(*args, **kwargs)
 
-    #pylint: disable=too-many-locals
+    # pylint: disable=too-many-locals
     def plot_shape(self, shape: BaseShape, *, kwargs):
         """
         Plots a BaseShape, which can be Empty, Whole, Simple, etc

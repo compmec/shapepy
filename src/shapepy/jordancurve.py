@@ -19,6 +19,7 @@ class IntegrateJordan:
     Defines functions to integrate over the internal area
     defined by the jordan curve.
     """
+
     @staticmethod
     def vertical(
         jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
