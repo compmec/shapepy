@@ -1,6 +1,6 @@
 """
-This file contains the code to test the relative position of an object with respect
-to another
+This file contains the code to test the relative position
+of an object with respect to another
 """
 
 from fractions import Fraction
@@ -653,7 +653,7 @@ class TestObjectsInConnected:
     def test_connected(self):
         small_square = Primitive.square(side=2)
         big_square = Primitive.square(side=4)
-        connected = ConnectedShape([big_square, ~small_square])
+        _ = ConnectedShape([big_square, ~small_square])
 
         assert (~small_square) in (~small_square)
         assert (~big_square) in (~small_square)

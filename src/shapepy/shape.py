@@ -6,6 +6,7 @@ like ```move```, ```rotate``` and ```scale``` to model your desired curve.
 You can assemble JordanCurves to create shapes with holes,
 or even unconnected shapes.
 """
+
 from __future__ import annotations
 
 import abc

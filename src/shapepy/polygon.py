@@ -3,6 +3,7 @@ Module that defines the basic geometric classes used for the package
 
 They are used to encapsulate some commands
 """
+
 from __future__ import annotations
 
 import fractions

@@ -1,9 +1,7 @@
 """
 Tests related to shape module, more specifically about the class SimpleShape
-Which are in fact positive shapes defined only by one jordan curve 
+Which are in fact positive shapes defined only by one jordan curve
 """
-
-import math
 
 import pytest
 
@@ -30,7 +28,8 @@ def test_begin():
 
 class TestIntersectionSimple:
     """
-    Tests between two simple shapes such they have a finite number of intersection points
+    Tests between two simple shapes such they have a finite number
+    of intersection points
     """
 
     @pytest.mark.order(9)
