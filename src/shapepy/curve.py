@@ -160,19 +160,37 @@ class BezierCurve(BaseCurve):
 
     @property
     def degree(self) -> int:
+        """
+        The polynomial degree used by the Bezier Curve
+        """
         return self.npts - 1
 
     @property
     def npts(self) -> int:
+        """
+        The number of control points used by the curve
+        """
         return len(self.ctrlpoints)
 
     @property
     def ctrlpoints(self) -> Tuple[Point2D]:
+        """
+        The control points that defines the cdurve
+        """
         return self.__ctrlpoints
 
     @ctrlpoints.setter
     def ctrlpoints(self, other: Tuple[Any]):
         self.__ctrlpoints = tuple(other)
+
+    def __call__(
+        self, nodes: Union[float, Tuple[float]]
+    ) -> Union[Any, Tuple[Any]]:
+        try:
+            iter(nodes)
+            return self.eval(nodes)
+        except TypeError:
+            return self.eval((nodes,))[0]
 
     def __str__(self) -> str:
         msg = f"BezierCurve of degree {self.degree} and "
@@ -200,6 +218,9 @@ class BezierCurve(BaseCurve):
         return tuple(results)
 
     def derivate(self, times: Optional[int] = 1) -> BezierCurve:
+        """
+        Computes the derivative of the Bezier Curve
+        """
         assert isinstance(times, int)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
@@ -229,6 +250,9 @@ class BezierCurve(BaseCurve):
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[BezierCurve]:
+        """
+        Splits the Bezier Curve into the given segments
+        """
         knotvector = pynurbs.GeneratorKnotVector.bezier(self.degree)
         curve = pynurbs.Curve(knotvector, self.ctrlpoints)
         beziers = curve.split(nodes)
@@ -450,6 +474,9 @@ class PlanarCurve(BaseCurve):
 
 
 class Operations:
+    """
+    Defines the operation of over the bezier curves
+    """
     __degree_decre = {}
 
     @staticmethod
@@ -485,6 +512,9 @@ class Operations:
 
 
 class Intersection:
+    """
+    Defines the methods used to compute the intersection between curves
+    """
     tol_du = 1e-9  # tolerance convergence
     tol_norm = 1e-9  # tolerance convergence
     max_denom = math.ceil(1 / tol_du)
@@ -566,6 +596,10 @@ class Intersection:
         pairs: Tuple[Tuple[float]],
         max_dist: float,
     ) -> Tuple[Tuple[float]]:
+        """
+        Filter the pairs values, since the intersection pair
+        (0.5, 1) is almost the same as (1e-6, 0.99999) 
+        """
         pairs = list(pairs)
         index = 0
         while index < len(pairs):
@@ -581,6 +615,9 @@ class Intersection:
     def filter_parameters(
         pairs: Tuple[Tuple[float]], max_dist: float
     ) -> Tuple[Tuple[float]]:
+        """
+        Filter the parameters values, cause 0 is almost the same as 1e-6
+        """
         pairs = list(pairs)
         index = 0
         while index < len(pairs):
@@ -598,6 +635,9 @@ class Intersection:
 
 
 class Projection:
+    """
+    Defines the methods used to find the projection of a point into a curve
+    """
     @staticmethod
     def point_on_curve(point: Point2D, curve: PlanarCurve) -> float:
         """Finds parameter u* such abs(C(u*)) is minimal
@@ -658,6 +698,9 @@ class Projection:
 
 
 class Derivate:
+    """
+    Defines the functions to derivate the bezier curve
+    """
     __non_rat_bezier_once = {}
 
     @staticmethod
