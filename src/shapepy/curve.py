@@ -468,6 +468,7 @@ class PlanarCurve:
         return planars
 
 
+#pylint: disable=too-few-public-methods
 class Operations:
     """
     Defines the operation of over the bezier curves
@@ -538,6 +539,7 @@ class Intersection:
             return tuple()  # Parallel, but not colinear
         return tuple()
 
+    #pylint: disable=too-many-locals
     @staticmethod
     def bezier_and_bezier(
         curvea: PlanarCurve, curveb: PlanarCurve, pairs: Tuple[Tuple[float]]
@@ -660,6 +662,7 @@ class Projection:
                 params.append(usample[i])
         return tuple(params)
 
+    #pylint: disable=too-many-locals
     @staticmethod
     def newton_iteration(
         point: Point2D, curve: PlanarCurve, usample: Tuple[float]
