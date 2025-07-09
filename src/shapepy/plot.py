@@ -109,9 +109,9 @@ class ShapePloter:
             if isinstance(ax, list) and len(ax) == 0:
                 ax = pyplot.gca()
         else:
-            if not isinstance(fig, ShapePloter.Figure):
+            if not isinstance(fig, matplotlib.figure.Figure):
                 raise TypeError
-            if not isinstance(ax, ShapePloter.Axes):
+            if not isinstance(ax, type(matplotlib.pyplot.gca())):
                 raise TypeError
         self.__fig = fig
         self.__ax = ax
