@@ -20,6 +20,11 @@ from shapepy.polygon import Box, Point2D
 
 
 class SuperclassMeta(type):
+    """
+    This class is the parent of other classes such
+    still gets the docstrings of their parent
+    """
+
     def __new__(mcs, classname, bases, cls_dict):
         cls = super().__new__(mcs, classname, bases, cls_dict)
         for name, member in cls_dict.items():
@@ -311,6 +316,10 @@ class FollowPath:
     def midpoints_shapes(
         shapea: BaseShape, shapeb: BaseShape, closed: bool, inside: bool
     ) -> Tuple[Tuple[int]]:
+        """
+        This function computes the indexes of the midpoints from
+        both shapes, shifting the indexs of shapeb.jordans
+        """
         indexsa = FollowPath.midpoints_one_shape(
             shapea, shapeb, closed, inside
         )
@@ -325,6 +334,10 @@ class FollowPath:
 
     @staticmethod
     def or_shapes(shapea: BaseShape, shapeb: BaseShape) -> Tuple[JordanCurve]:
+        """
+        Computes the set of jordan curves that defines the boundary of
+        the union between the two base shapes
+        """
         assert isinstance(shapea, BaseShape)
         assert isinstance(shapeb, BaseShape)
         for jordana in shapea.jordans:
@@ -339,6 +352,10 @@ class FollowPath:
 
     @staticmethod
     def and_shapes(shapea: BaseShape, shapeb: BaseShape) -> Tuple[JordanCurve]:
+        """
+        Computes the set of jordan curves that defines the boundary of
+        the intersection between the two base shapes
+        """
         assert isinstance(shapea, BaseShape)
         assert isinstance(shapeb, BaseShape)
         for jordana in shapea.jordans:
@@ -352,6 +369,8 @@ class FollowPath:
         return new_jordans
 
 
+# Inherit from object is needed
+# pylint: disable=useless-object-inheritance
 class BaseShape(object, metaclass=SuperclassMeta):
     """
     Class which allows operations like:
@@ -404,6 +423,7 @@ class BaseShape(object, metaclass=SuperclassMeta):
         return float(self) > 0
 
 
+# pylint: disable=abstract-method
 class SingletonShape(BaseShape):
     """SingletonShape"""
 
@@ -501,6 +521,7 @@ class WholeShape(SingletonShape):
         return ~other
 
 
+# pylint: disable=no-member
 class DefinedShape(BaseShape):
     """
     DefinedShape is the base class for SimpleShape,
@@ -830,6 +851,11 @@ class SimpleShape(DefinedShape):
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
+        """
+        The jordans curve that define the SimpleShape
+
+        It has only one jordan curve inside it
+        """
         return (self.__jordancurve,)
 
     def __set_jordancurve(self, other: JordanCurve):
@@ -1074,7 +1100,7 @@ class DisjointShape(DefinedShape):
         instance.subshapes = subshapes
         return instance
 
-    def __init__(self, subshapes: Tuple[ConnectedShape]):
+    def __init__(self, _: Tuple[ConnectedShape]):
         super().__init__()
 
     def __float__(self) -> float:
