@@ -136,11 +136,10 @@ class ShapePloter:
         A wrapper of the matplotlib.pyplot.plt.plot
         """
         if isinstance(args[0], BaseShape):
-            self.plot_shape(args[0], kwargs=kwargs)
-        else:
-            return self.gca().plot(*args, **kwargs)
+            return self.plot_shape(args[0], kwargs=kwargs)
+        return self.gca().plot(*args, **kwargs)
 
-    def plot_shape(self, shape: BaseShape, *, kwargs={}):
+    def plot_shape(self, shape: BaseShape, *, kwargs):
         """
         Plots a BaseShape, which can be Empty, Whole, Simple, etc
         """
