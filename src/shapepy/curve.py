@@ -131,17 +131,6 @@ class BezierCurve:
     def __init__(self, ctrlpoints: Tuple[Any]):
         self.ctrlpoints = ctrlpoints
 
-    def __or__(self, other: BezierCurve) -> BezierCurve:
-        """
-        Unite a set of bezier curves
-
-        If the error for unite is bigger than tolerance, raises ValueError
-        """
-        assert isinstance(other, BezierCurve)
-        final_curve = Operations.unite(self.ctrlpoints, other.ctrlpoints)
-        if final_curve.degree + 1 != final_curve.npts:
-            raise ValueError("Union is not a bezier curve!")
-        return self.__class__(final_curve.ctrlpoints)
 
     @property
     def degree(self) -> int:
