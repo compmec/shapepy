@@ -20,8 +20,8 @@ from shapepy.polygon import Box, Point2D
 
 
 class SuperclassMeta(type):
-    def __new__(mcls, classname, bases, cls_dict):
-        cls = super().__new__(mcls, classname, bases, cls_dict)
+    def __new__(mcs, classname, bases, cls_dict):
+        cls = super().__new__(mcs, classname, bases, cls_dict)
         for name, member in cls_dict.items():
             if not getattr(member, "__doc__"):
                 try:
@@ -314,7 +314,7 @@ class FollowPath:
         indexsa = FollowPath.midpoints_one_shape(
             shapea, shapeb, closed, inside
         )
-        indexsb = FollowPath.midpoints_one_shape(
+        indexsb = FollowPath.midpoints_one_shape(  # pylint: disable=W1114
             shapeb, shapea, closed, inside
         )
         indexsa = list(indexsa)
@@ -352,7 +352,7 @@ class FollowPath:
         return new_jordans
 
 
-class BaseShape(object, metaclass=SuperclassMeta):
+class BaseShape(metaclass=SuperclassMeta):
     """
     Class which allows operations like:
      - move
@@ -370,17 +370,14 @@ class BaseShape(object, metaclass=SuperclassMeta):
     @abc.abstractmethod
     def __invert__(self) -> BaseShape:
         """Invert shape"""
-        pass
 
     @abc.abstractmethod
-    def __or__(self) -> BaseShape:
+    def __or__(self, other: BaseShape) -> BaseShape:
         """Union shapes"""
-        pass
 
     @abc.abstractmethod
-    def __and__(self) -> BaseShape:
+    def __and__(self, other: BaseShape) -> BaseShape:
         """Intersection shapes"""
-        pass
 
     def __neg__(self) -> BaseShape:
         """Invert the BaseShape"""
@@ -512,14 +509,14 @@ class DefinedShape(BaseShape):
     """
 
     def __init__(self, *args, **kwargs):
-        self.__box = None
+        pass
 
     def __copy__(self) -> DefinedShape:
         return self.__deepcopy__(None)
 
     def __deepcopy__(self, memo) -> DefinedShape:
         jordans = tuple(copy(jordan) for jordan in self.jordans)
-        return ShapeFromJordans(jordans)
+        return shape_from_jordans(jordans)
 
     def box(self) -> Box:
         """
@@ -546,7 +543,7 @@ class DefinedShape(BaseShape):
         return box
 
     def __invert__(self) -> BaseShape:
-        return ShapeFromJordans(tuple(~jordan for jordan in self.jordans))
+        return shape_from_jordans(tuple(~jordan for jordan in self.jordans))
 
     def __or__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
@@ -561,7 +558,7 @@ class DefinedShape(BaseShape):
         new_jordans = FollowPath.or_shapes(self, other)
         if len(new_jordans) == 0:
             return WholeShape()
-        return ShapeFromJordans(new_jordans)
+        return shape_from_jordans(new_jordans)
 
     def __and__(self, other: BaseShape) -> BaseShape:
         assert isinstance(other, BaseShape)
@@ -576,7 +573,7 @@ class DefinedShape(BaseShape):
         new_jordans = FollowPath.and_shapes(self, other)
         if len(new_jordans) == 0:
             return EmptyShape()
-        return ShapeFromJordans(new_jordans)
+        return shape_from_jordans(new_jordans)
 
     def __contains__(
         self, other: Union[Point2D, JordanCurve, BaseShape]
@@ -768,15 +765,17 @@ class DefinedShape(BaseShape):
         return self._contains_shape(other)
 
     @abc.abstractmethod
-    def _contains_point(point: Point2D, boundary: Optional[bool] = True):
+    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True):
         pass
 
     @abc.abstractmethod
-    def _contains_jordan(jordan: JordanCurve, boundary: Optional[bool] = True):
+    def _contains_jordan(
+        self, jordan: JordanCurve, boundary: Optional[bool] = True
+    ):
         pass
 
     @abc.abstractmethod
-    def _contains_shape(other: BaseShape):
+    def _contains_shape(self, other: BaseShape):
         pass
 
 
@@ -798,7 +797,7 @@ class SimpleShape(DefinedShape):
     def __str__(self) -> str:
         area = float(self)
         vertices = self.jordans[0].vertices
-        vertices = tuple([tuple(vertex) for vertex in vertices])
+        vertices = tuple(tuple(vertex) for vertex in vertices)
         msg = f"Simple Shape of area {area:.2f} with vertices:\n"
         msg += str(np.array(vertices, dtype="float64"))
         return msg
@@ -923,19 +922,19 @@ class SimpleShape(DefinedShape):
 
     def __contains_simple(self, other: SimpleShape) -> bool:
         assert isinstance(other, SimpleShape)
-        areaA = float(other)
-        areaB = float(self)
+        areaa = float(other)
+        areab = float(self)
         jordana = other.jordans[0]
         jordanb = self.jordans[0]
-        if areaA < 0 and areaB > 0:
+        if areaa < 0 and areab > 0:
             return False
-        if not (self.box() & other.box()):
-            return areaA > 0 and areaB < 0
-        if areaA > 0 and areaB < 0:
+        if not self.box() & other.box():
+            return areaa > 0 and areab < 0
+        if areaa > 0 and areab < 0:
             return jordana in self and jordanb not in other
-        if areaA > areaB or jordana not in self:
+        if areaa > areab or jordana not in self:
             return False
-        if areaA > 0:
+        if areaa > 0:
             return True
         # If simple shape is not a square
         # may happens error here
@@ -1092,7 +1091,7 @@ class DisjointShape(DefinedShape):
         self_subshapes = list(self.subshapes)
         othe_subshapes = list(other.subshapes)
         # Compare if a curve is inside another
-        while len(self_subshapes) and len(othe_subshapes):
+        while len(self_subshapes) != 0 and len(othe_subshapes) != 0:
             for j, osbshape in enumerate(othe_subshapes):
                 if osbshape == self_subshapes[0]:
                     self_subshapes.pop(0)
@@ -1138,6 +1137,7 @@ class DisjointShape(DefinedShape):
                 if subshape not in self:
                     return False
             return True
+        raise NotImplementedError
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
@@ -1197,7 +1197,7 @@ class DisjointShape(DefinedShape):
         self.__subshapes = tuple(values)
 
 
-def DivideConnecteds(
+def divide_connecteds(
     simples: Tuple[SimpleShape],
 ) -> Tuple[Union[SimpleShape, ConnectedShape]]:
     """
@@ -1213,13 +1213,13 @@ def DivideConnecteds(
     externals = []
     connected = []
     simples = list(simples)
-    while len(simples):
+    while len(simples) != 0:
         areas = map(float, simples)
         absareas = tuple(map(abs, areas))
         index = absareas.index(max(absareas))
         connected.append(simples.pop(index))
         internal = []
-        while len(simples):  # Divide in two groups
+        while len(simples) != 0:  # Divide in two groups
             simple = simples.pop(0)
             jordan = simple.jordans[0]
             for subsimple in connected:
@@ -1234,10 +1234,10 @@ def DivideConnecteds(
         connected = connected[0]
     else:
         connected = ConnectedShape(connected)
-    return (connected,) + DivideConnecteds(externals)
+    return (connected,) + divide_connecteds(externals)
 
 
-def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
+def shape_from_jordans(jordans: Tuple[JordanCurve]) -> BaseShape:
     """Returns the correspondent shape
 
     This function don't do entry validation
@@ -1245,14 +1245,14 @@ def ShapeFromJordans(jordans: Tuple[JordanCurve]) -> BaseShape:
 
     Example
     ----------
-    >>> ShapeFromJordans([])
+    >>> shape_from_jordans([])
     EmptyShape
     """
     assert len(jordans) != 0
     simples = tuple(map(SimpleShape, jordans))
     if len(simples) == 1:
         return simples[0]
-    connecteds = DivideConnecteds(simples)
+    connecteds = divide_connecteds(simples)
     if len(connecteds) == 1:
         return connecteds[0]
     return DisjointShape(connecteds)
