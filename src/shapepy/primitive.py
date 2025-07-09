@@ -9,6 +9,7 @@ This file contains functions to create primitive shapes such as:
 import math
 from copy import copy
 from fractions import Fraction
+from numbers import Real
 from typing import Tuple
 
 import numpy as np
@@ -24,7 +25,8 @@ class Primitive:
     Primitive class with functions to create classical shapes such as
     `circle`, `triangle`, `square`, `regular_polygon` and a generic `polygon`
 
-    .. note:: This class also contains ``empty`` and ``whole`` instances to easy access
+    .. note:: This class also contains ``empty`` and ``whole``
+        instances to easy access
 
     """
 
@@ -65,23 +67,24 @@ class Primitive:
         .. image:: ../img/primitive/regular5.svg
 
         """
-        try:
-            assert isinstance(nsides, int)
-            assert nsides >= 3
-            float(radius)
-            assert radius > 0
-            center = Point2D(center)
-        except (ValueError, TypeError, AssertionError):
-            raise ValueError("Input invalid")
+        if not isinstance(nsides, int):
+            raise ValueError
+        if nsides < 3:
+            raise ValueError
+        if not isinstance(radius, Real):
+            raise ValueError
+        if radius <= 0:
+            raise ValueError
+        center = Point2D(center)
         if nsides == 4:
             vertices = [(radius, 0), (0, radius), (-radius, 0), (0, -radius)]
-            vertices = tuple([center + Point2D(vertex) for vertex in vertices])
+            vertices = tuple(center + Point2D(vertex) for vertex in vertices)
         else:
             vertices = np.empty((nsides, 2), dtype="float64")
             theta = np.linspace(0, math.tau, nsides, endpoint=False)
             vertices[:, 0] = radius * np.cos(theta)
             vertices[:, 1] = radius * np.sin(theta)
-            vertices = tuple([center + Point2D(vertex) for vertex in vertices])
+            vertices = tuple(center + Point2D(vertex) for vertex in vertices)
         return Primitive.polygon(vertices)
 
     @staticmethod
@@ -166,12 +169,9 @@ class Primitive:
         .. image:: ../img/primitive/square.svg
 
         """
-        try:
-            float(side)
-            assert side > 0
-            center = Point2D(center)
-        except (ValueError, TypeError, AssertionError):
-            raise ValueError("Input invalid")
+        if not isinstance(side, Real) or side <= 0:
+            raise ValueError
+        center = Point2D(center)
 
         if isinstance(side, int):
             side = Fraction(side)
@@ -212,18 +212,16 @@ class Primitive:
         .. note::
 
             We represent the circle by many quadratic segments.
-            NURBS are not implemented in this code to represent exactly circles.
-            You can choose the number of quadratic terms by changing ``ndivangle``.
+            NURBS are not implemented in this code to represent
+            exactly circles. You can choose the number of quadratic
+            terms by changing ``ndivangle``.
 
         """
-        try:
-            float(radius)
-            assert radius > 0
-            center = Point2D(center)
-            assert isinstance(ndivangle, int)
-            assert ndivangle >= 4
-        except (ValueError, TypeError, AssertionError):
-            raise ValueError("Input invalid")
+        if not isinstance(radius, Real) or radius <= 0:
+            raise ValueError
+        if not isinstance(ndivangle, int) or ndivangle < 4:
+            raise ValueError
+        center = Point2D(center)
 
         angle = math.tau / ndivangle
         height = np.tan(angle / 2)
@@ -231,7 +229,7 @@ class Primitive:
         start_point = radius * Point2D(1, 0)
         middle_point = radius * Point2D(1, height)
         beziers = []
-        for i in range(ndivangle - 1):
+        for _ in range(ndivangle - 1):
             end_point = copy(start_point).rotate(angle)
             new_bezier = PlanarCurve([start_point, middle_point, end_point])
             beziers.append(new_bezier)

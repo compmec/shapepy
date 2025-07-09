@@ -1,3 +1,15 @@
+"""
+File that defines the classes
+
+* Math: to store mathematical methods used
+* BaseCurve: Defines a parent of BezierCurve and PlanarCurve
+* Operations
+* Intersection
+* Projection
+* Derivate
+* IntegratePlanar
+"""
+
 from __future__ import annotations
 
 import math
@@ -12,6 +24,17 @@ from shapepy.polygon import Box, Point2D
 
 
 class Math:
+    """
+    Defines the mathematical functions used for the package
+
+    The methods are
+    * comb
+    * horner_method
+    * bezier_caract_matrix
+    * closed_linspace
+    * open_linspace
+    """
+
     __caract_matrix = {}
 
     @staticmethod
@@ -63,12 +86,38 @@ class Math:
 
     @staticmethod
     def closed_linspace(npts: int) -> Tuple[Fraction]:
+        """
+        Gives a set of numbers in interval [0, 1]
+
+        Example
+        -------
+        >>> closed_linspace(2)
+        (0, 1)
+        >>> closed_linspace(3)
+        (0, 0.5, 1)
+        >>> closed_linspace(4)
+        (0, 0.33, 0.66, 1)
+        >>> closed_linspace(5)
+        (0, 0.25, 0.5, 0.75, 1)
+        """
         assert isinstance(npts, int)
         assert npts >= 2
         return tuple(Fraction(num, npts - 1) for num in range(npts))
 
     @staticmethod
     def open_linspace(npts: int) -> Tuple[Fraction]:
+        """
+        Gives a set of numbers in interval (0, 1)
+
+        Example
+        -------
+        >>> open_linspace(1)
+        (0.5, )
+        >>> open_linspace(2)
+        (0.33, 0.66)
+        >>> open_linspace(3)
+        (0.25, 0.50, 0.75)
+        """
         assert isinstance(npts, int)
         assert npts >= 1
         return tuple(
@@ -76,7 +125,37 @@ class Math:
         )
 
 
-class BaseCurve(object):
+class BezierCurve:
+    """BezierCurve object"""
+
+    def __init__(self, ctrlpoints: Tuple[Any]):
+        self.ctrlpoints = ctrlpoints
+
+    @property
+    def degree(self) -> int:
+        """
+        The polynomial degree used by the Bezier Curve
+        """
+        return self.npts - 1
+
+    @property
+    def npts(self) -> int:
+        """
+        The number of control points used by the curve
+        """
+        return len(self.ctrlpoints)
+
+    @property
+    def ctrlpoints(self) -> Tuple[Point2D]:
+        """
+        The control points that defines the cdurve
+        """
+        return self.__ctrlpoints
+
+    @ctrlpoints.setter
+    def ctrlpoints(self, other: Tuple[Any]):
+        self.__ctrlpoints = tuple(other)
+
     def __call__(
         self, nodes: Union[float, Tuple[float]]
     ) -> Union[Any, Tuple[Any]]:
@@ -85,41 +164,6 @@ class BaseCurve(object):
             return self.eval(nodes)
         except TypeError:
             return self.eval((nodes,))[0]
-
-
-class BezierCurve(BaseCurve):
-    """BezierCurve object"""
-
-    def __init__(self, ctrlpoints: Tuple[Any]):
-        self.ctrlpoints = ctrlpoints
-
-    def __or__(self, other: BezierCurve) -> BezierCurve:
-        """
-        Unite a set of bezier curves
-
-        If the error for unite is bigger than tolerance, raises ValueError
-        """
-        assert isinstance(other, BezierCurve)
-        final_curve = Operations.unite(self.ctrlpoints, other.ctrlpoints)
-        if final_curve.degree + 1 != final_curve.npts:
-            raise ValueError("Union is not a bezier curve!")
-        return self.__class__(final_curve.ctrlpoints)
-
-    @property
-    def degree(self) -> int:
-        return self.npts - 1
-
-    @property
-    def npts(self) -> int:
-        return len(self.ctrlpoints)
-
-    @property
-    def ctrlpoints(self) -> Tuple[Point2D]:
-        return self.__ctrlpoints
-
-    @ctrlpoints.setter
-    def ctrlpoints(self, other: Tuple[Any]):
-        self.__ctrlpoints = tuple(other)
 
     def __str__(self) -> str:
         msg = f"BezierCurve of degree {self.degree} and "
@@ -147,6 +191,9 @@ class BezierCurve(BaseCurve):
         return tuple(results)
 
     def derivate(self, times: Optional[int] = 1) -> BezierCurve:
+        """
+        Computes the derivative of the Bezier Curve
+        """
         assert isinstance(times, int)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
@@ -170,12 +217,15 @@ class BezierCurve(BaseCurve):
                 break
             times += 1
         if times == 0:
-            return
+            return self
         mattrans, _ = Operations.degree_decrease(degree, times)
         self.ctrlpoints = tuple(np.dot(mattrans, points))
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[BezierCurve]:
+        """
+        Splits the Bezier Curve into the given segments
+        """
         knotvector = pynurbs.GeneratorKnotVector.bezier(self.degree)
         curve = pynurbs.Curve(knotvector, self.ctrlpoints)
         beziers = curve.split(nodes)
@@ -183,7 +233,12 @@ class BezierCurve(BaseCurve):
         return planars
 
 
-class PlanarCurve(BaseCurve):
+class PlanarCurve:
+    """
+    Defines a planar curve in the plane,
+    that contains a bezier curve inside it
+    """
+
     def __init__(self, ctrlpoints: Tuple[Point2D]):
         ctrlpoints = list(ctrlpoints)
         for i, point in enumerate(ctrlpoints):
@@ -239,13 +294,13 @@ class PlanarCurve(BaseCurve):
             return tuple()
         if self.degree == 1 and other.degree == 1:
             params = Intersection.lines(self, other)
-            return (params,) if len(params) else tuple()
+            return (params,) if len(params) != 0 else tuple()
         usample = list(Math.closed_linspace(self.npts + 3))
         vsample = list(Math.closed_linspace(other.npts + 3))
         pairs = []
-        for i, ui in enumerate(usample):
+        for ui in usample:
             pairs += [(ui, vj) for vj in vsample]
-        for k in range(3):
+        for _ in range(3):
             pairs = Intersection.bezier_and_bezier(self, other, pairs)
             pairs.insert(0, (0, 0))
             pairs.insert(0, (0, 1))
@@ -289,20 +344,44 @@ class PlanarCurve(BaseCurve):
                 return True
         return False
 
+    def __call__(
+        self, nodes: Union[float, Tuple[float]]
+    ) -> Union[Any, Tuple[Any]]:
+        try:
+            iter(nodes)
+            return self.eval(nodes)
+        except TypeError:
+            return self.eval((nodes,))[0]
+
     @property
     def degree(self) -> int:
+        """
+        The degree of the bezier curve
+
+        Degree = 1 -> Linear curve
+        Degree = 2 -> Quadratic
+        """
         return self.__planar.degree
 
     @property
     def npts(self) -> int:
+        """
+        The number of control points used by the curve
+        """
         return self.__planar.npts
 
     @property
     def ctrlpoints(self) -> Tuple[Point2D]:
+        """
+        The control points that defines the planar curve
+        """
         return self.__planar.ctrlpoints
 
     @property
     def weights(self) -> Tuple[float]:
+        """
+        The weights of the control points, used for rational curves
+        """
         raise NotImplementedError
 
     @ctrlpoints.setter
@@ -313,9 +392,15 @@ class PlanarCurve(BaseCurve):
         self.__planar.ctrlpoints = points
 
     def eval(self, nodes: Tuple[float]) -> Tuple[Any]:
+        """
+        Evaluates the nodes, giving the points
+        """
         return self.__planar.eval(nodes)
 
     def derivate(self, times: Optional[int] = 1) -> PlanarCurve:
+        """
+        Gives the first derivative of the curve
+        """
         assert isinstance(times, int)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
@@ -351,6 +436,10 @@ class PlanarCurve(BaseCurve):
         return self.__class__(ctrlpoints)
 
     def invert(self) -> PlanarCurve:
+        """
+        Inverts the direction of the curve.
+        If the curve is clockwise, it becomes counterclockwise
+        """
         points = self.ctrlpoints
         npts = len(points)
         new_ctrlpoints = tuple(points[i] for i in range(npts - 1, -1, -1))
@@ -358,12 +447,20 @@ class PlanarCurve(BaseCurve):
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[PlanarCurve]:
+        """
+        Splits the curve into more segments
+        """
         beziers = self.__planar.split(nodes)
         planars = tuple(PlanarCurve(bezier.ctrlpoints) for bezier in beziers)
         return planars
 
 
+# pylint: disable=too-few-public-methods
 class Operations:
+    """
+    Defines the operation of over the bezier curves
+    """
+
     __degree_decre = {}
 
     @staticmethod
@@ -399,6 +496,10 @@ class Operations:
 
 
 class Intersection:
+    """
+    Defines the methods used to compute the intersection between curves
+    """
+
     tol_du = 1e-9  # tolerance convergence
     tol_norm = 1e-9  # tolerance convergence
     max_denom = math.ceil(1 / tol_du)
@@ -427,6 +528,7 @@ class Intersection:
             return tuple()  # Parallel, but not colinear
         return tuple()
 
+    # pylint: disable=too-many-locals
     @staticmethod
     def bezier_and_bezier(
         curvea: PlanarCurve, curveb: PlanarCurve, pairs: Tuple[Tuple[float]]
@@ -441,7 +543,7 @@ class Intersection:
         ddcurveb = dcurveb.derivate()
 
         # Start newton iteration
-        for k in range(20):  # Number of newton iteration
+        for _ in range(20):  # Number of newton iteration
             new_pairs = set()
             for u, v in pairs:
                 ssu = curvea(u)
@@ -480,6 +582,10 @@ class Intersection:
         pairs: Tuple[Tuple[float]],
         max_dist: float,
     ) -> Tuple[Tuple[float]]:
+        """
+        Filter the pairs values, since the intersection pair
+        (0.5, 1) is almost the same as (1e-6, 0.99999)
+        """
         pairs = list(pairs)
         index = 0
         while index < len(pairs):
@@ -495,6 +601,9 @@ class Intersection:
     def filter_parameters(
         pairs: Tuple[Tuple[float]], max_dist: float
     ) -> Tuple[Tuple[float]]:
+        """
+        Filter the parameters values, cause 0 is almost the same as 1e-6
+        """
         pairs = list(pairs)
         index = 0
         while index < len(pairs):
@@ -512,6 +621,10 @@ class Intersection:
 
 
 class Projection:
+    """
+    Defines the methods used to find the projection of a point into a curve
+    """
+
     @staticmethod
     def point_on_curve(point: Point2D, curve: PlanarCurve) -> float:
         """Finds parameter u* such abs(C(u*)) is minimal
@@ -539,6 +652,7 @@ class Projection:
                 params.append(usample[i])
         return tuple(params)
 
+    # pylint: disable=too-many-locals
     @staticmethod
     def newton_iteration(
         point: Point2D, curve: PlanarCurve, usample: Tuple[float]
@@ -572,6 +686,10 @@ class Projection:
 
 
 class Derivate:
+    """
+    Defines the functions to derivate the bezier curve
+    """
+
     __non_rat_bezier_once = {}
 
     @staticmethod
@@ -712,6 +830,11 @@ class IntegratePlanar:
     def winding_number_linear(
         pointa: Point2D, pointb: Point2D, center: Point2D
     ) -> float:
+        """
+        Computes the winding number defined by the given points.
+        It means, it's the angle made between the vector
+        (pointb - center) and (pointa - center)
+        """
         anglea = np.arctan2(
             float(pointa[1] - center[1]), float(pointa[0] - center[0])
         )

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shapepy"
-version = "1.1.1"
+version = "1.1.2"
 description = "Geometric 2D library"
 authors = ["Carlos Adir <carlos.adir.leite@gmail.com>"]
 readme = "README.md"
@@ -13,14 +13,18 @@ pynurbs = "^1.0.7"
 python = "^3.9"
 
 [tool.poetry.dev-dependencies]
-pytest = "^5.2"
-pynurbs = "^1.0.7"
-black = "^23.0.0"
-isort = "^5.12.0"
-flake8 = "^5.0.0"
-pylint = "^3.0.0"
+pytest = "*"
+pynurbs = "*"
+black = "*"
+isort = "*"
+flake8 = "*"
+pylint = "*"
 pre-commit = "^3.0.0"
-mypy = "^1.0.0"
+coverage = "^7"
+pytest-cov = "^6"
+pytest-order = "^1.0"
+pytest-timeout = "^1.0"
+pytest-dependency = "^0.6"
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.3"

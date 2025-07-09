@@ -1,3 +1,8 @@
+"""
+Defines functions that allows plotting the figures made,
+like shapes, curves, points, doing projections and so on
+"""
+
 from __future__ import annotations
 
 from typing import Optional
@@ -21,6 +26,9 @@ PathPatch = matplotlib.patches.PathPatch
 
 
 def patch_segment(segment: PlanarCurve):
+    """
+    Creates the commands for matplotlib to plot the segment
+    """
     vertices = []
     commands = []
     if segment.degree == 1:
@@ -33,6 +41,9 @@ def patch_segment(segment: PlanarCurve):
 
 
 def path_shape(connected: ConnectedShape) -> Path:
+    """
+    Creates the commands for matplotlib to plot the shape
+    """
     vertices = []
     commands = []
     for jordan in connected.jordans:
@@ -49,6 +60,9 @@ def path_shape(connected: ConnectedShape) -> Path:
 
 
 def path_jordan(jordan: JordanCurve) -> Path:
+    """
+    Creates the commands for matplotlib to plot the jordan curve
+    """
     vertices = [jordan.segments[0].ctrlpoints[0]]
     commands = [Path.MOVETO]
     for segment in jordan.segments:
@@ -65,8 +79,20 @@ def path_jordan(jordan: JordanCurve) -> Path:
 
 
 class ShapePloter:
-    Figure = matplotlib.figure.Figure
-    Axes = matplotlib.axes._axes.Axes
+    """
+    Class which is a wrapper of the matplotlib.pyplot.plt
+
+    You can create the instance of this class and call the same way as plt
+
+    Example
+    -------
+    >>> plt = ShapePloter()
+    >>> plot.plot([0, 1], [3, -2])
+    >>> plt.show()
+    """
+
+    Figure = matplotlib.pyplot.gcf()
+    Axes = matplotlib.pyplot.gca()
 
     def __init__(
         self,
@@ -83,29 +109,41 @@ class ShapePloter:
             if isinstance(ax, list) and len(ax) == 0:
                 ax = pyplot.gca()
         else:
-            if not isinstance(fig, ShapePloter.Figure):
+            if not isinstance(fig, matplotlib.figure.Figure):
                 raise TypeError
-            if not isinstance(ax, ShapePloter.Axes):
+            if not isinstance(ax, type(matplotlib.pyplot.gca())):
                 raise TypeError
         self.__fig = fig
         self.__ax = ax
 
     def gcf(self) -> ShapePloter.Figure:
+        """
+        Gets the current figure
+        """
         return self.__fig
 
     def gca(self) -> ShapePloter.Axes:
+        """
+        Gets the current axis
+        """
         return self.__ax
 
     def __getattr__(self, attr):
         return getattr(matplotlib.pyplot, attr)
 
     def plot(self, *args, **kwargs):
+        """
+        A wrapper of the matplotlib.pyplot.plt.plot
+        """
         if isinstance(args[0], BaseShape):
-            self.plot_shape(args[0], kwargs=kwargs)
-        else:
-            return self.gca().plot(*args, **kwargs)
+            return self.plot_shape(args[0], kwargs=kwargs)
+        return self.gca().plot(*args, **kwargs)
 
-    def plot_shape(self, shape: BaseShape, *, kwargs={}):
+    # pylint: disable=too-many-locals
+    def plot_shape(self, shape: BaseShape, *, kwargs):
+        """
+        Plots a BaseShape, which can be Empty, Whole, Simple, etc
+        """
         assert isinstance(shape, BaseShape)
         if isinstance(shape, EmptyShape):
             return

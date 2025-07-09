@@ -5,9 +5,9 @@ This file contains tests functions to test the module polygon.py
 from fractions import Fraction
 
 import numpy as np
+import pynurbs
 import pytest
 
-import pynurbs
 from shapepy import Point2D
 from shapepy.jordancurve import JordanCurve
 

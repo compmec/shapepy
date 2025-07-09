@@ -2,6 +2,7 @@
 This modules contains a powerful class called JordanCurve which
 is in fact, stores a list of spline-curves.
 """
+
 from __future__ import annotations
 
 from copy import copy
@@ -15,6 +16,11 @@ from shapepy.polygon import Box, Point2D
 
 
 class IntegrateJordan:
+    """
+    Defines functions to integrate over the internal area
+    defined by the jordan curve.
+    """
+
     @staticmethod
     def vertical(
         jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
@@ -204,7 +210,8 @@ class JordanCurve:
     def from_full_curve(cls, full_curve) -> JordanCurve:
         """Initialize a JordanCurve from a full curve,
 
-        :param full_curve: The full curve to split. Ideally ``pynurbs.Curve`` instance
+        :param full_curve: The full curve to split.
+                Ideally ``pynurbs.Curve`` instance
         :type full_curve: Point2D
         :return: The created jordan curve
         :rtype: JordanCurve
@@ -428,7 +435,7 @@ class JordanCurve:
         points = list(new_segments[-1].ctrlpoints)
         points[-1] = segment.ctrlpoints[-1]
         new_segments[-1].ctrlpoints = points
-        for i, node in enumerate(nodes):
+        for i in range(len(nodes)):
             points = list(new_segments[i + 1].ctrlpoints)
             points[0] = new_segments[i].ctrlpoints[-1]
             new_segments[i + 1].ctrlpoints = points
@@ -442,11 +449,13 @@ class JordanCurve:
         """Divides the jordan curve in some nodes
 
         Given ``indexs = [a0, a1, ..., an]`` and ``nodes = [u0, u1, ..., un]``
-        then for each pair ``(ai, ui)``, split the ``self.segments[ai]`` at ``ui``
+        then for each pair ``(ai, ui)``,
+        split the ``self.segments[ai]`` at ``ui``
 
         .. note: ``node = 0`` or ``node = 1`` are ignored
 
-        :param indexs: The number of interior points, ``0 <= index < len(segments)``
+        :param indexs: The number of interior points,
+                       ``0 <= index < len(segments)``
         :type indexs: tuple[int]
         :param nodes: The nodes to split, ``0 <= node <= 1``
         :type nodes: tuple[float]
@@ -708,8 +717,8 @@ class JordanCurve:
 
     def __abs__(self) -> JordanCurve:
         """Returns the same curve, but in positive direction"""
-        copy = self.__copy__()
-        return copy if float(self) > 0 else copy.invert()
+        curve = self.__copy__()
+        return curve if float(self) > 0 else curve.invert()
 
     def __intersection(
         self, other: JordanCurve
@@ -742,19 +751,25 @@ class JordanCurve:
         equal_beziers: bool = True,
         end_points: bool = True,
     ) -> Tuple[Tuple[int, int, float, float]]:
-        """Computes the intersection between two jordan curves
+        r"""Computes the intersection between two jordan curves
 
-        Finds the values of (:math:`a^{\\star}`, :math:`b^{\\star}`, :math:`u^{\\star}`, :math:`v^{\\star}`) such
+        Finds the values of (:math:`a^{\star}`, :math:`b^{\star}`,
+        :math:`u^{\star}`, :math:`v^{\star}`) such
 
         .. math::
-            S_{a^{\\star}}(u^{\\star}) == O_{b^{\\star}}(v^{\\star})
+            S_{a^{\star}}(u^{\star}) == O_{b^{\star}}(v^{\star})
 
         It computes the intersection between each pair of segments
         from ``self`` and ``other`` and returns the matrix of coefficients
 
         .. math::
 
-            \\begin{bmatrix} a_0 & b_0 & u_0 & v_0 \\\\ a_1 & b_1 & u_1 & v_1 \\\\  \\vdots & \\vdots & \\vdots & \\vdots \\\\ a_{n} & b_{n} & u_{n} & v_{n} \\end{bmatrix}
+            \begin{bmatrix}
+            a_0 & b_0 & u_0 & v_0 \\
+            a_1 & b_1 & u_1 & v_1 \\
+            \vdots & \vdots & \vdots & \vdots \\
+            a_{n} & b_{n} & u_{n} & v_{n}
+            \end{bmatrix}
 
         If two bezier curves are equal, then ``u_i = v_i = None``
 
@@ -770,14 +785,18 @@ class JordanCurve:
         equal_beziers : bool, default = True
             Flag to return (or not) when two segments are equal
 
-            If the flag ``equal_beziers`` are inactive, then will remove when ``(ui, vi) == (None, None)``.
+            If the flag ``equal_beziers`` are inactive,
+            then will remove when ``(ui, vi) == (None, None)``.
 
         end_points : bool, default = True
-            Flag to return (or not) when jordans intersect at end points, defaults to ``True``
+            Flag to return (or not) when jordans intersect at end points
 
-            If the flag ``end_points`` are inactive, then will remove when ``(ui, vi)`` are ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
+            If the flag ``end_points`` are inactive,
+            then will remove when ``(ui, vi)`` are
+            ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
 
-        :return: The matrix of coefficients ``[(ai, bi, ui, vi)]`` or an empty tuple in case of non-intersection
+        :return: The matrix of coefficients ``[(ai, bi, ui, vi)]``
+                 or an empty tuple in case of non-intersection
         :rtype: tuple[(int, int, float, float)]
 
 
@@ -801,7 +820,7 @@ class JordanCurve:
                     intersections.remove((ai, bi, ui, vi))
         if not end_points:
             for ai, bi, ui, vi in tuple(intersections):
-                if ui is None or (0 < ui and ui < 1) or (0 < vi and vi < 1):
+                if ui is None or (0 < ui < 1) or (0 < vi < 1):
                     continue
                 intersections.remove((ai, bi, ui, vi))
         return tuple(sorted(intersections))

@@ -1,6 +1,6 @@
 """
 Tests related to shape module, more specifically about the class SimpleShape
-Which are in fact positive shapes defined only by one jordan curve 
+Which are in fact positive shapes defined only by one jordan curve
 """
 
 import pytest

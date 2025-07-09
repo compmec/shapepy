@@ -1,3 +1,9 @@
+"""
+Module that defines the basic geometric classes used for the package
+
+They are used to encapsulate some commands
+"""
+
 from __future__ import annotations
 
 import fractions
@@ -7,18 +13,18 @@ from typing import Tuple, Union
 import numpy as np
 
 
-class Point2D(object):
+class Point2D:
+    """
+    Defines a Point in the plane, that has 2 coordinates (x, y)
+    """
+
     def __new__(cls, *point: Tuple[float]):
         if isinstance(point[0], cls):
             return point[0]
         return super().__new__(cls)
 
     def __init__(self, *point: Tuple[float]):
-        try:
-            x, y = point if len(point) == 2 else point[0]
-        except ValueError:
-            error_msg = f"Invalid input for point: {point}"
-            raise ValueError(error_msg)
+        x, y = point if len(point) == 2 else point[0]
         if isinstance(x, str) or isinstance(y, str):
             raise TypeError
         float(x)
@@ -46,6 +52,9 @@ class Point2D(object):
         return self[0] * other[1] - self[1] * other[0]
 
     def norm2(self) -> float:
+        """
+        Computes the L2 norm square = <point, point>
+        """
         return self.inner(self)
 
     def __abs__(self) -> float:
@@ -81,7 +90,7 @@ class Point2D(object):
 
     def __getitem__(self, index: int):
         assert isinstance(index, int)
-        assert index == 0 or index == 1
+        assert index in {0, 1}
         return self._x if index == 0 else self._y
 
     def __str__(self) -> str:
@@ -103,7 +112,7 @@ class Point2D(object):
             )
         else:
             ymsg = str(self._y)
-        return "(%s, %s)" % (xmsg, ymsg)
+        return f"({xmsg}, {ymsg})"
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -194,6 +203,9 @@ class Point2D(object):
         return self
 
     def scale(self, xscale: float, yscale: float) -> Point2D:
+        """
+        Gives the new point (xscale * x0, yscale * y0)
+        """
         float(xscale)
         float(yscale)
         self._x *= xscale
@@ -203,12 +215,13 @@ class Point2D(object):
 
 class Box:
     """
-    Box class, which speeds up the evaluation of
-    ``__contains__`` in classes like ``PlanarCurve``, ``JordanCurve`` and ``SimpleShape``.
+    Box class, which speeds up the evaluation of ``__contains__``
+    in classes like ``PlanarCurve``, ``JordanCurve`` and ``SimpleShape``.
 
-    Since it's faster to evaluate if a point is in a rectangle (this box), we avoid some
-    computations like projecting the point on a curve and verifying if the distance is
-    big enough to consider whether the point is the object
+    Since it's faster to evaluate if a point is in a rectangle (this box),
+    we avoid some computations like projecting the point on a curve and
+    verifying if the distance is big enough to consider whether the point
+    is the object
 
     """
 
@@ -238,7 +251,7 @@ class Box:
             return False
         if self.toppt[0] + self.dx < point[0]:
             return False
-        return not (self.toppt[1] + self.dy < point[1])
+        return not self.toppt[1] + self.dy < point[1]
 
     def __or__(self, other: Box) -> Box:
         xmin = min(self.lowpt[0], other.lowpt[0])
