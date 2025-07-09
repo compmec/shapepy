@@ -1,3 +1,15 @@
+"""
+File that defines the classes
+
+* Math: to store mathematical methods used
+* BaseCurve: Defines a parent of BezierCurve and PlanarCurve
+* Operations
+* Intersection
+* Projection
+* Derivate
+* IntegratePlanar
+"""
+
 from __future__ import annotations
 
 import math
@@ -12,6 +24,17 @@ from shapepy.polygon import Box, Point2D
 
 
 class Math:
+    """
+    Defines the mathematical functions used for the package
+
+    The methods are
+    * comb
+    * horner_method
+    * bezier_caract_matrix
+    * closed_linspace
+    * open_linspace
+    """
+
     __caract_matrix = {}
 
     @staticmethod
@@ -63,12 +86,38 @@ class Math:
 
     @staticmethod
     def closed_linspace(npts: int) -> Tuple[Fraction]:
+        """
+        Gives a set of numbers in interval [0, 1]
+
+        Example
+        -------
+        >>> closed_linspace(2)
+        (0, 1)
+        >>> closed_linspace(3)
+        (0, 0.5, 1)
+        >>> closed_linspace(4)
+        (0, 0.33, 0.66, 1)
+        >>> closed_linspace(5)
+        (0, 0.25, 0.5, 0.75, 1)
+        """
         assert isinstance(npts, int)
         assert npts >= 2
         return tuple(Fraction(num, npts - 1) for num in range(npts))
 
     @staticmethod
     def open_linspace(npts: int) -> Tuple[Fraction]:
+        """
+        Gives a set of numbers in interval (0, 1)
+
+        Example
+        -------
+        >>> open_linspace(1)
+        (0.5, )
+        >>> open_linspace(2)
+        (0.33, 0.66)
+        >>> open_linspace(3)
+        (0.25, 0.50, 0.75)
+        """
         assert isinstance(npts, int)
         assert npts >= 1
         return tuple(
@@ -77,6 +126,10 @@ class Math:
 
 
 class BaseCurve(object):
+    """
+    Defines a parent class of BezierCurve and PlanarCurve
+    """
+
     def __call__(
         self, nodes: Union[float, Tuple[float]]
     ) -> Union[Any, Tuple[Any]]:
@@ -184,6 +237,11 @@ class BezierCurve(BaseCurve):
 
 
 class PlanarCurve(BaseCurve):
+    """
+    Defines a planar curve in the plane,
+    that contains a bezier curve inside it
+    """
+
     def __init__(self, ctrlpoints: Tuple[Point2D]):
         ctrlpoints = list(ctrlpoints)
         for i, point in enumerate(ctrlpoints):
@@ -291,18 +349,33 @@ class PlanarCurve(BaseCurve):
 
     @property
     def degree(self) -> int:
+        """
+        The degree of the bezier curve
+
+        Degree = 1 -> Linear curve
+        Degree = 2 -> Quadratic
+        """
         return self.__planar.degree
 
     @property
     def npts(self) -> int:
+        """
+        The number of control points used by the curve
+        """
         return self.__planar.npts
 
     @property
     def ctrlpoints(self) -> Tuple[Point2D]:
+        """
+        The control points that defines the planar curve
+        """
         return self.__planar.ctrlpoints
 
     @property
     def weights(self) -> Tuple[float]:
+        """
+        The weights of the control points, used for rational curves
+        """
         raise NotImplementedError
 
     @ctrlpoints.setter
@@ -313,9 +386,15 @@ class PlanarCurve(BaseCurve):
         self.__planar.ctrlpoints = points
 
     def eval(self, nodes: Tuple[float]) -> Tuple[Any]:
+        """
+        Evaluates the nodes, giving the points
+        """
         return self.__planar.eval(nodes)
 
     def derivate(self, times: Optional[int] = 1) -> PlanarCurve:
+        """
+        Gives the first derivative of the curve
+        """
         assert isinstance(times, int)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
@@ -351,6 +430,10 @@ class PlanarCurve(BaseCurve):
         return self.__class__(ctrlpoints)
 
     def invert(self) -> PlanarCurve:
+        """
+        Inverts the direction of the curve.
+        If the curve is clockwise, it becomes counterclockwise
+        """
         points = self.ctrlpoints
         npts = len(points)
         new_ctrlpoints = tuple(points[i] for i in range(npts - 1, -1, -1))
@@ -358,6 +441,9 @@ class PlanarCurve(BaseCurve):
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[PlanarCurve]:
+        """
+        Splits the curve into more segments
+        """
         beziers = self.__planar.split(nodes)
         planars = tuple(PlanarCurve(bezier.ctrlpoints) for bezier in beziers)
         return planars
@@ -712,6 +798,11 @@ class IntegratePlanar:
     def winding_number_linear(
         pointa: Point2D, pointb: Point2D, center: Point2D
     ) -> float:
+        """
+        Computes the winding number defined by the given points.
+        It means, it's the angle made between the vector
+        (pointb - center) and (pointa - center)
+        """
         anglea = np.arctan2(
             float(pointa[1] - center[1]), float(pointa[0] - center[0])
         )
