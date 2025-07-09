@@ -4,6 +4,9 @@ It uses mainly curves as boundary to compute the elements.
 For the moment, it only uses polygon shapes:
     retangular is a 4-side shape while a circle is a polygon with many sides
 """
+
+import importlib
+
 from shapepy.curve import IntegratePlanar, PlanarCurve
 from shapepy.jordancurve import IntegrateJordan, JordanCurve
 from shapepy.plot import ShapePloter
@@ -18,7 +21,7 @@ from shapepy.shape import (
     WholeShape,
 )
 
-__version__ = "1.1.0"
+__version__ = importlib.metadata.version("shapepy")
 
 if __name__ == "__main__":
     pass
