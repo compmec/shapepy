@@ -14,10 +14,10 @@ from typing import Tuple
 
 import numpy as np
 
-from shapepy.curve import PlanarCurve
-from shapepy.jordancurve import JordanCurve
-from shapepy.polygon import Point2D
-from shapepy.shape import EmptyShape, SimpleShape, WholeShape
+from shapepy.bool2d.shape import EmptyShape, SimpleShape, WholeShape
+from shapepy.geometry.curve import PlanarCurve
+from shapepy.geometry.jordancurve import JordanCurve
+from shapepy.geometry.polygon import Point2D
 
 
 class Primitive:

@@ -5,19 +5,24 @@ Which are in fact positive shapes defined only by one jordan curve
 
 import pytest
 
-from shapepy.primitive import Primitive
-from shapepy.shape import ConnectedShape, DisjointShape, EmptyShape, WholeShape
+from shapepy.bool2d.primitive import Primitive
+from shapepy.bool2d.shape import (
+    ConnectedShape,
+    DisjointShape,
+    EmptyShape,
+    WholeShape,
+)
 
 
 @pytest.mark.order(9)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
-        "tests/test_jordan_polygon.py::test_end",
-        "tests/test_jordan_curve.py::test_end",
-        "tests/test_primitive.py::test_end",
-        "tests/test_contains.py::test_end",
-        "tests/test_empty_whole.py::test_end",
+        "tests/geometry/test_polygon.py::test_end",
+        "tests/geometry/test_jordan_polygon.py::test_end",
+        "tests/geometry/test_jordan_curve.py::test_end",
+        "tests/bool2d/test_primitive.py::test_end",
+        "tests/bool2d/test_contains.py::test_end",
+        "tests/bool2d/test_empty_whole.py::test_end",
     ],
     scope="session",
 )

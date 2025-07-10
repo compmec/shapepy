@@ -11,8 +11,8 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from shapepy.curve import IntegratePlanar, PlanarCurve
-from shapepy.polygon import Box, Point2D
+from shapepy.geometry.curve import IntegratePlanar, PlanarCurve
+from shapepy.geometry.polygon import Box, Point2D
 
 
 class IntegrateJordan:

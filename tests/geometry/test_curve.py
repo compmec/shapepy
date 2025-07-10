@@ -8,13 +8,18 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from shapepy.curve import BezierCurve, IntegratePlanar, Math, PlanarCurve
+from shapepy.geometry.curve import (
+    BezierCurve,
+    IntegratePlanar,
+    Math,
+    PlanarCurve,
+)
 
 
 @pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
+        "tests/geometry/test_polygon.py::test_end",
     ],
     scope="session",
 )

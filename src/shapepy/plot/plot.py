@@ -11,15 +11,15 @@ import matplotlib
 import numpy as np
 from matplotlib import pyplot
 
-from shapepy.curve import PlanarCurve
-from shapepy.jordancurve import JordanCurve
-from shapepy.shape import (
+from shapepy.bool2d.shape import (
     BaseShape,
     ConnectedShape,
     DisjointShape,
     EmptyShape,
     WholeShape,
 )
+from shapepy.geometry.curve import PlanarCurve
+from shapepy.geometry.jordancurve import JordanCurve
 
 Path = matplotlib.path.Path
 PathPatch = matplotlib.patches.PathPatch
