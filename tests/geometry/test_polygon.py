@@ -10,7 +10,12 @@ from shapepy.geometry.polygon import Point2D
 
 
 @pytest.mark.order(2)
-@pytest.mark.dependency()
+@pytest.mark.dependency(
+    depends=[
+        "tests/scalar/test_reals.py::test_all",
+    ],
+    scope="session",
+)
 def test_begin():
     pass
 
