@@ -7,14 +7,14 @@ import math
 import numpy as np
 import pytest
 
-from shapepy.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
 
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_polygon.py::test_end",
-        "tests/test_curve.py::test_end",
+        "tests/geometry/test_polygon.py::test_end",
+        "tests/geometry/test_curve.py::test_end",
     ],
     scope="session",
 )

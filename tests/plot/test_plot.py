@@ -7,13 +7,13 @@ import pytest
 from matplotlib import pyplot
 
 from shapepy import ShapePloter
-from shapepy.primitive import Primitive
+from shapepy.bool2d.primitive import Primitive
 
 
 @pytest.mark.order(13)
 @pytest.mark.dependency(
     depends=[
-        "tests/test_shape.py::test_end",
+        "tests/bool2d/test_shape.py::test_end",
     ],
     scope="session",
 )

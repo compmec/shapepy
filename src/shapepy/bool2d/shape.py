@@ -16,8 +16,8 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from shapepy.jordancurve import IntegrateJordan, JordanCurve
-from shapepy.polygon import Box, Point2D
+from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.geometry.polygon import Box, Point2D
 
 
 class SuperclassMeta(type):

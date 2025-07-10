@@ -20,7 +20,7 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 import pynurbs
 
-from shapepy.polygon import Box, Point2D
+from shapepy.geometry.polygon import Box, Point2D
 
 
 class Math:

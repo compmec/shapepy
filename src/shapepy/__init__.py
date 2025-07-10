@@ -7,12 +7,8 @@ For the moment, it only uses polygon shapes:
 
 import importlib
 
-from shapepy.curve import IntegratePlanar, PlanarCurve
-from shapepy.jordancurve import IntegrateJordan, JordanCurve
-from shapepy.plot import ShapePloter
-from shapepy.polygon import Point2D
-from shapepy.primitive import Primitive
-from shapepy.shape import (
+from shapepy.bool2d.primitive import Primitive
+from shapepy.bool2d.shape import (
     ConnectedShape,
     DisjointShape,
     EmptyShape,
@@ -20,6 +16,10 @@ from shapepy.shape import (
     SimpleShape,
     WholeShape,
 )
+from shapepy.geometry.curve import IntegratePlanar, PlanarCurve
+from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.geometry.polygon import Point2D
+from shapepy.plot.plot import ShapePloter
 
 __version__ = importlib.metadata.version("shapepy")
 
