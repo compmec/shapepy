@@ -11,7 +11,7 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
-from shapepy.geometry.box import Box
+from shapepy.geometry.cage import Cage
 from shapepy.geometry.curve import IntegratePlanar, PlanarCurve
 from shapepy.geometry.point import Point2D
 
@@ -540,11 +540,11 @@ class JordanCurve:
         all_points.append(all_points[0])  # Close the curve
         return tuple(all_points)
 
-    def box(self) -> Box:
+    def box(self) -> Cage:
         """The box which encloses the jordan curve
 
         :return: The box which encloses the jordan curve
-        :rtype: Box
+        :rtype: Cage
 
         Example use
         -----------
@@ -553,7 +553,7 @@ class JordanCurve:
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> jordan.box()
-        Box with vertices (0, 0) and (4, 3)
+        Cage with vertices (0, 0) and (4, 3)
 
         """
         box = None
