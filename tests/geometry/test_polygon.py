@@ -6,7 +6,7 @@ from fractions import Fraction as frac
 
 import pytest
 
-from shapepy.geometry.polygon import Point2D
+from shapepy.geometry.point import Point2D
 
 
 @pytest.mark.order(2)
