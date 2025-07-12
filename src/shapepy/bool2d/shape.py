@@ -16,8 +16,11 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
+from shapepy.geometry.cage import Cage
 from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
-from shapepy.geometry.polygon import Box, Point2D
+from shapepy.geometry.point import Point2D
+
+from ..scalar.reals import To
 
 
 class SuperclassMeta(type):
@@ -540,15 +543,15 @@ class DefinedShape(BaseShape):
         jordans = tuple(copy(jordan) for jordan in self.jordans)
         return shape_from_jordans(jordans)
 
-    def box(self) -> Box:
+    def box(self) -> Cage:
         """
-        Box that encloses all jordan curves
+        Cage that encloses all jordan curves
 
         Parameters
         ----------
 
         :return: The box that encloses all
-        :rtype: Box
+        :rtype: Cage
 
 
         Example use
@@ -556,7 +559,7 @@ class DefinedShape(BaseShape):
         >>> from shapepy import Primitive, IntegrateShape
         >>> circle = Primitive.circle(radius = 1)
         >>> circle.box()
-        Box with vertices (-1.0, -1.0) and (1., 1.0)
+        Cage with vertices (-1.0, -1.0) and (1., 1.0)
 
         """
         box = None
@@ -604,13 +607,13 @@ class DefinedShape(BaseShape):
             return self.contains_shape(other)
         if isinstance(other, JordanCurve):
             return self.contains_jordan(other)
-        point = Point2D(other)
+        point = To.point(other)
         return self.contains_point(point)
 
     def __float__(self) -> float:
         return float(IntegrateShape.area(self))
 
-    def move(self, *point: Point2D) -> BaseShape:
+    def move(self, point: Point2D) -> BaseShape:
         """
         Moves/translate entire shape by an amount
 
@@ -630,7 +633,7 @@ class DefinedShape(BaseShape):
         >>> circle.move(1, 2)
 
         """
-        point = Point2D(*point)
+        point = To.point(point)
         for jordan in self.jordans:
             jordan.move(point)
         return self
@@ -719,7 +722,7 @@ class DefinedShape(BaseShape):
         False
 
         """
-        point = Point2D(point)
+        point = To.point(point)
         assert isinstance(boundary, bool)
         return self._contains_point(point, boundary)
 

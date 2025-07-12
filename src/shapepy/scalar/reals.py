@@ -233,7 +233,7 @@ class To:
         return number
 
     @staticmethod
-    def rational(numerator: Rational, denominator: Rational) -> Rational:
+    def rational(numerator: Rational, denominator: Rational = 1) -> Rational:
         """
         Divide two rational numbers and return the result as a fraction.
         If any input is not integer/rational, performs standard division.

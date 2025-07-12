@@ -8,8 +8,9 @@ import numpy as np
 import pynurbs
 import pytest
 
-from shapepy import Point2D
 from shapepy.geometry.jordancurve import JordanCurve
+from shapepy.geometry.point import Point2D
+from shapepy.scalar.reals import To
 
 
 @pytest.mark.order(6)
@@ -39,7 +40,7 @@ class TestQuadraticJordan:
         knotvector = [Fraction(knot) for knot in knotvector]
         points = [(0, -1), (2, 0), (0, 1), (0, 1), (0, -1)]
         curve = pynurbs.Curve(knotvector)
-        curve.ctrlpoints = [Point2D(point) for point in points]
+        curve.ctrlpoints = [To.point(point) for point in points]
         JordanCurve.from_full_curve(curve)
 
     @pytest.mark.order(6)
@@ -69,12 +70,12 @@ class TestQuadraticJordan:
 
         pointsa = [(0, -2), (4, 0), (0, 2), (0, 0), (0, -2)]
         curvea = pynurbs.Curve(knotvector)
-        curvea.ctrlpoints = [Point2D(pt) for pt in pointsa]
+        curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
         jordana = JordanCurve.from_full_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         curveb = pynurbs.Curve(knotvector)
-        curveb.ctrlpoints = [Point2D(pt) for pt in pointsb]
+        curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = JordanCurve.from_full_curve(curveb)
 
         good = [(0, 0, 1 / 4, 1 / 4), (0, 0, 3 / 4, 3 / 4)]
@@ -98,13 +99,13 @@ class TestQuadraticJordan:
         pointsa = [(0, -2), (4, 0), (0, 2), (0, 0), (0, -2)]
         # pointsa = np.array(pointsa, dtype="float64")
         curvea = pynurbs.Curve(knotvector)
-        curvea.ctrlpoints = [Point2D(pt) for pt in pointsa]
+        curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
         jordana = JordanCurve.from_full_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         # pointsb = np.array(pointsb, dtype="float64")
         curveb = pynurbs.Curve(knotvector)
-        curveb.ctrlpoints = [Point2D(pt) for pt in pointsb]
+        curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = JordanCurve.from_full_curve(curveb)
 
         good = [(0, 0, 0.25, 0.25), (0, 0, 0.75, 0.75)]
