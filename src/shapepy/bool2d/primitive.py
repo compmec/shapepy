@@ -8,8 +8,6 @@ This file contains functions to create primitive shapes such as:
 
 import math
 from copy import copy
-from fractions import Fraction
-from numbers import Real
 from typing import Tuple
 
 import numpy as np
@@ -18,6 +16,8 @@ from shapepy.bool2d.shape import EmptyShape, SimpleShape, WholeShape
 from shapepy.geometry.curve import PlanarCurve
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D
+
+from ..scalar.reals import Is, To
 
 
 class Primitive:
@@ -67,24 +67,24 @@ class Primitive:
         .. image:: ../img/primitive/regular5.svg
 
         """
-        if not isinstance(nsides, int):
+        if not Is.integer(nsides):
             raise ValueError
         if nsides < 3:
             raise ValueError
-        if not isinstance(radius, Real):
+        if not Is.real(radius):
             raise ValueError
         if radius <= 0:
             raise ValueError
-        center = Point2D(center)
+        center = To.point(center)
         if nsides == 4:
             vertices = [(radius, 0), (0, radius), (-radius, 0), (0, -radius)]
-            vertices = tuple(center + Point2D(vertex) for vertex in vertices)
+            vertices = tuple(center + To.point(vertex) for vertex in vertices)
         else:
             vertices = np.empty((nsides, 2), dtype="float64")
             theta = np.linspace(0, math.tau, nsides, endpoint=False)
             vertices[:, 0] = radius * np.cos(theta)
             vertices[:, 1] = radius * np.sin(theta)
-            vertices = tuple(center + Point2D(vertex) for vertex in vertices)
+            vertices = tuple(center + To.point(vertex) for vertex in vertices)
         return Primitive.polygon(vertices)
 
     @staticmethod
@@ -109,7 +109,7 @@ class Primitive:
         .. image:: ../img/primitive/diamond.svg
 
         """
-        vertices = tuple(Point2D(vertex) for vertex in vertices)
+        vertices = tuple(map(To.point, vertices))
         jordan_curve = JordanCurve.from_vertices(vertices)
         return SimpleShape(jordan_curve)
 
@@ -138,9 +138,9 @@ class Primitive:
         .. image:: ../img/primitive/triangle.svg
 
         """
-        center = Point2D(center)
+        center = To.point(center)
         vertices = [(0, 0), (side, 0), (0, side)]
-        vertices = tuple(center + Point2D(vertex) for vertex in vertices)
+        vertices = tuple(center + To.point(vertex) for vertex in vertices)
         return Primitive.polygon(vertices)
 
     @staticmethod
@@ -169,15 +169,15 @@ class Primitive:
         .. image:: ../img/primitive/square.svg
 
         """
-        if not isinstance(side, Real) or side <= 0:
+        if not Is.real(side) or side <= 0:
             raise ValueError
-        center = Point2D(center)
+        center = To.point(center)
 
-        if isinstance(side, int):
-            side = Fraction(side)
+        if Is.integer(side):
+            side = To.rational(side)
         side /= 2
         vertices = [(side, side), (-side, side), (-side, -side), (side, -side)]
-        vertices = [center + Point2D(vertex) for vertex in vertices]
+        vertices = [center + To.point(vertex) for vertex in vertices]
         return Primitive.polygon(vertices)
 
     @staticmethod
@@ -217,11 +217,11 @@ class Primitive:
             terms by changing ``ndivangle``.
 
         """
-        if not isinstance(radius, Real) or radius <= 0:
+        if not Is.real(radius) or radius <= 0:
             raise ValueError
-        if not isinstance(ndivangle, int) or ndivangle < 4:
+        if not Is.integer(ndivangle) or ndivangle < 4:
             raise ValueError
-        center = Point2D(center)
+        center = To.point(center)
 
         angle = math.tau / ndivangle
         height = np.tan(angle / 2)

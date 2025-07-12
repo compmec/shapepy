@@ -322,4 +322,22 @@ def to_angle(obj: object) -> Angle:
     return Angle.radians(obj)
 
 
+def is_angle(obj: object) -> bool:
+    """
+    Checks if the object is an instance of Angle
+
+    Parameters
+    ----------
+    obj : object
+        The object to check
+
+    Returns
+    -------
+    bool
+        True if the object is an instance of Angle, False otherwise
+    """
+    return isinstance(obj, Angle)
+
+
 To.angle = to_angle
+Is.angle = is_angle

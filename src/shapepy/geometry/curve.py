@@ -15,13 +15,15 @@ from __future__ import annotations
 import math
 from copy import copy
 from fractions import Fraction
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Tuple, Union
 
 import numpy as np
 import pynurbs
 
 from shapepy.geometry.cage import Cage
 from shapepy.geometry.point import Point2D
+
+from ..scalar.reals import Is, Rational, To
 
 
 class Math:
@@ -86,7 +88,7 @@ class Math:
         return Math.__caract_matrix[degree]
 
     @staticmethod
-    def closed_linspace(npts: int) -> Tuple[Fraction]:
+    def closed_linspace(npts: int) -> Tuple[Rational]:
         """
         Gives a set of numbers in interval [0, 1]
 
@@ -103,10 +105,10 @@ class Math:
         """
         assert isinstance(npts, int)
         assert npts >= 2
-        return tuple(Fraction(num, npts - 1) for num in range(npts))
+        return tuple(To.rational(num, npts - 1) for num in range(npts))
 
     @staticmethod
-    def open_linspace(npts: int) -> Tuple[Fraction]:
+    def open_linspace(npts: int) -> Tuple[Rational]:
         """
         Gives a set of numbers in interval (0, 1)
 
@@ -122,8 +124,34 @@ class Math:
         assert isinstance(npts, int)
         assert npts >= 1
         return tuple(
-            Fraction(num) / (2 * npts) for num in range(1, 2 * npts, 2)
+            To.rational(num) / (2 * npts) for num in range(1, 2 * npts, 2)
         )
+
+    @staticmethod
+    def matdot(
+        matrix: Iterable[Iterable[float]], column: Iterable[Any]
+    ) -> Iterable[Any]:
+        """
+        Computes the dot product of a matrix with a column vector
+
+        If column is a tuple of floats, then it returns a tuple of floats
+        If column is a matrix, computes the matrix product
+        """
+        column = tuple(column)
+        for line in matrix:
+            yield Math.inner(line, column)
+
+    @staticmethod
+    def inner(vectora: Iterable[Any], vectorb: Iterable[Any]) -> Any:
+        """
+        Computes the inner product of two vectors.
+        """
+        veca0 = next(iter(vectora))
+        vecb0 = next(iter(vectorb))
+        result = veca0 * vecb0
+        for va, vb in zip(vectora, vectorb):
+            result += va * vb
+        return result
 
 
 class BezierCurve:
@@ -186,7 +214,14 @@ class BezierCurve:
         iter(nodes)
         results = [0] * len(nodes)
         matrix = Math.bezier_caract_matrix(self.degree)
-        canon_pts = np.dot(self.ctrlpoints, matrix)
+        zero = 0 * self.ctrlpoints[0]
+        canon_pts = tuple(
+            sum(
+                (line[j] * pt for j, pt in enumerate(self.ctrlpoints)),
+                start=zero,
+            )
+            for line in matrix
+        )
         for k, node in enumerate(nodes):
             results[k] = Math.horner_method(node, canon_pts)
         return tuple(results)
@@ -198,7 +233,14 @@ class BezierCurve:
         assert isinstance(times, int)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
-        new_ctrlpoints = np.dot(matrix, self.ctrlpoints)
+        zero = 0 * self.ctrlpoints[0]
+        new_ctrlpoints = tuple(
+            sum(
+                (line[j] * pj for j, pj in enumerate(self.ctrlpoints)),
+                start=zero,
+            )
+            for line in matrix
+        )
         return self.__class__(new_ctrlpoints)
 
     def clean(self, tolerance: Optional[float] = 1e-9) -> BezierCurve:
@@ -213,14 +255,17 @@ class BezierCurve:
         points = self.ctrlpoints
         while degree - times > 1:
             _, materror = Operations.degree_decrease(degree, times + 1)
-            error = np.dot(points, np.dot(materror, points))
+            error = sum(
+                sum(matval * (pi @ pj) for matval, pj in zip(line, points))
+                for line, pi in zip(materror, points)
+            )
             if tolerance and error > tolerance:
                 break
             times += 1
         if times == 0:
             return self
         mattrans, _ = Operations.degree_decrease(degree, times)
-        self.ctrlpoints = tuple(np.dot(mattrans, points))
+        self.ctrlpoints = tuple(Math.matdot(mattrans, points))
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[BezierCurve]:
@@ -243,7 +288,7 @@ class PlanarCurve:
     def __init__(self, ctrlpoints: Tuple[Point2D]):
         ctrlpoints = list(ctrlpoints)
         for i, point in enumerate(ctrlpoints):
-            ctrlpoints[i] = Point2D(point)
+            ctrlpoints[i] = To.point(point)
         self.__planar = BezierCurve(ctrlpoints)
 
     def __or__(self, other: PlanarCurve) -> PlanarCurve:
@@ -255,18 +300,22 @@ class PlanarCurve:
         dapt = self.ctrlpoints[-1] - self.ctrlpoints[-2]
         # First point of first derivative
         dbpt = other.ctrlpoints[1] - other.ctrlpoints[0]
-        if abs(dapt.cross(dbpt)) > 1e-6:
-            node = Fraction(1, 2)
+        if abs(dapt ^ dbpt) > 1e-6:
+            node = To.rational(1, 2)
         else:
             dsumpt = dapt + dbpt
-            denomin = dsumpt.inner(dsumpt)
-            node = dapt.inner(dsumpt) / denomin
-        knotvectora = pynurbs.GeneratorKnotVector.bezier(self.degree, Fraction)
+            denomin = dsumpt @ dsumpt
+            node = dapt @ dsumpt / denomin
+        knotvectora = pynurbs.GeneratorKnotVector.bezier(
+            self.degree, To.rational
+        )
         knotvectora.scale(node)
         knotvectorb = pynurbs.GeneratorKnotVector.bezier(
-            other.degree, Fraction
+            other.degree, To.rational
         )
         knotvectorb.scale(1 - node).shift(node)
+        print(knotvectora)
+        print(knotvectorb)
         newknotvector = tuple(knotvectora) + tuple(
             knotvectorb[self.degree + 1 :]
         )
@@ -274,7 +323,10 @@ class PlanarCurve:
         finalcurve.ctrlpoints = tuple(self.ctrlpoints) + tuple(
             other.ctrlpoints
         )
+        print("finalcurve = ", finalcurve)
+        print(f"node = {node}")
         finalcurve.knot_clean((node,))
+        print(".....")
         if finalcurve.degree + 1 != finalcurve.npts:
             raise ValueError("Union is not a bezier curve!")
         return self.__class__(finalcurve.ctrlpoints)
@@ -334,7 +386,7 @@ class PlanarCurve:
         return True
 
     def __contains__(self, point: Point2D) -> bool:
-        point = Point2D(point)
+        point = To.point(point)
         if point not in self.box():
             return False
         params = Projection.point_on_curve(point, self)
@@ -389,7 +441,7 @@ class PlanarCurve:
     def ctrlpoints(self, points: Tuple[Point2D]):
         points = list(points)
         for i, point in enumerate(points):
-            points[i] = Point2D(point)
+            points[i] = To.point(point)
         self.__planar.ctrlpoints = points
 
     def eval(self, nodes: Tuple[float]) -> Tuple[Any]:
@@ -405,7 +457,14 @@ class PlanarCurve:
         assert isinstance(times, int)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
-        new_ctrlpoints = np.dot(matrix, self.ctrlpoints)
+        zero = 0 * self.ctrlpoints[0]
+        new_ctrlpoints = tuple(
+            sum(
+                (mij * pt for mij, pt in zip(line, self.ctrlpoints)),
+                start=zero,
+            )
+            for line in matrix
+        )
         return self.__class__(new_ctrlpoints)
 
     def box(self) -> Cage:
@@ -482,10 +541,10 @@ class Operations:
         assert degree - times >= 0
         if (degree, times) not in Operations.__degree_decre:
             old_knotvector = pynurbs.GeneratorKnotVector.bezier(
-                degree, Fraction
+                degree, To.rational
             )
             new_knotvector = pynurbs.GeneratorKnotVector.bezier(
-                degree - times, Fraction
+                degree - times, To.rational
             )
             matrix, error = pynurbs.heavy.LeastSquare.spline2spline(
                 old_knotvector, new_knotvector
@@ -515,17 +574,17 @@ class Intersection:
         vector0 = pta1 - pta0
         vector1 = ptb1 - ptb0
         diff0 = ptb0 - pta0
-        denom = vector0.cross(vector1)
+        denom = vector0 ^ vector1
         if denom != 0:  # Lines are not parallel
-            param0 = diff0.cross(vector1) / denom
-            param1 = diff0.cross(vector0) / denom
+            param0 = (diff0 ^ vector1) / denom
+            param1 = (diff0 ^ vector0) / denom
             if param0 < 0 or 1 < param0:
                 return tuple()
             if param1 < 0 or 1 < param1:
                 return tuple()
             return param0, param1
         # Lines are parallel
-        if vector0.cross(diff0):
+        if vector0 ^ diff0 != 0:
             return tuple()  # Parallel, but not colinear
         return tuple()
 
@@ -555,11 +614,11 @@ class Intersection:
                 ddv = ddcurveb(v)
 
                 dif = ssu - oov
-                vect0 = dsu.inner(dif)
-                vect1 = -dov.inner(dif)
-                mat00 = dsu.inner(dsu) + ddu.inner(dif)
-                mat01 = -dsu.inner(dov)
-                mat11 = dov.inner(dov) - ddv.inner(dif)
+                vect0 = dsu @ dif
+                vect1 = -dov @ dif
+                mat00 = dsu @ dsu + ddu @ dif
+                mat01 = -dsu @ dov
+                mat11 = dov @ dov - ddv @ dif
                 deter = mat00 * mat11 - mat01**2
                 if abs(deter) < 1e-6:
                     continue
@@ -569,9 +628,9 @@ class Intersection:
                 new_pairs.add(pair)
             pairs = list(new_pairs)
             for i, (ui, vi) in enumerate(pairs):
-                if isinstance(ui, Fraction):
+                if Is.instance(ui, Fraction):
                     ui = ui.limit_denominator(10000)
-                if isinstance(vi, Fraction):
+                if Is.instance(vi, Fraction):
                     vi = vi.limit_denominator(10000)
                 pairs[i] = (ui, vi)
         return pairs
@@ -639,13 +698,13 @@ class Projection:
 
 
         """
-        point = Point2D(point)
+        point = To.point(point)
         assert isinstance(curve, PlanarCurve)
         nsample = 2 + curve.degree
         usample = Math.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
         curvals = tuple(cval - point for cval in curve(usample))
-        distans2 = tuple(curval.inner(curval) for curval in curvals)
+        distans2 = tuple(curval @ curval for curval in curvals)
         mindist2 = min(distans2)
         params = []
         for i, dist2 in enumerate(distans2):
@@ -662,11 +721,11 @@ class Projection:
         Uses newton iterations to find the parameters ``usample``
         such <C'(u), C(u) - P> = 0 stabilizes
         """
-        point = Point2D(point)
+        point = To.point(point)
         dcurve = curve.derivate()
         ddcurve = dcurve.derivate()
         usample = list(usample)
-        zero, one = Fraction(0), Fraction(1)
+        zero, one = To.rational(0), To.rational(1)
         for _ in range(10):  # Number of iterations
             curvals = tuple(cval - point for cval in curve(usample))
             dcurvals = dcurve(usample)
@@ -674,9 +733,9 @@ class Projection:
             for k, uk in enumerate(usample):
                 curval = curvals[k]
                 deriva = dcurvals[k]
-                fuk = deriva.inner(curval)
-                dfuk = ddcurvals[k].inner(curval)
-                dfuk += deriva.inner(deriva)
+                fuk = deriva @ curval
+                dfuk = ddcurvals[k] @ curval
+                dfuk += deriva @ deriva
                 dfuk = dfuk if abs(dfuk) > 1e-6 else 1e-6
                 newu = uk - fuk / dfuk
                 usample[k] = min(one, max(newu, zero))
@@ -709,7 +768,9 @@ class Derivate:
         q = p - 1
         """
         if degree not in Derivate.__non_rat_bezier_once:
-            knotvector = pynurbs.GeneratorKnotVector.bezier(degree, Fraction)
+            knotvector = pynurbs.GeneratorKnotVector.bezier(
+                degree, To.rational
+            )
             matrix = pynurbs.heavy.Calculus.derivate_nonrational_bezier(
                 knotvector
             )

@@ -20,6 +20,8 @@ from shapepy.geometry.cage import Cage
 from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
 from shapepy.geometry.point import Point2D
 
+from ..scalar.reals import To
+
 
 class SuperclassMeta(type):
     """
@@ -605,13 +607,13 @@ class DefinedShape(BaseShape):
             return self.contains_shape(other)
         if isinstance(other, JordanCurve):
             return self.contains_jordan(other)
-        point = Point2D(other)
+        point = To.point(other)
         return self.contains_point(point)
 
     def __float__(self) -> float:
         return float(IntegrateShape.area(self))
 
-    def move(self, *point: Point2D) -> BaseShape:
+    def move(self, point: Point2D) -> BaseShape:
         """
         Moves/translate entire shape by an amount
 
@@ -631,7 +633,7 @@ class DefinedShape(BaseShape):
         >>> circle.move(1, 2)
 
         """
-        point = Point2D(*point)
+        point = To.point(point)
         for jordan in self.jordans:
             jordan.move(point)
         return self
@@ -720,7 +722,7 @@ class DefinedShape(BaseShape):
         False
 
         """
-        point = Point2D(point)
+        point = To.point(point)
         assert isinstance(boundary, bool)
         return self._contains_point(point, boundary)
 
