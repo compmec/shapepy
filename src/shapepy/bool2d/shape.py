@@ -16,7 +16,7 @@ from typing import Any, Optional, Tuple, Union
 
 import numpy as np
 
-from shapepy.geometry.cage import Cage
+from shapepy.geometry.box import Box
 from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
 from shapepy.geometry.point import Point2D
 
@@ -543,15 +543,15 @@ class DefinedShape(BaseShape):
         jordans = tuple(copy(jordan) for jordan in self.jordans)
         return shape_from_jordans(jordans)
 
-    def box(self) -> Cage:
+    def box(self) -> Box:
         """
-        Cage that encloses all jordan curves
+        Box that encloses all jordan curves
 
         Parameters
         ----------
 
         :return: The box that encloses all
-        :rtype: Cage
+        :rtype: Box
 
 
         Example use
@@ -559,7 +559,7 @@ class DefinedShape(BaseShape):
         >>> from shapepy import Primitive, IntegrateShape
         >>> circle = Primitive.circle(radius = 1)
         >>> circle.box()
-        Cage with vertices (-1.0, -1.0) and (1., 1.0)
+        Box with vertices (-1.0, -1.0) and (1., 1.0)
 
         """
         box = None

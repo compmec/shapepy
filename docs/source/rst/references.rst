@@ -3,7 +3,7 @@
 
 ----------------------------------------------------
 
-.. autoclass:: shape.geometry.cage.Cage
+.. autoclass:: shape.geometry.box.Box
     :members:
 
 

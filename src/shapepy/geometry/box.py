@@ -1,5 +1,5 @@
 """
-Cage class for geometric operations.
+Box class for geometric operations.
 This class is used to speed up the evaluation of point containment
 """
 
@@ -10,9 +10,9 @@ from typing import Union
 from .point import Point2D
 
 
-class Cage:
+class Box:
     """
-    Cage class, which speeds up the evaluation of ``__contains__``
+    Box class, which speeds up the evaluation of ``__contains__``
     in classes like ``PlanarCurve``, ``JordanCurve`` and ``SimpleShape``.
 
     Since it's faster to evaluate if a point is in a rectangle (this box),
@@ -30,7 +30,7 @@ class Cage:
         self.toppt = toppt
 
     def __str__(self) -> str:
-        return f"Cage with vertices {self.lowpt} and {self.toppt}"
+        return f"Box with vertices {self.lowpt} and {self.toppt}"
 
     def __bool__(self) -> bool:
         return True
@@ -50,17 +50,17 @@ class Cage:
             return False
         return not self.toppt[1] + self.dy < point[1]
 
-    def __or__(self, other: Cage) -> Cage:
+    def __or__(self, other: Box) -> Box:
         xmin = min(self.lowpt[0], other.lowpt[0])
         ymin = min(self.lowpt[1], other.lowpt[1])
         xmax = max(self.toppt[0], other.toppt[0])
         ymax = max(self.toppt[1], other.toppt[1])
-        return Cage(Point2D(xmin, ymin), Point2D(xmax, ymax))
+        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
 
-    def __ror__(self, other) -> Cage:
+    def __ror__(self, other) -> Box:
         return self
 
-    def __and__(self, other: Cage) -> Union[Cage, None]:
+    def __and__(self, other: Box) -> Union[Box, None]:
         xmin = max(self.lowpt[0], other.lowpt[0])
         xmax = min(self.toppt[0], other.toppt[0])
         if xmax < xmin:
@@ -69,4 +69,4 @@ class Cage:
         ymax = min(self.toppt[1], other.toppt[1])
         if ymax < ymin:
             return None
-        return Cage(Point2D(xmin, ymin), Point2D(xmax, ymax))
+        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
