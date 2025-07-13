@@ -130,10 +130,10 @@ def test_evaluate():
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
 def test_neg():
-    polya = Bezier([1, 2, 3, 4])
-    polyb = Bezier([-1, -2, -3, -4])
+    beziera = Bezier([1, 2, 3, 4])
+    bezierb = Bezier([-1, -2, -3, -4])
 
-    assert -polya == polyb
+    assert -beziera == bezierb
 
 
 @pytest.mark.order(4)
@@ -152,12 +152,12 @@ def test_add():
         dega, degb = np.random.randint(0, maxdeg + 1, 2)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         coefsb = np.random.uniform(-1, 1, degb + 1)
-        polya = Bezier(coefsa)
-        polyb = Bezier(coefsb)
-        polyc = polya + polyb
-        valuesa = polya(tsample)
-        valuesb = polyb(tsample)
-        valuesc = polyc(tsample)
+        beziera = Bezier(coefsa)
+        bezierb = Bezier(coefsb)
+        bezierc = beziera + bezierb
+        valuesa = beziera(tsample)
+        valuesb = bezierb(tsample)
+        valuesc = bezierc(tsample)
 
         np.testing.assert_allclose(valuesa + valuesb, valuesc)
 
@@ -165,12 +165,12 @@ def test_add():
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         const = np.random.uniform(-1, 1)
-        polya = Bezier(coefsa)
-        polyb = polya + const
-        polyc = const + polya
-        valuesa = polya(tsample)
-        valuesb = polyb(tsample)
-        valuesc = polyc(tsample)
+        beziera = Bezier(coefsa)
+        bezierb = beziera + const
+        bezierc = const + beziera
+        valuesa = beziera(tsample)
+        valuesb = bezierb(tsample)
+        valuesc = bezierc(tsample)
 
         np.testing.assert_allclose(valuesa + const, valuesb)
         np.testing.assert_allclose(const + valuesa, valuesc)
@@ -192,12 +192,12 @@ def test_sub():
         dega, degb = np.random.randint(0, maxdeg + 1, 2)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         coefsb = np.random.uniform(-1, 1, degb + 1)
-        polya = Bezier(coefsa)
-        polyb = Bezier(coefsb)
-        polyc = polya - polyb
-        valuesa = polya(tsample)
-        valuesb = polyb(tsample)
-        valuesc = polyc(tsample)
+        beziera = Bezier(coefsa)
+        bezierb = Bezier(coefsb)
+        bezierc = beziera - bezierb
+        valuesa = beziera(tsample)
+        valuesb = bezierb(tsample)
+        valuesc = bezierc(tsample)
 
         np.testing.assert_allclose(valuesa - valuesb, valuesc)
 
@@ -205,12 +205,12 @@ def test_sub():
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         const = np.random.uniform(-1, 1)
-        polya = Bezier(coefsa)
-        polyb = polya - const
-        polyc = const - polya
-        valuesa = polya(tsample)
-        valuesb = polyb(tsample)
-        valuesc = polyc(tsample)
+        beziera = Bezier(coefsa)
+        bezierb = beziera - const
+        bezierc = const - beziera
+        valuesa = beziera(tsample)
+        valuesb = bezierb(tsample)
+        valuesc = bezierc(tsample)
 
         np.testing.assert_allclose(valuesa - const, valuesb)
         np.testing.assert_allclose(const - valuesa, valuesc)
@@ -232,12 +232,12 @@ def test_mul():
         dega, degb = np.random.randint(0, maxdeg + 1, 2)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         coefsb = np.random.uniform(-1, 1, degb + 1)
-        polya = Bezier(coefsa)
-        polyb = Bezier(coefsb)
-        polyc = polya * polyb
-        valuesa = polya(tsample)
-        valuesb = polyb(tsample)
-        valuesc = polyc(tsample)
+        beziera = Bezier(coefsa)
+        bezierb = Bezier(coefsb)
+        bezierc = beziera * bezierb
+        valuesa = beziera(tsample)
+        valuesb = bezierb(tsample)
+        valuesc = bezierc(tsample)
 
         np.testing.assert_allclose(valuesa * valuesb, valuesc)
 
@@ -245,12 +245,12 @@ def test_mul():
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         const = np.random.uniform(-1, 1)
-        polya = Bezier(coefsa)
-        polyb = polya * const
-        polyc = const * polya
-        valuesa = polya(tsample)
-        valuesb = polyb(tsample)
-        valuesc = polyc(tsample)
+        beziera = Bezier(coefsa)
+        bezierb = beziera * const
+        bezierc = const * beziera
+        valuesa = beziera(tsample)
+        valuesb = bezierb(tsample)
+        valuesc = bezierc(tsample)
 
         np.testing.assert_allclose(valuesa * const, valuesb)
         np.testing.assert_allclose(const * valuesa, valuesc)
@@ -275,8 +275,8 @@ def test_conversions():
         ctrlpoints = tuple(np.random.randint(-3, 4, degree + 1))
         bezier = Bezier(ctrlpoints)
         for _ in range(4):
-            poly = bezier2polynomial(bezier)
-            bezier = polynomial2bezier(poly)
+            bezier = bezier2polynomial(bezier)
+            bezier = polynomial2bezier(bezier)
             assert bezier == Bezier(ctrlpoints)
 
 
