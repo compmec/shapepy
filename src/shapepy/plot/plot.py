@@ -21,6 +21,8 @@ from shapepy.bool2d.shape import (
 from shapepy.geometry.curve import PlanarCurve
 from shapepy.geometry.jordancurve import JordanCurve
 
+from ..tools import Is
+
 Path = matplotlib.path.Path
 PathPatch = matplotlib.patches.PathPatch
 
@@ -106,12 +108,12 @@ class ShapePloter:
             fig = ax.get_figure()
         elif ax is None:
             ax = fig.axes
-            if isinstance(ax, list) and len(ax) == 0:
+            if Is.instance(ax, list) and len(ax) == 0:
                 ax = pyplot.gca()
         else:
-            if not isinstance(fig, matplotlib.figure.Figure):
+            if not Is.instance(fig, matplotlib.figure.Figure):
                 raise TypeError
-            if not isinstance(ax, type(matplotlib.pyplot.gca())):
+            if not Is.instance(ax, type(matplotlib.pyplot.gca())):
                 raise TypeError
         self.__fig = fig
         self.__ax = ax
@@ -135,7 +137,7 @@ class ShapePloter:
         """
         A wrapper of the matplotlib.pyplot.plt.plot
         """
-        if isinstance(args[0], BaseShape):
+        if Is.instance(args[0], BaseShape):
             return self.plot_shape(args[0], kwargs=kwargs)
         return self.gca().plot(*args, **kwargs)
 
@@ -144,10 +146,10 @@ class ShapePloter:
         """
         Plots a BaseShape, which can be Empty, Whole, Simple, etc
         """
-        assert isinstance(shape, BaseShape)
-        if isinstance(shape, EmptyShape):
+        assert Is.instance(shape, BaseShape)
+        if Is.instance(shape, EmptyShape):
             return
-        if isinstance(shape, WholeShape):
+        if Is.instance(shape, WholeShape):
             self.gca().set_facecolor("#BFFFBF")
             return
         attrs = ["pos_color", "neg_color", "fill_color", "alpha", "marker"]
@@ -160,7 +162,7 @@ class ShapePloter:
         alpha = kwargs.pop("alpha")
         marker = kwargs.pop("marker")
         connecteds = (
-            shape.subshapes if isinstance(shape, DisjointShape) else [shape]
+            shape.subshapes if Is.instance(shape, DisjointShape) else [shape]
         )
         for connected in connecteds:
             path = path_shape(connected)

@@ -7,7 +7,8 @@ They are used to encapsulate some commands
 from __future__ import annotations
 
 from ..scalar.angle import Angle
-from ..scalar.reals import Is, Math, Real, To
+from ..scalar.reals import Math, Real
+from ..tools import Is, To
 
 TOLERANCE = 1e-9
 
@@ -67,7 +68,7 @@ class Point2D:
     def __mul__(self, other: float) -> Point2D:
         if Is.point(other):
             return self.__matmul__(other)
-        if not Is.real(other):
+        if not Is.finite(other):
             raise TypeError(f"Multiplication with non-real number: {other}")
         return self.__class__(self[0] * other, self[1] * other)
 
@@ -79,7 +80,7 @@ class Point2D:
         return self[0] * other[0] + self[1] * other[1]
 
     def __xor__(self, other: Point2D) -> float:
-        if not isinstance(other, Point2D):
+        if not Is.point(other):
             raise TypeError(f"Cross product with non-Point2D object: {other}")
         return self[0] * other[1] - self[1] * other[0]
 
@@ -166,7 +167,7 @@ def to_point(point: Point2D | tuple[Real, Real]) -> Point2D:
     Point2D
         The converted point
     """
-    if isinstance(point, Point2D):
+    if Is.instance(point, Point2D):
         return point
     return Point2D(point[0], point[1])
 
@@ -185,10 +186,10 @@ def is_point(point: Point2D | tuple[Real, Real]) -> bool:
     bool
         True if the point is a Point2D or a tuple of two reals, False otherwise
     """
-    return isinstance(point, Point2D) or (
-        isinstance(point, tuple)
+    return Is.instance(point, Point2D) or (
+        Is.instance(point, tuple)
         and len(point) == 2
-        and all(Is.real(coord) for coord in point)
+        and all(Is.finite(coord) for coord in point)
     )
 
 

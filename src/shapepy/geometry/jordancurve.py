@@ -15,7 +15,7 @@ from shapepy.geometry.box import Box
 from shapepy.geometry.curve import IntegratePlanar, PlanarCurve
 from shapepy.geometry.point import Point2D
 
-from ..scalar.reals import To
+from ..tools import Is, To
 
 
 class IntegrateJordan:
@@ -33,10 +33,10 @@ class IntegrateJordan:
 
         I = int x^expx * y^expy * dy
         """
-        assert isinstance(jordan, JordanCurve)
-        assert isinstance(expx, int)
-        assert isinstance(expy, int)
-        assert nnodes is None or isinstance(nnodes, int)
+        assert Is.instance(jordan, JordanCurve)
+        assert Is.integer(expx) and expx >= 0
+        assert Is.integer(expy) and expy >= 0
+        assert nnodes is None or Is.integer(nnodes)
         total = 0
         for bezier in jordan.segments:
             total += IntegratePlanar.vertical(bezier, expx, expy, nnodes)
@@ -51,8 +51,8 @@ class IntegrateJordan:
 
         I = int x^expx * y^expy * ds
         """
-        assert isinstance(jordan, JordanCurve)
-        assert nnodes is None or isinstance(nnodes, int)
+        assert Is.instance(jordan, JordanCurve)
+        assert nnodes is None or Is.integer(nnodes)
         total = 0
         for bezier in jordan.segments:
             total += IntegratePlanar.polynomial(bezier, expx, expy, nnodes)
@@ -63,8 +63,8 @@ class IntegrateJordan:
         """
         Computes the lenght of jordan curve
         """
-        assert isinstance(jordan, JordanCurve)
-        assert nnodes is None or isinstance(nnodes, int)
+        assert Is.instance(jordan, JordanCurve)
+        assert nnodes is None or Is.integer(nnodes)
         lenght = 0
         for bezier in jordan.segments:
             lenght += IntegratePlanar.lenght(bezier, nnodes)
@@ -75,8 +75,8 @@ class IntegrateJordan:
         """
         Computes the interior area from jordan curve
         """
-        assert isinstance(jordan, JordanCurve)
-        assert nnodes is None or isinstance(nnodes, int)
+        assert Is.instance(jordan, JordanCurve)
+        assert nnodes is None or Is.integer(nnodes)
         area = 0
         for bezier in jordan.segments:
             area += IntegratePlanar.area(bezier, nnodes)
@@ -161,7 +161,7 @@ class JordanCurve:
         ((0, 0), (4, 0), (0, 3))
 
         """
-        if isinstance(vertices, str):
+        if Is.instance(vertices, str):
             raise TypeError
         vertices = list(vertices)
         for i, vertex in enumerate(vertices):
@@ -198,7 +198,7 @@ class JordanCurve:
         ((0, 0), (4, 0), (4, 3), (0, 3))
 
         """
-        if isinstance(all_ctrlpoints, str):
+        if Is.instance(all_ctrlpoints, str):
             raise TypeError
         beziers = [0] * len(all_ctrlpoints)
         for i, ctrlpoints in enumerate(all_ctrlpoints):
@@ -477,13 +477,10 @@ class JordanCurve:
 
         """
         for index in indexs:
-            assert isinstance(index, int)
-            assert 0 <= index
+            assert Is.integer(index) and 0 <= index
             assert index < len(self.segments)
         for node in nodes:
-            float(node)
-            assert 0 <= node
-            assert node <= 1
+            assert Is.finite(node) and 0 <= node <= 1
         assert len(indexs) == len(nodes)
         # Clean boundary nodes, when node = 0 or 1
         pairs = sorted(zip(indexs, nodes))
@@ -530,7 +527,7 @@ class JordanCurve:
         >>> plt.show()
 
         """
-        assert subnpts is None or (isinstance(subnpts, int) and subnpts >= 0)
+        assert subnpts is None or (Is.integer(subnpts) and subnpts >= 0)
         all_points = []
         for segment in self.segments:
             npts = (
@@ -620,7 +617,7 @@ class JordanCurve:
     @segments.setter
     def segments(self, other: Tuple[PlanarCurve]):
         for segment in other:
-            if not isinstance(segment, PlanarCurve):
+            if not Is.instance(segment, PlanarCurve):
                 raise TypeError
         ncurves = len(other)
         for i in range(ncurves - 1):
@@ -657,7 +654,7 @@ class JordanCurve:
         return msg
 
     def __eq__(self, other: JordanCurve) -> bool:
-        assert isinstance(other, JordanCurve)
+        assert Is.instance(other, JordanCurve)
         for point in other.points(1):
             if point not in self:
                 return False
@@ -814,7 +811,7 @@ class JordanCurve:
         ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
 
         """
-        assert isinstance(other, JordanCurve)
+        assert Is.instance(other, JordanCurve)
         intersections = self.__intersection(other)
         # Filter the values
         if not equal_beziers:

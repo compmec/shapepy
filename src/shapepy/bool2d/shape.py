@@ -20,7 +20,7 @@ from shapepy.geometry.box import Box
 from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
 from shapepy.geometry.point import Point2D
 
-from ..scalar.reals import To
+from ..tools import Is, To
 
 
 class SuperclassMeta(type):
@@ -88,10 +88,10 @@ class IntegrateShape:
 
 
         """
-        assert isinstance(shape, BaseShape)
-        assert isinstance(expx, int)
-        assert isinstance(expy, int)
-        assert nnodes is None or isinstance(nnodes, int)
+        assert Is.instance(shape, BaseShape)
+        assert Is.integer(expx)
+        assert Is.integer(expy)
+        assert nnodes is None or Is.integer(nnodes)
         total = 0
         for jordan in shape.jordans:
             total += IntegrateJordan.vertical(jordan, expx + 1, expy, nnodes)
@@ -148,8 +148,8 @@ class FollowPath:
         Find the intersections between two jordan curves and call split on the
         nodes which intersects
         """
-        assert isinstance(jordana, JordanCurve)
-        assert isinstance(jordanb, JordanCurve)
+        assert Is.instance(jordana, JordanCurve)
+        assert Is.instance(jordanb, JordanCurve)
         if jordana.box() & jordanb.box() is None:
             return
         all_positions = (set(), set())
@@ -211,8 +211,8 @@ class FollowPath:
         """
         Tells if a list is equal to another
         """
-        assert isinstance(oneobj, (tuple, list))
-        assert isinstance(other, (tuple, list))
+        assert Is.iterable(oneobj)
+        assert Is.iterable(other)
         oneobj = tuple(oneobj)
         other = tuple(other)
         if len(oneobj) != len(other):
@@ -277,7 +277,7 @@ class FollowPath:
         of the intersection between 'jordansa' and 'jordansb'
         """
         for jordan in jordans:
-            assert isinstance(jordan, JordanCurve)
+            assert Is.instance(jordan, JordanCurve)
         bez_indexs = []
         for ind_jord, ind_seg in start_indexs:
             indices_matrix = FollowPath.pursue_path(ind_jord, ind_seg, jordans)
@@ -342,8 +342,8 @@ class FollowPath:
         Computes the set of jordan curves that defines the boundary of
         the union between the two base shapes
         """
-        assert isinstance(shapea, BaseShape)
-        assert isinstance(shapeb, BaseShape)
+        assert Is.instance(shapea, BaseShape)
+        assert Is.instance(shapeb, BaseShape)
         for jordana in shapea.jordans:
             for jordanb in shapeb.jordans:
                 FollowPath.split_two_jordans(jordana, jordanb)
@@ -360,8 +360,8 @@ class FollowPath:
         Computes the set of jordan curves that defines the boundary of
         the intersection between the two base shapes
         """
-        assert isinstance(shapea, BaseShape)
-        assert isinstance(shapeb, BaseShape)
+        assert Is.instance(shapea, BaseShape)
+        assert Is.instance(shapeb, BaseShape)
         for jordana in shapea.jordans:
             for jordanb in shapeb.jordans:
                 FollowPath.split_two_jordans(jordana, jordanb)
@@ -571,10 +571,10 @@ class DefinedShape(BaseShape):
         return shape_from_jordans(tuple(~jordan for jordan in self.jordans))
 
     def __or__(self, other: BaseShape) -> BaseShape:
-        assert isinstance(other, BaseShape)
-        if isinstance(other, WholeShape):
+        assert Is.instance(other, BaseShape)
+        if Is.instance(other, WholeShape):
             return WholeShape()
-        if isinstance(other, EmptyShape):
+        if Is.instance(other, EmptyShape):
             return copy(self)
         if other in self:
             return copy(self)
@@ -586,10 +586,10 @@ class DefinedShape(BaseShape):
         return shape_from_jordans(new_jordans)
 
     def __and__(self, other: BaseShape) -> BaseShape:
-        assert isinstance(other, BaseShape)
-        if isinstance(other, WholeShape):
+        assert Is.instance(other, BaseShape)
+        if Is.instance(other, WholeShape):
             return copy(self)
-        if isinstance(other, EmptyShape):
+        if Is.instance(other, EmptyShape):
             return EmptyShape()
         if other in self:
             return copy(other)
@@ -603,9 +603,9 @@ class DefinedShape(BaseShape):
     def __contains__(
         self, other: Union[Point2D, JordanCurve, BaseShape]
     ) -> bool:
-        if isinstance(other, BaseShape):
+        if Is.instance(other, BaseShape):
             return self.contains_shape(other)
-        if isinstance(other, JordanCurve):
+        if Is.instance(other, JordanCurve):
             return self.contains_jordan(other)
         point = To.point(other)
         return self.contains_point(point)
@@ -723,7 +723,7 @@ class DefinedShape(BaseShape):
 
         """
         point = To.point(point)
-        assert isinstance(boundary, bool)
+        assert Is.bool(boundary)
         return self._contains_point(point, boundary)
 
     def contains_jordan(
@@ -754,8 +754,8 @@ class DefinedShape(BaseShape):
         True
 
         """
-        assert isinstance(jordan, JordanCurve)
-        assert isinstance(boundary, bool)
+        assert Is.instance(jordan, JordanCurve)
+        assert Is.bool(boundary)
         return self._contains_jordan(jordan, boundary)
 
     def contains_shape(self, other: BaseShape) -> bool:
@@ -782,10 +782,10 @@ class DefinedShape(BaseShape):
         True
 
         """
-        assert isinstance(other, BaseShape)
-        if isinstance(other, EmptyShape):
+        assert Is.instance(other, BaseShape)
+        if Is.instance(other, EmptyShape):
             return True
-        if isinstance(other, WholeShape):
+        if Is.instance(other, WholeShape):
             return False
         return self._contains_shape(other)
 
@@ -815,7 +815,7 @@ class SimpleShape(DefinedShape):
     """
 
     def __init__(self, jordancurve: JordanCurve):
-        assert isinstance(jordancurve, JordanCurve)
+        assert Is.instance(jordancurve, JordanCurve)
         super().__init__()
         self.__set_jordancurve(jordancurve)
 
@@ -842,9 +842,9 @@ class SimpleShape(DefinedShape):
 
         :raises ValueError: If ``other`` is not a BaseShape instance
         """
-        if not isinstance(other, BaseShape):
+        if not Is.instance(other, BaseShape):
             raise ValueError
-        if not isinstance(other, SimpleShape):
+        if not Is.instance(other, SimpleShape):
             return False
         if float(self) != float(other):
             return False
@@ -863,7 +863,7 @@ class SimpleShape(DefinedShape):
         return (self.__jordancurve,)
 
     def __set_jordancurve(self, other: JordanCurve):
-        assert isinstance(other, JordanCurve)
+        assert Is.instance(other, JordanCurve)
         self.__jordancurve = copy(other)
 
     def invert(self) -> SimpleShape:
@@ -928,10 +928,10 @@ class SimpleShape(DefinedShape):
         return True
 
     def _contains_shape(self, other: DefinedShape) -> bool:
-        assert isinstance(other, DefinedShape)
-        if isinstance(other, SimpleShape):
+        assert Is.instance(other, DefinedShape)
+        if Is.instance(other, SimpleShape):
             return self.__contains_simple(other)
-        if isinstance(other, ConnectedShape):
+        if Is.instance(other, ConnectedShape):
             # cap S_i in S_j = any_i (bar S_j in bar S_i)
             contains = False
             self.invert()
@@ -952,7 +952,7 @@ class SimpleShape(DefinedShape):
 
     # pylint: disable=chained-comparison
     def __contains_simple(self, other: SimpleShape) -> bool:
-        assert isinstance(other, SimpleShape)
+        assert Is.instance(other, SimpleShape)
         areaa = float(other)
         areab = float(self)
         jordana = other.jordans[0]
@@ -995,8 +995,8 @@ class ConnectedShape(DefinedShape):
         return str(self)
 
     def __eq__(self, other: BaseShape) -> bool:
-        assert isinstance(other, BaseShape)
-        if not isinstance(other, ConnectedShape):
+        assert Is.instance(other, BaseShape)
+        if not Is.instance(other, ConnectedShape):
             return False
         if abs(float(self) - float(other)) > 1e-6:
             return False
@@ -1049,7 +1049,7 @@ class ConnectedShape(DefinedShape):
     @subshapes.setter
     def subshapes(self, values: Tuple[SimpleShape]):
         for value in values:
-            assert isinstance(value, SimpleShape)
+            assert Is.instance(value, SimpleShape)
         areas = map(float, values)
 
         def algori(pair):
@@ -1097,7 +1097,7 @@ class DisjointShape(DefinedShape):
         if len(subshapes) == 0:
             return EmptyShape()
         for subshape in subshapes:
-            assert isinstance(subshape, (SimpleShape, ConnectedShape))
+            assert Is.instance(subshape, (SimpleShape, ConnectedShape))
         if len(subshapes) == 1:
             return copy(subshapes[0])
         instance = super(DisjointShape, cls).__new__(cls)
@@ -1114,8 +1114,8 @@ class DisjointShape(DefinedShape):
         return float(total)
 
     def __eq__(self, other: BaseShape):
-        assert isinstance(other, BaseShape)
-        if not isinstance(other, DisjointShape):
+        assert Is.instance(other, BaseShape)
+        if not Is.instance(other, DisjointShape):
             return False
         if float(self) != float(other):
             return False
@@ -1157,13 +1157,13 @@ class DisjointShape(DefinedShape):
         return False
 
     def _contains_shape(self, other: DefinedShape) -> bool:
-        assert isinstance(other, DefinedShape)
-        if isinstance(other, (SimpleShape, ConnectedShape)):
+        assert Is.instance(other, DefinedShape)
+        if Is.instance(other, (SimpleShape, ConnectedShape)):
             for subshape in self.subshapes:
                 if other in subshape:
                     return True
             return False
-        if isinstance(other, DisjointShape):
+        if Is.instance(other, DisjointShape):
             for subshape in other.subshapes:
                 if subshape not in self:
                     return False
@@ -1216,7 +1216,7 @@ class DisjointShape(DefinedShape):
     @subshapes.setter
     def subshapes(self, values: Tuple[BaseShape]):
         for value in values:
-            assert isinstance(value, (SimpleShape, ConnectedShape))
+            assert Is.instance(value, (SimpleShape, ConnectedShape))
         areas = map(float, values)
         lenghts = map(float, [val.jordans[0] for val in values])
 

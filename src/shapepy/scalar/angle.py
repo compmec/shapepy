@@ -10,7 +10,8 @@ from __future__ import annotations
 import re
 from numbers import Real
 
-from .reals import Is, Math, To
+from ..scalar.reals import Math
+from ..tools import Is, To
 
 
 class Angle:
@@ -189,13 +190,13 @@ class Angle:
     def __init__(self, quad: int = 0, part: Real = 0):
         if not Is.integer(quad):
             raise TypeError(f"Expected integer value, got {type(quad)}")
-        if not Is.real(part):
+        if not Is.finite(part):
             raise TypeError(f"Expected numeric value, got {type(part)}")
         self.quad: int = quad % 4
         self.part: Real = part
 
     def __eq__(self, other: object) -> bool:
-        if isinstance(other, Angle):
+        if Is.instance(other, Angle):
             return self.quad == other.quad and (self.part - other.part == 0)
         return self == Angle.radians(other)
 
@@ -203,15 +204,13 @@ class Angle:
         return float(Math.tau * (self.quad + self.part) / 4)
 
     def __add__(self, other: Angle) -> Angle:
-        if not isinstance(other, Angle):
-            raise TypeError(f"Cannot add {type(self)} with {type(other)}")
+        other = To.angle(other)
         return self.__class__.turns(
             ((self.quad + other.quad) + (self.part + other.part)) / 4
         )
 
     def __sub__(self, other: Angle) -> Angle:
-        if not isinstance(other, Angle):
-            raise TypeError(f"Cannot sub {type(self)} with {type(other)}")
+        other = To.angle(other)
         return self.__class__.turns(
             ((self.quad - other.quad) + (self.part - other.part)) / 4
         )
@@ -309,9 +308,9 @@ def to_angle(obj: object) -> Angle:
     >>> angle("2.1rad")
     >>> angle(1.25)
     """
-    if isinstance(obj, Angle):
+    if Is.instance(obj, Angle):
         return obj
-    if isinstance(obj, str):
+    if Is.instance(obj, str):
         tipo = re.findall(r"([a-zA-Z]+)$", obj)[0]
         value = To.finite(obj.replace(tipo, ""))
         if "deg" in tipo:
@@ -322,4 +321,29 @@ def to_angle(obj: object) -> Angle:
     return Angle.radians(obj)
 
 
+def is_angle(obj: object) -> bool:
+    """
+    Checks if the object is an instance of Angle
+
+    Parameters
+    ----------
+    obj : object
+        The object to check
+
+    Returns
+    -------
+    bool
+        True if the object is an instance of Angle, False otherwise
+
+    Example
+    -------
+    >>> is_angle(Angle.radians(1))
+    True
+    >>> is_angle(1.25)
+    False
+    """
+    return Is.instance(obj, Angle)
+
+
 To.angle = to_angle
+Is.angle = is_angle
