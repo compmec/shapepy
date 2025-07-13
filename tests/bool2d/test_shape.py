@@ -12,7 +12,7 @@ from shapepy.bool2d.shape import IntegrateShape, SimpleShape
 from shapepy.geometry.jordancurve import JordanCurve
 
 
-@pytest.mark.order(8)
+@pytest.mark.order(25)
 @pytest.mark.dependency(
     depends=[
         "tests/geometry/test_polygon.py::test_end",
@@ -29,12 +29,12 @@ def test_begin():
 
 
 class TestIntegrate:
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
     def test_centered_rectangular(self):
@@ -54,7 +54,7 @@ class TestIntegrate:
                     good /= 2 ** (expx + expy)
                 assert abs(test - good) < 1e-9
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -81,7 +81,7 @@ class TestIntegrate:
                 good /= (1 + expx) * (1 + expy)
                 assert abs(test - good) < 1e-9 * abs(good)
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -107,7 +107,7 @@ class TestIntegrate:
                     good /= (1 + expx + expy) * (2 + expx + expy)
                 assert abs(test - good) < 1e-9
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -122,7 +122,7 @@ class TestIntegrate:
 
 
 class TestOthers:
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -131,7 +131,7 @@ class TestOthers:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
@@ -144,7 +144,7 @@ class TestOthers:
         str(shape)
         repr(shape)
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
@@ -157,7 +157,7 @@ class TestOthers:
         with pytest.raises(ValueError):
             shapea != 0
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(25)
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
@@ -169,7 +169,7 @@ class TestOthers:
         pass
 
 
-@pytest.mark.order(8)
+@pytest.mark.order(25)
 @pytest.mark.dependency(
     depends=[
         "TestIntegrate::test_end",

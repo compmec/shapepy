@@ -7,7 +7,7 @@ import pytest
 from shapepy.bool2d.primitive import Primitive
 
 
-@pytest.mark.order(9)
+@pytest.mark.order(33)
 @pytest.mark.dependency(
     depends=[
         "tests/geometry/test_polygon.py::test_end",
@@ -16,6 +16,9 @@ from shapepy.bool2d.primitive import Primitive
         "tests/bool2d/test_primitive.py::test_end",
         "tests/bool2d/test_contains.py::test_end",
         "tests/bool2d/test_empty_whole.py::test_end",
+        "tests/bool2d/test_shape.py::test_end",
+        "tests/bool2d/test_bool_no_intersect.py::test_end",
+        "tests/bool2d/test_bool_finite_intersect.py::test_end",
     ],
     scope="session",
 )
@@ -24,7 +27,7 @@ def test_begin():
 
 
 class TestTriangle:
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -33,7 +36,7 @@ class TestTriangle:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTriangle::test_begin"])
     def test_or_triangles(self):
@@ -47,7 +50,7 @@ class TestTriangle:
         good = Primitive.polygon(vertices)
         assert test == good
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -66,7 +69,7 @@ class TestTriangle:
         good = Primitive.polygon(vertices)
         assert test == good
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -87,7 +90,7 @@ class TestTriangle:
 
         assert test == good
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(33)
     @pytest.mark.dependency(
         depends=[
             "TestTriangle::test_begin",
@@ -100,7 +103,7 @@ class TestTriangle:
         pass
 
 
-@pytest.mark.order(9)
+@pytest.mark.order(33)
 @pytest.mark.dependency(
     depends=[
         "TestTriangle::test_end",

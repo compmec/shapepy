@@ -9,7 +9,7 @@ import pytest
 from shapepy.geometry.point import Point2D
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(11)
 @pytest.mark.dependency(
     depends=[
         "tests/scalar/test_reals.py::test_all",
@@ -21,12 +21,12 @@ def test_begin():
 
 
 class TestPoint:
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestPoint::test_begin"])
     def test_creation(self):
@@ -44,7 +44,7 @@ class TestPoint:
         with pytest.raises(TypeError):
             Point2D([0, 0])
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=["TestPoint::test_begin", "TestPoint::test_creation"]
@@ -57,7 +57,7 @@ class TestPoint:
         with pytest.raises(TypeError):
             Point2D(1, None)
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -75,7 +75,7 @@ class TestPoint:
         assert point[0] == 1
         assert point[1] == 2
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -106,7 +106,7 @@ class TestPoint:
 
         assert pointa != (12, 5)
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -139,7 +139,7 @@ class TestPoint:
         point = Point2D(5.0, 12.0)
         assert abs(point) == 13
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -164,7 +164,7 @@ class TestPoint:
         assert pointa @ pointb == 2
         assert pointb @ pointa == 2
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=["TestPoint::test_begin", "TestPoint::test_creation"]
@@ -185,7 +185,7 @@ class TestPoint:
         assert pointa ^ pointb == 0
         assert pointb ^ pointa == 0
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -205,7 +205,7 @@ class TestPoint:
         assert pta ^ ptb == pta[0] * ptb[1] - pta[1] * ptb[0]
         assert ptb ^ pta == pta[0] * ptb[1] - pta[1] * ptb[0]
 
-    @pytest.mark.order(2)
+    @pytest.mark.order(11)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -224,7 +224,7 @@ class TestPoint:
         pass
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(11)
 @pytest.mark.dependency(
     depends=[
         "TestPoint::test_end",
@@ -241,7 +241,7 @@ def test_print():
     print(type(pointb))
 
 
-@pytest.mark.order(2)
+@pytest.mark.order(11)
 @pytest.mark.dependency(
     depends=[
         "TestPoint::test_end",

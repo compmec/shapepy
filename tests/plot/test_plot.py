@@ -10,7 +10,7 @@ from shapepy import ShapePloter
 from shapepy.bool2d.primitive import Primitive
 
 
-@pytest.mark.order(13)
+@pytest.mark.order(51)
 @pytest.mark.dependency(
     depends=[
         "tests/bool2d/test_shape.py::test_end",
@@ -22,12 +22,12 @@ def test_begin():
 
 
 class TestPlot:
-    @pytest.mark.order(13)
+    @pytest.mark.order(51)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(13)
+    @pytest.mark.order(51)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestPlot::test_begin"])
     def test_create(self):
@@ -38,7 +38,7 @@ class TestPlot:
         ShapePloter(ax=ax)
         ShapePloter(fig=fig, ax=ax)
 
-    @pytest.mark.order(13)
+    @pytest.mark.order(51)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -61,7 +61,7 @@ class TestPlot:
 
         # plt.show()
 
-    @pytest.mark.order(13)
+    @pytest.mark.order(51)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -85,7 +85,7 @@ class TestPlot:
         plt = ShapePloter()
         plt.plot(shape)
 
-    @pytest.mark.order(13)
+    @pytest.mark.order(51)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -103,7 +103,7 @@ class TestPlot:
         plt = ShapePloter()
         plt.plot(shape, fill_color="cyan")
 
-    @pytest.mark.order(13)
+    @pytest.mark.order(51)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -118,7 +118,7 @@ class TestPlot:
         pass
 
 
-@pytest.mark.order(13)
+@pytest.mark.order(51)
 @pytest.mark.dependency(
     depends=[
         "test_begin",

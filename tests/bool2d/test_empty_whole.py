@@ -11,7 +11,7 @@ from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import EmptyShape, WholeShape
 
 
-@pytest.mark.order(8)
+@pytest.mark.order(24)
 @pytest.mark.dependency(
     depends=[
         "tests/geometry/test_polygon.py::test_end",
@@ -31,12 +31,12 @@ class TestBoolean:
     Test boolean with special cases, a empty shape and whole domain
     """
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_or(self):
         empty = EmptyShape()
@@ -51,7 +51,7 @@ class TestBoolean:
         assert whole + empty is whole
         assert whole + whole is whole
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_and(self):
         empty = EmptyShape()
@@ -66,7 +66,7 @@ class TestBoolean:
         assert whole * empty is empty
         assert whole * whole is whole
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_xor(self):
         empty = EmptyShape()
@@ -76,7 +76,7 @@ class TestBoolean:
         assert whole ^ empty is whole
         assert whole ^ whole is empty
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_sub(self):
         empty = EmptyShape()
@@ -86,7 +86,7 @@ class TestBoolean:
         assert whole - empty is whole
         assert whole - whole is empty
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_bool(self):
         empty = EmptyShape()
@@ -94,7 +94,7 @@ class TestBoolean:
         assert bool(empty) is False
         assert bool(whole) is True
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_float(self):
         empty = EmptyShape()
@@ -102,7 +102,7 @@ class TestBoolean:
         assert float(empty) == float(0)
         assert float(whole) == float("inf")
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_invert(self):
         empty = EmptyShape()
@@ -112,7 +112,7 @@ class TestBoolean:
         assert ~(~empty) is empty
         assert ~(~whole) is whole
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_copy(self):
         empty = EmptyShape()
@@ -120,7 +120,7 @@ class TestBoolean:
         assert copy(empty) is empty
         assert copy(whole) is whole
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(
         depends=[
             "TestBoolean::test_begin",
@@ -139,7 +139,7 @@ class TestBoolean:
 
 
 class TestBoolShape:
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -149,6 +149,7 @@ class TestBoolShape:
     def test_begin(self):
         pass
 
+    @pytest.mark.order(24)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_simple(self):
@@ -182,6 +183,7 @@ class TestBoolShape:
         assert empty - shape is empty
         assert whole - shape == ~shape
 
+    @pytest.mark.order(24)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_connected(self):
@@ -217,12 +219,13 @@ class TestBoolShape:
         assert empty - shape is empty
         assert whole - shape == ~shape
 
+    @pytest.mark.order(24)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_disjoint(self):
         pass
 
-    @pytest.mark.order(8)
+    @pytest.mark.order(24)
     @pytest.mark.dependency(
         depends=[
             "TestBoolShape::test_begin",
@@ -235,9 +238,10 @@ class TestBoolShape:
         pass
 
 
-@pytest.mark.order(8)
+@pytest.mark.order(24)
 @pytest.mark.dependency(
     depends=[
+        "test_begin",
         "TestBoolean::test_end",
         "TestBoolShape::test_end",
     ]

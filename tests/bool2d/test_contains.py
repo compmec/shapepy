@@ -18,7 +18,7 @@ from shapepy.bool2d.shape import (
 from shapepy.geometry.jordancurve import JordanCurve
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(23)
 @pytest.mark.dependency(
     depends=[
         "tests/geometry/test_polygon.py::test_end",
@@ -37,12 +37,12 @@ class TestObjectsInEmptyWhole:
     Test relative to special cases, a empty shape and whole domain
     """
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
     def test_singleton(self):
         empty0 = EmptyShape()
@@ -55,7 +55,7 @@ class TestObjectsInEmptyWhole:
         assert whole0 is whole1
         assert empty1 != whole1
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -68,7 +68,7 @@ class TestObjectsInEmptyWhole:
         assert empty in empty
         assert empty in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -81,7 +81,7 @@ class TestObjectsInEmptyWhole:
         assert whole not in empty
         assert whole in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -95,7 +95,7 @@ class TestObjectsInEmptyWhole:
             assert point not in empty
             assert point in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -116,7 +116,7 @@ class TestObjectsInEmptyWhole:
         assert jordan not in empty
         assert jordan in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -131,7 +131,7 @@ class TestObjectsInEmptyWhole:
         assert shape not in empty
         assert shape in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -148,7 +148,7 @@ class TestObjectsInEmptyWhole:
         assert shape not in empty
         assert shape in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -165,7 +165,7 @@ class TestObjectsInEmptyWhole:
         assert shape not in empty
         assert shape in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInEmptyWhole::test_begin",
@@ -188,14 +188,14 @@ class TestObjectsInJordan:
     Tests the respective position
     """
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=["test_begin", "TestObjectsInEmptyWhole::test_end"]
     )
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -224,7 +224,7 @@ class TestObjectsInJordan:
         assert (0.5, 1) in square
         assert (0, 0.5) in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -241,7 +241,7 @@ class TestObjectsInJordan:
         square = JordanCurve.from_vertices(vertices)
         assert (1, 1) not in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -258,7 +258,7 @@ class TestObjectsInJordan:
         assert (-1, -1) not in square
         assert (2, 2) not in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -277,7 +277,7 @@ class TestObjectsInSimple:
     Tests the respective position
     """
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -288,7 +288,7 @@ class TestObjectsInSimple:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInSimple::test_begin"])
     def test_empty(self):
         empty = EmptyShape()
@@ -296,7 +296,7 @@ class TestObjectsInSimple:
         assert empty in square
         assert square not in empty
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInSimple::test_begin"])
     def test_whole(self):
         whole = WholeShape()
@@ -304,7 +304,7 @@ class TestObjectsInSimple:
         assert whole not in square
         assert square in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -325,7 +325,7 @@ class TestObjectsInSimple:
             assert len(test_ids) == len(good_ids)
             assert test_ids == good_ids
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -350,7 +350,7 @@ class TestObjectsInSimple:
             assert len(test_types) == len(good_types)
             assert test_types == good_types
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -384,7 +384,7 @@ class TestObjectsInSimple:
         assert (3, 3) not in square
         assert (-3, -3) not in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -419,7 +419,7 @@ class TestObjectsInSimple:
         assert ~(big_square.jordans[0]) in (~small_square)
         assert ~(big_square.jordans[0]) in (~big_square)
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -456,7 +456,7 @@ class TestObjectsInSimple:
         assert (~left) not in (~right)
         assert (~right) not in (~left)
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -478,7 +478,7 @@ class TestObjectsInSimple:
         assert connected in (~small_square)
         assert connected not in (~big_square)
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -514,7 +514,7 @@ class TestObjectsInSimple:
         square = Primitive.square(side=7, center=(0, 0))
         assert disj_shape not in square
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInSimple::test_begin",
@@ -536,7 +536,7 @@ class TestObjectsInConnected:
     Tests the respective position
     """
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -548,7 +548,7 @@ class TestObjectsInConnected:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInConnected::test_begin"])
     def test_empty(self):
         empty = EmptyShape()
@@ -556,7 +556,7 @@ class TestObjectsInConnected:
         assert empty in square
         assert square not in empty
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInConnected::test_begin"])
     def test_whole(self):
         whole = WholeShape()
@@ -564,7 +564,7 @@ class TestObjectsInConnected:
         assert whole not in square
         assert square in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInConnected::test_begin",
@@ -598,7 +598,7 @@ class TestObjectsInConnected:
         assert (1.5, 1.5) in connected
         assert (1.5, -1.5) in connected
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInConnected::test_begin",
@@ -624,7 +624,7 @@ class TestObjectsInConnected:
         assert (~big_jordan) in connected
         assert (~big_jordan) in connected
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInConnected::test_begin",
@@ -644,7 +644,7 @@ class TestObjectsInConnected:
         assert (~small_square) not in connected
         assert (~big_square) not in connected
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInConnected::test_begin",
@@ -665,7 +665,7 @@ class TestObjectsInConnected:
         assert (~small_square) not in (~big_square)
         assert (~big_square) in (~big_square)
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInConnected::test_begin",
@@ -680,7 +680,7 @@ class TestObjectsInConnected:
     def test_disjoint(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInConnected::test_begin",
@@ -702,7 +702,7 @@ class TestObjectsInDisjoint:
     Tests the respective position
     """
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -715,7 +715,7 @@ class TestObjectsInDisjoint:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInDisjoint::test_begin"])
     def test_empty(self):
         empty = EmptyShape()
@@ -726,7 +726,7 @@ class TestObjectsInDisjoint:
         assert empty in disj_shape
         assert disj_shape not in empty
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInDisjoint::test_begin"])
     def test_whole(self):
         whole = WholeShape()
@@ -737,7 +737,7 @@ class TestObjectsInDisjoint:
         assert whole not in disj_shape
         assert disj_shape in whole
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInDisjoint::test_begin",
@@ -755,7 +755,7 @@ class TestObjectsInDisjoint:
         assert (-3, 0) in disj_shape
         assert (3, 0) in disj_shape
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInDisjoint::test_begin",
@@ -767,7 +767,7 @@ class TestObjectsInDisjoint:
     def test_jordan(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInDisjoint::test_begin",
@@ -780,7 +780,7 @@ class TestObjectsInDisjoint:
     def test_simple(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInDisjoint::test_begin",
@@ -794,7 +794,7 @@ class TestObjectsInDisjoint:
     def test_connected(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInDisjoint::test_begin",
@@ -809,7 +809,7 @@ class TestObjectsInDisjoint:
     def test_disjoint(self):
         pass
 
-    @pytest.mark.order(7)
+    @pytest.mark.order(23)
     @pytest.mark.dependency(
         depends=[
             "TestObjectsInDisjoint::test_begin",
@@ -826,7 +826,7 @@ class TestObjectsInDisjoint:
         pass
 
 
-@pytest.mark.order(7)
+@pytest.mark.order(23)
 @pytest.mark.dependency(
     depends=[
         "TestObjectsInEmptyWhole::test_end",
