@@ -33,6 +33,22 @@ def test_degree():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_build"])
+def test_coefficients():
+    bezier = Polynomial([0])
+    assert bezier[0] == 0
+    bezier = Polynomial([1])
+    assert bezier[0] == 1
+    bezier = Polynomial([1, 2])
+    assert bezier[0] == 1
+    assert bezier[1] == 2
+    bezier = Polynomial([1, 2, 3])
+    assert bezier[0] == 1
+    assert bezier[1] == 2
+    assert bezier[2] == 3
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build", "test_degree"])
 def test_compare():
     poly = Polynomial([0])
@@ -304,6 +320,32 @@ def test_print():
     poly = Polynomial([1, 2, 3])
     assert str(poly) == "1 + 2 * t + 3 * t^2"
     repr(poly)
+
+
+@pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_build"])
+def test_numpy_array():
+    import numpy as np
+
+    degree = 3
+    coefs = np.zeros((degree + 1, 3), dtype="int64")
+    poly = Polynomial(coefs)
+    assert poly.degree == 0
+    assert tuple(poly[0]) == (0, 0, 0)
+    str(poly)
+    repr(poly)
+
+    coefs = ((3, 2), (-4, 1), (1, -3))
+    coefs = np.array(coefs, dtype="int64")
+    poly = Polynomial(coefs)
+    str(poly)
+    repr(poly)
+
+    square = poly @ poly
+    assert square.degree == 4
+    assert square == Polynomial([13, -20, 11, -14, 10])
+    point = np.array([2, 1], dtype="int64")
+    assert poly @ point == Polynomial([8, -7, -1])
 
 
 @pytest.mark.order(3)

@@ -40,7 +40,11 @@ class Polynomial:
         coefs = tuple(coefs)
         if len(coefs) == 0:
             raise ValueError("Cannot receive an empty tuple")
-        degree = max((i for i, v in enumerate(coefs) if v), default=0)
+        if Is.real(coefs[0]):
+            degree = max((i for i, v in enumerate(coefs) if v), default=0)
+        else:
+            degree = max((i for i, v in enumerate(coefs) if v @ v), default=0)
+        coefs = coefs[: degree + 1]
         self.__coefs = tuple(coefs[: degree + 1])
 
     @property
@@ -53,7 +57,7 @@ class Polynomial:
         return len(self.__coefs) - 1
 
     def __eq__(self, value: object) -> bool:
-        if isinstance(value, Polynomial):
+        if Is.instance(value, Polynomial):
             return tuple(self) == tuple(value)
         if Is.real(value):
             return self.degree == 0 and value == self[0]
@@ -69,7 +73,7 @@ class Polynomial:
         return self.__class__(-coef for coef in self)
 
     def __add__(self, other: Union[Real, Polynomial]) -> Polynomial:
-        if not isinstance(other, Polynomial):
+        if not Is.instance(other, Polynomial):
             coefs = list(self)
             coefs[0] += other
             return self.__class__(coefs)
@@ -81,13 +85,22 @@ class Polynomial:
         return self.__class__(coefs)
 
     def __mul__(self, other: Union[Real, Polynomial]) -> Polynomial:
-        if isinstance(other, Polynomial):
-            coefs = [0] * (self.degree + other.degree + 1)
+        if Is.instance(other, Polynomial):
+            coefs = [0 * self[0]] * (self.degree + other.degree + 1)
             for i, coefi in enumerate(self):
                 for j, coefj in enumerate(other):
                     coefs[i + j] += coefi * coefj
         else:
             coefs = tuple(other * coef for coef in self)
+        return self.__class__(coefs)
+
+    def __matmul__(self, other: Union[Real, Polynomial]) -> Polynomial:
+        if not isinstance(other, Polynomial):
+            return self.__class__((coef @ other for coef in self))
+        coefs = [0 * (self[0] @ self[0])] * (self.degree + other.degree + 1)
+        for i, coefi in enumerate(self):
+            for j, coefj in enumerate(other):
+                coefs[i + j] += coefi @ coefj
         return self.__class__(coefs)
 
     def __sub__(self, other: Union[Real, Polynomial]) -> Polynomial:
@@ -114,6 +127,13 @@ class Polynomial:
         if self.degree == 0:
             return str(self[0])
         msgs: List[str] = []
+        if not Is.real(self[0]):
+            msgs.append(f"({self[0]})")
+            if self.degree > 0:
+                msgs.append(f"({self[1]}) * t")
+            for i, coef in enumerate(self[2:]):
+                msgs.append(f"({coef}) * t^{i+2}")
+            return " + ".join(msgs)
         flag = False
         for i, coef in enumerate(self):
             if coef == 0:
