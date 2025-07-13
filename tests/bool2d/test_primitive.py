@@ -9,7 +9,7 @@ import pytest
 from shapepy import Primitive
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(22)
 @pytest.mark.dependency(
     depends=[
         "tests/geometry/test_polygon.py::test_end",
@@ -22,12 +22,12 @@ def test_begin():
 
 
 class TestPrimitive:
-    @pytest.mark.order(5)
+    @pytest.mark.order(22)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(22)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestPrimitive::test_begin"])
     def test_creation(self):
@@ -57,7 +57,7 @@ class TestPrimitive:
         with pytest.raises(ValueError):
             Primitive.circle(radius="asd")
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(22)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=["TestPrimitive::test_begin", "TestPrimitive::test_creation"]
@@ -79,7 +79,7 @@ class TestPrimitive:
         area = 9
         assert abs(float(square) - area) < 1e-9
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(22)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -100,7 +100,7 @@ class TestPrimitive:
             area = radius**2 * nsides * math.sin(2 * math.pi / nsides) / 2
             assert abs(float(polygon) - area) < 1e-9
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(22)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -121,7 +121,7 @@ class TestPrimitive:
         area = -0.5
         assert abs(float(triangle) - area) < 1e-9
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(22)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -142,7 +142,7 @@ class TestPrimitive:
         area = math.pi * radius**2
         assert abs(float(circle) - area) < 1e-3 * radius**2
 
-    @pytest.mark.order(5)
+    @pytest.mark.order(22)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -158,7 +158,7 @@ class TestPrimitive:
         pass
 
 
-@pytest.mark.order(5)
+@pytest.mark.order(22)
 @pytest.mark.dependency(
     depends=[
         "TestPrimitive::test_end",

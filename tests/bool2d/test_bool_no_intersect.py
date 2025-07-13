@@ -14,7 +14,7 @@ from shapepy.bool2d.shape import (
 )
 
 
-@pytest.mark.order(9)
+@pytest.mark.order(31)
 @pytest.mark.dependency(
     depends=[
         "tests/geometry/test_polygon.py::test_end",
@@ -35,12 +35,12 @@ class TestEqualSquare:
     Make tests of boolean operations between the same shape (a square)
     """
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestEqualSquare::test_begin"])
     def test_or(self):
@@ -51,7 +51,7 @@ class TestEqualSquare:
         assert (~square) | square is WholeShape()
         assert (~square) | (~square) == ~square
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=["TestEqualSquare::test_begin", "TestEqualSquare::test_or"]
@@ -64,7 +64,7 @@ class TestEqualSquare:
         assert (~square) & square is EmptyShape()
         assert (~square) & (~square) == ~square
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -80,7 +80,7 @@ class TestEqualSquare:
         assert (~square) - square == ~square
         assert (~square) - (~square) is EmptyShape()
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -98,7 +98,7 @@ class TestEqualSquare:
         assert (~square) ^ square is WholeShape()
         assert (~square) ^ (~square) is EmptyShape()
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=[
             "TestEqualSquare::test_begin",
@@ -120,14 +120,14 @@ class TestTwoCenteredSquares:
     which is tested in other file
     """
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=["test_begin", "TestEqualSquare::test_end"]
     )
     def test_begin(self):
         pass
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
     def test_or(self):
@@ -145,7 +145,7 @@ class TestTwoCenteredSquares:
         assert (~square1) | (~square2) == ~square1
         assert (~square2) | (~square1) == ~square1
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
     def test_and(self):
@@ -163,7 +163,7 @@ class TestTwoCenteredSquares:
         assert (~square1) & (~square2) == ~square2
         assert (~square2) & (~square1) == ~square2
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
     def test_sub(self):
@@ -181,7 +181,7 @@ class TestTwoCenteredSquares:
         assert (~square1) - (~square2) == ConnectedShape([square2, ~square1])
         assert (~square2) - (~square1) is EmptyShape()
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
     def test_xor(self):
@@ -199,7 +199,7 @@ class TestTwoCenteredSquares:
         assert (~square1) ^ (~square2) == ConnectedShape([square2, ~square1])
         assert (~square2) ^ (~square1) == ConnectedShape([square2, ~square1])
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=[
             "TestTwoCenteredSquares::test_begin",
@@ -221,7 +221,7 @@ class TestTwoDisjointSquares:
     which is tested in other file
     """
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -231,7 +231,7 @@ class TestTwoDisjointSquares:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjointSquares::test_begin"])
     def test_or(self):
@@ -249,7 +249,7 @@ class TestTwoDisjointSquares:
         assert (~left) | (~right) is WholeShape()
         assert (~right) | (~left) is WholeShape()
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjointSquares::test_begin"])
     def test_and(self):
@@ -267,7 +267,7 @@ class TestTwoDisjointSquares:
         assert (~left) & (~right) == ConnectedShape([~left, ~right])
         assert (~right) & (~left) == ConnectedShape([~left, ~right])
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjointSquares::test_begin"])
     def test_sub(self):
@@ -285,7 +285,7 @@ class TestTwoDisjointSquares:
         assert (~left) - (~right) == right
         assert (~right) - (~left) == left
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjointSquares::test_begin"])
     def test_xor(self):
@@ -303,7 +303,7 @@ class TestTwoDisjointSquares:
         assert (~left) ^ (~right) == DisjointShape([left, right])
         assert (~right) ^ (~left) == DisjointShape([left, right])
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=[
             "TestTwoDisjointSquares::test_begin",
@@ -322,12 +322,12 @@ class TestEqualHollowSquare:
     Make tests of boolean operations between the same shape (a square)
     """
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestEqualHollowSquare::test_begin"])
     def test_or(self):
@@ -340,7 +340,7 @@ class TestEqualHollowSquare:
         assert (~square) | square is WholeShape()
         assert (~square) | (~square) == ~square
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -358,7 +358,7 @@ class TestEqualHollowSquare:
         assert (~square) & square is EmptyShape()
         assert (~square) & (~square) == ~square
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -376,7 +376,7 @@ class TestEqualHollowSquare:
         assert (~square) - square == ~square
         assert (~square) - (~square) is EmptyShape()
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -396,7 +396,7 @@ class TestEqualHollowSquare:
         assert (~square) ^ square is WholeShape()
         assert (~square) ^ (~square) is EmptyShape()
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=[
             "TestEqualHollowSquare::test_begin",
@@ -418,7 +418,7 @@ class TestTwoDisjHollowSquares:
     which is tested in other file
     """
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -431,7 +431,7 @@ class TestTwoDisjHollowSquares:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_or(self):
@@ -453,7 +453,7 @@ class TestTwoDisjHollowSquares:
         assert (~left) | (~right) is WholeShape()
         assert (~right) | (~left) is WholeShape()
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_and(self):
@@ -477,7 +477,7 @@ class TestTwoDisjHollowSquares:
         assert (~left) & (~right) == good
         assert (~right) & (~left) == good
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_sub(self):
@@ -501,7 +501,7 @@ class TestTwoDisjHollowSquares:
         assert (~left) - (~right) == right
         assert (~right) - (~left) == left
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_xor(self):
@@ -525,7 +525,7 @@ class TestTwoDisjHollowSquares:
         assert (~left) ^ (~right) == DisjointShape([left, right])
         assert (~right) ^ (~left) == DisjointShape([left, right])
 
-    @pytest.mark.order(9)
+    @pytest.mark.order(31)
     @pytest.mark.dependency(
         depends=[
             "TestTwoDisjHollowSquares::test_begin",
@@ -539,7 +539,7 @@ class TestTwoDisjHollowSquares:
         pass
 
 
-@pytest.mark.order(9)
+@pytest.mark.order(31)
 @pytest.mark.dependency(
     depends=[
         "TestEqualSquare::test_end",
