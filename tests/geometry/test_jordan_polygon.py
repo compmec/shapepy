@@ -236,7 +236,7 @@ class TestTransformationPolygon:
         test_square_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_square = JordanCurve.from_vertices(test_square_pts)
         test_square.move((1, 2))
-        test_square.move(1, 2)
+        test_square.move((1, 2))
 
         assert test_square == good_square
 

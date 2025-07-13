@@ -1,9 +1,9 @@
-.. autoclass:: shape.polygon.Point2D
+.. autoclass:: shape.geometry.point.Point2D
     :members:
 
 ----------------------------------------------------
 
-.. autoclass:: shape.polygon.Box
+.. autoclass:: shape.geometry.box.Box
     :members:
 
 

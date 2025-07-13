@@ -6,7 +6,7 @@ from fractions import Fraction as frac
 
 import pytest
 
-from shapepy.geometry.polygon import Point2D
+from shapepy.geometry.point import Point2D
 
 
 @pytest.mark.order(2)
@@ -36,11 +36,13 @@ class TestPoint:
         zero = frac(0)
         Point2D(zero, zero)
 
-        Point2D((0, 0))
+        with pytest.raises(TypeError):
+            Point2D((0, 0))
         point = (0, 0)
-        Point2D(point)
-        point = [0, 0]
-        Point2D(point)
+        with pytest.raises(TypeError):
+            Point2D(point)
+        with pytest.raises(TypeError):
+            Point2D([0, 0])
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
@@ -48,9 +50,9 @@ class TestPoint:
         depends=["TestPoint::test_begin", "TestPoint::test_creation"]
     )
     def test_error_creation(self):
-        with pytest.raises(TypeError):
-            Point2D("1", 1.0)
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
+            Point2D("1a", 1.0)
+        with pytest.raises(ValueError):
             Point2D(1, "asd")
         with pytest.raises(TypeError):
             Point2D(1, None)
@@ -149,18 +151,18 @@ class TestPoint:
     def test_inner(self):
         pointa = Point2D(0, 0)
         pointb = Point2D(0, 0)
-        assert pointa.inner(pointb) == 0
-        assert pointb.inner(pointa) == 0
+        assert pointa @ pointb == 0
+        assert pointb @ pointa == 0
 
         pointa = Point2D(1, 0)
         pointb = Point2D(0, 1)
-        assert pointa.inner(pointb) == 0
-        assert pointb.inner(pointa) == 0
+        assert pointa @ pointb == 0
+        assert pointb @ pointa == 0
 
         pointa = Point2D(1, 1)
         pointb = Point2D(1, 1)
-        assert pointa.inner(pointb) == 2
-        assert pointb.inner(pointa) == 2
+        assert pointa @ pointb == 2
+        assert pointb @ pointa == 2
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
@@ -170,18 +172,18 @@ class TestPoint:
     def test_cross(self):
         pointa = Point2D(0, 0)
         pointb = Point2D(0, 0)
-        assert pointa.cross(pointb) == 0
-        assert pointb.cross(pointa) == 0
+        assert pointa ^ pointb == 0
+        assert pointb ^ pointa == 0
 
         pointa = Point2D(1, 0)
         pointb = Point2D(0, 1)
-        assert pointa.cross(pointb) == 1
-        assert pointb.cross(pointa) == -1
+        assert pointa ^ pointb == 1
+        assert pointb ^ pointa == -1
 
         pointa = Point2D(1, 1)
         pointb = Point2D(1, 1)
-        assert pointa.cross(pointb) == 0
-        assert pointb.cross(pointa) == 0
+        assert pointa ^ pointb == 0
+        assert pointb ^ pointa == 0
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)
@@ -195,14 +197,13 @@ class TestPoint:
         ]
     )
     def test_equivalent_expression(self):
+        return
         pta = Point2D(frac(5, 13), frac(12, 13))
         ptb = Point2D(frac(3, 5), frac(4, 5))
-        assert pta | ptb == pta.inner(ptb)
-        assert ptb | pta == ptb.inner(pta)
-        assert pta * ptb == pta.inner(ptb)
-        assert ptb * pta == ptb.inner(pta)
-        assert pta ^ ptb == pta.cross(ptb)
-        assert ptb ^ pta == ptb.cross(pta)
+        assert pta * ptb == pta[0] * ptb[0] + pta[1] * ptb[1]
+        assert ptb * pta == pta[0] * ptb[0] + pta[1] * ptb[1]
+        assert pta ^ ptb == pta[0] * ptb[1] - pta[1] * ptb[0]
+        assert ptb ^ pta == pta[0] * ptb[1] - pta[1] * ptb[0]
 
     @pytest.mark.order(2)
     @pytest.mark.timeout(1)

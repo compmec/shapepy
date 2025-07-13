@@ -18,7 +18,7 @@ from shapepy.bool2d.shape import (
 )
 from shapepy.geometry.curve import IntegratePlanar, PlanarCurve
 from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
-from shapepy.geometry.polygon import Point2D
+from shapepy.geometry.point import Point2D
 from shapepy.plot.plot import ShapePloter
 
 __version__ = importlib.metadata.version("shapepy")

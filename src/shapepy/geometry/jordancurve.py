@@ -11,8 +11,11 @@ from typing import Optional, Tuple, Union
 
 import numpy as np
 
+from shapepy.geometry.box import Box
 from shapepy.geometry.curve import IntegratePlanar, PlanarCurve
-from shapepy.geometry.polygon import Box, Point2D
+from shapepy.geometry.point import Point2D
+
+from ..scalar.reals import To
 
 
 class IntegrateJordan:
@@ -162,7 +165,7 @@ class JordanCurve:
             raise TypeError
         vertices = list(vertices)
         for i, vertex in enumerate(vertices):
-            vertices[i] = Point2D(vertex)
+            vertices[i] = To.point(vertex)
         nverts = len(vertices)
         vertices.append(vertices[0])
         beziers = [0] * nverts
@@ -201,7 +204,7 @@ class JordanCurve:
         for i, ctrlpoints in enumerate(all_ctrlpoints):
             ctrlpoints = list(ctrlpoints)
             for j, ctrlpoint in enumerate(ctrlpoints):
-                ctrlpoints[j] = Point2D(ctrlpoint)
+                ctrlpoints[j] = To.point(ctrlpoint)
             new_bezier = PlanarCurve(ctrlpoints)
             beziers[i] = new_bezier
         return cls.from_segments(beziers)
@@ -308,7 +311,7 @@ class JordanCurve:
         self.segments = segments
         return self
 
-    def move(self, *point: Point2D) -> JordanCurve:
+    def move(self, point: Point2D) -> JordanCurve:
         """Translate the entire curve by ``point``
 
         :param point: The translation amount
@@ -327,9 +330,9 @@ class JordanCurve:
         ((2, 3), (6, 3), (2, 6))
 
         """
-        point = Point2D(*point)
+        point = To.point(point)
         for vertex in self.vertices:
-            vertex.move(point)
+            vertex += point
         return self
 
     def scale(self, xscale: float, yscale: float) -> JordanCurve:
@@ -630,7 +633,7 @@ class JordanCurve:
         self.__lenght = None
         segments = []
         for bezier in other:
-            ctrlpoints = [Point2D(point) for point in bezier.ctrlpoints]
+            ctrlpoints = [To.point(point) for point in bezier.ctrlpoints]
             new_bezier = PlanarCurve(ctrlpoints)
             segments.append(new_bezier)
         self.__segments = tuple(segments)
