@@ -7,7 +7,7 @@ from __future__ import annotations
 from numbers import Real
 from typing import Iterable, List, Union
 
-from ..tools import Is, To
+from ..tools import Is
 from .reals import Math
 
 
@@ -55,7 +55,9 @@ class Polynomial:
     def __eq__(self, value: object) -> bool:
         if isinstance(value, Polynomial):
             return tuple(self) == tuple(value)
-        return self.degree == 0 and value == self[0]
+        if Is.real(value):
+            return self.degree == 0 and value == self[0]
+        return NotImplemented
 
     def __iter__(self):
         yield from self.__coefs

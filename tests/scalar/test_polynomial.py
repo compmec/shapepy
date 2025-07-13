@@ -34,6 +34,19 @@ def test_degree():
 
 @pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build", "test_degree"])
+def test_compare():
+    poly = Polynomial([0])
+    assert poly == 0
+    assert poly != 1
+    assert poly != "asd"
+
+    polya = Polynomial([3, 2])
+    polyb = Polynomial([3.0, 2.0])
+    assert polya == polyb
+
+
+@pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_build", "test_degree"])
 def test_evaluate():
     poly = Polynomial([0])  # p(t) = 0
     assert poly(0) == 0
@@ -54,7 +67,9 @@ def test_evaluate():
 
 
 @pytest.mark.order(3)
-@pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
+@pytest.mark.dependency(
+    depends=["test_build", "test_degree", "test_evaluate", "test_compare"]
+)
 def test_neg():
     polya = Polynomial([1, 2, 3, 4])
     polyb = Polynomial([-1, -2, -3, -4])
@@ -63,7 +78,9 @@ def test_neg():
 
 
 @pytest.mark.order(3)
-@pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
+@pytest.mark.dependency(
+    depends=["test_build", "test_degree", "test_evaluate", "test_compare"]
+)
 def test_add():
     """
     BasisFunctions to test if the polynomials coefficients
@@ -103,7 +120,9 @@ def test_add():
 
 
 @pytest.mark.order(3)
-@pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
+@pytest.mark.dependency(
+    depends=["test_build", "test_degree", "test_evaluate", "test_compare"]
+)
 def test_sub():
     """
     BasisFunctions to test if the polynomials coefficients
@@ -143,7 +162,9 @@ def test_sub():
 
 
 @pytest.mark.order(3)
-@pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
+@pytest.mark.dependency(
+    depends=["test_build", "test_degree", "test_evaluate", "test_compare"]
+)
 def test_mul():
     """
     BasisFunctions to test if the polynomials coefficients
