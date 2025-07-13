@@ -37,7 +37,7 @@ class Polynomial:
     def __init__(self, coefs: Iterable[Real]):
         if not Is.iterable(coefs):
             raise TypeError("Expected an iterable of coefficients")
-        coefs = tuple(map(To.finite, coefs))
+        coefs = tuple(coefs)
         if len(coefs) == 0:
             raise ValueError("Cannot receive an empty tuple")
         degree = max((i for i, v in enumerate(coefs) if v), default=0)
