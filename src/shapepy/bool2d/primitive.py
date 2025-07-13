@@ -8,6 +8,7 @@ This file contains functions to create primitive shapes such as:
 
 import math
 from copy import copy
+from numbers import Real
 from typing import Tuple
 
 import numpy as np
@@ -17,7 +18,7 @@ from shapepy.geometry.curve import PlanarCurve
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D
 
-from ..scalar.reals import Is, To
+from ..scalar.reals import To
 
 
 class Primitive:
@@ -67,11 +68,11 @@ class Primitive:
         .. image:: ../img/primitive/regular5.svg
 
         """
-        if not Is.integer(nsides):
+        if not isinstance(nsides, int):
             raise ValueError
         if nsides < 3:
             raise ValueError
-        if not Is.real(radius):
+        if not isinstance(radius, Real):
             raise ValueError
         if radius <= 0:
             raise ValueError
@@ -169,11 +170,11 @@ class Primitive:
         .. image:: ../img/primitive/square.svg
 
         """
-        if not Is.real(side) or side <= 0:
+        if not isinstance(side, Real) or side <= 0:
             raise ValueError
         center = To.point(center)
 
-        if Is.integer(side):
+        if isinstance(side, int):
             side = To.rational(side)
         side /= 2
         vertices = [(side, side), (-side, side), (-side, -side), (side, -side)]
@@ -217,9 +218,9 @@ class Primitive:
             terms by changing ``ndivangle``.
 
         """
-        if not Is.real(radius) or radius <= 0:
+        if not isinstance(radius, Real) or radius <= 0:
             raise ValueError
-        if not Is.integer(ndivangle) or ndivangle < 4:
+        if not isinstance(ndivangle, int) or ndivangle < 4:
             raise ValueError
         center = To.point(center)
 
