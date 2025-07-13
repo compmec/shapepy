@@ -9,6 +9,7 @@ from typing import Iterable, Tuple, Union
 
 from ..tools import Is, To
 from .polynomial import Polynomial
+from .polynomial import derivate as polyderiv
 from .reals import Math, Rational, Real
 
 
@@ -159,3 +160,15 @@ class Bezier:
 
     def __repr__(self) -> str:
         return repr(self.__polynomial)
+
+
+def derivate(bezier: Bezier, times: int = 1) -> Bezier:
+    """
+    Derivate the bezier curve, giving a new one
+
+    Example
+    -------
+    >>> bezier = Bezier([1, 2, 5])
+    >>> dbezier = derivate(bezier)
+    """
+    return polynomial2bezier(polyderiv(bezier2polynomial(bezier), times))

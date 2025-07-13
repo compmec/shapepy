@@ -289,16 +289,29 @@ def test_clean():
 
 
 @pytest.mark.order(4)
+@pytest.mark.dependency(depends=["test_build", "test_matrices"])
+def test_derivate():
+    ctrlpoints = [1, 2, 3, 4]
+    bezier = Bezier(ctrlpoints)
+    assert clean(bezier) == Bezier([1, 4])
+
+
+@pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
         "test_build",
+        "test_coefficients",
         "test_degree",
+        "test_matrices",
         "test_evaluate",
         "test_neg",
         "test_add",
         "test_sub",
         "test_mul",
+        "test_print",
         "test_conversions",
+        "test_clean",
+        "test_derivate",
     ]
 )
 def test_all():
