@@ -23,7 +23,8 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
-from ..scalar.reals import Is, Rational, To
+from ..scalar.reals import Rational
+from ..tools import Is, To
 
 
 class Math:
@@ -75,7 +76,7 @@ class Math:
                  = binom(p, i) * sum_{j=0}^{p-i} (-1)^{} * u^{i+(p-i)}
 
         """
-        assert isinstance(degree, int)
+        assert Is.integer(degree)
         assert degree >= 0
         if degree not in Math.__caract_matrix:
             matrix = np.zeros((degree + 1, degree + 1), dtype="object")
@@ -103,7 +104,7 @@ class Math:
         >>> closed_linspace(5)
         (0, 0.25, 0.5, 0.75, 1)
         """
-        assert isinstance(npts, int)
+        assert Is.integer(npts)
         assert npts >= 2
         return tuple(To.rational(num, npts - 1) for num in range(npts))
 
@@ -121,7 +122,7 @@ class Math:
         >>> open_linspace(3)
         (0.25, 0.50, 0.75)
         """
-        assert isinstance(npts, int)
+        assert Is.integer(npts)
         assert npts >= 1
         return tuple(
             To.rational(num) / (2 * npts) for num in range(1, 2 * npts, 2)
@@ -230,7 +231,7 @@ class BezierCurve:
         """
         Computes the derivative of the Bezier Curve
         """
-        assert isinstance(times, int)
+        assert Is.integer(times)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
         zero = 0 * self.ctrlpoints[0]
@@ -293,7 +294,7 @@ class PlanarCurve:
 
     def __or__(self, other: PlanarCurve) -> PlanarCurve:
         """Computes the union of two bezier curves"""
-        assert isinstance(other, PlanarCurve)
+        assert Is.instance(other, PlanarCurve)
         assert self.degree == other.degree
         assert self.ctrlpoints[-1] == other.ctrlpoints[0]
         # Last point of first derivative
@@ -377,7 +378,7 @@ class PlanarCurve:
         return msg
 
     def __eq__(self, other: PlanarCurve) -> bool:
-        assert isinstance(other, PlanarCurve)
+        assert Is.instance(other, PlanarCurve)
         if self.npts != other.npts:
             return False
         for pta, ptb in zip(self.ctrlpoints, other.ctrlpoints):
@@ -454,7 +455,7 @@ class PlanarCurve:
         """
         Gives the first derivative of the curve
         """
-        assert isinstance(times, int)
+        assert Is.integer(times)
         assert times > 0
         matrix = Derivate.non_rational_bezier(self.degree, times)
         zero = 0 * self.ctrlpoints[0]
@@ -534,9 +535,9 @@ class Operations:
         error = [P]^T * [E] * [P]
 
         """
-        assert isinstance(degree, int)
+        assert Is.integer(degree)
         assert degree > 0
-        assert isinstance(times, int)
+        assert Is.integer(times)
         assert times > 0
         assert degree - times >= 0
         if (degree, times) not in Operations.__degree_decre:
@@ -699,7 +700,7 @@ class Projection:
 
         """
         point = To.point(point)
-        assert isinstance(curve, PlanarCurve)
+        assert Is.instance(curve, PlanarCurve)
         nsample = 2 + curve.degree
         usample = Math.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
@@ -791,10 +792,8 @@ class Derivate:
         [Q] = [T] * [P]
         [T].shape = (q+1, p+1)
         """
-        assert isinstance(degree, int)
-        assert degree >= 0
-        assert isinstance(times, int)
-        assert times > 0
+        assert Is.integer(degree) and degree >= 0
+        assert Is.integer(times) and times > 0
         if degree - times < 0:
             return ((0,) * (degree + 1),)
         matrix = np.eye(degree + 1, dtype="int64")
@@ -822,15 +821,12 @@ class IntegratePlanar:
         I = int_C x^expx * y^expy * dy
 
         """
-        assert isinstance(curve, PlanarCurve)
-        assert isinstance(expx, int)
-        assert isinstance(expy, int)
+        assert Is.instance(curve, PlanarCurve)
+        assert Is.integer(expx) and expx >= 0
+        assert Is.integer(expy) and expy >= 0
         if nnodes is None:
             nnodes = 3 + expx + expy + curve.degree
-        assert isinstance(nnodes, int)
-        assert nnodes >= 0
-        assert expx >= 0
-        assert expy >= 0
+        assert Is.integer(nnodes) and nnodes >= 0
         dcurve = curve.derivate()
         nodes = Math.open_linspace(nnodes)
         poids = pynurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
@@ -850,10 +846,10 @@ class IntegratePlanar:
 
         I = int_C x^expx * y^expy * ds
         """
-        assert isinstance(curve, PlanarCurve)
+        assert Is.instance(curve, PlanarCurve)
         if nnodes is None:
             nnodes = 3 + expx + expy + curve.degree
-        assert isinstance(nnodes, int)
+        assert Is.integer(nnodes)
         assert nnodes >= 0
         assert expx == 0
         assert expy == 0
@@ -917,7 +913,7 @@ class IntegratePlanar:
         """
         Computes the integral for a bezier curve of given control points
         """
-        assert isinstance(curve, PlanarCurve)
+        assert Is.instance(curve, PlanarCurve)
         nnodes = curve.npts if nnodes is None else nnodes
         nodes = Math.closed_linspace(nnodes)
         total = 0

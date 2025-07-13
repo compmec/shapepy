@@ -22,287 +22,274 @@ from fractions import Fraction
 from numbers import Integral, Rational, Real
 from typing import Any, Callable
 
+from ..tools import Is, To
 
-class Is:
+
+def is_finite(number: Real) -> bool:
     """
-    Contains functions to test the objects,
-    telling if an object is a number, or it's integer, etc
+    Check if a number is finite.
+
+    Parameters
+    ----------
+    number : Real
+        The number to check for being finite
+
+    Returns
+    -------
+    bool
+        True if the number is finite, False otherwise
+
+    Examples
+    --------
+    >>> Is.finite(float("inf"))
+    False
+    >>> Is.finite(0)
+    True
     """
-
-    instance = isinstance
-
-    @staticmethod
-    def finite(number: Real) -> bool:
-        """
-        Check if a number is finite.
-
-        Parameters
-        ----------
-        number : Real
-            The number to check for being finite
-
-        Returns
-        -------
-        bool
-            True if the number is finite, False otherwise
-
-        Examples
-        --------
-        >>> Is.finite(float("inf"))
-        False
-        >>> Is.finite(0)
-        True
-        """
-        return Is.real(number) and math.isfinite(number)
-
-    @staticmethod
-    def infinity(number: Real) -> bool:
-        """
-        Check if a number is negative or positive infinity.
-
-        Parameters
-        ----------
-        number : Real
-            The number to check for being infinity
-
-        Returns
-        -------
-        bool
-            True if the number is infinity, False otherwise
-
-        Examples
-        --------
-        >>> Is.infinity(-float("inf"))
-        True
-        >>> Is.infinity(float("inf"))
-        True
-        >>> Is.infinity(0)
-        False
-        """
-        return Is.real(number) and math.isinf(number)
-
-    @staticmethod
-    def integer(number: Real) -> bool:
-        """
-        Check if a number is integer.
-
-        Parameters
-        ----------
-        number : Real
-            The number to check for being an integer
-
-        Returns
-        -------
-        bool
-            True if the number is integer, False otherwise
-
-        Examples
-        --------
-        >>> Is.integer(1)
-        True
-        >>> Is.integer(1.2)
-        False
-        """
-        return Is.instance(number, Integral)
-
-    @staticmethod
-    def rational(number: Real) -> bool:
-        """
-        Check if a number is integer or rational.
-
-        Parameters
-        ----------
-        number : Real
-            The number to check for rationality
-
-        Returns
-        -------
-        bool
-            True if the number is rational, False otherwise
-
-        Examples
-        --------
-        >>> Is.rational(1)
-        True
-        >>> Is.rational(Fraction(1, 2))
-        True
-        >>> Is.rational(0.5)
-        """
-        return Is.real(number) and Is.instance(number, Rational)
-
-    @staticmethod
-    def real(value: object) -> bool:
-        """
-        Check if a number is a real number.
-
-        Parameters
-        ----------
-        value : object
-            The object to check for being a number
-
-        Returns
-        -------
-        bool
-            True if the number is a number, False otherwise
-
-        Examples
-        --------
-        >>> Is.real(float("inf"))
-        True
-        >>> Is.real(0)
-        True
-        >>> Is.real("asd")
-        False
-        """
-        return Is.instance(value, Real)
+    return Is.real(number) and math.isfinite(number)
 
 
-class To:
+def is_infinity(number: Real) -> bool:
     """
-    Contains static methods to transform objects to some type numbers
+    Check if a number is negative or positive infinity.
+
+    Parameters
+    ----------
+    number : Real
+        The number to check for being infinity
+
+    Returns
+    -------
+    bool
+        True if the number is infinity, False otherwise
+
+    Examples
+    --------
+    >>> Is.infinity(-float("inf"))
+    True
+    >>> Is.infinity(float("inf"))
+    True
+    >>> Is.infinity(0)
+    False
     """
+    return Is.real(number) and math.isinf(number)
 
-    @staticmethod
-    def real(number: Any) -> Real:
-        """
-        Converts the number to a real number.
 
-        Parameters
-        ----------
-        number : Any
-            Number to be converted to a real number
+def is_integer(number: Real) -> bool:
+    """
+    Check if a number is integer.
 
-        Returns
-        -------
-        Real
-            The converted real number
+    Parameters
+    ----------
+    number : Real
+        The number to check for being an integer
 
-        Examples
-        --------
-        >>> To.real(-1)
-        -1
-        >>> To.real(0)
-        0
-        >>> To.real(1)
-        1
-        >>> To.real(1.5)
-        1.5
-        >>> To.real(float("inf"))
-        inf
-        >>> To.real("inf")
-        inf
-        """
-        if Is.instance(number, Real):
-            return number
-        return float(number)
+    Returns
+    -------
+    bool
+        True if the number is integer, False otherwise
 
-    @staticmethod
-    def finite(number: Any) -> Real:
-        """
-        Converts the number to an finite number.
+    Examples
+    --------
+    >>> Is.integer(1)
+    True
+    >>> Is.integer(1.2)
+    False
+    """
+    return Is.instance(number, Integral)
 
-        Parameters
-        ----------
-        number : Any
-            Number to be converted to an integer
 
-        Returns
-        -------
-        Real
-            The converted number in integer
+def is_rational(number: Real) -> bool:
+    """
+    Check if a number is integer or rational.
 
-        Raises
-        ------
-        ValueError
-            If the number is not finite
+    Parameters
+    ----------
+    number : Real
+        The number to check for rationality
 
-        Examples
-        --------
-        >>> To.finite(-1)
-        -1
-        >>> To.finite(0)
-        0
-        >>> To.finite(1)
-        1
-        >>> To.finite(1.5)
-        1.5
-        """
-        number = To.real(number)
-        if not Is.finite(number):
-            raise ValueError(f"{number} is not finite")
+    Returns
+    -------
+    bool
+        True if the number is rational, False otherwise
+
+    Examples
+    --------
+    >>> Is.rational(1)
+    True
+    >>> Is.rational(Fraction(1, 2))
+    True
+    >>> Is.rational(0.5)
+    """
+    return Is.real(number) and Is.instance(number, Rational)
+
+
+def is_real(value: object) -> bool:
+    """
+    Check if a number is a real number.
+
+    Parameters
+    ----------
+    value : object
+        The object to check for being a number
+
+    Returns
+    -------
+    bool
+        True if the number is a number, False otherwise
+
+    Examples
+    --------
+    >>> Is.real(float("inf"))
+    True
+    >>> Is.real(0)
+    True
+    >>> Is.real("asd")
+    False
+    """
+    return Is.instance(value, Real)
+
+
+def to_real(number: Any) -> Real:
+    """
+    Converts the number to a real number.
+
+    Parameters
+    ----------
+    number : Any
+        Number to be converted to a real number
+
+    Returns
+    -------
+    Real
+        The converted real number
+
+    Examples
+    --------
+    >>> To.real(-1)
+    -1
+    >>> To.real(0)
+    0
+    >>> To.real(1)
+    1
+    >>> To.real(1.5)
+    1.5
+    >>> To.real(float("inf"))
+    inf
+    >>> To.real("inf")
+    inf
+    """
+    if Is.instance(number, Real):
         return number
-
-    @staticmethod
-    def rational(numerator: Rational, denominator: Rational = 1) -> Rational:
-        """
-        Divide two rational numbers and return the result as a fraction.
-        If any input is not integer/rational, performs standard division.
-
-        Parameters
-        ----------
-        numerator : int or rational or float
-            The numerator number
-        denominator : int or rational or float
-            The divisor number
-
-        Returns
-        -------
-        Rational
-            A  instance if inputs are integers/rational
-
-        Raises
-        ------
-        ZeroDivisionError
-            If denominator is zero
-        TypeError
-            If inputs are not numeric types
-
-        Notes
-        -----
-        This function preserves exact rational representation when inputs are
-        integers or rational numbers. For example:
+    return To.float(number)
 
 
-        Examples
-        --------
-        >>> To.rational(1, 2)
-        Fraction(1, 2)
-        >>> To.rational(12, 9)
-        Fraction(4, 3)
-        >>> To.rational(22, 7)
-        Fraction(22, 7)
-        """
-        numerator = To.real(numerator)
-        denominator = To.real(denominator)
-        return Fraction(numerator, denominator)
+def to_finite(number: Any) -> Real:
+    """
+    Converts the number to an finite number.
 
-    @staticmethod
-    def integer(number: Any) -> Integral:
-        """
-        Converts the number to an integer.
+    Parameters
+    ----------
+    number : Any
+        Number to be converted to an integer
 
-        Parameters
-        ----------
-        number : Real
-            Number to be converted to an integer
+    Returns
+    -------
+    Real
+        The converted number in integer
 
-        Returns
-        -------
-        int
-            The converted number in integer
+    Raises
+    ------
+    ValueError
+        If the number is not finite
 
-        Examples
-        --------
-        >>> To.integer(-1)
-        -1
-        >>> To.integer(0)
-        0
-        >>> To.integer(1)
-        1
-        """
-        if Is.instance(number, Integral):
-            return number
-        return int(number)
+    Examples
+    --------
+    >>> To.finite(-1)
+    -1
+    >>> To.finite(0)
+    0
+    >>> To.finite(1)
+    1
+    >>> To.finite(1.5)
+    1.5
+    """
+    number = To.real(number)
+    if not Is.finite(number):
+        raise ValueError(f"{number} is not finite")
+    return number
+
+
+def to_rational(numerator: Rational, denominator: Rational = 1) -> Rational:
+    """
+    Divide two rational numbers and return the result as a fraction.
+    If any input is not integer/rational, performs standard division.
+
+    Parameters
+    ----------
+    numerator : int or rational or float
+        The numerator number
+    denominator : int or rational or float
+        The divisor number
+
+    Returns
+    -------
+    Rational
+        A  instance if inputs are integers/rational
+
+    Raises
+    ------
+    ZeroDivisionError
+        If denominator is zero
+    TypeError
+        If inputs are not numeric types
+
+    Notes
+    -----
+    This function preserves exact rational representation when inputs are
+    integers or rational numbers. For example:
+
+
+    Examples
+    --------
+    >>> To.rational(1, 2)
+    Fraction(1, 2)
+    >>> To.rational(12, 9)
+    Fraction(4, 3)
+    >>> To.rational(22, 7)
+    Fraction(22, 7)
+    """
+    numerator = To.real(numerator)
+    denominator = To.real(denominator)
+    return Fraction(numerator, denominator)
+
+
+def to_integer(number: Any) -> Integral:
+    """
+    Converts the number to an integer.
+
+    Parameters
+    ----------
+    number : Real
+        Number to be converted to an integer
+
+    Returns
+    -------
+    int
+        The converted number in integer
+
+    Examples
+    --------
+    >>> To.integer(-1)
+    -1
+    >>> To.integer(0)
+    0
+    >>> To.integer(1)
+    1
+    """
+    if Is.instance(number, Integral):
+        return number
+    return int(number)
 
 
 class Math:
@@ -515,3 +502,14 @@ class Math:
             TypeError: If the input is not a numeric type
         """
         return To.finite(math.degrees(angle))
+
+
+Is.real = is_real
+Is.finite = is_finite
+Is.infinity = is_infinity
+Is.integer = is_integer
+Is.rational = is_rational
+To.real = to_real
+To.finite = to_finite
+To.rational = to_rational
+To.integer = to_integer

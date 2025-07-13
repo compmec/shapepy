@@ -7,6 +7,7 @@ from __future__ import annotations
 
 from typing import Union
 
+from ..tools import To
 from .point import Point2D
 
 
@@ -26,8 +27,8 @@ class Box:
     dy = 1e-6
 
     def __init__(self, lowpt: Point2D, toppt: Point2D):
-        self.lowpt = lowpt
-        self.toppt = toppt
+        self.lowpt = To.point(lowpt)
+        self.toppt = To.point(toppt)
 
     def __str__(self) -> str:
         return f"Box with vertices {self.lowpt} and {self.toppt}"
@@ -42,6 +43,7 @@ class Box:
         )
 
     def __contains__(self, point: Point2D) -> bool:
+        point = To.point(point)
         if point[0] < self.lowpt[0] - self.dx:
             return False
         if point[1] < self.lowpt[1] - self.dy:
