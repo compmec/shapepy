@@ -17,68 +17,15 @@ from copy import copy
 from fractions import Fraction
 from typing import Iterable, Optional, Tuple, Union
 
-import numpy as np
 import pynurbs
 
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
 from ..scalar.bezier import Bezier, clean, derivate, split
-from ..scalar.reals import Rational, Real
+from ..scalar.quadrature import closed_linspace
+from ..scalar.reals import Real
 from ..tools import Is, To, vectorize
-
-
-class Math:
-    """
-    Defines the mathematical functions used for the package
-
-    The methods are
-    * comb
-    * horner_method
-    * bezier_caract_matrix
-    * closed_linspace
-    * open_linspace
-    """
-
-    @staticmethod
-    def closed_linspace(npts: int) -> Tuple[Rational]:
-        """
-        Gives a set of numbers in interval [0, 1]
-
-        Example
-        -------
-        >>> closed_linspace(2)
-        (0, 1)
-        >>> closed_linspace(3)
-        (0, 0.5, 1)
-        >>> closed_linspace(4)
-        (0, 0.33, 0.66, 1)
-        >>> closed_linspace(5)
-        (0, 0.25, 0.5, 0.75, 1)
-        """
-        if not Is.integer(npts) or npts < 2:
-            raise ValueError("npts must be integer >= 2")
-        return tuple(To.rational(num, npts - 1) for num in range(npts))
-
-    @staticmethod
-    def open_linspace(npts: int) -> Tuple[Rational]:
-        """
-        Gives a set of numbers in interval (0, 1)
-
-        Example
-        -------
-        >>> open_linspace(1)
-        (0.5, )
-        >>> open_linspace(2)
-        (0.33, 0.66)
-        >>> open_linspace(3)
-        (0.25, 0.50, 0.75)
-        """
-        if not Is.integer(npts) or npts < 1:
-            raise ValueError("npts must be integer >= 1")
-        return tuple(
-            To.rational(num) / (2 * npts) for num in range(1, 2 * npts, 2)
-        )
 
 
 class Segment:
@@ -144,8 +91,8 @@ class Segment:
         if self.degree == 1 and other.degree == 1:
             params = Intersection.lines(self, other)
             return (params,) if len(params) != 0 else tuple()
-        usample = list(Math.closed_linspace(self.npts + 3))
-        vsample = list(Math.closed_linspace(other.npts + 3))
+        usample = list(closed_linspace(self.npts + 3))
+        vsample = list(closed_linspace(other.npts + 3))
         pairs = []
         for ui in usample:
             pairs += [(ui, vj) for vj in vsample]
@@ -429,7 +376,7 @@ class Projection:
         point = To.point(point)
         assert Is.instance(curve, Segment)
         nsample = 2 + curve.degree
-        usample = Math.closed_linspace(nsample)
+        usample = closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
         curvals = tuple(cval - point for cval in curve(usample))
         distans2 = tuple(curval @ curval for curval in curvals)
@@ -471,126 +418,3 @@ class Projection:
             if len(usample) == 1:
                 break
         return usample
-
-
-class IntegratePlanar:
-    """
-    This class compute the integral of a function f(x, y)
-    over a bezier curve.
-    """
-
-    @staticmethod
-    def vertical(
-        curve: Segment,
-        expx: Optional[int] = 0,
-        expy: Optional[int] = 0,
-        nnodes: Optional[int] = None,
-    ):
-        """Computes the integral I
-
-        I = int_C x^expx * y^expy * dy
-
-        """
-        assert Is.instance(curve, Segment)
-        assert Is.integer(expx) and expx >= 0
-        assert Is.integer(expy) and expy >= 0
-        if nnodes is None:
-            nnodes = 3 + expx + expy + curve.degree
-        assert Is.integer(nnodes) and nnodes >= 0
-        dcurve = curve.derivate()
-        nodes = Math.open_linspace(nnodes)
-        poids = pynurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
-        points = curve(nodes)
-        xvals = tuple(point[0] ** expx for point in points)
-        yvals = tuple(point[1] ** expy for point in points)
-        dyvals = tuple(point[1] for point in dcurve(nodes))
-        funcvals = tuple(map(np.prod, zip(xvals, yvals, dyvals)))
-        return np.inner(poids, funcvals)
-
-    @staticmethod
-    def polynomial(
-        curve: Segment, expx: int, expy: int, nnodes: Optional[int] = None
-    ):
-        """
-        Computes the integral
-
-        I = int_C x^expx * y^expy * ds
-        """
-        assert Is.instance(curve, Segment)
-        if nnodes is None:
-            nnodes = 3 + expx + expy + curve.degree
-        assert Is.integer(nnodes)
-        assert nnodes >= 0
-        assert expx == 0
-        assert expy == 0
-        dcurve = curve.derivate()
-        nodes = Math.open_linspace(nnodes)
-        poids = pynurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
-        funcvals = tuple(abs(point) for point in dcurve(nodes))
-        return float(np.inner(poids, funcvals))
-
-    @staticmethod
-    def lenght(curve: Segment, nnodes: int = 5):
-        """Computes the integral I
-
-            I = int_{C} ds
-
-        Given the control points P of a bezier curve C(u) of
-        degree p
-
-            C(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-
-            I = int_{0}^{1} abs(C'(u)) * du
-
-        """
-        return IntegratePlanar.polynomial(curve, 0, 0, nnodes)
-
-    @staticmethod
-    def area(curve: Segment, nnodes: Optional[int] = None):
-        """Computes the integral I
-
-        I = int_0^1 x * dy
-
-        """
-        return IntegratePlanar.vertical(curve, 1, 0, nnodes)
-
-    @staticmethod
-    def winding_number_linear(
-        pointa: Point2D, pointb: Point2D, center: Point2D
-    ) -> float:
-        """
-        Computes the winding number defined by the given points.
-        It means, it's the angle made between the vector
-        (pointb - center) and (pointa - center)
-        """
-        anglea = np.arctan2(
-            float(pointa[1] - center[1]), float(pointa[0] - center[0])
-        )
-        angleb = np.arctan2(
-            float(pointb[1] - center[1]), float(pointb[0] - center[0])
-        )
-        wind = (angleb - anglea) / math.tau
-        if abs(wind) < 0.5:
-            return wind
-        return wind - 1 if wind > 0 else wind + 1
-
-    @staticmethod
-    def winding_number(
-        curve: Segment,
-        center: Optional[Point2D] = (0.0, 0.0),
-        nnodes: Optional[int] = None,
-    ) -> float:
-        """
-        Computes the integral for a bezier curve of given control points
-        """
-        assert Is.instance(curve, Segment)
-        nnodes = curve.npts if nnodes is None else nnodes
-        nodes = Math.closed_linspace(nnodes)
-        total = 0
-        for nodea, nodeb in zip(nodes[:-1], nodes[1:]):
-            pointa = curve(nodea)
-            pointb = curve(nodeb)
-            total += IntegratePlanar.winding_number_linear(
-                pointa, pointb, center
-            )
-        return total

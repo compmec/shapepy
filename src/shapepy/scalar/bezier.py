@@ -11,6 +11,7 @@ from ..tools import Is, To
 from .polynomial import Polynomial
 from .polynomial import derivate as polyderiv
 from .polynomial import scale, shift
+from .quadrature import inner
 from .reals import Math, Rational, Real
 
 
@@ -49,16 +50,6 @@ def inverse_caract_matrix(degree: int) -> Tuple[Tuple[Rational, ...], ...]:
             val = To.rational(Math.binom(degree - j, i), Math.binom(degree, i))
             matrix[degree - j][i] = val
     return tuple(map(tuple, matrix))
-
-
-def inner(vectora: Iterable[Real], vectorb: Iterable[Real]) -> Real:
-    """Returns the inner product of two vectors"""
-    if not Is.iterable(vectora) or not Is.iterable(vectorb):
-        raise TypeError("Expected two iterables")
-    vectora = tuple(vectora)
-    vectorb = tuple(vectorb)
-    result = vectora[0] * vectorb[0]
-    return sum((a * b for a, b in zip(vectora[1:], vectorb[1:])), start=result)
 
 
 def bezier2polynomial(bezier: Bezier) -> Polynomial:

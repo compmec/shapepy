@@ -13,9 +13,10 @@ import numpy as np
 
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
-from shapepy.geometry.segment import IntegratePlanar, Segment
+from shapepy.geometry.segment import Segment
 
 from ..tools import Is, To
+from . import integral
 
 
 class IntegrateJordan:
@@ -39,7 +40,7 @@ class IntegrateJordan:
         assert nnodes is None or Is.integer(nnodes)
         total = 0
         for bezier in jordan.segments:
-            total += IntegratePlanar.vertical(bezier, expx, expy, nnodes)
+            total += integral.vertical(bezier, expx, expy, nnodes)
         return total
 
     @staticmethod
@@ -55,7 +56,7 @@ class IntegrateJordan:
         assert nnodes is None or Is.integer(nnodes)
         total = 0
         for bezier in jordan.segments:
-            total += IntegratePlanar.polynomial(bezier, expx, expy, nnodes)
+            total += integral.polynomial(bezier, expx, expy, nnodes)
         return total
 
     @staticmethod
@@ -65,10 +66,10 @@ class IntegrateJordan:
         """
         assert Is.instance(jordan, JordanCurve)
         assert nnodes is None or Is.integer(nnodes)
-        lenght = 0
+        length = 0
         for bezier in jordan.segments:
-            lenght += IntegratePlanar.lenght(bezier, nnodes)
-        return lenght
+            length += integral.lenght(bezier, nnodes)
+        return length
 
     @staticmethod
     def area(jordan: JordanCurve, nnodes: Optional[int] = None) -> float:
@@ -79,7 +80,7 @@ class IntegrateJordan:
         assert nnodes is None or Is.integer(nnodes)
         area = 0
         for bezier in jordan.segments:
-            area += IntegratePlanar.area(bezier, nnodes)
+            area += integral.area(bezier, nnodes)
         return area
 
     @staticmethod
@@ -98,7 +99,7 @@ class IntegrateJordan:
                 if center in bezier:
                     return 0.5 if float(jordan) > 0 else -0.5
         for bezier in jordan.segments:
-            wind += IntegratePlanar.winding_number(bezier, center, nnodes)
+            wind += integral.winding_number(bezier, center, nnodes)
         return round(wind)
 
 
