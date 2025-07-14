@@ -2,7 +2,7 @@
 File that defines the classes
 
 * Math: to store mathematical methods used
-* BaseCurve: Defines a parent of BezierCurve and PlanarCurve
+* BaseCurve: Defines a parent of BezierCurve and Segment
 * Operations
 * Intersection
 * Projection
@@ -280,7 +280,7 @@ class BezierCurve:
         return planars
 
 
-class PlanarCurve:
+class Segment:
     """
     Defines a planar curve in the plane,
     that contains a bezier curve inside it
@@ -292,9 +292,9 @@ class PlanarCurve:
             ctrlpoints[i] = To.point(point)
         self.__planar = BezierCurve(ctrlpoints)
 
-    def __or__(self, other: PlanarCurve) -> PlanarCurve:
+    def __or__(self, other: Segment) -> Segment:
         """Computes the union of two bezier curves"""
-        assert Is.instance(other, PlanarCurve)
+        assert Is.instance(other, Segment)
         assert self.degree == other.degree
         assert self.ctrlpoints[-1] == other.ctrlpoints[0]
         # Last point of first derivative
@@ -332,7 +332,7 @@ class PlanarCurve:
             raise ValueError("Union is not a bezier curve!")
         return self.__class__(finalcurve.ctrlpoints)
 
-    def __and__(self, other: PlanarCurve) -> Union[None, Tuple[Tuple[int]]]:
+    def __and__(self, other: Segment) -> Union[None, Tuple[Tuple[int]]]:
         """Computes the intersection between two Planar Curves
 
         Returns None if there's no intersection
@@ -374,11 +374,11 @@ class PlanarCurve:
         return msg
 
     def __repr__(self) -> str:
-        msg = f"PlanarCurve (deg {self.degree})"
+        msg = f"Segment (deg {self.degree})"
         return msg
 
-    def __eq__(self, other: PlanarCurve) -> bool:
-        assert Is.instance(other, PlanarCurve)
+    def __eq__(self, other: Segment) -> bool:
+        assert Is.instance(other, Segment)
         if self.npts != other.npts:
             return False
         for pta, ptb in zip(self.ctrlpoints, other.ctrlpoints):
@@ -451,7 +451,7 @@ class PlanarCurve:
         """
         return self.__planar.eval(nodes)
 
-    def derivate(self, times: Optional[int] = 1) -> PlanarCurve:
+    def derivate(self, times: Optional[int] = 1) -> Segment:
         """
         Gives the first derivative of the curve
         """
@@ -479,7 +479,7 @@ class PlanarCurve:
         ymax = max(point[1] for point in self.ctrlpoints)
         return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
 
-    def clean(self, tolerance: Optional[float] = 1e-9) -> PlanarCurve:
+    def clean(self, tolerance: Optional[float] = 1e-9) -> Segment:
         """Reduces at maximum the degree of the bezier curve.
 
         If ``tolerance = None``, then it don't verify the error
@@ -489,14 +489,14 @@ class PlanarCurve:
         self.__planar.clean(tolerance)
         return self
 
-    def __copy__(self) -> PlanarCurve:
+    def __copy__(self) -> Segment:
         return self.__deepcopy__(None)
 
-    def __deepcopy__(self, memo) -> PlanarCurve:
+    def __deepcopy__(self, memo) -> Segment:
         ctrlpoints = tuple(copy(point) for point in self.ctrlpoints)
         return self.__class__(ctrlpoints)
 
-    def invert(self) -> PlanarCurve:
+    def invert(self) -> Segment:
         """
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
@@ -507,12 +507,12 @@ class PlanarCurve:
         self.__planar.ctrlpoints = new_ctrlpoints
         return self
 
-    def split(self, nodes: Tuple[float]) -> Tuple[PlanarCurve]:
+    def split(self, nodes: Tuple[float]) -> Tuple[Segment]:
         """
         Splits the curve into more segments
         """
         beziers = self.__planar.split(nodes)
-        planars = tuple(PlanarCurve(bezier.ctrlpoints) for bezier in beziers)
+        planars = tuple(Segment(bezier.ctrlpoints) for bezier in beziers)
         return planars
 
 
@@ -566,7 +566,7 @@ class Intersection:
     max_denom = math.ceil(1 / tol_du)
 
     @staticmethod
-    def lines(curvea: PlanarCurve, curveb: PlanarCurve) -> Tuple[float]:
+    def lines(curvea: Segment, curveb: Segment) -> Tuple[float]:
         """Finds the intersection of two line segments"""
         assert curvea.degree == 1
         assert curveb.degree == 1
@@ -592,7 +592,7 @@ class Intersection:
     # pylint: disable=too-many-locals
     @staticmethod
     def bezier_and_bezier(
-        curvea: PlanarCurve, curveb: PlanarCurve, pairs: Tuple[Tuple[float]]
+        curvea: Segment, curveb: Segment, pairs: Tuple[Tuple[float]]
     ) -> Tuple[Tuple[float]]:
         """Finds all the pairs (u*, v*) such A(u*) = B(v*)
 
@@ -638,8 +638,8 @@ class Intersection:
 
     @staticmethod
     def filter_distance(
-        curvea: PlanarCurve,
-        curveb: PlanarCurve,
+        curvea: Segment,
+        curveb: Segment,
         pairs: Tuple[Tuple[float]],
         max_dist: float,
     ) -> Tuple[Tuple[float]]:
@@ -687,7 +687,7 @@ class Projection:
     """
 
     @staticmethod
-    def point_on_curve(point: Point2D, curve: PlanarCurve) -> float:
+    def point_on_curve(point: Point2D, curve: Segment) -> float:
         """Finds parameter u* such abs(C(u*)) is minimal
 
         Find the parameter by reducing the distance J(u)
@@ -700,7 +700,7 @@ class Projection:
 
         """
         point = To.point(point)
-        assert Is.instance(curve, PlanarCurve)
+        assert Is.instance(curve, Segment)
         nsample = 2 + curve.degree
         usample = Math.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
@@ -716,7 +716,7 @@ class Projection:
     # pylint: disable=too-many-locals
     @staticmethod
     def newton_iteration(
-        point: Point2D, curve: PlanarCurve, usample: Tuple[float]
+        point: Point2D, curve: Segment, usample: Tuple[float]
     ) -> Tuple[float]:
         """
         Uses newton iterations to find the parameters ``usample``
@@ -811,7 +811,7 @@ class IntegratePlanar:
 
     @staticmethod
     def vertical(
-        curve: PlanarCurve,
+        curve: Segment,
         expx: Optional[int] = 0,
         expy: Optional[int] = 0,
         nnodes: Optional[int] = None,
@@ -821,7 +821,7 @@ class IntegratePlanar:
         I = int_C x^expx * y^expy * dy
 
         """
-        assert Is.instance(curve, PlanarCurve)
+        assert Is.instance(curve, Segment)
         assert Is.integer(expx) and expx >= 0
         assert Is.integer(expy) and expy >= 0
         if nnodes is None:
@@ -839,14 +839,14 @@ class IntegratePlanar:
 
     @staticmethod
     def polynomial(
-        curve: PlanarCurve, expx: int, expy: int, nnodes: Optional[int] = None
+        curve: Segment, expx: int, expy: int, nnodes: Optional[int] = None
     ):
         """
         Computes the integral
 
         I = int_C x^expx * y^expy * ds
         """
-        assert Is.instance(curve, PlanarCurve)
+        assert Is.instance(curve, Segment)
         if nnodes is None:
             nnodes = 3 + expx + expy + curve.degree
         assert Is.integer(nnodes)
@@ -860,7 +860,7 @@ class IntegratePlanar:
         return float(np.inner(poids, funcvals))
 
     @staticmethod
-    def lenght(curve: PlanarCurve, nnodes: int = 5):
+    def lenght(curve: Segment, nnodes: int = 5):
         """Computes the integral I
 
             I = int_{C} ds
@@ -876,7 +876,7 @@ class IntegratePlanar:
         return IntegratePlanar.polynomial(curve, 0, 0, nnodes)
 
     @staticmethod
-    def area(curve: PlanarCurve, nnodes: Optional[int] = None):
+    def area(curve: Segment, nnodes: Optional[int] = None):
         """Computes the integral I
 
         I = int_0^1 x * dy
@@ -906,14 +906,14 @@ class IntegratePlanar:
 
     @staticmethod
     def winding_number(
-        curve: PlanarCurve,
+        curve: Segment,
         center: Optional[Point2D] = (0.0, 0.0),
         nnodes: Optional[int] = None,
     ) -> float:
         """
         Computes the integral for a bezier curve of given control points
         """
-        assert Is.instance(curve, PlanarCurve)
+        assert Is.instance(curve, Segment)
         nnodes = curve.npts if nnodes is None else nnodes
         nodes = Math.closed_linspace(nnodes)
         total = 0

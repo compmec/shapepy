@@ -14,7 +14,7 @@ from .point import Point2D
 class Box:
     """
     Box class, which speeds up the evaluation of ``__contains__``
-    in classes like ``PlanarCurve``, ``JordanCurve`` and ``SimpleShape``.
+    in classes like ``Segment``, ``JordanCurve`` and ``SimpleShape``.
 
     Since it's faster to evaluate if a point is in a rectangle (this box),
     we avoid some computations like projecting the point on a curve and

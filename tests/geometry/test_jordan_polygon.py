@@ -15,7 +15,7 @@ from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
     depends=[
         "tests/geometry/test_point.py::test_all",
         "tests/geometry/test_box.py::test_all",
-        "tests/geometry/test_curve.py::test_all",
+        "tests/geometry/test_segment.py::test_all",
     ],
     scope="session",
 )

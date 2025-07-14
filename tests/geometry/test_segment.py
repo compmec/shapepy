@@ -8,11 +8,11 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from shapepy.geometry.curve import (
+from shapepy.geometry.segment import (
     BezierCurve,
     IntegratePlanar,
     Math,
-    PlanarCurve,
+    Segment,
 )
 
 
@@ -206,7 +206,7 @@ class TestPlanarCurve:
     @pytest.mark.dependency(depends=["TestPlanarCurve::test_begin"])
     def test_construct(self):
         points = [(0, 0), (1, 0), (0, 1)]
-        PlanarCurve(points)
+        Segment(points)
 
     @pytest.mark.order(13)
     @pytest.mark.timeout(10)
@@ -246,7 +246,7 @@ class TestDerivate:
     @pytest.mark.dependency(depends=["TestDerivate::test_begin"])
     def test_planar_bezier(self):
         points = [(0, 0), (1, 0), (0, 1)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         dcurve = curve.derivate()
         assert id(dcurve) != id(curve)
 
@@ -274,34 +274,34 @@ class TestIntegrate:
     @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
     def test_lenght(self):
         points = [(0, 0), (1, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert IntegratePlanar.lenght(curve) == 1
 
         points = [(1, 0), (0, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert IntegratePlanar.lenght(curve) == 1
 
         points = [(0, 1), (1, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert abs(IntegratePlanar.lenght(curve) - np.sqrt(2)) < 1e-9
 
     @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
     def test_winding_triangles(self):
-        curve = PlanarCurve([(1, 0), (2, 0)])
+        curve = Segment([(1, 0), (2, 0)])
         wind = IntegratePlanar.winding_number(curve)
         assert wind == 0
 
-        curve = PlanarCurve([(1, 0), (1, 1)])
+        curve = Segment([(1, 0), (1, 1)])
         wind = IntegratePlanar.winding_number(curve)
         assert abs(wind - 0.125) < 1e-9
 
-        curve = PlanarCurve([(1, 0), (0, 1)])
+        curve = Segment([(1, 0), (0, 1)])
         wind = IntegratePlanar.winding_number(curve)
         assert abs(wind - 0.25) < 1e-9
 
-        curve = PlanarCurve([(1, 0), (-0.5, np.sqrt(3) / 2)])
+        curve = Segment([(1, 0), (-0.5, np.sqrt(3) / 2)])
         wind = IntegratePlanar.winding_number(curve)
         assert abs(3 * wind - 1) < 1e-9
 
@@ -322,7 +322,7 @@ class TestIntegrate:
             angle1 = angle0 + 2 * np.pi * good_wind
             point0 = (np.cos(angle0), np.sin(angle0))
             point1 = (np.cos(angle1), np.sin(angle1))
-            curve = PlanarCurve([point0, point1])
+            curve = Segment([point0, point1])
             test_wind = IntegratePlanar.winding_number(curve)
             diff = abs(good_wind - test_wind)
             maxim = max(maxim, diff)
@@ -342,7 +342,7 @@ class TestIntegrate:
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             pairs = zip(ctrlpoints[:-1], ctrlpoints[1:])
-            curves = tuple(PlanarCurve(pair) for pair in pairs)
+            curves = tuple(Segment(pair) for pair in pairs)
             for curve in curves:
                 wind = IntegratePlanar.winding_number(curve)
                 assert abs(nsides * wind - 1) < 1e-2
@@ -351,7 +351,7 @@ class TestIntegrate:
             angles = np.linspace(math.tau, 0, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             pairs = zip(ctrlpoints[:-1], ctrlpoints[1:])
-            curves = tuple(PlanarCurve(pair) for pair in pairs)
+            curves = tuple(Segment(pair) for pair in pairs)
             for curve in curves:
                 wind = IntegratePlanar.winding_number(curve)
                 assert abs(nsides * wind + 1) < 1e-2
@@ -382,17 +382,17 @@ class TestOperations:
     @pytest.mark.dependency(depends=["TestOperations::test_begin"])
     def test_clean_segment(self):
         points = [(0, 0), (1, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         curve.clean()
         assert curve.degree == 1
 
         points = [(2, 3), (-1, 4)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         curve.clean()
         assert curve.degree == 1
 
         points = [(2, 3), (-1, 4)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         curve.clean(tolerance=None)
         assert curve.degree == 1
 
@@ -406,19 +406,19 @@ class TestOperations:
     )
     def test_clean_quadratic(self):
         points = [(0, 0), (1, 0), (2, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert curve.degree == 2
         curve.clean()
         assert curve.degree == 1
 
         points = [(0, 2), (1, 4), (2, 6)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert curve.degree == 2
         curve.clean()
         assert curve.degree == 1
 
         points = [(2, 3), (-1, 4), (-4, 5)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert curve.degree == 2
         curve.clean(tolerance=None)
         assert curve.degree == 1
@@ -447,7 +447,7 @@ class TestContains:
     @pytest.mark.dependency(depends=["TestContains::test_begin"])
     def test_line(self):
         points = [(0, 0), (1, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert (0, 0) in curve
         assert (1, 0) in curve
         assert (0.5, 0) in curve
@@ -455,7 +455,7 @@ class TestContains:
         assert (0, -1) not in curve
 
         points = [(0, 1), (0, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert (0, 0) in curve
         assert (0, 1) in curve
         assert (0, 0.5) in curve
@@ -463,7 +463,7 @@ class TestContains:
         assert (-1, 0) not in curve
 
         points = [(0, 0), (1, 1)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         assert (0, 0) in curve
         assert (1, 1) in curve
         assert (0.5, 0.5) in curve
@@ -496,10 +496,10 @@ class TestSplitUnite:
     def test_middle(self):
         half = Fraction(1, 2)
         points = [(0, 0), (1, 0)]
-        curve = PlanarCurve(points)
+        curve = Segment(points)
         curvea, curveb = curve.split([half])
-        assert curvea == PlanarCurve([(0, 0), (half, 0)])
-        assert curveb == PlanarCurve([(half, 0), (1, 0)])
+        assert curvea == Segment([(0, 0), (half, 0)])
+        assert curveb == Segment([(half, 0), (1, 0)])
 
         test = curvea | curveb
         assert test == curve

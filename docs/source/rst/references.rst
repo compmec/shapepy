@@ -9,7 +9,7 @@
 
 ----------------------------------------------------
 
-.. autoclass:: shape.curve.PlanarCurve
+.. autoclass:: shape.segment.Segment
     :members:
     :inherited-members:
     :undoc-members:
