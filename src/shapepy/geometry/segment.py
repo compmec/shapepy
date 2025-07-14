@@ -15,7 +15,7 @@ from __future__ import annotations
 import math
 from copy import copy
 from fractions import Fraction
-from typing import Any, Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple, Union
 
 import numpy as np
 import pynurbs
@@ -23,8 +23,9 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
-from ..scalar.reals import Rational
-from ..tools import Is, To
+from ..scalar.bezier import Bezier, clean, derivate, split
+from ..scalar.reals import Rational, Real
+from ..tools import Is, To, vectorize
 
 
 class Math:
@@ -38,55 +39,6 @@ class Math:
     * closed_linspace
     * open_linspace
     """
-
-    __caract_matrix = {}
-
-    @staticmethod
-    def comb(n: int, i: int) -> int:
-        """Computes binom(n, i)"""
-        value = 1
-        for j in range(n - i + 1, n + 1):
-            value *= j
-        for j in range(2, i + 1):
-            value //= j
-        return value
-
-    @staticmethod
-    def horner_method(node: float, coefs: Tuple[float]) -> float:
-        """Computes the polynomial for given coefs
-
-        coefs = [an, ..., a2, a1, a0]
-        return a0 + a1*xi + a2*xi^2 + ... + an*xi^n
-        """
-        value = 0 * coefs[0]
-        for coef in coefs:
-            value *= node
-            value += coef
-        return value
-
-    @staticmethod
-    def bezier_caract_matrix(degree: int) -> Tuple[Tuple[int]]:
-        """Returns the matrix [M] with the polynomial coefficients
-
-        [M]_{ij} = coef(x^{degree-j} from B_{i,p}(x))
-
-        p = degree
-
-        B_{i, p} = binom(p, i) * (1-u)^{p-i} * u^i
-                 = binom(p, i) * sum_{j=0}^{p-i} (-1)^{} * u^{i+(p-i)}
-
-        """
-        assert Is.integer(degree)
-        assert degree >= 0
-        if degree not in Math.__caract_matrix:
-            matrix = np.zeros((degree + 1, degree + 1), dtype="object")
-            for i in range(degree + 1):
-                for j in range(degree - i + 1):
-                    val = Math.comb(degree, i) * Math.comb(degree - i, j)
-                    matrix[i, j] = -val if (degree + i + j) % 2 else val
-            matrix = tuple(tuple(line) for line in matrix)
-            Math.__caract_matrix[degree] = matrix
-        return Math.__caract_matrix[degree]
 
     @staticmethod
     def closed_linspace(npts: int) -> Tuple[Rational]:
@@ -104,8 +56,8 @@ class Math:
         >>> closed_linspace(5)
         (0, 0.25, 0.5, 0.75, 1)
         """
-        assert Is.integer(npts)
-        assert npts >= 2
+        if not Is.integer(npts) or npts < 2:
+            raise ValueError("npts must be integer >= 2")
         return tuple(To.rational(num, npts - 1) for num in range(npts))
 
     @staticmethod
@@ -122,162 +74,11 @@ class Math:
         >>> open_linspace(3)
         (0.25, 0.50, 0.75)
         """
-        assert Is.integer(npts)
-        assert npts >= 1
+        if not Is.integer(npts) or npts < 1:
+            raise ValueError("npts must be integer >= 1")
         return tuple(
             To.rational(num) / (2 * npts) for num in range(1, 2 * npts, 2)
         )
-
-    @staticmethod
-    def matdot(
-        matrix: Iterable[Iterable[float]], column: Iterable[Any]
-    ) -> Iterable[Any]:
-        """
-        Computes the dot product of a matrix with a column vector
-
-        If column is a tuple of floats, then it returns a tuple of floats
-        If column is a matrix, computes the matrix product
-        """
-        column = tuple(column)
-        for line in matrix:
-            yield Math.inner(line, column)
-
-    @staticmethod
-    def inner(vectora: Iterable[Any], vectorb: Iterable[Any]) -> Any:
-        """
-        Computes the inner product of two vectors.
-        """
-        veca0 = next(iter(vectora))
-        vecb0 = next(iter(vectorb))
-        result = veca0 * vecb0
-        for va, vb in zip(vectora, vectorb):
-            result += va * vb
-        return result
-
-
-class BezierCurve:
-    """BezierCurve object"""
-
-    def __init__(self, ctrlpoints: Tuple[Any]):
-        self.ctrlpoints = ctrlpoints
-
-    @property
-    def degree(self) -> int:
-        """
-        The polynomial degree used by the Bezier Curve
-        """
-        return self.npts - 1
-
-    @property
-    def npts(self) -> int:
-        """
-        The number of control points used by the curve
-        """
-        return len(self.ctrlpoints)
-
-    @property
-    def ctrlpoints(self) -> Tuple[Point2D]:
-        """
-        The control points that defines the cdurve
-        """
-        return self.__ctrlpoints
-
-    @ctrlpoints.setter
-    def ctrlpoints(self, other: Tuple[Any]):
-        self.__ctrlpoints = tuple(other)
-
-    def __call__(
-        self, nodes: Union[float, Tuple[float]]
-    ) -> Union[Any, Tuple[Any]]:
-        try:
-            iter(nodes)
-            return self.eval(nodes)
-        except TypeError:
-            return self.eval((nodes,))[0]
-
-    def __str__(self) -> str:
-        msg = f"BezierCurve of degree {self.degree} and "
-        msg += f"control points {str(self.ctrlpoints)}"
-        return msg
-
-    def __repr__(self) -> str:
-        return self.__str__()
-
-    def eval(self, nodes: Tuple[float]) -> Tuple[Any]:
-        """
-        Evaluates
-
-                              [ 1 ]
-        [P0, ..., Pn] * [M] * [   ]
-                              [x^n]
-
-        """
-        iter(nodes)
-        results = [0] * len(nodes)
-        matrix = Math.bezier_caract_matrix(self.degree)
-        zero = 0 * self.ctrlpoints[0]
-        canon_pts = tuple(
-            sum(
-                (line[j] * pt for j, pt in enumerate(self.ctrlpoints)),
-                start=zero,
-            )
-            for line in matrix
-        )
-        for k, node in enumerate(nodes):
-            results[k] = Math.horner_method(node, canon_pts)
-        return tuple(results)
-
-    def derivate(self, times: Optional[int] = 1) -> BezierCurve:
-        """
-        Computes the derivative of the Bezier Curve
-        """
-        assert Is.integer(times)
-        assert times > 0
-        matrix = Derivate.non_rational_bezier(self.degree, times)
-        zero = 0 * self.ctrlpoints[0]
-        new_ctrlpoints = tuple(
-            sum(
-                (line[j] * pj for j, pj in enumerate(self.ctrlpoints)),
-                start=zero,
-            )
-            for line in matrix
-        )
-        return self.__class__(new_ctrlpoints)
-
-    def clean(self, tolerance: Optional[float] = 1e-9) -> BezierCurve:
-        """Reduces at maximum the degree of the bezier curve.
-
-        If ``tolerance = None``, then it don't verify the error
-        and stops with a bezier curve of degree ``1`` (segment)
-
-        """
-        degree = self.degree
-        times = 0
-        points = self.ctrlpoints
-        while degree - times > 1:
-            _, materror = Operations.degree_decrease(degree, times + 1)
-            error = sum(
-                sum(matval * (pi @ pj) for matval, pj in zip(line, points))
-                for line, pi in zip(materror, points)
-            )
-            if tolerance and error > tolerance:
-                break
-            times += 1
-        if times == 0:
-            return self
-        mattrans, _ = Operations.degree_decrease(degree, times)
-        self.ctrlpoints = tuple(Math.matdot(mattrans, points))
-        return self
-
-    def split(self, nodes: Tuple[float]) -> Tuple[BezierCurve]:
-        """
-        Splits the Bezier Curve into the given segments
-        """
-        knotvector = pynurbs.GeneratorKnotVector.bezier(self.degree)
-        curve = pynurbs.Curve(knotvector, self.ctrlpoints)
-        beziers = curve.split(nodes)
-        planars = tuple(BezierCurve(bezier.ctrlpoints) for bezier in beziers)
-        return planars
 
 
 class Segment:
@@ -286,11 +87,10 @@ class Segment:
     that contains a bezier curve inside it
     """
 
-    def __init__(self, ctrlpoints: Tuple[Point2D]):
-        ctrlpoints = list(ctrlpoints)
-        for i, point in enumerate(ctrlpoints):
-            ctrlpoints[i] = To.point(point)
-        self.__planar = BezierCurve(ctrlpoints)
+    def __init__(self, ctrlpoints: Iterable[Point2D]):
+        if not Is.iterable(ctrlpoints):
+            raise ValueError("Control points must be iterable")
+        self.ctrlpoints = list(map(To.point, ctrlpoints))
 
     def __or__(self, other: Segment) -> Segment:
         """Computes the union of two bezier curves"""
@@ -315,8 +115,6 @@ class Segment:
             other.degree, To.rational
         )
         knotvectorb.scale(1 - node).shift(node)
-        print(knotvectora)
-        print(knotvectorb)
         newknotvector = tuple(knotvectora) + tuple(
             knotvectorb[self.degree + 1 :]
         )
@@ -324,10 +122,7 @@ class Segment:
         finalcurve.ctrlpoints = tuple(self.ctrlpoints) + tuple(
             other.ctrlpoints
         )
-        print("finalcurve = ", finalcurve)
-        print(f"node = {node}")
         finalcurve.knot_clean((node,))
-        print(".....")
         if finalcurve.degree + 1 != finalcurve.npts:
             raise ValueError("Union is not a bezier curve!")
         return self.__class__(finalcurve.ctrlpoints)
@@ -391,21 +186,17 @@ class Segment:
         if point not in self.box():
             return False
         params = Projection.point_on_curve(point, self)
-        vectors = tuple(cval - point for cval in self.eval(params))
+        vectors = tuple(cval - point for cval in self(params))
         distances = tuple(abs(vector) for vector in vectors)
         for dist in distances:
             if dist < 1e-6:  # Tolerance
                 return True
         return False
 
-    def __call__(
-        self, nodes: Union[float, Tuple[float]]
-    ) -> Union[Any, Tuple[Any]]:
-        try:
-            iter(nodes)
-            return self.eval(nodes)
-        except TypeError:
-            return self.eval((nodes,))[0]
+    @vectorize(1, 0)
+    def __call__(self, node: Real) -> Point2D:
+        planar = Bezier(self.ctrlpoints)
+        return planar(node)
 
     @property
     def degree(self) -> int:
@@ -415,58 +206,35 @@ class Segment:
         Degree = 1 -> Linear curve
         Degree = 2 -> Quadratic
         """
-        return self.__planar.degree
+        return self.npts - 1
 
     @property
     def npts(self) -> int:
         """
         The number of control points used by the curve
         """
-        return self.__planar.npts
+        return len(self.ctrlpoints)
 
     @property
-    def ctrlpoints(self) -> Tuple[Point2D]:
+    def ctrlpoints(self) -> Tuple[Point2D, ...]:
         """
         The control points that defines the planar curve
         """
-        return self.__planar.ctrlpoints
-
-    @property
-    def weights(self) -> Tuple[float]:
-        """
-        The weights of the control points, used for rational curves
-        """
-        raise NotImplementedError
+        return self.__ctrlpoints
 
     @ctrlpoints.setter
-    def ctrlpoints(self, points: Tuple[Point2D]):
-        points = list(points)
-        for i, point in enumerate(points):
-            points[i] = To.point(point)
-        self.__planar.ctrlpoints = points
-
-    def eval(self, nodes: Tuple[float]) -> Tuple[Any]:
-        """
-        Evaluates the nodes, giving the points
-        """
-        return self.__planar.eval(nodes)
+    def ctrlpoints(self, points: Iterable[Point2D]):
+        self.__ctrlpoints = list(map(To.point, points))
+        self.__planar = Bezier(self.ctrlpoints)
 
     def derivate(self, times: Optional[int] = 1) -> Segment:
         """
         Gives the first derivative of the curve
         """
-        assert Is.integer(times)
-        assert times > 0
-        matrix = Derivate.non_rational_bezier(self.degree, times)
-        zero = 0 * self.ctrlpoints[0]
-        new_ctrlpoints = tuple(
-            sum(
-                (mij * pt for mij, pt in zip(line, self.ctrlpoints)),
-                start=zero,
-            )
-            for line in matrix
-        )
-        return self.__class__(new_ctrlpoints)
+        if not Is.integer(times) or times <= 0:
+            raise ValueError(f"Times must be integer >= 1, not {times}")
+        newplanar = derivate(Bezier(self.ctrlpoints), times)
+        return self.__class__(newplanar)
 
     def box(self) -> Box:
         """Returns two points which defines the minimal exterior rectangle
@@ -486,7 +254,9 @@ class Segment:
         and stops with a bezier curve of degree ``1`` (linear segment)
 
         """
-        self.__planar.clean(tolerance)
+        newplanar = clean(Bezier(self.ctrlpoints))
+        if newplanar.degree != self.degree:
+            self.ctrlpoints = tuple(newplanar)
         return self
 
     def __copy__(self) -> Segment:
@@ -501,19 +271,16 @@ class Segment:
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
-        points = self.ctrlpoints
-        npts = len(points)
-        new_ctrlpoints = tuple(points[i] for i in range(npts - 1, -1, -1))
-        self.__planar.ctrlpoints = new_ctrlpoints
+        points = tuple(self.ctrlpoints)
+        self.ctrlpoints = (points[i] for i in range(self.degree, -1, -1))
         return self
 
     def split(self, nodes: Tuple[float]) -> Tuple[Segment]:
         """
         Splits the curve into more segments
         """
-        beziers = self.__planar.split(nodes)
-        planars = tuple(Segment(bezier.ctrlpoints) for bezier in beziers)
-        return planars
+        beziers = split(self.__planar, nodes)
+        return tuple(map(Segment, beziers))
 
 
 # pylint: disable=too-few-public-methods
@@ -521,39 +288,6 @@ class Operations:
     """
     Defines the operation of over the bezier curves
     """
-
-    __degree_decre = {}
-
-    @staticmethod
-    def degree_decrease(degree: int, times: int) -> Tuple[Tuple[Tuple[float]]]:
-        """Returns the transformation and error matrix such
-
-        A(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-        B(u) = sum_{i=0}^{p-t} B_{i,p-t}(u) * Q_i
-
-        [Q] = [T] * [P]
-        error = [P]^T * [E] * [P]
-
-        """
-        assert Is.integer(degree)
-        assert degree > 0
-        assert Is.integer(times)
-        assert times > 0
-        assert degree - times >= 0
-        if (degree, times) not in Operations.__degree_decre:
-            old_knotvector = pynurbs.GeneratorKnotVector.bezier(
-                degree, To.rational
-            )
-            new_knotvector = pynurbs.GeneratorKnotVector.bezier(
-                degree - times, To.rational
-            )
-            matrix, error = pynurbs.heavy.LeastSquare.spline2spline(
-                old_knotvector, new_knotvector
-            )
-            matrix = tuple(tuple(line) for line in matrix)
-            error = tuple(tuple(line) for line in error)
-            Operations.__degree_decre[(degree, times)] = matrix, error
-        return Operations.__degree_decre[(degree, times)]
 
 
 class Intersection:
@@ -746,63 +480,6 @@ class Projection:
         return usample
 
 
-class Derivate:
-    """
-    Defines the functions to derivate the bezier curve
-    """
-
-    __non_rat_bezier_once = {}
-
-    @staticmethod
-    def non_rational_bezier_once(degree: int) -> Tuple[Tuple[float]]:
-        """Derivate a bezier curve of given degree
-
-        Returns the transformation matrix [T] such
-
-        A(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-        C(u) = sum_{i=0}^{q} B_{i,q}(u) * Q_i
-
-        C(u) = (d^t A)/(du^t)
-
-        [Q] = [T] * [P]
-        [T].shape = (q+1, p+1)
-        q = p - 1
-        """
-        if degree not in Derivate.__non_rat_bezier_once:
-            knotvector = pynurbs.GeneratorKnotVector.bezier(
-                degree, To.rational
-            )
-            matrix = pynurbs.heavy.Calculus.derivate_nonrational_bezier(
-                knotvector
-            )
-            Derivate.__non_rat_bezier_once[degree] = tuple(matrix)
-        return Derivate.__non_rat_bezier_once[degree]
-
-    @staticmethod
-    def non_rational_bezier(degree: int, times: int) -> Tuple[Tuple[float]]:
-        """Derivate a bezier curve of given degree
-
-        Returns the transformation matrix [T] such
-
-        A(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-        C(u) = sum_{i=0}^{q} B_{i,q}(u) * Q_i
-
-        C(u) = (d^t A)/(du^t)
-
-        [Q] = [T] * [P]
-        [T].shape = (q+1, p+1)
-        """
-        assert Is.integer(degree) and degree >= 0
-        assert Is.integer(times) and times > 0
-        if degree - times < 0:
-            return ((0,) * (degree + 1),)
-        matrix = np.eye(degree + 1, dtype="int64")
-        for i in range(times):
-            derive = Derivate.non_rational_bezier_once(degree - i)
-            matrix = np.dot(derive, matrix)
-        return tuple(tuple(line) for line in matrix)
-
-
 class IntegratePlanar:
     """
     This class compute the integral of a function f(x, y)
@@ -917,8 +594,9 @@ class IntegratePlanar:
         nnodes = curve.npts if nnodes is None else nnodes
         nodes = Math.closed_linspace(nnodes)
         total = 0
-        for pair_node in zip(nodes[:-1], nodes[1:]):
-            pointa, pointb = curve.eval(pair_node)
+        for nodea, nodeb in zip(nodes[:-1], nodes[1:]):
+            pointa = curve(nodea)
+            pointb = curve(nodeb)
             total += IntegratePlanar.winding_number_linear(
                 pointa, pointb, center
             )

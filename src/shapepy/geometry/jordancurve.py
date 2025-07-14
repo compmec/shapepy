@@ -534,7 +534,7 @@ class JordanCurve:
                 subnpts if subnpts is not None else 10 * (segment.degree - 1)
             )
             usample = tuple(Fraction(num, npts + 1) for num in range(npts + 1))
-            points = segment.eval(usample)
+            points = segment(usample)
             all_points += list(tuple(point) for point in points)
         all_points.append(all_points[0])  # Close the curve
         return tuple(all_points)
