@@ -16,10 +16,11 @@ from shapepy.geometry.curve import (
 )
 
 
-@pytest.mark.order(12)
+@pytest.mark.order(13)
 @pytest.mark.dependency(
     depends=[
-        "tests/geometry/test_polygon.py::test_end",
+        "tests/geometry/test_point.py::test_all",
+        "tests/geometry/test_box.py::test_all",
     ],
     scope="session",
 )
@@ -28,12 +29,12 @@ def test_begin():
 
 
 class TestMath:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestMath::test_begin"])
     def test_comb(self):
@@ -55,7 +56,7 @@ class TestMath:
         assert Math.comb(4, 3) == 4
         assert Math.comb(4, 4) == 1
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestMath::test_begin"])
     def test_horner_method(self):
@@ -74,7 +75,7 @@ class TestMath:
         assert Math.horner_method(0.5, coefs) == 2.5
         assert Math.horner_method(1, coefs) == 3
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -99,7 +100,7 @@ class TestMath:
         good = [[-1, 3, -3, 1], [3, -6, 3, 0], [-3, 3, 0, 0], [1, 0, 0, 0]]
         np.testing.assert_allclose(test, good)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -114,12 +115,12 @@ class TestMath:
 
 
 class TestScalarBezier:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestScalarBezier::test_begin"])
     def test_constant_one(self):
@@ -138,7 +139,7 @@ class TestScalarBezier:
         assert bezier(0.5) == 1
         assert bezier(1) == 1
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestScalarBezier::test_begin"])
     def test_constant_two(self):
@@ -158,7 +159,7 @@ class TestScalarBezier:
         assert bezier(0.5) == const
         assert bezier(1) == const
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestScalarBezier::test_begin"])
     def test_degree_1(self):
@@ -168,7 +169,7 @@ class TestScalarBezier:
         assert bezier(0.5) == 0.5 * (points[0] + points[1])
         assert bezier(1) == points[1]
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestScalarBezier::test_begin"])
     def test_degree_2(self):
@@ -179,7 +180,7 @@ class TestScalarBezier:
         assert abs(bezier(0.5) - good) < 1e-6
         assert abs(bezier(1) - points[2]) < 1e-6
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -195,19 +196,19 @@ class TestScalarBezier:
 
 
 class TestPlanarCurve:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestPlanarCurve::test_begin"])
     def test_construct(self):
         points = [(0, 0), (1, 0), (0, 1)]
         PlanarCurve(points)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -220,7 +221,7 @@ class TestPlanarCurve:
 
 
 class TestDerivate:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -231,7 +232,7 @@ class TestDerivate:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestDerivate::test_begin"])
     def test_scalar_bezier(self):
@@ -240,7 +241,7 @@ class TestDerivate:
         dcurve = curve.derivate()
         assert id(dcurve) != id(curve)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestDerivate::test_begin"])
     def test_planar_bezier(self):
@@ -249,7 +250,7 @@ class TestDerivate:
         dcurve = curve.derivate()
         assert id(dcurve) != id(curve)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -263,12 +264,12 @@ class TestDerivate:
 
 
 class TestIntegrate:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
     def test_lenght(self):
@@ -284,7 +285,7 @@ class TestIntegrate:
         curve = PlanarCurve(points)
         assert abs(IntegratePlanar.lenght(curve) - np.sqrt(2)) < 1e-9
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrate::test_begin"])
     def test_winding_triangles(self):
@@ -304,7 +305,7 @@ class TestIntegrate:
         wind = IntegratePlanar.winding_number(curve)
         assert abs(3 * wind - 1) < 1e-9
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -327,7 +328,7 @@ class TestIntegrate:
             maxim = max(maxim, diff)
             assert abs(good_wind - test_wind) < 1e-9
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -355,7 +356,7 @@ class TestIntegrate:
                 wind = IntegratePlanar.winding_number(curve)
                 assert abs(nsides * wind + 1) < 1e-2
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -371,12 +372,12 @@ class TestIntegrate:
 
 
 class TestOperations:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestOperations::test_begin"])
     def test_clean_segment(self):
@@ -395,7 +396,7 @@ class TestOperations:
         curve.clean(tolerance=None)
         assert curve.degree == 1
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -422,7 +423,7 @@ class TestOperations:
         curve.clean(tolerance=None)
         assert curve.degree == 1
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -436,12 +437,12 @@ class TestOperations:
 
 
 class TestContains:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestContains::test_begin"])
     def test_line(self):
@@ -471,7 +472,7 @@ class TestContains:
         assert (-1, -1) not in curve
         assert (-0.1, -0.1) not in curve
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -484,12 +485,12 @@ class TestContains:
 
 
 class TestSplitUnite:
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestSplitUnite::test_begin"])
     def test_middle(self):
@@ -503,7 +504,7 @@ class TestSplitUnite:
         test = curvea | curveb
         assert test == curve
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(13)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -515,7 +516,7 @@ class TestSplitUnite:
         pass
 
 
-@pytest.mark.order(12)
+@pytest.mark.order(13)
 @pytest.mark.dependency(
     depends=[
         "TestMath::test_end",
@@ -528,5 +529,5 @@ class TestSplitUnite:
         "TestSplitUnite::test_end",
     ]
 )
-def test_end():
+def test_all():
     pass

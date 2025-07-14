@@ -10,11 +10,12 @@ import pytest
 from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
 
 
-@pytest.mark.order(12)
+@pytest.mark.order(15)
 @pytest.mark.dependency(
     depends=[
-        "tests/geometry/test_polygon.py::test_end",
-        "tests/geometry/test_curve.py::test_end",
+        "tests/geometry/test_point.py::test_all",
+        "tests/geometry/test_box.py::test_all",
+        "tests/geometry/test_curve.py::test_all",
     ],
     scope="session",
 )
@@ -23,12 +24,12 @@ def test_begin():
 
 
 class TestJordanPolygon:
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestJordanPolygon::test_begin"])
     def test_creation(self):
@@ -38,7 +39,7 @@ class TestJordanPolygon:
         points = [(0, 0), (1, 0), (1, 1), (0, 1)]
         JordanCurve.from_vertices(points)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -50,7 +51,7 @@ class TestJordanPolygon:
         with pytest.raises(TypeError):
             JordanCurve.from_vertices("asd")
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -70,7 +71,7 @@ class TestJordanPolygon:
             assert last_point == first_point
             assert id(last_point) == id(first_point)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -97,7 +98,7 @@ class TestJordanPolygon:
             for neg1 in negatives:
                 assert neg0 == neg1
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -126,7 +127,7 @@ class TestJordanPolygon:
         assert square != postri1
         assert square != postri2
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -151,7 +152,7 @@ class TestJordanPolygon:
                 # assert ~(~pos) == pos
                 # assert ~(~neg) == neg
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -202,7 +203,7 @@ class TestJordanPolygon:
         test = np.array(square1 & square0, dtype="float64")
         assert np.all(test == good)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -221,12 +222,12 @@ class TestJordanPolygon:
 
 
 class TestTransformationPolygon:
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(depends=["TestJordanPolygon::test_end"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestTransformationPolygon::test_begin"])
     def test_move(self):
@@ -240,7 +241,7 @@ class TestTransformationPolygon:
 
         assert test_square == good_square
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -256,7 +257,7 @@ class TestTransformationPolygon:
         test_rectangle.scale(2, 3)
         assert test_rectangle == good_rectangle
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -277,7 +278,7 @@ class TestTransformationPolygon:
         test_square.rotate(60, degrees=True)
         assert test_square == good_square
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -305,7 +306,7 @@ class TestTransformationPolygon:
         assert test_square == orig_square
         assert test_square != inve_square
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -323,7 +324,7 @@ class TestTransformationPolygon:
         test_square.split((0, 2, 3), (0.5, 0.5, 0.5))
         assert test_square == good_square
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(20)
     @pytest.mark.dependency(
         depends=[
@@ -355,7 +356,7 @@ class TestTransformationPolygon:
         assert len(test_ids) == len(good_ids)
         assert test_ids == good_ids
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -372,7 +373,7 @@ class TestTransformationPolygon:
 
 
 class TestIntegrateJordan:
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -383,7 +384,7 @@ class TestIntegrateJordan:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrateJordan::test_begin"])
     def test_winding_regular_polygon(self):
@@ -401,7 +402,7 @@ class TestIntegrateJordan:
             wind = IntegrateJordan.winding_number(jordancurve)
             assert abs(wind + 1) < 1e-9
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrateJordan::test_begin"])
     def test_lenght_triangle(self):
@@ -417,7 +418,7 @@ class TestIntegrateJordan:
         good = -12
         assert abs(test - good) < 1e-3
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -450,7 +451,7 @@ class TestIntegrateJordan:
         assert lenght < 0
         assert abs(lenght + 4 * side) < 1e-9
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -467,7 +468,7 @@ class TestIntegrateJordan:
             jordan_curve = JordanCurve.from_vertices(ctrlpoints)
             assert (float(jordan_curve) - lenght) < 1e-9
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -483,7 +484,7 @@ class TestIntegrateJordan:
 
 
 class TestOthers:
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
             "TestJordanPolygon::test_end",
@@ -493,7 +494,7 @@ class TestOthers:
     def test_begin(self):
         pass
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(depends=["TestOthers::test_begin"])
     def test_print(self):
         points = [(1, 1), (2, 2), (0, 3)]
@@ -508,7 +509,7 @@ class TestOthers:
 
         str(triangle.vertices)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(depends=["TestOthers::test_begin"])
     def test_self_intersection(self):
         points = [(0, 0), (1, 0), (0, 1)]
@@ -534,7 +535,7 @@ class TestOthers:
         )
         assert bool(inters)
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(depends=["TestOthers::test_begin"])
     def test_clean(self):
         verticesa = [(-1, 0), (0, 0), (1, 0), (0, 1)]
@@ -565,7 +566,7 @@ class TestOthers:
         jordanb = JordanCurve.from_vertices(verticesb)
         assert jordana == jordanb
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=["TestOthers::test_begin", "TestOthers::test_clean"]
     )
@@ -576,7 +577,7 @@ class TestOthers:
         jordanb = JordanCurve.from_vertices(verticesb)
         assert jordana == jordanb
 
-    @pytest.mark.order(12)
+    @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
             "TestOthers::test_begin",
@@ -590,13 +591,14 @@ class TestOthers:
         pass
 
 
-@pytest.mark.order(12)
+@pytest.mark.order(15)
 @pytest.mark.dependency(
     depends=[
+        "test_begin",
         "TestJordanPolygon::test_end",
         "TestTransformationPolygon::test_end",
         "TestIntegrateJordan::test_end",
     ]
 )
-def test_end():
+def test_all():
     pass
