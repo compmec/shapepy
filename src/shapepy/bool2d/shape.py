@@ -921,7 +921,7 @@ class SimpleShape(DefinedShape):
         for a, us in uvals.items():
             us = sorted(us)
             umids = tuple((u0 + u1) / 2 for u0, u1 in zip(us[:-1], us[1:]))
-            points = jordan.segments[a].eval(umids)
+            points = jordan.segments[a](umids)
             for point in points:
                 if not self.contains_point(point, boundary):
                     return False

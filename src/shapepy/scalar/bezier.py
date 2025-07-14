@@ -10,6 +10,7 @@ from typing import Iterable, Tuple, Union
 from ..tools import Is, To
 from .polynomial import Polynomial
 from .polynomial import derivate as polyderiv
+from .polynomial import scale, shift
 from .reals import Math, Rational, Real
 
 
@@ -172,3 +173,15 @@ def derivate(bezier: Bezier, times: int = 1) -> Bezier:
     >>> dbezier = derivate(bezier)
     """
     return polynomial2bezier(polyderiv(bezier2polynomial(bezier), times))
+
+
+def split(bezier: Bezier, nodes: Iterable[Real]) -> Iterable[Bezier]:
+    """
+    Splits the bezier curve into segments
+    """
+    nodes = (node for node in nodes if 0 < node < 1)
+    nodes = tuple([0] + sorted(nodes) + [1])
+    poly = bezier2polynomial(bezier)
+    for knota, knotb in zip(nodes, nodes[1:]):
+        newpoly = scale(shift(poly, -knota), knotb - knota)
+        yield polynomial2bezier(newpoly)

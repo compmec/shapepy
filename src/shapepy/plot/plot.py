@@ -18,8 +18,8 @@ from shapepy.bool2d.shape import (
     EmptyShape,
     WholeShape,
 )
-from shapepy.geometry.curve import PlanarCurve
 from shapepy.geometry.jordancurve import JordanCurve
+from shapepy.geometry.segment import Segment
 
 from ..tools import Is
 
@@ -27,7 +27,7 @@ Path = matplotlib.path.Path
 PathPatch = matplotlib.patches.PathPatch
 
 
-def patch_segment(segment: PlanarCurve):
+def patch_segment(segment: Segment):
     """
     Creates the commands for matplotlib to plot the segment
     """

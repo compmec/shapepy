@@ -12,8 +12,9 @@ from shapepy import Primitive
 @pytest.mark.order(22)
 @pytest.mark.dependency(
     depends=[
-        "tests/geometry/test_polygon.py::test_end",
-        "tests/geometry/test_jordan_polygon.py::test_end",
+        "tests/geometry/test_point.py::test_all",
+        "tests/geometry/test_box.py::test_all",
+        "tests/geometry/test_jordan_polygon.py::test_all",
     ],
     scope="session",
 )

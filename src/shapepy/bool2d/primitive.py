@@ -13,9 +13,9 @@ from typing import Tuple
 import numpy as np
 
 from shapepy.bool2d.shape import EmptyShape, SimpleShape, WholeShape
-from shapepy.geometry.curve import PlanarCurve
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D
+from shapepy.geometry.segment import Segment
 
 from ..tools import Is, To
 
@@ -227,12 +227,12 @@ class Primitive:
         beziers = []
         for _ in range(ndivangle - 1):
             end_point = copy(start_point).rotate(angle)
-            new_bezier = PlanarCurve([start_point, middle_point, end_point])
+            new_bezier = Segment([start_point, middle_point, end_point])
             beziers.append(new_bezier)
             start_point = end_point
             middle_point = copy(middle_point).rotate(angle)
         end_point = beziers[0].ctrlpoints[0]
-        new_bezier = PlanarCurve([start_point, middle_point, end_point])
+        new_bezier = Segment([start_point, middle_point, end_point])
         beziers.append(new_bezier)
 
         jordan_curve = JordanCurve.from_segments(beziers)

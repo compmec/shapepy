@@ -12,8 +12,8 @@ from typing import Optional, Tuple, Union
 import numpy as np
 
 from shapepy.geometry.box import Box
-from shapepy.geometry.curve import IntegratePlanar, PlanarCurve
 from shapepy.geometry.point import Point2D
+from shapepy.geometry.segment import IntegratePlanar, Segment
 
 from ..tools import Is, To
 
@@ -108,25 +108,25 @@ class JordanCurve:
     It stores a list of 'segments', each segment is a bezier curve
     """
 
-    def __init__(self, segments: Tuple[PlanarCurve]):
+    def __init__(self, segments: Tuple[Segment]):
         self.segments = segments
 
     @classmethod
-    def from_segments(cls, beziers: Tuple[PlanarCurve]) -> JordanCurve:
+    def from_segments(cls, beziers: Tuple[Segment]) -> JordanCurve:
         """Initialize a JordanCurve from a list of beziers,
 
         :param beziers: The list connected planar curves
-        :type beziers: Tuple[PlanarCurve]
+        :type beziers: Tuple[Segment]
         :return: The created jordan curve
         :rtype: JordanCurve
 
         Example use
         -----------
 
-        >>> from shapepy import PlanarCurve, JordanCurve
-        >>> segment0 = PlanarCurve([(0, 0), (4, 0)])
-        >>> segment1 = PlanarCurve([(4, 0), (4, 3), (0, 3)])
-        >>> segment2 = PlanarCurve([(0, 3), (0, 0)])
+        >>> from shapepy import Segment, JordanCurve
+        >>> segment0 = Segment([(0, 0), (4, 0)])
+        >>> segment1 = Segment([(4, 0), (4, 3), (0, 3)])
+        >>> segment2 = Segment([(0, 3), (0, 0)])
         >>> JordanCurve.from_segments([segment0, segment1, segment2])
         Jordan Curve of degree 2 and vertices
         ((0, 0), (4, 0), (4, 3), (0, 3))
@@ -171,7 +171,7 @@ class JordanCurve:
         beziers = [0] * nverts
         for i in range(nverts):
             ctrlpoints = vertices[i : i + 2]
-            new_bezier = PlanarCurve(ctrlpoints)
+            new_bezier = Segment(ctrlpoints)
             beziers[i] = new_bezier
         return cls.from_segments(beziers)
 
@@ -205,7 +205,7 @@ class JordanCurve:
             ctrlpoints = list(ctrlpoints)
             for j, ctrlpoint in enumerate(ctrlpoints):
                 ctrlpoints[j] = To.point(ctrlpoint)
-            new_bezier = PlanarCurve(ctrlpoints)
+            new_bezier = Segment(ctrlpoints)
             beziers[i] = new_bezier
         return cls.from_segments(beziers)
 
@@ -534,7 +534,7 @@ class JordanCurve:
                 subnpts if subnpts is not None else 10 * (segment.degree - 1)
             )
             usample = tuple(Fraction(num, npts + 1) for num in range(npts + 1))
-            points = segment.eval(usample)
+            points = segment(usample)
             all_points += list(tuple(point) for point in points)
         all_points.append(all_points[0])  # Close the curve
         return tuple(all_points)
@@ -561,7 +561,7 @@ class JordanCurve:
         return box
 
     @property
-    def segments(self) -> Tuple[PlanarCurve]:
+    def segments(self) -> Tuple[Segment]:
         """Segments
 
         When setting, it checks if the points are the same between
@@ -569,7 +569,7 @@ class JordanCurve:
 
         :getter: Returns the tuple of connected planar beziers, not copy
         :setter: Sets the segments of the jordan curve
-        :type: tuple[PlanarCurve]
+        :type: tuple[Segment]
 
         Example use
         -----------
@@ -578,7 +578,7 @@ class JordanCurve:
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
         >>> jordan = JordanCurve.from_vertices(vertices)
         >>> print(jordan.segments)
-        (PlanarCurve (deg 1), PlanarCurve (deg 1), PlanarCurve (deg 1))
+        (Segment (deg 1), Segment (deg 1), Segment (deg 1))
         >>> print(jordan.segments[0])
         Planar curve of degree 1 and control points ((0, 0), (4, 0))
 
@@ -615,9 +615,9 @@ class JordanCurve:
         return tuple(vertices)
 
     @segments.setter
-    def segments(self, other: Tuple[PlanarCurve]):
+    def segments(self, other: Tuple[Segment]):
         for segment in other:
-            if not Is.instance(segment, PlanarCurve):
+            if not Is.instance(segment, Segment):
                 raise TypeError
         ncurves = len(other)
         for i in range(ncurves - 1):
@@ -631,7 +631,7 @@ class JordanCurve:
         segments = []
         for bezier in other:
             ctrlpoints = [To.point(point) for point in bezier.ctrlpoints]
-            new_bezier = PlanarCurve(ctrlpoints)
+            new_bezier = Segment(ctrlpoints)
             segments.append(new_bezier)
         self.__segments = tuple(segments)
 

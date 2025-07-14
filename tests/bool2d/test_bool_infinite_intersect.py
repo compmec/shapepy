@@ -10,9 +10,6 @@ from shapepy.bool2d.primitive import Primitive
 @pytest.mark.order(33)
 @pytest.mark.dependency(
     depends=[
-        "tests/geometry/test_polygon.py::test_end",
-        "tests/geometry/test_jordan_polygon.py::test_end",
-        "tests/geometry/test_jordan_curve.py::test_end",
         "tests/bool2d/test_primitive.py::test_end",
         "tests/bool2d/test_contains.py::test_end",
         "tests/bool2d/test_empty_whole.py::test_end",

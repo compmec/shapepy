@@ -9,16 +9,16 @@ import pynurbs
 import pytest
 
 from shapepy.geometry.jordancurve import JordanCurve
-from shapepy.geometry.point import Point2D
 from shapepy.scalar.reals import To
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(16)
 @pytest.mark.dependency(
     depends=[
-        "tests/geometry/test_polygon.py::test_end",
-        "tests/geometry/test_curve.py::test_end",
-        "tests/geometry/test_jordan_polygon.py::test_end",
+        "tests/geometry/test_point.py::test_all",
+        "tests/geometry/test_box.py::test_all",
+        "tests/geometry/test_segment.py::test_all",
+        "tests/geometry/test_jordan_polygon.py::test_all",
     ],
     scope="session",
 )
@@ -27,12 +27,12 @@ def test_begin():
 
 
 class TestQuadraticJordan:
-    @pytest.mark.order(14)
+    @pytest.mark.order(16)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(14)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestQuadraticJordan::test_begin"])
     def test_creation(self):
@@ -43,7 +43,7 @@ class TestQuadraticJordan:
         curve.ctrlpoints = [To.point(point) for point in points]
         JordanCurve.from_full_curve(curve)
 
-    @pytest.mark.order(14)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -55,7 +55,7 @@ class TestQuadraticJordan:
         with pytest.raises(TypeError):
             JordanCurve("asd")
 
-    @pytest.mark.order(14)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -83,7 +83,7 @@ class TestQuadraticJordan:
         test = np.array(test, dtype="float64")
         assert np.all(test == good)
 
-    @pytest.mark.order(14)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -113,7 +113,7 @@ class TestQuadraticJordan:
         test = np.array(test, dtype="float64")
         np.testing.assert_allclose(test, good)
 
-    @pytest.mark.order(14)
+    @pytest.mark.order(16)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(
         depends=[
@@ -128,11 +128,11 @@ class TestQuadraticJordan:
         pass
 
 
-@pytest.mark.order(14)
+@pytest.mark.order(16)
 @pytest.mark.dependency(
     depends=[
         "TestQuadraticJordan::test_end",
     ]
 )
-def test_end():
+def test_all():
     pass
