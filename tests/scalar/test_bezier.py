@@ -8,6 +8,7 @@ from shapepy.scalar.bezier import (
     clean,
     inverse_caract_matrix,
     polynomial2bezier,
+    split,
 )
 from shapepy.scalar.polynomial import Polynomial
 
@@ -297,6 +298,19 @@ def test_derivate():
 
 
 @pytest.mark.order(4)
+@pytest.mark.dependency(depends=["test_build", "test_matrices"])
+def test_split():
+    bezier = Bezier([1, 3, 2, -1])
+    bez0, bez1 = tuple(split(bezier, [0.5]))
+    assert bez0(0.0) == bezier(0.00)
+    assert bez0(0.5) == bezier(0.25)
+    assert bez0(1.0) == bezier(0.50)
+    assert bez1(0.0) == bezier(0.50)
+    assert bez1(0.5) == bezier(0.75)
+    assert bez1(1.0) == bezier(1.00)
+
+
+@pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
         "test_build",
@@ -312,6 +326,7 @@ def test_derivate():
         "test_conversions",
         "test_clean",
         "test_derivate",
+        "test_split",
     ]
 )
 def test_all():
