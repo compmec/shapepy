@@ -283,13 +283,6 @@ class Segment:
         return tuple(map(Segment, beziers))
 
 
-# pylint: disable=too-few-public-methods
-class Operations:
-    """
-    Defines the operation of over the bezier curves
-    """
-
-
 class Intersection:
     """
     Defines the methods used to compute the intersection between curves
