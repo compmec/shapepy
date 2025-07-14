@@ -96,3 +96,7 @@ def vectorize(position: int = 0, dimension: int = 0):
         return wrapper
 
     return decorator
+
+
+class NotExpectedError(Exception):
+    """Raised when arrives in a section that were not expected"""
