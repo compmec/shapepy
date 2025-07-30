@@ -132,6 +132,10 @@ class Bezier:
         mulpoly = self.__polynomial * other
         return polynomial2bezier(mulpoly)
 
+    def __pow__(self, exponent: int) -> Polynomial:
+        poly = bezier2polynomial(self)
+        return polynomial2bezier(poly**exponent)
+
     def __sub__(self, other: Union[Real, Polynomial]) -> Polynomial:
         return self.__add__(-other)
 
