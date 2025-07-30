@@ -7,8 +7,8 @@ from shapepy.scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from shapepy.tools import To
 
 all_methods = {
-    IntegratorFactory.open_newton_cotes: range(1, 6),
-    IntegratorFactory.custom_open_formula: range(1, 6),
+    IntegratorFactory.open_newton_cotes: range(1, 7),
+    IntegratorFactory.custom_open_formula: range(1, 7),
     IntegratorFactory.clenshaw_curtis: range(1, 7),
 }
 

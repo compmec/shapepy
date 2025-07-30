@@ -87,9 +87,8 @@ def invert_matrix(matrix):
         for i in range(k - 1, -1, -1):
             matrix[i] = matrix[i] * matrix[k, k] - matrix[k] * matrix[i, k]
 
-    diagonal = list(np.diag(matrix[:, :side]))
     inverse = tuple(
-        tuple(line / diag) for line, diag in zip(matrix[:, side:], diagonal)
+        tuple(line[side:] / line[i]) for i, line in enumerate(matrix)
     )
     return inverse
 
@@ -399,9 +398,9 @@ class AdaptativeIntegrator:
         tolerance: Real = 1e-9,
         maxdepth: int = 12,
     ):
-        self.__integrator = integrator
-        self.__tolerance = tolerance
-        self.__maxdepth = maxdepth
+        self.integrator = integrator
+        self.tolerance = tolerance
+        self.maxdepth = maxdepth
 
     @property
     def integrator(self) -> DirectIntegrator:
@@ -428,7 +427,7 @@ class AdaptativeIntegrator:
     def integrator(self, value: DirectIntegrator):
         if not Is.instance(value, DirectIntegrator):
             raise TypeError(f"Needs a Direct Integrator: {type(value)}")
-        self.__maxdepth = value
+        self.__integrator = value
 
     @tolerance.setter
     def tolerance(self, value: Real):
@@ -448,12 +447,12 @@ class AdaptativeIntegrator:
         """Computes the integral of func in [a, b]"""
 
         @lru_cache(maxsize=None)
-        def cfunc(node: Real) -> Real:
+        def cfunction(node: Real) -> Real:
             return function(node)
 
         @lru_cache(maxsize=None)
         def cdirect(left: Real, right: Real) -> Real:
-            return self.integrator.integrate(function, (left, right))
+            return self.integrator.integrate(cfunction, (left, right))
 
         def recursive(
             lknot: Real, rknot: Real, tolerance: Real, depth: int
@@ -471,6 +470,6 @@ class AdaptativeIntegrator:
             return lvalue + rvalue
 
         result = recursive(interval[0], interval[1], self.tolerance, 0)
-        cfunc.cache_clear()
+        cfunction.cache_clear()
         cdirect.cache_clear()
         return result
