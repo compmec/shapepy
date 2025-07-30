@@ -26,11 +26,11 @@ def test_begin():
 def test_lenght():
     points = [(0, 0), (1, 0)]
     curve = Segment(points)
-    assert integral.lenght(curve) == 1
+    assert abs(integral.lenght(curve) - 1) < 1e-9
 
     points = [(1, 0), (0, 0)]
     curve = Segment(points)
-    assert integral.lenght(curve) == 1
+    assert abs(integral.lenght(curve) - 1) < 1e-9
 
     points = [(0, 1), (1, 0)]
     curve = Segment(points)

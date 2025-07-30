@@ -60,15 +60,14 @@ class IntegrateJordan:
         return total
 
     @staticmethod
-    def lenght(jordan: JordanCurve, nnodes: Optional[int] = None) -> float:
+    def lenght(jordan: JordanCurve) -> float:
         """
         Computes the lenght of jordan curve
         """
         assert Is.instance(jordan, JordanCurve)
-        assert nnodes is None or Is.integer(nnodes)
         length = 0
         for bezier in jordan.segments:
-            length += integral.lenght(bezier, nnodes)
+            length += integral.lenght(bezier)
         return length
 
     @staticmethod
@@ -110,6 +109,8 @@ class JordanCurve:
     """
 
     def __init__(self, segments: Tuple[Segment]):
+        self.__length = None
+        self.__area = None
         self.segments = segments
 
     @classmethod
@@ -628,7 +629,8 @@ class JordanCurve:
             assert id(start_point) == id(end_point)
         for segment in other:
             segment.clean()
-        self.__lenght = None
+        self.__length = None
+        self.__area = None
         segments = []
         for bezier in other:
             ctrlpoints = [To.point(point) for point in bezier.ctrlpoints]
@@ -710,11 +712,11 @@ class JordanCurve:
         -12.0
 
         """
-        if self.__lenght is None:
+        if self.__area is None:
             lenght = IntegrateJordan.lenght(self)
-            area = IntegrateJordan.area(self)
-            self.__lenght = lenght if area > 0 else -lenght
-        return self.__lenght
+            self.__area = IntegrateJordan.area(self)
+            self.__length = lenght if self.__area > 0 else -lenght
+        return self.__length
 
     def __abs__(self) -> JordanCurve:
         """Returns the same curve, but in positive direction"""
