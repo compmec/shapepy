@@ -17,9 +17,10 @@ from typing import Any, Optional, Tuple, Union
 import numpy as np
 
 from shapepy.geometry.box import Box
-from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D
 
+from ..geometry.integral import IntegrateJordan
 from ..tools import Is, To
 
 
@@ -38,101 +39,6 @@ class SuperclassMeta(type):
                 except AttributeError:
                     pass
         return cls
-
-
-class IntegrateShape:
-    """
-    Class that contains static functions to evaluate integrals over a shape
-    """
-
-    @staticmethod
-    def polynomial(
-        shape: BaseShape, expx: int, expy: int, nnodes: Optional[int] = None
-    ) -> float:
-        r"""
-        Computes the integral
-
-        .. math::
-            I = \int_D x^a \cdot y^b \cdot dA
-
-        Which :math:`D` is the region defined by shape
-
-        We transform this integral into a boundary integral
-
-        .. math::
-            I = \dfrac{1}{a+1} \cdot \int_C x^{a+ 1} \cdot y^b \cdot dy
-
-        Parameters
-        ----------
-        shape : BaseShape
-            The shape to integrate
-        expx : int
-            The expoent :math:`a`
-        expy : int
-            The expoent :math:`b`
-        nnodes : int, default = None
-            The number of integration nodes
-
-            If ``None``, then it computes based on the
-            the sum of the expoents and the curve's degree
-
-        :return: The value of the integral :math:`I`
-        :rtype: float
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive, IntegrateShape
-        >>> circle = Primitive.circle(radius = 1)
-        >>> IntegrateShape.polynomial(circle, 2, 0)
-
-
-        """
-        assert Is.instance(shape, BaseShape)
-        assert Is.integer(expx)
-        assert Is.integer(expy)
-        assert nnodes is None or Is.integer(nnodes)
-        total = 0
-        for jordan in shape.jordans:
-            total += IntegrateJordan.vertical(jordan, expx + 1, expy, nnodes)
-        return total / (1 + expx)
-
-    @staticmethod
-    def area(shape: BaseShape, nnodes: Optional[int] = None) -> float:
-        """
-        Computes the area of the given shape
-
-        .. math::
-            I = \\int_D dA
-
-        Which :math:`D` is the region defined by shape
-
-        If the shape is unbounded (example, inverse of a circle), then
-        it returns the negative value of the area of the bounded shape
-
-        Parameters
-        ----------
-
-        shape : BaseShape
-            The shape to integrate
-        nnodes : int, default = None
-            The number of integration nodes
-
-            If ``None``, then it computes based on the curve's degree
-
-        :return: The value of the area :math:`I`
-        :rtype: float
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive, IntegrateShape
-        >>> circle = Primitive.circle(radius = 1)
-        >>> inertia_xx = IntegrateShape.area(circle, 2, 0)
-        >>> print(inertia_xx)
-
-        """
-        return IntegrateShape.polynomial(shape, 0, 0, nnodes)
 
 
 class FollowPath:
@@ -611,7 +517,7 @@ class DefinedShape(BaseShape):
         return self.contains_point(point)
 
     def __float__(self) -> float:
-        return float(IntegrateShape.area(self))
+        return float(sum(jordan.area for jordan in self.jordans))
 
     def move(self, point: Point2D) -> BaseShape:
         """

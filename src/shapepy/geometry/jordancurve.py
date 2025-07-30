@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from copy import copy
 from fractions import Fraction
-from typing import Optional, Tuple, Union
+from typing import Optional, Tuple
 
 import numpy as np
 
@@ -15,91 +15,10 @@ from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 from shapepy.geometry.segment import Segment
 
+from ..scalar.bezier import Bezier, bezier2polynomial
+from ..scalar.polynomial import derivate, integrate
+from ..scalar.reals import Real
 from ..tools import Is, To
-from . import integral
-
-
-class IntegrateJordan:
-    """
-    Defines functions to integrate over the internal area
-    defined by the jordan curve.
-    """
-
-    @staticmethod
-    def vertical(
-        jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
-    ):
-        """
-        Computes the integral I
-
-        I = int x^expx * y^expy * dy
-        """
-        assert Is.instance(jordan, JordanCurve)
-        assert Is.integer(expx) and expx >= 0
-        assert Is.integer(expy) and expy >= 0
-        assert nnodes is None or Is.integer(nnodes)
-        total = 0
-        for bezier in jordan.segments:
-            total += integral.vertical(bezier, expx, expy, nnodes)
-        return total
-
-    @staticmethod
-    def polynomial(
-        jordan: JordanCurve, expx: int, expy: int, nnodes: Optional[int] = None
-    ):
-        """
-        Computes the integral
-
-        I = int x^expx * y^expy * ds
-        """
-        assert Is.instance(jordan, JordanCurve)
-        assert nnodes is None or Is.integer(nnodes)
-        total = 0
-        for bezier in jordan.segments:
-            total += integral.polynomial(bezier, expx, expy, nnodes)
-        return total
-
-    @staticmethod
-    def lenght(jordan: JordanCurve) -> float:
-        """
-        Computes the lenght of jordan curve
-        """
-        assert Is.instance(jordan, JordanCurve)
-        length = 0
-        for bezier in jordan.segments:
-            length += integral.lenght(bezier)
-        return length
-
-    @staticmethod
-    def area(jordan: JordanCurve, nnodes: Optional[int] = None) -> float:
-        """
-        Computes the interior area from jordan curve
-        """
-        assert Is.instance(jordan, JordanCurve)
-        assert nnodes is None or Is.integer(nnodes)
-        area = 0
-        for bezier in jordan.segments:
-            area += integral.area(bezier, nnodes)
-        return area
-
-    @staticmethod
-    def winding_number(
-        jordan: JordanCurve,
-        center: Optional[Point2D] = (0.0, 0.0),
-        nnodes: Optional[int] = None,
-    ) -> Union[int, float]:
-        """Computes the winding number from jordan curve
-
-        Returns [-1, -0.5, 0, 0.5 or 1]
-        """
-        wind = 0
-        if center in jordan.box():
-            for bezier in jordan.segments:
-                if center in bezier:
-                    return 0.5 if float(jordan) > 0 else -0.5
-        for bezier in jordan.segments:
-            wind += integral.winding_number(bezier, center, nnodes)
-        return round(wind)
 
 
 class JordanCurve:
