@@ -23,7 +23,11 @@ from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
 from ..scalar.bezier import Bezier, clean, derivate, split
-from ..scalar.quadrature import closed_linspace
+from ..scalar.quadrature import (
+    AdaptativeIntegrator,
+    IntegratorFactory,
+    closed_linspace,
+)
 from ..scalar.reals import Real
 from ..tools import Is, To, vectorize
 
@@ -37,6 +41,7 @@ class Segment:
     def __init__(self, ctrlpoints: Iterable[Point2D]):
         if not Is.iterable(ctrlpoints):
             raise ValueError("Control points must be iterable")
+        self.__length = None
         self.ctrlpoints = list(map(To.point, ctrlpoints))
 
     def __or__(self, other: Segment) -> Segment:
@@ -163,6 +168,15 @@ class Segment:
         return len(self.ctrlpoints)
 
     @property
+    def length(self) -> Real:
+        """
+        The length of the segment
+        """
+        if self.__length is None:
+            self.__length = compute_length(self)
+        return self.__length
+
+    @property
     def ctrlpoints(self) -> Tuple[Point2D, ...]:
         """
         The control points that defines the planar curve
@@ -171,6 +185,7 @@ class Segment:
 
     @ctrlpoints.setter
     def ctrlpoints(self, points: Iterable[Point2D]):
+        self.__length = None
         self.__ctrlpoints = list(map(To.point, points))
         self.__planar = Bezier(self.ctrlpoints)
 
@@ -418,3 +433,18 @@ class Projection:
             if len(usample) == 1:
                 break
         return usample
+
+
+def compute_length(segment: Segment) -> Real:
+    """
+    Computes the length of the jordan curve
+    """
+    integrator = IntegratorFactory.clenshaw_curtis(3)
+    adaptative = AdaptativeIntegrator(integrator, 1e-9, 12)
+
+    dsegment = segment.derivate()
+
+    def function(node):
+        return abs(dsegment(node))
+
+    return adaptative.integrate(function, (0, 1))

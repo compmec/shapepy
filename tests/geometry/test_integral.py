@@ -26,15 +26,15 @@ def test_begin():
 def test_lenght():
     points = [(0, 0), (1, 0)]
     curve = Segment(points)
-    assert abs(integral.lenght(curve) - 1) < 1e-9
+    assert abs(curve.length - 1) < 1e-9
 
     points = [(1, 0), (0, 0)]
     curve = Segment(points)
-    assert abs(integral.lenght(curve) - 1) < 1e-9
+    assert abs(curve.length - 1) < 1e-9
 
     points = [(0, 1), (1, 0)]
     curve = Segment(points)
-    assert abs(integral.lenght(curve) - np.sqrt(2)) < 1e-9
+    assert abs(curve.length - np.sqrt(2)) < 1e-9
 
 
 @pytest.mark.order(14)

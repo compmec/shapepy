@@ -563,6 +563,20 @@ class JordanCurve:
         return box
 
     @property
+    def length(self) -> Real:
+        """The length of the curve"""
+        if self.__length is None:
+            self.__length = sum(seg.length for seg in self.segments)
+        return self.__length
+
+    @property
+    def area(self) -> Real:
+        """The internal area"""
+        if self.__area is None:
+            self.__area = compute_area(self)
+        return self.__area
+
+    @property
     def segments(self) -> Tuple[Segment]:
         """Segments
 
@@ -712,11 +726,7 @@ class JordanCurve:
         -12.0
 
         """
-        if self.__area is None:
-            lenght = IntegrateJordan.lenght(self)
-            self.__area = IntegrateJordan.area(self)
-            self.__length = lenght if self.__area > 0 else -lenght
-        return self.__length
+        return float(self.length if self.area > 0 else -self.length)
 
     def __abs__(self) -> JordanCurve:
         """Returns the same curve, but in positive direction"""
@@ -827,3 +837,19 @@ class JordanCurve:
                     continue
                 intersections.remove((ai, bi, ui, vi))
         return tuple(sorted(intersections))
+
+
+def compute_area(jordan: JordanCurve) -> Real:
+    """
+    Computes the area inside of the jordan curve
+
+    If jordan is clockwise, then the area is negative
+    """
+
+    total = 0
+    for segment in jordan.segments:
+        xfunc = bezier2polynomial(Bezier(pt[0] for pt in segment.ctrlpoints))
+        yfunc = bezier2polynomial(Bezier(pt[1] for pt in segment.ctrlpoints))
+        poly = integrate(xfunc * derivate(yfunc) - yfunc * derivate(xfunc))
+        total += poly(1) - poly(0)
+    return total / 2
