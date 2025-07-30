@@ -238,3 +238,21 @@ def derivate(polynomial: Polynomial, times: int = 1) -> Polynomial:
         for n, coef in enumerate(polynomial[times:])
     )
     return Polynomial(coefs)
+
+
+def integrate(polynomial: Polynomial) -> Polynomial:
+    """
+    Integrates the polynomial curve on the interval
+
+    Example
+    -------
+    >>> poly = Polynomial([1, 2, 5])
+    >>> print(poly)
+    1 + 2 * t + 5 * t^2
+    >>> dpoly = integrate(poly)
+    >>> print(dpoly)
+    t + t^2 + (5/3) * t^3
+    """
+    newcoefs = [0 * polynomial[0]]
+    newcoefs += list(coef / (n + 1) for n, coef in enumerate(polynomial))
+    return Polynomial(newcoefs)
