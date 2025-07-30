@@ -38,6 +38,13 @@ class Is:
             return False
         return True
 
+    @staticmethod
+    def callable(obj: Any) -> bool:
+        """
+        Tells if the object is callable
+        """
+        return hasattr(obj, "__call__")
+
 
 # pylint: disable=too-few-public-methods
 class To:
