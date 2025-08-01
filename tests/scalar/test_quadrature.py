@@ -127,7 +127,9 @@ def test_trignometric():
 @pytest.mark.dependency(
     depends=[
         "test_begin",
-        "test_polynomial",
+        "test_polynomial_open_newton_cotes",
+        "test_polynomial_custom_open_formula",
+        "test_polynomial_clenshaw_curtis",
         "test_trignometric",
     ]
 )
