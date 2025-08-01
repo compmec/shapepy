@@ -148,7 +148,28 @@ class NodeSampleFactory:
 
     @lru_cache(maxsize=None)
     @staticmethod
-    def open_newton_cotes(npts: int) -> Iterable[Real]:
+    def closed_newton_cotes(npts: int) -> Tuple[Real]:
+        """
+        Gives a set of numbers in interval [0, 1]
+
+        Example
+        -------
+        >>> closed_newton_cotes(2)
+        (0, 1)
+        >>> closed_newton_cotes(3)
+        (0, 1/2, 1)
+        >>> closed_newton_cotes(4)
+        (0, 1/3, 2/3, 1)
+        >>> closed_newton_cotes(5)
+        (0, 1/4, 2/4, 3/4, 1)
+        """
+        if not Is.integer(npts) or npts < 2:
+            raise ValueError("npts must be integer >= 2")
+        return tuple(To.rational(num, npts - 1) for num in range(npts))
+
+    @lru_cache(maxsize=None)
+    @staticmethod
+    def open_newton_cotes(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
 
@@ -169,7 +190,7 @@ class NodeSampleFactory:
 
     @lru_cache(maxsize=None)
     @staticmethod
-    def custom_open_formula(npts: int) -> Iterable[Real]:
+    def custom_open_formula(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
 
@@ -192,7 +213,7 @@ class NodeSampleFactory:
 
     @lru_cache(maxsize=None)
     @staticmethod
-    def chebyshev(npts: int) -> Iterable[Real]:
+    def chebyshev(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
 
@@ -220,6 +241,19 @@ class IntegratorFactory:
     """
     Defines methods that creates Direct Integrators
     """
+
+    closed_newton_cotes_weights = {
+        2: (frac(1, 2), frac(1, 2)),
+        3: (frac(1, 6), frac(2, 3), frac(1, 6)),
+        4: (frac(1, 8), frac(3, 8), frac(3, 8), frac(1, 8)),
+        5: (
+            frac(7, 90),
+            frac(32, 90),
+            frac(12, 90),
+            frac(32, 90),
+            frac(7, 90),
+        ),
+    }
 
     open_newton_cotes_weights = {
         1: (frac(1),),
@@ -280,6 +314,36 @@ class IntegratorFactory:
             (14 - 5 * Math.sqrt(3)) / 90,
         ),
     }
+
+    @staticmethod
+    def closed_newton_cotes(
+        npts: int, convert: type = To.rational
+    ) -> DirectIntegrator:
+        """
+        Gives a set of numbers in interval (0, 1)
+
+        Example
+        -------
+        >>> closed_newton_cotes(2)
+        {"nodes": (0, 1),
+         "weights": (1/2, 1/2)}
+        >>> closed_newton_cotes(3)
+        {"nodes": (0, 1/2, 1),
+         "weights": (1/2, 1/2)}
+        >>> closed_newton_cotes(4)
+        {"nodes": (0, 1/3, 2/3, 1),
+         "weights": (2/3, -1/3, 2/3)}
+        >>> closed_newton_cotes(5)
+        {"nodes": (0, 1/4, 2/4, 3/4, 1),
+         "weights": (11/24, 1/24, 1/24, 11/24)}
+        """
+        nodes = NodeSampleFactory.closed_newton_cotes(npts)
+        if npts in IntegratorFactory.closed_newton_cotes_weights:
+            weights = IntegratorFactory.closed_newton_cotes_weights[npts]
+        else:
+            weights = tuple(find_polynomial_weights(nodes))
+            IntegratorFactory.closed_newton_cotes_weights[npts] = weights
+        return DirectIntegrator(map(convert, nodes), map(convert, weights))
 
     @staticmethod
     def open_newton_cotes(
