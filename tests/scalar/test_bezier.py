@@ -257,6 +257,24 @@ def test_mul():
         np.testing.assert_allclose(const * valuesa, valuesc)
 
 
+@pytest.mark.order(3)
+@pytest.mark.dependency(
+    depends=[
+        "test_build",
+        "test_degree",
+        "test_evaluate",
+        "test_compare",
+        "test_mul",
+    ]
+)
+def test_pow():
+    bezier = Bezier([-1, 1])
+    assert bezier**0 == 1
+    assert bezier**1 == bezier
+    assert bezier**2 == bezier * bezier
+    assert bezier**3 == bezier * bezier * bezier
+
+
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():

@@ -225,6 +225,24 @@ def test_mul():
         "test_build",
         "test_degree",
         "test_evaluate",
+        "test_compare",
+        "test_mul",
+    ]
+)
+def test_pow():
+    poly = Polynomial([-1, 1])
+    assert poly**0 == 1
+    assert poly**1 == poly
+    assert poly**2 == poly * poly
+    assert poly**3 == poly * poly * poly
+
+
+@pytest.mark.order(3)
+@pytest.mark.dependency(
+    depends=[
+        "test_build",
+        "test_degree",
+        "test_evaluate",
         "test_add",
         "test_mul",
     ]
@@ -333,6 +351,7 @@ def test_numpy_array():
         "test_add",
         "test_sub",
         "test_mul",
+        "test_pow",
         "test_shift",
         "test_scale",
     ]
