@@ -24,11 +24,8 @@ from shapepy.geometry.point import Point2D
 
 from ..scalar.bezier import Bezier, clean, split
 from ..scalar.calculus import derivate
-from ..scalar.quadrature import (
-    AdaptativeIntegrator,
-    IntegratorFactory,
-    closed_linspace,
-)
+from ..scalar.nodes_sample import NodeSampleFactory
+from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Real
 from ..tools import Is, To, vectorize
 
@@ -97,8 +94,8 @@ class Segment:
         if self.degree == 1 and other.degree == 1:
             params = Intersection.lines(self, other)
             return (params,) if len(params) != 0 else tuple()
-        usample = list(closed_linspace(self.npts + 3))
-        vsample = list(closed_linspace(other.npts + 3))
+        usample = list(NodeSampleFactory.closed_linspace(self.npts + 3))
+        vsample = list(NodeSampleFactory.closed_linspace(other.npts + 3))
         pairs = []
         for ui in usample:
             pairs += [(ui, vj) for vj in vsample]
@@ -392,7 +389,7 @@ class Projection:
         point = To.point(point)
         assert Is.instance(curve, Segment)
         nsample = 2 + curve.degree
-        usample = closed_linspace(nsample)
+        usample = NodeSampleFactory.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
         curvals = tuple(cval - point for cval in curve(usample))
         distans2 = tuple(curval @ curval for curval in curvals)

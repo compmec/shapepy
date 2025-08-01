@@ -10,7 +10,7 @@ import numpy as np
 
 from ..scalar.bezier import Bezier, bezier2polynomial
 from ..scalar.calculus import derivate, integrate
-from ..scalar.quadrature import closed_linspace
+from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Math
 from ..tools import Is
 from .jordancurve import JordanCurve
@@ -53,7 +53,7 @@ class IntegrateSegment:
         """
         assert Is.instance(curve, Segment)
         nnodes = curve.npts if nnodes is None else nnodes
-        nodes = closed_linspace(nnodes)
+        nodes = NodeSampleFactory.closed_linspace(nnodes)
         total = 0
         for nodea, nodeb in zip(nodes[:-1], nodes[1:]):
             pointa = curve(nodea)

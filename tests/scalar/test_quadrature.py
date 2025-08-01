@@ -20,6 +20,7 @@ all_methods = {
         "tests/scalar/test_reals.py::test_all",
         "tests/scalar/test_angle.py::test_all",
         "tests/scalar/test_polynomial.py::test_all",
+        "tests/scalar/test_nodes_sample.py::test_all",
     ],
     scope="session",
 )
