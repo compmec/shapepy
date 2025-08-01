@@ -1,3 +1,20 @@
+.. _v1.1.5:
+
+======
+v1.1.5
+======
+
+What has changed
+----------------
+
+* Reorganize integration methods
+    * Remove `IntegrateShape` to use `IntegrateJordan` directly
+    * Move `IntegrateJordan` from `jordancurve` to separated file
+* Add Direct and Adaptative quadrature methods
+    * It's used for computing the length of a curve
+* Changed numeric integration for analytic integration in polynomial methods
+    * Computing the area and integral over shapes are now faster
+
 .. _v1.1.4:
 
 ======

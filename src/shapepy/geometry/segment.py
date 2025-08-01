@@ -22,8 +22,10 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
-from ..scalar.bezier import Bezier, clean, derivate, split
-from ..scalar.quadrature import closed_linspace
+from ..scalar.bezier import Bezier, clean, split
+from ..scalar.calculus import derivate
+from ..scalar.nodes_sample import NodeSampleFactory
+from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Real
 from ..tools import Is, To, vectorize
 
@@ -37,6 +39,7 @@ class Segment:
     def __init__(self, ctrlpoints: Iterable[Point2D]):
         if not Is.iterable(ctrlpoints):
             raise ValueError("Control points must be iterable")
+        self.__length = None
         self.ctrlpoints = list(map(To.point, ctrlpoints))
 
     def __or__(self, other: Segment) -> Segment:
@@ -91,8 +94,8 @@ class Segment:
         if self.degree == 1 and other.degree == 1:
             params = Intersection.lines(self, other)
             return (params,) if len(params) != 0 else tuple()
-        usample = list(closed_linspace(self.npts + 3))
-        vsample = list(closed_linspace(other.npts + 3))
+        usample = list(NodeSampleFactory.closed_linspace(self.npts + 3))
+        vsample = list(NodeSampleFactory.closed_linspace(other.npts + 3))
         pairs = []
         for ui in usample:
             pairs += [(ui, vj) for vj in vsample]
@@ -163,6 +166,15 @@ class Segment:
         return len(self.ctrlpoints)
 
     @property
+    def length(self) -> Real:
+        """
+        The length of the segment
+        """
+        if self.__length is None:
+            self.__length = compute_length(self)
+        return self.__length
+
+    @property
     def ctrlpoints(self) -> Tuple[Point2D, ...]:
         """
         The control points that defines the planar curve
@@ -171,6 +183,7 @@ class Segment:
 
     @ctrlpoints.setter
     def ctrlpoints(self, points: Iterable[Point2D]):
+        self.__length = None
         self.__ctrlpoints = list(map(To.point, points))
         self.__planar = Bezier(self.ctrlpoints)
 
@@ -376,7 +389,7 @@ class Projection:
         point = To.point(point)
         assert Is.instance(curve, Segment)
         nsample = 2 + curve.degree
-        usample = closed_linspace(nsample)
+        usample = NodeSampleFactory.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
         curvals = tuple(cval - point for cval in curve(usample))
         distans2 = tuple(curval @ curval for curval in curvals)
@@ -418,3 +431,18 @@ class Projection:
             if len(usample) == 1:
                 break
         return usample
+
+
+def compute_length(segment: Segment) -> Real:
+    """
+    Computes the length of the jordan curve
+    """
+    integrator = IntegratorFactory.clenshaw_curtis(3)
+    adaptative = AdaptativeIntegrator(integrator, 1e-9, 12)
+
+    dsegment = segment.derivate()
+
+    def function(node):
+        return abs(dsegment(node))
+
+    return adaptative.integrate(function, (0, 1))

@@ -4,6 +4,7 @@ import numpy as np
 import pytest
 
 from shapepy.geometry import integral
+from shapepy.geometry.integral import IntegrateSegment
 from shapepy.geometry.segment import Segment
 
 
@@ -26,15 +27,15 @@ def test_begin():
 def test_lenght():
     points = [(0, 0), (1, 0)]
     curve = Segment(points)
-    assert integral.lenght(curve) == 1
+    assert abs(curve.length - 1) < 1e-9
 
     points = [(1, 0), (0, 0)]
     curve = Segment(points)
-    assert integral.lenght(curve) == 1
+    assert abs(curve.length - 1) < 1e-9
 
     points = [(0, 1), (1, 0)]
     curve = Segment(points)
-    assert abs(integral.lenght(curve) - np.sqrt(2)) < 1e-9
+    assert abs(curve.length - np.sqrt(2)) < 1e-9
 
 
 @pytest.mark.order(14)
@@ -42,19 +43,19 @@ def test_lenght():
 @pytest.mark.dependency(depends=["test_begin"])
 def test_winding_triangles():
     curve = Segment([(1, 0), (2, 0)])
-    wind = integral.winding_number(curve)
+    wind = IntegrateSegment.winding_number(curve)
     assert wind == 0
 
     curve = Segment([(1, 0), (1, 1)])
-    wind = integral.winding_number(curve)
+    wind = IntegrateSegment.winding_number(curve)
     assert abs(wind - 0.125) < 1e-9
 
     curve = Segment([(1, 0), (0, 1)])
-    wind = integral.winding_number(curve)
+    wind = IntegrateSegment.winding_number(curve)
     assert abs(wind - 0.25) < 1e-9
 
     curve = Segment([(1, 0), (-0.5, np.sqrt(3) / 2)])
-    wind = integral.winding_number(curve)
+    wind = IntegrateSegment.winding_number(curve)
     assert abs(3 * wind - 1) < 1e-9
 
 
@@ -76,7 +77,7 @@ def test_winding_unit_circle():
         point0 = (np.cos(angle0), np.sin(angle0))
         point1 = (np.cos(angle1), np.sin(angle1))
         curve = Segment([point0, point1])
-        test_wind = integral.winding_number(curve)
+        test_wind = IntegrateSegment.winding_number(curve)
         diff = abs(good_wind - test_wind)
         maxim = max(maxim, diff)
         assert abs(good_wind - test_wind) < 1e-9
@@ -98,7 +99,7 @@ def test_winding_regular_polygon():
         pairs = zip(ctrlpoints[:-1], ctrlpoints[1:])
         curves = tuple(Segment(pair) for pair in pairs)
         for curve in curves:
-            wind = integral.winding_number(curve)
+            wind = IntegrateSegment.winding_number(curve)
             assert abs(nsides * wind - 1) < 1e-2
 
     for nsides in range(3, 10):
@@ -107,7 +108,7 @@ def test_winding_regular_polygon():
         pairs = zip(ctrlpoints[:-1], ctrlpoints[1:])
         curves = tuple(Segment(pair) for pair in pairs)
         for curve in curves:
-            wind = integral.winding_number(curve)
+            wind = IntegrateSegment.winding_number(curve)
             assert abs(nsides * wind + 1) < 1e-2
 
 

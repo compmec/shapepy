@@ -257,6 +257,24 @@ def test_mul():
         np.testing.assert_allclose(const * valuesa, valuesc)
 
 
+@pytest.mark.order(3)
+@pytest.mark.dependency(
+    depends=[
+        "test_build",
+        "test_degree",
+        "test_evaluate",
+        "test_compare",
+        "test_mul",
+    ]
+)
+def test_pow():
+    bezier = Bezier([-1, 1])
+    assert bezier**0 == 1
+    assert bezier**1 == bezier
+    assert bezier**2 == bezier * bezier
+    assert bezier**3 == bezier * bezier * bezier
+
+
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build"])
 def test_print():
@@ -291,14 +309,6 @@ def test_clean():
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_matrices"])
-def test_derivate():
-    ctrlpoints = [1, 2, 3, 4]
-    bezier = Bezier(ctrlpoints)
-    assert clean(bezier) == Bezier([1, 4])
-
-
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build", "test_matrices"])
 def test_split():
     bezier = Bezier([1, 3, 2, -1])
     bez0, bez1 = tuple(split(bezier, [0.5]))
@@ -325,7 +335,6 @@ def test_split():
         "test_print",
         "test_conversions",
         "test_clean",
-        "test_derivate",
         "test_split",
     ]
 )

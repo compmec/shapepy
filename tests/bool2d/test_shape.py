@@ -8,7 +8,8 @@ import math
 import pytest
 
 from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import IntegrateShape, SimpleShape
+from shapepy.bool2d.shape import SimpleShape
+from shapepy.geometry.integral import IntegrateJordan
 from shapepy.geometry.jordancurve import JordanCurve
 
 
@@ -41,7 +42,9 @@ class TestIntegrate:
         rectangular.scale(width, height)
         for expx in range(nx):
             for expy in range(ny):
-                test = IntegrateShape.polynomial(rectangular, expx, expy)
+                test = IntegrateJordan.polynomial(
+                    rectangular.jordans[0], expx, expy
+                )
                 if expx % 2 or expy % 2:
                     good = 0
                 else:
@@ -68,7 +71,9 @@ class TestIntegrate:
         rectangular.move(center)
         for expx in range(nx):
             for expy in range(ny):
-                test = IntegrateShape.polynomial(rectangular, expx, expy)
+                test = IntegrateJordan.polynomial(
+                    rectangular.jordans[0], expx, expy
+                )
                 good = (center[0] + width / 2) ** (expx + 1) - (
                     center[0] - width / 2
                 ) ** (expx + 1)
@@ -94,7 +99,7 @@ class TestIntegrate:
         nx, ny = 5, 5
         for expx in range(nx):
             for expy in range(ny):
-                test = IntegrateShape.polynomial(rombo, expx, expy)
+                test = IntegrateJordan.polynomial(rombo.jordans[0], expx, expy)
                 if expx % 2 or expy % 2:
                     good = 0
                 else:

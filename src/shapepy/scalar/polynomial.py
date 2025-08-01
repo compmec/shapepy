@@ -7,7 +7,7 @@ from __future__ import annotations
 from numbers import Real
 from typing import Iterable, List, Union
 
-from ..tools import Is
+from ..tools import Is, pow_keys
 from .reals import Math
 
 
@@ -102,6 +102,18 @@ class Polynomial:
             for j, coefj in enumerate(other):
                 coefs[i + j] += coefi @ coefj
         return self.__class__(coefs)
+
+    def __pow__(self, exponent: int) -> Polynomial:
+        if not Is.integer(exponent) or exponent < 0:
+            raise ValueError
+        if not Is.finite(self[0]):
+            raise ValueError
+        if exponent == 0:
+            return self.__class__([1 + 0 * self[0]])
+        cache = {1: self}
+        for n in pow_keys(exponent):
+            cache[n] = cache[n // 2] * cache[n - n // 2]
+        return cache[exponent]
 
     def __sub__(self, other: Union[Real, Polynomial]) -> Polynomial:
         return self.__add__(-other)
@@ -204,25 +216,3 @@ def shift(polynomial: Polynomial, amount: Real) -> Polynomial:
                 value *= -1
             newcoefs[j] += coef * value
     return Polynomial(newcoefs)
-
-
-def derivate(polynomial: Polynomial, times: int = 1) -> Polynomial:
-    """
-    Derivate the polynomial curve, giving a new one
-
-    Example
-    -------
-    >>> poly = Polynomial([1, 2, 5])
-    >>> print(poly)
-    1 + 2 * t + 5 * t^2
-    >>> dpoly = poly.derivate()
-    >>> print(dpoly)
-    2 + 10 * t
-    """
-    if polynomial.degree < times:
-        return Polynomial([0 * polynomial[0]])
-    coefs = (
-        Math.factorial(n + times) // Math.factorial(n) * coef
-        for n, coef in enumerate(polynomial[times:])
-    )
-    return Polynomial(coefs)

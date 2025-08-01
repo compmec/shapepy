@@ -4,101 +4,101 @@ Contains functions to integrate over a segment
 
 from __future__ import annotations
 
-from typing import Union
+from typing import Optional, Union
 
 import numpy as np
-import pynurbs
 
-from ..scalar.quadrature import (
-    closed_linspace,
-    inner,
-    open_linspace,
-    open_newton_cotes,
-)
+from ..scalar.bezier import Bezier, bezier2polynomial
+from ..scalar.calculus import derivate, integrate
+from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Math
 from ..tools import Is
+from .jordancurve import JordanCurve
 from .point import Point2D
 from .segment import Segment
 
 
-def vertical(
-    curve: Segment,
-    expx: int = 0,
-    expy: int = 0,
-    nnodes: Union[None, int] = None,
-):
-    """Computes the integral I
-
-    I = int_C x^expx * y^expy * dy
-
+class IntegrateSegment:
     """
-    if not Is.instance(curve, Segment):
-        raise TypeError
-    if not Is.integer(expx) or expx < 0:
-        raise ValueError
-    if not Is.integer(expy) or expy < 0:
-        raise ValueError
-    if nnodes is None:
-        nnodes = 3 + expx + expy + curve.degree
-    elif not Is.integer(nnodes) or nnodes < 0:
-        raise ValueError
-    dcurve = curve.derivate()
-    nodes = open_linspace(nnodes)
-    poids = pynurbs.heavy.IntegratorArray.open_newton_cotes(nnodes)
-    points = curve(nodes)
-    xvals = tuple(point[0] ** expx for point in points)
-    yvals = tuple(point[1] ** expy for point in points)
-    dyvals = tuple(point[1] for point in dcurve(nodes))
-    funcvals = tuple(map(np.prod, zip(xvals, yvals, dyvals)))
-    return np.inner(poids, funcvals)
-
-
-def polynomial(
-    curve: Segment, expx: int, expy: int, nnodes: Union[None, int] = None
-):
+    Defines methods to integrates over a segment
     """
-    Computes the integral
 
-    I = int_C x^expx * y^expy * ds
+    @staticmethod
+    def polynomial(curve: Segment, expx: int, expy: int):
+        """
+        Computes the integral
+
+        I = int_D x^expx * y^expy * dA
+
+        """
+        if not Is.instance(curve, Segment):
+            raise TypeError
+
+        xfunc = bezier2polynomial(Bezier(pt[0] for pt in curve.ctrlpoints))
+        yfunc = bezier2polynomial(Bezier(pt[1] for pt in curve.ctrlpoints))
+
+        poly = (xfunc**expx) * (yfunc**expy)
+        poly *= xfunc * derivate(yfunc) - yfunc * derivate(xfunc)
+        poly = integrate(poly)
+        return (poly(1) - poly(0)) / (expx + expy + 2)
+
+    @staticmethod
+    def winding_number(
+        curve: Segment,
+        center: Point2D = (0.0, 0.0),
+        nnodes: Union[None, int] = None,
+    ) -> float:
+        """
+        Computes the integral for a bezier curve of given control points
+        """
+        assert Is.instance(curve, Segment)
+        nnodes = curve.npts if nnodes is None else nnodes
+        nodes = NodeSampleFactory.closed_linspace(nnodes)
+        total = 0
+        for nodea, nodeb in zip(nodes[:-1], nodes[1:]):
+            pointa = curve(nodea)
+            pointb = curve(nodeb)
+            total += winding_number_linear(pointa, pointb, center)
+        return total
+
+
+class IntegrateJordan:
     """
-    if not Is.instance(curve, Segment):
-        raise TypeError
-    if nnodes is None:
-        nnodes = 3 + expx + expy + curve.degree
-    elif not Is.integer(nnodes) or nnodes < 0:
-        raise ValueError
-    assert expx == 0
-    assert expy == 0
-    dcurve = curve.derivate()
-    nodes = open_linspace(nnodes)
-    weights = open_newton_cotes(nnodes)
-    funcvals = tuple(abs(point) for point in dcurve(nodes))
-    return float(inner(weights, funcvals))
-
-
-def lenght(curve: Segment, nnodes: int = 5):
-    """Computes the integral I
-
-        I = int_{C} ds
-
-    Given the control points P of a bezier curve C(u) of
-    degree p
-
-        C(u) = sum_{i=0}^{p} B_{i,p}(u) * P_i
-
-        I = int_{0}^{1} abs(C'(u)) * du
-
+    Defines functions to integrate over the internal area
+    defined by the jordan curve.
     """
-    return polynomial(curve, 0, 0, nnodes)
 
+    @staticmethod
+    def polynomial(jordan: JordanCurve, expx: int, expy: int):
+        """
+        Computes the integral
 
-def area(curve: Segment, nnodes: Union[None, int] = None):
-    """Computes the integral I
+        I = int x^expx * y^expy * ds
+        """
+        assert Is.instance(jordan, JordanCurve)
+        return sum(
+            IntegrateSegment.polynomial(segment, expx, expy)
+            for segment in jordan.segments
+        )
 
-    I = int_0^1 x * dy
+    @staticmethod
+    def winding_number(
+        jordan: JordanCurve,
+        center: Optional[Point2D] = (0.0, 0.0),
+        nnodes: Optional[int] = None,
+    ) -> Union[int, float]:
+        """Computes the winding number from jordan curve
 
-    """
-    return vertical(curve, 1, 0, nnodes)
+        Returns [-1, -0.5, 0, 0.5 or 1]
+        """
+        wind = 0
+        if center in jordan.box():
+            for bezier in jordan.segments:
+                if center in bezier:
+                    return 0.5 if float(jordan) > 0 else -0.5
+        for bezier in jordan.segments:
+            wind += IntegrateSegment.winding_number(bezier, center, nnodes)
+        return round(wind)
 
 
 def winding_number_linear(
@@ -119,22 +119,3 @@ def winding_number_linear(
     if abs(wind) < 0.5:
         return wind
     return wind - 1 if wind > 0 else wind + 1
-
-
-def winding_number(
-    curve: Segment,
-    center: Point2D = (0.0, 0.0),
-    nnodes: Union[None, int] = None,
-) -> float:
-    """
-    Computes the integral for a bezier curve of given control points
-    """
-    assert Is.instance(curve, Segment)
-    nnodes = curve.npts if nnodes is None else nnodes
-    nodes = closed_linspace(nnodes)
-    total = 0
-    for nodea, nodeb in zip(nodes[:-1], nodes[1:]):
-        pointa = curve(nodea)
-        pointb = curve(nodeb)
-        total += winding_number_linear(pointa, pointb, center)
-    return total

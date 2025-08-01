@@ -8,9 +8,7 @@ from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
 from ..tools import Is, To
-from .polynomial import Polynomial
-from .polynomial import derivate as polyderiv
-from .polynomial import scale, shift
+from .polynomial import Polynomial, scale, shift
 from .quadrature import inner
 from .reals import Math, Rational, Real
 
@@ -132,6 +130,10 @@ class Bezier:
         mulpoly = self.__polynomial * other
         return polynomial2bezier(mulpoly)
 
+    def __pow__(self, exponent: int) -> Polynomial:
+        poly = bezier2polynomial(self)
+        return polynomial2bezier(poly**exponent)
+
     def __sub__(self, other: Union[Real, Polynomial]) -> Polynomial:
         return self.__add__(-other)
 
@@ -152,18 +154,6 @@ class Bezier:
 
     def __repr__(self) -> str:
         return repr(self.__polynomial)
-
-
-def derivate(bezier: Bezier, times: int = 1) -> Bezier:
-    """
-    Derivate the bezier curve, giving a new one
-
-    Example
-    -------
-    >>> bezier = Bezier([1, 2, 5])
-    >>> dbezier = derivate(bezier)
-    """
-    return polynomial2bezier(polyderiv(bezier2polynomial(bezier), times))
 
 
 def split(bezier: Bezier, nodes: Iterable[Real]) -> Iterable[Bezier]:

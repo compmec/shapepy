@@ -6,8 +6,8 @@ logging, errors, debugging, etc.
 from __future__ import annotations
 
 import types
-from functools import wraps
-from typing import Any
+from functools import lru_cache, wraps
+from typing import Any, Set
 
 import numpy as np
 
@@ -37,6 +37,13 @@ class Is:
         except TypeError:
             return False
         return True
+
+    @staticmethod
+    def callable(obj: Any) -> bool:
+        """
+        Tells if the object is callable
+        """
+        return hasattr(obj, "__call__")
 
 
 # pylint: disable=too-few-public-methods
@@ -100,3 +107,28 @@ def vectorize(position: int = 0, dimension: int = 0):
 
 class NotExpectedError(Exception):
     """Raised when arrives in a section that were not expected"""
+
+
+@lru_cache(maxsize=None)
+def pow_keys(exp: int) -> Set[int]:
+    """
+    Computes the basis to exponentials
+
+    >>> pow_keys(1)
+    {}
+    >>> pow_keys(2)
+    {2}
+    >>> pow_keys(3)
+    {2, 3}
+    >>> pow_keys(4)
+    {2, 4}
+    >>> pow_keys(12)
+    {2, 3, 6, 12}
+    >>> pow_keys(18)
+    {2, 3, 4, 5, 9, 18}
+    """
+    if not Is.integer(exp) or exp < 1:
+        raise ValueError
+    if exp == 1:
+        return set()
+    return pow_keys(exp // 2) | pow_keys(exp - exp // 2) | {exp}

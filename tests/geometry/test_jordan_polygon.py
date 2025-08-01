@@ -7,7 +7,8 @@ import math
 import numpy as np
 import pytest
 
-from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.geometry.integral import IntegrateJordan
+from shapepy.geometry.jordancurve import JordanCurve
 
 
 @pytest.mark.order(15)

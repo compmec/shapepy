@@ -12,11 +12,11 @@ from shapepy.bool2d.shape import (
     ConnectedShape,
     DisjointShape,
     EmptyShape,
-    IntegrateShape,
     SimpleShape,
     WholeShape,
 )
-from shapepy.geometry.jordancurve import IntegrateJordan, JordanCurve
+from shapepy.geometry.integral import IntegrateJordan
+from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D
 from shapepy.geometry.segment import Segment
 from shapepy.plot.plot import ShapePloter

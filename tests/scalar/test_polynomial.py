@@ -1,6 +1,6 @@
 import pytest
 
-from shapepy.scalar.polynomial import Polynomial, derivate, scale, shift
+from shapepy.scalar.polynomial import Polynomial, scale, shift
 
 
 @pytest.mark.order(3)
@@ -225,23 +225,16 @@ def test_mul():
         "test_build",
         "test_degree",
         "test_evaluate",
-        "test_add",
+        "test_compare",
         "test_mul",
     ]
 )
-def test_derivate():
-    poly = Polynomial([0])
-    assert derivate(poly, 1) == 0
-    assert derivate(poly, 2) == 0
-
-    poly = Polynomial([3])
-    assert derivate(poly, 1) == 0
-    assert derivate(poly, 2) == 0
-
-    poly = Polynomial([1, 1, 1, 1, 1])
-    assert derivate(poly, 1) == Polynomial([1, 2, 3, 4])
-    assert derivate(poly, 2) == Polynomial([2, 6, 12])
-    assert derivate(poly, 3) == Polynomial([6, 24])
+def test_pow():
+    poly = Polynomial([-1, 1])
+    assert poly**0 == 1
+    assert poly**1 == poly
+    assert poly**2 == poly * poly
+    assert poly**3 == poly * poly * poly
 
 
 @pytest.mark.order(3)
@@ -358,6 +351,7 @@ def test_numpy_array():
         "test_add",
         "test_sub",
         "test_mul",
+        "test_pow",
         "test_shift",
         "test_scale",
     ]
