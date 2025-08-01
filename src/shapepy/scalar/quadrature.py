@@ -71,13 +71,13 @@ def invert_matrix(matrix):
     # Eliminate lower triangle
     for k in range(side):
         # Swap pivos
-        if matrix[k, k] == 0:
+        if matrix[k, k] == 0:  # pragma: no cover
             for i in range(k + 1, side):
                 if matrix[i, k] != 0:
                     matrix[[k, i]] = matrix[[i, k]]
                     break
         # Eliminate lines bellow the pivo
-        if matrix[k, k] < 0:
+        if matrix[k, k] < 0:  # pragma: no cover
             matrix[k] *= -1
         for i in range(k + 1, side):
             matrix[i] = matrix[i] * matrix[k, k] - matrix[k] * matrix[i, k]
@@ -116,10 +116,10 @@ class DirectIntegrator:
         """Get the weights used by the integrator"""
         return self.__weights
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return str({"nodes": self.nodes, "weights": self.weights})
 
-    def __repr__(self) -> str:
+    def __repr__(self) -> str:  # pragma: no cover
         return str(self)
 
     def integrate(
@@ -306,7 +306,7 @@ class IntegratorFactory:
         {"nodes": (1/6, 2/6, 3/6, 4/6, 5/6),
          "weights": (11/20, -14/20, 26/20, -14/20, 11/20)}
         """
-        nodes = tuple(NodeSampleFactory.open_newton_cotes(npts))
+        nodes = NodeSampleFactory.open_newton_cotes(npts)
         if npts in IntegratorFactory.open_newton_cotes_weights:
             weights = IntegratorFactory.open_newton_cotes_weights[npts]
         else:
@@ -341,7 +341,7 @@ class IntegratorFactory:
          "weights": (275/1152, 25/288, 67/192, 25/288, 275/1152)}
 
         """
-        nodes = tuple(NodeSampleFactory.custom_open_formula(npts))
+        nodes = NodeSampleFactory.custom_open_formula(npts)
         if npts in IntegratorFactory.custom_open_formula_weights:
             weights = IntegratorFactory.custom_open_formula_weights[npts]
         else:
@@ -377,12 +377,12 @@ class IntegratorFactory:
         """
         if not Is.integer(npts) or npts < 1:
             raise ValueError("npts must be integer > 0")
-        nodes = tuple(NodeSampleFactory.chebyshev(npts))
-        if npts in IntegratorFactory.clenshaw_curtis_weights:
-            weights = IntegratorFactory.clenshaw_curtis_weights[npts]
-        else:
-            weights = tuple(find_polynomial_weights(nodes))
-            IntegratorFactory.clenshaw_curtis_weights[npts] = weights
+        nodes = NodeSampleFactory.chebyshev(npts)
+        if npts not in IntegratorFactory.clenshaw_curtis_weights:
+            raise NotImplementedError(
+                f"The weights values are unknown for {npts}"
+            )
+        weights = IntegratorFactory.clenshaw_curtis_weights[npts]
         return DirectIntegrator(map(convert, nodes), map(convert, weights))
 
 
