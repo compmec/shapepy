@@ -1,3 +1,22 @@
+.. _v1.1.4:
+
+======
+v1.1.4
+======
+
+What has changed
+----------------
+
+* Added `reals.py` to contains methods of conversion to scalar numbers 
+* Added `Is` and `To` containers to help verification and conversion to common types
+* Added `Angle` class to wrap float and evaluate angles
+* Added `Polynomial` and `Bezier` classes to help evaluation of curves
+* Removed `BezierCurve` from `geometry`
+* Renamed `PlanarCurve` to `Segment`
+* Added `length` property on `Segment` and `JordanCurve`
+* Added `area` property on `JordanCurve`
+
+
 .. _v1.1.3:
 
 ======
