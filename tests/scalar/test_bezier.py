@@ -291,14 +291,6 @@ def test_clean():
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_matrices"])
-def test_derivate():
-    ctrlpoints = [1, 2, 3, 4]
-    bezier = Bezier(ctrlpoints)
-    assert clean(bezier) == Bezier([1, 4])
-
-
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build", "test_matrices"])
 def test_split():
     bezier = Bezier([1, 3, 2, -1])
     bez0, bez1 = tuple(split(bezier, [0.5]))
@@ -325,7 +317,6 @@ def test_split():
         "test_print",
         "test_conversions",
         "test_clean",
-        "test_derivate",
         "test_split",
     ]
 )

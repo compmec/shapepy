@@ -16,7 +16,7 @@ from shapepy.geometry.point import Point2D
 from shapepy.geometry.segment import Segment
 
 from ..scalar.bezier import Bezier, bezier2polynomial
-from ..scalar.polynomial import derivate, integrate
+from ..scalar.calculus import derivate, integrate
 from ..scalar.reals import Real
 from ..tools import Is, To
 

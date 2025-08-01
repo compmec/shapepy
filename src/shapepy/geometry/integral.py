@@ -9,7 +9,7 @@ from typing import Optional, Union
 import numpy as np
 
 from ..scalar.bezier import Bezier, bezier2polynomial
-from ..scalar.polynomial import derivate, integrate
+from ..scalar.calculus import derivate, integrate
 from ..scalar.quadrature import closed_linspace
 from ..scalar.reals import Math
 from ..tools import Is
