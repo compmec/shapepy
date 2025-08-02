@@ -9,9 +9,6 @@ and how they interact with each other.
 
 * :ref:`theory_point`
 * :ref:`theory_curve`
-    * :ref:`theory_curve_polygon`
-    * :ref:`theory_curve_polynomial`
-    * :ref:`theory_curve_trigonometric`
     * :ref:`theory_curve_jordan`
 * :ref:`theory_shape`
     * :ref:`theory_shape_simple`
@@ -826,29 +823,29 @@ The following operations are available:
     :align: center
 
     * - Name
-        - Logic
-        - Math
-        - Python
+      - Logic
+      - Math
+      - Python
     * - Inversion
-        - NOT
-        - :math:`\overline{A}`
-        - `~A`
+      - NOT
+      - :math:`\overline{A}`
+      - `~A`
     * - Union
-        - OR
-        - :math:`A \cup B`
-        - `A | B`
+      - OR
+      - :math:`A \cup B`
+      - `A | B`
     * - Intersection
-        - AND
-        - :math:`A \cap B`
-        - `A & B`
+      - AND
+      - :math:`A \cap B`
+      - `A & B`
     * - Subtraction
-        - SUB
-        - :math:`A - B`
-        - `A - B`
+      - SUB
+      - :math:`A - B`
+      - `A - B`
     * - Exclusive or
-        - XOR
-        - :math:`A \otimes B`
-        - `A ^ B`
+      - XOR
+      - :math:`A \otimes B`
+      - `A ^ B`
 
 From these operations above, only three of them are basic: **NOT**, **OR** and **AND**.
 

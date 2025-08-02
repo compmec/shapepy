@@ -261,8 +261,8 @@ class IntegratorFactory:
             IntegratorFactory.open_newton_cotes_weights[npts] = weights
         return DirectIntegrator(map(convert, nodes), map(convert, weights))
 
-    @lru_cache(maxsize=None)
     @staticmethod
+    @lru_cache(maxsize=None)
     def custom_open_formula(
         npts: int, convert: type = To.rational
     ) -> DirectIntegrator:
@@ -296,8 +296,8 @@ class IntegratorFactory:
             IntegratorFactory.custom_open_formula_weights[npts] = weights
         return DirectIntegrator(map(convert, nodes), map(convert, weights))
 
-    @lru_cache(maxsize=None)
     @staticmethod
+    @lru_cache(maxsize=None)
     def clenshaw_curtis(
         npts: int, convert: type = To.finite
     ) -> DirectIntegrator:

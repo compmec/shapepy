@@ -15,8 +15,8 @@ class NodeSampleFactory:
     Functions to get node samples
     """
 
-    @lru_cache(maxsize=None)
     @staticmethod
+    @lru_cache(maxsize=None)
     def closed_linspace(npts: int) -> Tuple[Rational, ...]:
         """
         Gives a set of numbers in interval [0, 1]
@@ -36,8 +36,8 @@ class NodeSampleFactory:
             raise ValueError("npts must be integer >= 2")
         return tuple(To.rational(num, npts - 1) for num in range(npts))
 
-    @lru_cache(maxsize=None)
     @staticmethod
+    @lru_cache(maxsize=None)
     def closed_newton_cotes(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval [0, 1]
@@ -57,8 +57,8 @@ class NodeSampleFactory:
             raise ValueError("npts must be integer >= 2")
         return tuple(To.rational(num, npts - 1) for num in range(npts))
 
-    @lru_cache(maxsize=None)
     @staticmethod
+    @lru_cache(maxsize=None)
     def open_newton_cotes(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
@@ -78,8 +78,8 @@ class NodeSampleFactory:
             raise ValueError("npts must be integer >= 1")
         return tuple(To.rational(num, npts + 1) for num in range(1, npts + 1))
 
-    @lru_cache(maxsize=None)
     @staticmethod
+    @lru_cache(maxsize=None)
     def custom_open_formula(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
@@ -101,8 +101,8 @@ class NodeSampleFactory:
             To.rational(num, 2 * npts) for num in range(1, 2 * npts, 2)
         )
 
-    @lru_cache(maxsize=None)
     @staticmethod
+    @lru_cache(maxsize=None)
     def chebyshev(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
