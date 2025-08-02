@@ -17,6 +17,7 @@ from shapepy.geometry.jordancurve import JordanCurve, clean_jordan
         "tests/geometry/test_point.py::test_all",
         "tests/geometry/test_box.py::test_all",
         "tests/geometry/test_segment.py::test_all",
+        "tests/geometry/test_piecewise.py::test_all",
     ],
     scope="session",
 )
