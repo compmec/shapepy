@@ -169,7 +169,9 @@ def to_point(point: Point2D | tuple[Real, Real]) -> Point2D:
     """
     if Is.instance(point, Point2D):
         return point
-    return Point2D(point[0], point[1])
+    xcoord = To.finite(point[0])
+    ycoord = To.finite(point[1])
+    return Point2D(xcoord, ycoord)
 
 
 def is_point(point: Point2D | tuple[Real, Real]) -> bool:
