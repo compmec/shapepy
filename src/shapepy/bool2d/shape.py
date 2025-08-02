@@ -54,8 +54,8 @@ class FollowPath:
         Find the intersections between two jordan curves and call split on the
         nodes which intersects
         """
-        assert Is.instance(jordana, JordanCurve)
-        assert Is.instance(jordanb, JordanCurve)
+        assert Is.jordan(jordana)
+        assert Is.jordan(jordanb)
         if jordana.box() & jordanb.box() is None:
             return
         all_positions = (set(), set())
@@ -182,8 +182,7 @@ class FollowPath:
         Returns a list of jordan curves which is the result
         of the intersection between 'jordansa' and 'jordansb'
         """
-        for jordan in jordans:
-            assert Is.instance(jordan, JordanCurve)
+        assert all(map(Is.jordan, jordans))
         bez_indexs = []
         for ind_jord, ind_seg in start_indexs:
             indices_matrix = FollowPath.pursue_path(ind_jord, ind_seg, jordans)
@@ -660,7 +659,7 @@ class DefinedShape(BaseShape):
         True
 
         """
-        assert Is.instance(jordan, JordanCurve)
+        assert Is.jordan(jordan)
         assert Is.bool(boundary)
         return self._contains_jordan(jordan, boundary)
 
@@ -721,7 +720,7 @@ class SimpleShape(DefinedShape):
     """
 
     def __init__(self, jordancurve: JordanCurve):
-        assert Is.instance(jordancurve, JordanCurve)
+        assert Is.jordan(jordancurve)
         super().__init__()
         self.__set_jordancurve(jordancurve)
 
@@ -769,7 +768,7 @@ class SimpleShape(DefinedShape):
         return (self.__jordancurve,)
 
     def __set_jordancurve(self, other: JordanCurve):
-        assert Is.instance(other, JordanCurve)
+        assert Is.jordan(other)
         self.__jordancurve = copy(other)
 
     def invert(self) -> SimpleShape:

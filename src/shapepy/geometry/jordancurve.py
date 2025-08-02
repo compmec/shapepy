@@ -115,8 +115,9 @@ class JordanCurve:
         ((0, 0), (4, 0), (4, 3), (0, 3))
 
         """
-        if Is.instance(all_ctrlpoints, str):
-            raise TypeError
+        all_ctrlpoints = tuple(
+            tuple(map(To.point, pts) for pts in all_ctrlpoints)
+        )
         beziers = [0] * len(all_ctrlpoints)
         for i, ctrlpoints in enumerate(all_ctrlpoints):
             ctrlpoints = list(ctrlpoints)
@@ -526,7 +527,7 @@ class JordanCurve:
         return msg
 
     def __eq__(self, other: JordanCurve) -> bool:
-        if not Is.instance(other, JordanCurve):
+        if not Is.jordan(other):
             raise ValueError
         for point in other.points(1):
             if point not in self:
@@ -670,7 +671,7 @@ class JordanCurve:
         ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
 
         """
-        assert Is.instance(other, JordanCurve)
+        assert Is.jordan(other)
         intersections = self.__intersection(other)
         # Filter the values
         if not equal_beziers:
@@ -776,3 +777,22 @@ def clean_jordan(jordan: JordanCurve) -> JordanCurve:
             break
     piecewise = PiecewiseCurve(segments)
     return JordanCurve(piecewise)
+
+
+def is_jordan(obj: object) -> bool:
+    """
+    Checks if the parameter is a Jordan Curve
+
+    Parameters
+    ----------
+    obj : The object to be tested
+
+    Returns
+    -------
+    bool
+        True if the obj is a Jordan Curve, False otherwise
+    """
+    return Is.instance(obj, JordanCurve)
+
+
+Is.jordan = is_jordan
