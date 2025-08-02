@@ -7,11 +7,12 @@ from __future__ import annotations
 from numbers import Real
 from typing import Iterable, List, Union
 
+from ..scalar.reals import Math
 from ..tools import Is, pow_keys
-from .reals import Math
+from .base import IAnalytic
 
 
-class Polynomial:
+class Polynomial(IAnalytic):
     """
     Defines a polynomial with coefficients
 

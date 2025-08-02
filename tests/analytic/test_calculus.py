@@ -4,8 +4,8 @@ from typing import Iterable, Union
 
 import pytest
 
-from shapepy.scalar.bezier import Bezier
-from shapepy.scalar.calculus import (
+from shapepy.analytic.bezier import Bezier
+from shapepy.analytic.calculus import (
     derivate,
     derivate_bezier,
     derivate_polynomial,
@@ -13,14 +13,14 @@ from shapepy.scalar.calculus import (
     integrate_bezier,
     integrate_polynomial,
 )
-from shapepy.scalar.polynomial import Polynomial
+from shapepy.analytic.polynomial import Polynomial
 
 
 @pytest.mark.order(9)
 @pytest.mark.dependency(
     depends=[
-        "tests/scalar/test_polynomial.py::test_all",
-        "tests/scalar/test_bezier.py::test_all",
+        "tests/analytic/test_polynomial.py::test_all",
+        "tests/analytic/test_bezier.py::test_all",
     ],
     scope="session",
 )

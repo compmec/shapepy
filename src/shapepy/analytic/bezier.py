@@ -7,10 +7,11 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
+from ..scalar.quadrature import inner
+from ..scalar.reals import Math, Rational, Real
 from ..tools import Is, To
+from .base import IAnalytic
 from .polynomial import Polynomial, scale, shift
-from .quadrature import inner
-from .reals import Math, Rational, Real
 
 
 @lru_cache(maxsize=None)
@@ -75,7 +76,7 @@ def clean_bezier(bezier: Bezier) -> Bezier:
     return polynomial2bezier(bezier2polynomial(bezier))
 
 
-class Bezier:
+class Bezier(IAnalytic):
     """
     Defines the Bezier class, that allows evaluating and operating
     such as adding, subtracting, multiplying, etc

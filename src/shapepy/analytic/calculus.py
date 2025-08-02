@@ -4,10 +4,10 @@ Methods to derivate and integrate scalar functions
 
 from typing import Union
 
+from ..scalar.reals import Math
 from ..tools import Is
 from .bezier import Bezier, bezier2polynomial, polynomial2bezier
 from .polynomial import Polynomial
-from .reals import Math
 
 
 def integrate_polynomial(polynomial: Polynomial, times: int = 1) -> Polynomial:

@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from shapepy.scalar.bezier import (
+from shapepy.analytic.bezier import (
     Bezier,
     bezier2polynomial,
     bezier_caract_matrix,
@@ -10,13 +10,13 @@ from shapepy.scalar.bezier import (
     polynomial2bezier,
     split,
 )
-from shapepy.scalar.polynomial import Polynomial
+from shapepy.analytic.polynomial import Polynomial
 
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
-        "tests/scalar/test_polynomial.py::test_all",
+        "tests/analytic/test_polynomial.py::test_all",
     ],
     scope="session",
 )

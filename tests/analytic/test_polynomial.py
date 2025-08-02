@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from shapepy.scalar.polynomial import Polynomial, scale, shift
+from shapepy.analytic.polynomial import Polynomial, scale, shift
 
 
 @pytest.mark.order(3)
