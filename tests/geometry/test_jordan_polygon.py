@@ -519,20 +519,20 @@ class TestOthers:
         assert id(jordana) != id(jordanb)
         inters = jordana & jordanb
         assert not bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=False, end_points=False
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=False, end_points=False
         )
         assert not bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=False, end_points=True
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=False, end_points=True
         )
         assert bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=True, end_points=False
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=True, end_points=False
         )
         assert bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=True, end_points=True
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=True, end_points=True
         )
         assert bool(inters)
 

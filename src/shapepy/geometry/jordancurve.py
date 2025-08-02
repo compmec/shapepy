@@ -512,7 +512,9 @@ class JordanCurve:
         self, other: JordanCurve
     ) -> Tuple[Tuple[int, int, float, float]]:
         """Computes the intersection of two jordan curves"""
-        return self.intersection(other, equal_beziers=False, end_points=False)
+        if not Is.jordan(other):
+            raise TypeError
+        return self.piecewise & other.piecewise
 
     def __str__(self) -> str:
         max_degree = max(curve.degree for curve in self.segments)
@@ -579,111 +581,6 @@ class JordanCurve:
 
         """
         return float(self.length if self.area > 0 else -self.length)
-
-    def __intersection(
-        self, other: JordanCurve
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        """Private method of ``intersection``
-
-        Computes the intersection between ``self`` and ``other``
-        returning a list of [(a0, b0, u0, v0), ...]
-        such self.segments[a0](u0) == other.segments[b0](v0)
-
-        If (ui, vi) == (None, None), it means
-        self.segments[a0] == other.segments[b0]
-
-        """
-        intersections = set()
-        for ai, sbezier in enumerate(self.segments):
-            for bj, obezier in enumerate(other.segments):
-                inters = sbezier & obezier
-                if inters is None:
-                    continue
-                if len(inters) == 0:  # Equal curves
-                    intersections.add((ai, bj, None, None))
-                for ui, vj in inters:
-                    intersections.add((ai, bj, ui, vj))
-        return list(intersections)
-
-    def intersection(
-        self,
-        other: JordanCurve,
-        equal_beziers: bool = True,
-        end_points: bool = True,
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        r"""Computes the intersection between two jordan curves
-
-        Finds the values of (:math:`a^{\star}`, :math:`b^{\star}`,
-        :math:`u^{\star}`, :math:`v^{\star}`) such
-
-        .. math::
-            S_{a^{\star}}(u^{\star}) == O_{b^{\star}}(v^{\star})
-
-        It computes the intersection between each pair of segments
-        from ``self`` and ``other`` and returns the matrix of coefficients
-
-        .. math::
-
-            \begin{bmatrix}
-            a_0 & b_0 & u_0 & v_0 \\
-            a_1 & b_1 & u_1 & v_1 \\
-            \vdots & \vdots & \vdots & \vdots \\
-            a_{n} & b_{n} & u_{n} & v_{n}
-            \end{bmatrix}
-
-        If two bezier curves are equal, then ``u_i = v_i = None``
-
-        * ``0 <= a_i < len(self.segments)``
-        * ``0 <= b_i < len(other.segments)``
-        * ``0 <= u_i <= 1`` or ``None``
-        * ``0 <= v_i <= 1`` or ``None``
-
-        Parameters
-        ----------
-        other : JordanCurve
-            The jordan curve which intersects ``self``
-        equal_beziers : bool, default = True
-            Flag to return (or not) when two segments are equal
-
-            If the flag ``equal_beziers`` are inactive,
-            then will remove when ``(ui, vi) == (None, None)``.
-
-        end_points : bool, default = True
-            Flag to return (or not) when jordans intersect at end points
-
-            If the flag ``end_points`` are inactive,
-            then will remove when ``(ui, vi)`` are
-            ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
-
-        :return: The matrix of coefficients ``[(ai, bi, ui, vi)]``
-                 or an empty tuple in case of non-intersection
-        :rtype: tuple[(int, int, float, float)]
-
-
-        Example use
-        -----------
-        >>> from shapepy import JordanCurve
-        >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
-        >>> jordan_a = JordanCurve.from_vertices(vertices_a)
-        >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]
-        >>> jordan_b = JordanCurve.from_vertices(vertices_b)
-        >>> jordan_a.intersection(jordan_b)
-        ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
-
-        """
-        assert Is.jordan(other)
-        intersections = self.__intersection(other)
-        # Filter the values
-        if not equal_beziers:
-            for ai, bi, ui, vi in tuple(intersections):
-                if ui is None:
-                    intersections.remove((ai, bi, ui, vi))
-        if not end_points:
-            for ai, bi, ui, vi in tuple(intersections):
-                if ui is None or (0 < ui < 1) or (0 < vi < 1):
-                    continue
-                intersections.remove((ai, bi, ui, vi))
-        return tuple(sorted(intersections))
 
 
 def compute_area(jordan: JordanCurve) -> Real:
