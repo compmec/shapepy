@@ -4,7 +4,7 @@ Defines the Bezier class, that has the same basis as the Polynomial
 
 from __future__ import annotations
 
-from functools import lru_cache
+from functools import cache
 from typing import Iterable, Tuple, Union
 
 from ..tools import Is, To
@@ -13,7 +13,7 @@ from .quadrature import inner
 from .reals import Math, Rational, Real
 
 
-@lru_cache(maxsize=None)
+@cache
 def bezier_caract_matrix(degree: int) -> Tuple[Tuple[Rational, ...], ...]:
     """Returns the matrix [M] with the polynomial coefficients
 
@@ -35,7 +35,7 @@ def bezier_caract_matrix(degree: int) -> Tuple[Tuple[Rational, ...], ...]:
     return tuple(map(tuple, matrix))
 
 
-@lru_cache(maxsize=None)
+@cache
 def inverse_caract_matrix(degree: int) -> Tuple[Tuple[Rational, ...], ...]:
     """
     Returns the inverse matrix of the caract bezier matrix
