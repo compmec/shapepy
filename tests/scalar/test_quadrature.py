@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from shapepy.scalar.polynomial import Polynomial
+from shapepy.analytic.polynomial import Polynomial
 from shapepy.scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from shapepy.tools import To
 
@@ -18,7 +18,7 @@ all_methods = {
     depends=[
         "tests/scalar/test_reals.py::test_all",
         "tests/scalar/test_angle.py::test_all",
-        "tests/scalar/test_polynomial.py::test_all",
+        "tests/analytic/test_polynomial.py::test_all",
         "tests/scalar/test_nodes_sample.py::test_all",
     ],
     scope="session",

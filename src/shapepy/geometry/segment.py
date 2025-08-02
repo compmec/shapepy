@@ -22,8 +22,8 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
-from ..scalar.bezier import Bezier, clean_bezier, split
-from ..scalar.calculus import derivate
+from ..analytic.bezier import Bezier, clean_bezier, split
+from ..analytic.calculus import derivate
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Real

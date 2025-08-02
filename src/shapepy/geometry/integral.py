@@ -8,8 +8,8 @@ from typing import Optional, Union
 
 import numpy as np
 
-from ..scalar.bezier import Bezier, bezier2polynomial
-from ..scalar.calculus import derivate, integrate
+from ..analytic.bezier import Bezier, bezier2polynomial
+from ..analytic.calculus import derivate, integrate
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Math
 from ..tools import Is

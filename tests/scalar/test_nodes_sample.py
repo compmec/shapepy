@@ -1,12 +1,9 @@
 from fractions import Fraction as frac
 from math import sqrt
-from typing import Iterable
 
 import pytest
 
 from shapepy.scalar.nodes_sample import NodeSampleFactory
-from shapepy.scalar.polynomial import Polynomial
-from shapepy.tools import To
 
 
 @pytest.mark.order(4)

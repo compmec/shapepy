@@ -13,8 +13,8 @@ from shapepy.geometry.point import Point2D
 @pytest.mark.dependency(
     depends=[
         "tests/scalar/test_reals.py::test_all",
-        "tests/scalar/test_polynomial.py::test_all",
-        "tests/scalar/test_bezier.py::test_all",
+        "tests/analytic/test_polynomial.py::test_all",
+        "tests/analytic/test_bezier.py::test_all",
     ],
     scope="session",
 )

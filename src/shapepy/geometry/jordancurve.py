@@ -11,8 +11,8 @@ from typing import Iterable, Optional, Tuple
 
 import numpy as np
 
-from ..scalar.bezier import Bezier, bezier2polynomial
-from ..scalar.calculus import derivate, integrate
+from ..analytic.bezier import Bezier, bezier2polynomial
+from ..analytic.calculus import derivate, integrate
 from ..scalar.reals import Real
 from ..tools import Is, To
 from .box import Box
