@@ -52,7 +52,7 @@ class TestQuadraticJordan:
         ]
     )
     def test_error_creation(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             JordanCurve("asd")
 
     @pytest.mark.order(16)

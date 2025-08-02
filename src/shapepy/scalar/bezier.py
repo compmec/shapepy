@@ -68,7 +68,7 @@ def polynomial2bezier(polynomial: Polynomial) -> Bezier:
     return Bezier(ctrlpoints)
 
 
-def clean(bezier: Bezier) -> Bezier:
+def clean_bezier(bezier: Bezier) -> Bezier:
     """
     Decreases the degree of the bezier curve if possible
     """

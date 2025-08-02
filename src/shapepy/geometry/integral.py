@@ -31,8 +31,7 @@ class IntegrateSegment:
         I = int_D x^expx * y^expy * dA
 
         """
-        if not Is.instance(curve, Segment):
-            raise TypeError
+        assert Is.segment(curve)
 
         xfunc = bezier2polynomial(Bezier(pt[0] for pt in curve.ctrlpoints))
         yfunc = bezier2polynomial(Bezier(pt[1] for pt in curve.ctrlpoints))
@@ -51,7 +50,7 @@ class IntegrateSegment:
         """
         Computes the integral for a bezier curve of given control points
         """
-        assert Is.instance(curve, Segment)
+        assert Is.segment(curve)
         nnodes = curve.npts if nnodes is None else nnodes
         nodes = NodeSampleFactory.closed_linspace(nnodes)
         total = 0
@@ -75,7 +74,7 @@ class IntegrateJordan:
 
         I = int x^expx * y^expy * ds
         """
-        assert Is.instance(jordan, JordanCurve)
+        assert Is.jordan(jordan)
         return sum(
             IntegrateSegment.polynomial(segment, expx, expy)
             for segment in jordan.segments
