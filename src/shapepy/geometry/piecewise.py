@@ -188,9 +188,9 @@ class PiecewiseCurve:
         -----------
         >>> from shapepy import JordanCurve
         >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
-        >>> jordan_a = JordanCurve.from_vertices(vertices_a)
+        >>> jordan_a = FactoryJordan.polygon(vertices_a)
         >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]
-        >>> jordan_b = JordanCurve.from_vertices(vertices_b)
+        >>> jordan_b = FactoryJordan.polygon(vertices_b)
         >>> jordan_a.intersection(jordan_b)
         ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
 

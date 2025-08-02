@@ -8,6 +8,7 @@ import numpy as np
 import pynurbs
 import pytest
 
+from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.scalar.reals import To
 
@@ -42,7 +43,7 @@ class TestQuadraticJordan:
         points = [(0, -1), (2, 0), (0, 1), (0, 1), (0, -1)]
         curve = pynurbs.Curve(knotvector)
         curve.ctrlpoints = [To.point(point) for point in points]
-        JordanCurve.from_full_curve(curve)
+        FactoryJordan.spline_curve(curve)
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)
@@ -72,12 +73,12 @@ class TestQuadraticJordan:
         pointsa = [(0, -2), (4, 0), (0, 2), (0, 0), (0, -2)]
         curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
-        jordana = JordanCurve.from_full_curve(curvea)
+        jordana = FactoryJordan.spline_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
-        jordanb = JordanCurve.from_full_curve(curveb)
+        jordanb = FactoryJordan.spline_curve(curveb)
 
         good = [(0, 0, 1 / 4, 1 / 4), (0, 0, 3 / 4, 3 / 4)]
         test = jordana & jordanb
@@ -101,13 +102,13 @@ class TestQuadraticJordan:
         # pointsa = np.array(pointsa, dtype="float64")
         curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
-        jordana = JordanCurve.from_full_curve(curvea)
+        jordana = FactoryJordan.spline_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         # pointsb = np.array(pointsb, dtype="float64")
         curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
-        jordanb = JordanCurve.from_full_curve(curveb)
+        jordanb = FactoryJordan.spline_curve(curveb)
 
         good = [(0, 0, 0.25, 0.25), (0, 0, 0.75, 0.75)]
         test = jordana & jordanb

@@ -7,7 +7,7 @@ import pytest
 
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import SimpleShape
-from shapepy.geometry.jordancurve import JordanCurve
+from shapepy.geometry.factory import FactoryJordan
 
 
 @pytest.mark.order(32)
@@ -76,10 +76,10 @@ class TestIntersectionSimple:
         square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
         left_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2), (0, -1), (-1, 0)]
-        left_jordanpoly = JordanCurve.from_vertices(left_points)
+        left_jordanpoly = FactoryJordan.polygon(left_points)
         left_shape = SimpleShape(left_jordanpoly)
         right_points = [(0, 1), (1, 0), (0, -1), (1, -2), (3, 0), (1, 2)]
-        right_jordanpoly = JordanCurve.from_vertices(right_points)
+        right_jordanpoly = FactoryJordan.polygon(right_points)
         right_shape = SimpleShape(right_jordanpoly)
 
         assert square0 - square1 == left_shape

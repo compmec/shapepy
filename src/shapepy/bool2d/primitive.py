@@ -12,12 +12,12 @@ from typing import Tuple
 
 import numpy as np
 
-from shapepy.bool2d.shape import EmptyShape, SimpleShape, WholeShape
-from shapepy.geometry.jordancurve import JordanCurve
-from shapepy.geometry.point import Point2D
-from shapepy.geometry.segment import Segment
-
+from ..geometry.factory import FactoryJordan
+from ..geometry.jordancurve import JordanCurve
+from ..geometry.point import Point2D
+from ..geometry.segment import Segment
 from ..tools import Is, To
+from .shape import EmptyShape, SimpleShape, WholeShape
 
 
 class Primitive:
@@ -106,7 +106,7 @@ class Primitive:
 
         """
         vertices = tuple(map(To.point, vertices))
-        jordan_curve = JordanCurve.from_vertices(vertices)
+        jordan_curve = FactoryJordan.polygon(vertices)
         return SimpleShape(jordan_curve)
 
     @staticmethod
@@ -235,7 +235,7 @@ class Primitive:
         new_bezier = Segment([start_point, middle_point, end_point])
         beziers.append(new_bezier)
 
-        jordan_curve = JordanCurve.from_segments(beziers)
+        jordan_curve = JordanCurve(beziers)
         jordan_curve.move(center)
         circle = SimpleShape(jordan_curve)
         return circle
