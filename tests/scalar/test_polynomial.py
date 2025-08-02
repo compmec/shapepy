@@ -1,3 +1,4 @@
+import numpy as np
 import pytest
 
 from shapepy.scalar.polynomial import Polynomial, scale, shift
@@ -102,7 +103,7 @@ def test_add():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -144,7 +145,7 @@ def test_sub():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -186,7 +187,7 @@ def test_mul():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -252,7 +253,7 @@ def test_shift():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -283,7 +284,7 @@ def test_scale():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -318,8 +319,6 @@ def test_print():
 @pytest.mark.order(3)
 @pytest.mark.dependency(depends=["test_build"])
 def test_numpy_array():
-    import numpy as np
-
     degree = 3
     coefs = np.zeros((degree + 1, 3), dtype="int64")
     poly = Polynomial(coefs)

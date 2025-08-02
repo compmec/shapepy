@@ -68,6 +68,7 @@ def test_winding_triangles():
     ]
 )
 def test_winding_unit_circle():
+    np.random.seed(0)
     ntests = 1000
     maxim = 0
     for _ in range(ntests):

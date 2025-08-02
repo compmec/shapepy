@@ -92,6 +92,8 @@ def test_compare():
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_degree", "test_matrices"])
 def test_evaluate():
+    np.random.seed(0)
+
     bezier = Bezier([0])
     assert bezier(0) == 0
     assert bezier(0.5) == 0
@@ -144,7 +146,7 @@ def test_add():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -184,7 +186,7 @@ def test_sub():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -224,7 +226,7 @@ def test_mul():
     BasisFunctions to test if the polynomials coefficients
     are correctly computed
     """
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     maxdeg = 6
@@ -288,6 +290,8 @@ def test_print():
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_matrices"])
 def test_conversions():
+    np.random.seed(0)
+
     ntests = 100
     for _ in range(ntests):
         degree = np.random.randint(0, 6)
