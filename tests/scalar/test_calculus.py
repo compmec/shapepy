@@ -126,6 +126,7 @@ class TestIntegrateDerivate:
     def generate_functions(
         quantity: int, tipo: type
     ) -> Iterable[Union[Polynomial, Bezier]]:
+        random.seed(0)
         for _ in range(quantity):
             npts = random.randint(1, 10)
             coefs = (Fraction(random.randint(-5, 5)) for _ in range(npts))
@@ -153,7 +154,6 @@ class TestIntegrateDerivate:
     def test_bezier(self):
         for bezier in TestIntegrateDerivate.generate_functions(100, Bezier):
             for times in range(5):
-                print(type(bezier), bezier)
                 assert derivate(integrate(bezier, times), times) == bezier
 
     @pytest.mark.order(9)

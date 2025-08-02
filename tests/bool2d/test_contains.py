@@ -310,11 +310,13 @@ class TestObjectsInSimple:
         ]
     )
     def test_keep_ids(self):
+        np.random.seed(0)
+
         square = Primitive.square(side=4)
         jordan = square.jordans[0]
         good_ids = tuple(id(vertex) for vertex in jordan.vertices)
 
-        for k in range(100):  # number of tests
+        for _ in range(100):  # number of tests
             point = np.random.uniform(-4, 4, 2)
             point in square
             jordan = square.jordans[0]

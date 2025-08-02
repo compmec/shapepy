@@ -231,6 +231,7 @@ def test_evaluate_sincos():
     depends=["test_build_radians", "test_build_degrees", "test_build_turns"]
 )
 def test_evaluate_operations():
+    random.seed(0)
 
     for _ in range(1000):
         a = random.randint(0, 720)

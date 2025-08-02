@@ -1,5 +1,4 @@
-from typing import Iterable
-
+import numpy as np
 import pytest
 
 from shapepy.scalar.polynomial import Polynomial
@@ -41,7 +40,7 @@ def test_build():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin", "test_build"])
 def test_polynomial_closed_newton_cotes():
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     method = IntegratorFactory.closed_newton_cotes
@@ -62,7 +61,7 @@ def test_polynomial_closed_newton_cotes():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin", "test_build"])
 def test_polynomial_open_newton_cotes():
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     method = IntegratorFactory.open_newton_cotes
@@ -83,7 +82,7 @@ def test_polynomial_open_newton_cotes():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin", "test_build"])
 def test_polynomial_custom_open_formula():
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     method = IntegratorFactory.custom_open_formula
@@ -104,13 +103,12 @@ def test_polynomial_custom_open_formula():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin", "test_build"])
 def test_polynomial_clenshaw_curtis():
-    import numpy as np
+    np.random.seed(0)
 
     ntests = 100
     method = IntegratorFactory.clenshaw_curtis
     numbers = all_methods[method]
     for npts in numbers:
-        print(f"npts = {npts}")
         direct = method(npts)
         for degree in range(npts):
             for _ in range(ntests):
@@ -134,8 +132,6 @@ def test_polynomial_clenshaw_curtis():
     ]
 )
 def test_trignometric():
-    import numpy as np
-
     tolerance = 1e-6
     direct = IntegratorFactory.open_newton_cotes(3, float)
     adaptative = AdaptativeIntegrator(direct, tolerance)
