@@ -22,7 +22,7 @@ class PiecewiseCurve:
         knots: Union[None, Iterable[Real]] = None,
     ):
         segments = tuple(segments)
-        if not all(Is.instance(seg, Segment) for seg in segments):
+        if not all(map(Is.segment, segments)):
             raise ValueError("All segments must be instances of Segment")
         if knots is None:
             knots = tuple(map(To.rational, range(len(segments) + 1)))
@@ -102,3 +102,22 @@ def clean_piecewise(piecewise: PiecewiseCurve) -> PiecewiseCurve:
     Cleans the piecewise curve, keeping the current parametrisation
     """
     return PiecewiseCurve(map(clean_segment, piecewise))
+
+
+def is_piecewise(obj: object) -> bool:
+    """
+    Checks if the parameter is a Piecewise curve
+
+    Parameters
+    ----------
+    obj : The object to be tested
+
+    Returns
+    -------
+    bool
+        True if the obj is a PiecewiseCurve, False otherwise
+    """
+    return Is.instance(obj, PiecewiseCurve)
+
+
+Is.piecewise = is_piecewise

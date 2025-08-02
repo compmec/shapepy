@@ -44,7 +44,7 @@ class Segment:
 
     def __or__(self, other: Segment) -> Segment:
         """Computes the union of two bezier curves"""
-        assert Is.instance(other, Segment)
+        assert Is.segment(other)
         assert self.degree == other.degree
         assert self.ctrlpoints[-1] == other.ctrlpoints[0]
         # Last point of first derivative
@@ -123,7 +123,8 @@ class Segment:
         return msg
 
     def __eq__(self, other: Segment) -> bool:
-        assert Is.instance(other, Segment)
+        if not Is.segment(other):
+            raise ValueError
         if self.npts != other.npts:
             return False
         for pta, ptb in zip(self.ctrlpoints, other.ctrlpoints):
@@ -375,7 +376,7 @@ class Projection:
 
         """
         point = To.point(point)
-        assert Is.instance(curve, Segment)
+        assert Is.segment(curve)
         nsample = 2 + curve.degree
         usample = NodeSampleFactory.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
@@ -447,3 +448,22 @@ def clean_segment(segment: Segment) -> Segment:
     if newplanar.degree == segment.degree:
         return segment
     return Segment(tuple(newplanar))
+
+
+def is_segment(obj: object) -> bool:
+    """
+    Checks if the parameter is a Segment
+
+    Parameters
+    ----------
+    obj : The object to be tested
+
+    Returns
+    -------
+    bool
+        True if the obj is a Segment, False otherwise
+    """
+    return Is.instance(obj, Segment)
+
+
+Is.segment = is_segment
