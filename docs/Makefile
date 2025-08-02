@@ -23,3 +23,7 @@ clean:
 	rm -rf $(BUILDDIR)/*
 	rm -rf auto_examples/
 	rm -rf $(SOURCEDIR)/sphinx_gallery_examples/
+
+browser:
+	make html
+	brave build/html/index.html
