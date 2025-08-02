@@ -7,18 +7,18 @@ from __future__ import annotations
 
 from copy import copy
 from fractions import Fraction
-from typing import Optional, Tuple
+from typing import Iterable, Optional, Tuple
 
 import numpy as np
-
-from shapepy.geometry.box import Box
-from shapepy.geometry.point import Point2D
-from shapepy.geometry.segment import Segment
 
 from ..scalar.bezier import Bezier, bezier2polynomial
 from ..scalar.calculus import derivate, integrate
 from ..scalar.reals import Real
 from ..tools import Is, To
+from .box import Box
+from .piecewise import PiecewiseCurve, clean_piecewise
+from .point import Point2D
+from .segment import Segment, clean_segment, segment_self_intersect
 
 
 class JordanCurve:
@@ -27,9 +27,9 @@ class JordanCurve:
     It stores a list of 'segments', each segment is a bezier curve
     """
 
-    def __init__(self, segments: Tuple[Segment]):
-        self.__length = None
+    def __init__(self, segments: Iterable[Segment]):
         self.__area = None
+
         self.segments = segments
 
     @classmethod
@@ -82,11 +82,7 @@ class JordanCurve:
         ((0, 0), (4, 0), (0, 3))
 
         """
-        if Is.instance(vertices, str):
-            raise TypeError
-        vertices = list(vertices)
-        for i, vertex in enumerate(vertices):
-            vertices[i] = To.point(vertex)
+        vertices = list(map(To.point, vertices))
         nverts = len(vertices)
         vertices.append(vertices[0])
         beziers = [0] * nverts
@@ -183,54 +179,6 @@ class JordanCurve:
             new_segment = segment.__class__(points)
             new_segments.append(new_segment)
         return self.__class__.from_segments(new_segments)
-
-    def clean(self) -> JordanCurve:
-        """Clean the jordan curve
-
-        Removes the uncessary nodes from jordan curve,
-        for example, after calling ``split`` function
-
-        :return: The same curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (1, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
-        >>> jordan.clean()
-        Jordan Curve of degree 1 and vertices
-        ((0, 0), (4, 0), (0, 3))
-
-        """
-        for segment in self.segments:
-            segment.clean()
-        segments = list(self.segments)
-        while True:
-            nsegments = len(segments)
-            for i in range(nsegments):
-                j = (i + 1) % nsegments
-                seg0 = segments[i]
-                seg1 = segments[j]
-                try:
-                    start_point = seg0.ctrlpoints[0]
-                    end_point = seg1.ctrlpoints[-1]
-                    segment = seg0 | seg1
-                    segment.ctrlpoints = (
-                        [start_point]
-                        + list(segment.ctrlpoints[1:-1])
-                        + [end_point]
-                    )
-                    segments[i] = segment
-                    segments.pop(j)
-                    break  # Can unite
-                except ValueError:
-                    pass  # Cannot unite
-            else:  # Cannot unite more segments
-                break
-        self.segments = segments
-        return self
 
     def move(self, point: Point2D) -> JordanCurve:
         """Translate the entire curve by ``point``
@@ -350,9 +298,7 @@ class JordanCurve:
     def __split_segment(self, index: int, nodes: Tuple[float]) -> None:
         nodes = tuple(sorted(nodes))
         segment = self.segments[index]
-        new_segments = segment.split(nodes)
-        for new_segment in new_segments:
-            new_segment.clean()
+        new_segments = tuple(map(clean_segment, segment.split(nodes)))
         points = list(new_segments[0].ctrlpoints)
         points[0] = segment.ctrlpoints[0]
         new_segments[0].ctrlpoints = points
@@ -476,17 +422,12 @@ class JordanCurve:
         Box with vertices (0, 0) and (4, 3)
 
         """
-        box = None
-        for bezier in self.segments:
-            box |= bezier.box()
-        return box
+        return self.piecewise.box()
 
     @property
     def length(self) -> Real:
         """The length of the curve"""
-        if self.__length is None:
-            self.__length = sum(seg.length for seg in self.segments)
-        return self.__length
+        return self.piecewise.length
 
     @property
     def area(self) -> Real:
@@ -496,7 +437,14 @@ class JordanCurve:
         return self.__area
 
     @property
-    def segments(self) -> Tuple[Segment]:
+    def piecewise(self) -> PiecewiseCurve:
+        """
+        Gives the piecewise curve
+        """
+        return self.__piecewise
+
+    @property
+    def segments(self) -> Tuple[Segment, ...]:
         """Segments
 
         When setting, it checks if the points are the same between
@@ -518,7 +466,7 @@ class JordanCurve:
         Planar curve of degree 1 and control points ((0, 0), (4, 0))
 
         """
-        return tuple(self.__segments)
+        return tuple(self.piecewise)
 
     @property
     def vertices(self) -> Tuple[Point2D]:
@@ -550,26 +498,14 @@ class JordanCurve:
         return tuple(vertices)
 
     @segments.setter
-    def segments(self, other: Tuple[Segment]):
-        for segment in other:
-            if not Is.instance(segment, Segment):
-                raise TypeError
-        ncurves = len(other)
-        for i in range(ncurves - 1):
-            end_point = other[i].ctrlpoints[-1]
-            start_point = other[i + 1].ctrlpoints[0]
-            assert start_point == end_point
-            assert id(start_point) == id(end_point)
-        for segment in other:
-            segment.clean()
-        self.__length = None
+    def segments(self, other: Iterable[Segment]):
+        piecewise = PiecewiseCurve(other)
+        if not piecewise_is_closed(piecewise):
+            raise ValueError
+        if piecewise_self_intersect(piecewise):
+            raise ValueError
+        self.__piecewise = clean_piecewise(piecewise)
         self.__area = None
-        segments = []
-        for bezier in other:
-            ctrlpoints = [To.point(point) for point in bezier.ctrlpoints]
-            new_bezier = Segment(ctrlpoints)
-            segments.append(new_bezier)
-        self.__segments = tuple(segments)
 
     def __and__(
         self, other: JordanCurve
@@ -590,12 +526,13 @@ class JordanCurve:
         return msg
 
     def __eq__(self, other: JordanCurve) -> bool:
-        assert Is.instance(other, JordanCurve)
+        if not Is.instance(other, JordanCurve):
+            raise ValueError
         for point in other.points(1):
             if point not in self:
                 return False
-        selcopy = self.__copy__().clean()
-        othcopy = other.__copy__().clean()
+        selcopy = clean_jordan(self.__copy__())
+        othcopy = clean_jordan(other.__copy__())
         if len(selcopy.segments) != len(othcopy.segments):
             return False
         segment1 = othcopy.segments[0]
@@ -616,12 +553,7 @@ class JordanCurve:
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
-        if point not in self.box():
-            return False
-        for bezier in self.segments:
-            if point in bezier:
-                return True
-        return False
+        return point in self.piecewise
 
     def __float__(self) -> float:
         """Returns the lenght of the curve
@@ -646,11 +578,6 @@ class JordanCurve:
 
         """
         return float(self.length if self.area > 0 else -self.length)
-
-    def __abs__(self) -> JordanCurve:
-        """Returns the same curve, but in positive direction"""
-        curve = self.__copy__()
-        return curve if float(self) > 0 else curve.invert()
 
     def __intersection(
         self, other: JordanCurve
@@ -772,3 +699,80 @@ def compute_area(jordan: JordanCurve) -> Real:
         poly = integrate(xfunc * derivate(yfunc) - yfunc * derivate(xfunc))
         total += poly(1) - poly(0)
     return total / 2
+
+
+def piecewise_is_closed(piecewise: PiecewiseCurve) -> bool:
+    """
+    Tells if the piecewise curve is a closed curve
+    """
+    first_point = piecewise(piecewise.knots[0])
+    last_point = piecewise(piecewise.knots[-1])
+    return piecewise_is_continuous(piecewise) and (first_point == last_point)
+
+
+def piecewise_is_continuous(piecewise: PiecewiseCurve) -> bool:
+    """
+    Tells if the segments are connected forming a continuous curve
+    """
+    segments = tuple(piecewise)
+    return all(
+        segments[i](1) == segments[i + 1](0) for i in range(len(segments) - 1)
+    )
+
+
+def piecewise_self_intersect(piecewise: PiecewiseCurve) -> bool:
+    """
+    Tells if the piecewise intersects itself
+
+    Meaning, if there's at least two different (ta) and (tb)
+    such piecewise(ta) == piecewise(tb)
+    """
+    return any(map(segment_self_intersect, piecewise))
+
+
+def clean_jordan(jordan: JordanCurve) -> JordanCurve:
+    """Cleans the jordan curve
+
+    Removes the uncessary nodes from jordan curve,
+    for example, after calling ``split`` function
+
+    :return: The same curve
+    :rtype: JordanCurve
+
+    Example use
+    -----------
+
+    >>> from shapepy import JordanCurve
+    >>> vertices = [(0, 0), (1, 0), (4, 0), (0, 3)]
+    >>> jordan = JordanCurve.from_vertices(vertices)
+    >>> jordan.clean()
+    Jordan Curve of degree 1 and vertices
+    ((0, 0), (4, 0), (0, 3))
+
+    """
+    piecewise = clean_piecewise(jordan.piecewise)
+    segments = list(piecewise)
+    while True:
+        nsegments = len(segments)
+        for i in range(nsegments):
+            j = (i + 1) % nsegments
+            seg0 = segments[i]
+            seg1 = segments[j]
+            try:
+                start_point = seg0.ctrlpoints[0]
+                end_point = seg1.ctrlpoints[-1]
+                segment = seg0 | seg1
+                segment.ctrlpoints = (
+                    [start_point]
+                    + list(segment.ctrlpoints[1:-1])
+                    + [end_point]
+                )
+                segments[i] = segment
+                segments.pop(j)
+                break  # Can unite
+            except ValueError:
+                pass  # Cannot unite
+        else:  # Cannot unite more segments
+            break
+    piecewise = PiecewiseCurve(segments)
+    return JordanCurve(piecewise)
