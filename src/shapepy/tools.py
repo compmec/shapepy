@@ -6,7 +6,7 @@ logging, errors, debugging, etc.
 from __future__ import annotations
 
 import types
-from functools import cache, wraps
+from functools import lru_cache, wraps
 from typing import Any, Set
 
 import numpy as np
@@ -109,7 +109,7 @@ class NotExpectedError(Exception):
     """Raised when arrives in a section that were not expected"""
 
 
-@cache
+@lru_cache(maxsize=None)
 def pow_keys(exp: int) -> Set[int]:
     """
     Computes the basis to exponentials

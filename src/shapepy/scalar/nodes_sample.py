@@ -2,7 +2,7 @@
 Defines the NodeSampleFactory
 """
 
-from functools import cache
+from functools import lru_cache
 from typing import Tuple
 
 from ..tools import Is, To
@@ -16,7 +16,7 @@ class NodeSampleFactory:
     """
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=None)
     def closed_linspace(npts: int) -> Tuple[Rational, ...]:
         """
         Gives a set of numbers in interval [0, 1]
@@ -37,7 +37,7 @@ class NodeSampleFactory:
         return tuple(To.rational(num, npts - 1) for num in range(npts))
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=None)
     def closed_newton_cotes(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval [0, 1]
@@ -58,7 +58,7 @@ class NodeSampleFactory:
         return tuple(To.rational(num, npts - 1) for num in range(npts))
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=None)
     def open_newton_cotes(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
@@ -79,7 +79,7 @@ class NodeSampleFactory:
         return tuple(To.rational(num, npts + 1) for num in range(1, npts + 1))
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=None)
     def custom_open_formula(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)
@@ -102,7 +102,7 @@ class NodeSampleFactory:
         )
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=None)
     def chebyshev(npts: int) -> Tuple[Real]:
         """
         Gives a set of numbers in interval (0, 1)

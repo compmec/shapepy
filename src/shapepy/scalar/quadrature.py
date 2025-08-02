@@ -2,7 +2,7 @@
 Defines the functions used to numerical integration
 """
 
-from functools import cache
+from functools import lru_cache
 from typing import Callable, Iterable, Tuple
 
 import numpy as np
@@ -262,7 +262,7 @@ class IntegratorFactory:
         return DirectIntegrator(map(convert, nodes), map(convert, weights))
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=None)
     def custom_open_formula(
         npts: int, convert: type = To.rational
     ) -> DirectIntegrator:
@@ -297,7 +297,7 @@ class IntegratorFactory:
         return DirectIntegrator(map(convert, nodes), map(convert, weights))
 
     @staticmethod
-    @cache
+    @lru_cache(maxsize=None)
     def clenshaw_curtis(
         npts: int, convert: type = To.finite
     ) -> DirectIntegrator:
@@ -393,11 +393,11 @@ class AdaptativeIntegrator:
     ) -> Real:
         """Computes the integral of func in [a, b]"""
 
-        @cache
+        @lru_cache(maxsize=None)
         def cfunction(node: Real) -> Real:
             return function(node)
 
-        @cache
+        @lru_cache(maxsize=None)
         def cdirect(left: Real, right: Real) -> Real:
             return self.integrator.integrate(cfunction, (left, right))
 
