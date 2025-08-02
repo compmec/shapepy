@@ -7,18 +7,18 @@ from __future__ import annotations
 
 from copy import copy
 from fractions import Fraction
-from typing import Optional, Tuple
+from typing import Iterable, Optional, Tuple
 
 import numpy as np
-
-from shapepy.geometry.box import Box
-from shapepy.geometry.point import Point2D
-from shapepy.geometry.segment import Segment
 
 from ..scalar.bezier import Bezier, bezier2polynomial
 from ..scalar.calculus import derivate, integrate
 from ..scalar.reals import Real
 from ..tools import Is, To
+from .box import Box
+from .piecewise import PiecewiseCurve, clean_piecewise
+from .point import Point2D
+from .segment import Segment, clean_segment, segment_self_intersect
 
 
 class JordanCurve:
@@ -27,9 +27,9 @@ class JordanCurve:
     It stores a list of 'segments', each segment is a bezier curve
     """
 
-    def __init__(self, segments: Tuple[Segment]):
-        self.__length = None
+    def __init__(self, segments: Iterable[Segment]):
         self.__area = None
+
         self.segments = segments
 
     @classmethod
@@ -82,11 +82,7 @@ class JordanCurve:
         ((0, 0), (4, 0), (0, 3))
 
         """
-        if Is.instance(vertices, str):
-            raise TypeError
-        vertices = list(vertices)
-        for i, vertex in enumerate(vertices):
-            vertices[i] = To.point(vertex)
+        vertices = list(map(To.point, vertices))
         nverts = len(vertices)
         vertices.append(vertices[0])
         beziers = [0] * nverts
@@ -119,8 +115,9 @@ class JordanCurve:
         ((0, 0), (4, 0), (4, 3), (0, 3))
 
         """
-        if Is.instance(all_ctrlpoints, str):
-            raise TypeError
+        all_ctrlpoints = tuple(
+            tuple(map(To.point, pts) for pts in all_ctrlpoints)
+        )
         beziers = [0] * len(all_ctrlpoints)
         for i, ctrlpoints in enumerate(all_ctrlpoints):
             ctrlpoints = list(ctrlpoints)
@@ -183,54 +180,6 @@ class JordanCurve:
             new_segment = segment.__class__(points)
             new_segments.append(new_segment)
         return self.__class__.from_segments(new_segments)
-
-    def clean(self) -> JordanCurve:
-        """Clean the jordan curve
-
-        Removes the uncessary nodes from jordan curve,
-        for example, after calling ``split`` function
-
-        :return: The same curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (1, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
-        >>> jordan.clean()
-        Jordan Curve of degree 1 and vertices
-        ((0, 0), (4, 0), (0, 3))
-
-        """
-        for segment in self.segments:
-            segment.clean()
-        segments = list(self.segments)
-        while True:
-            nsegments = len(segments)
-            for i in range(nsegments):
-                j = (i + 1) % nsegments
-                seg0 = segments[i]
-                seg1 = segments[j]
-                try:
-                    start_point = seg0.ctrlpoints[0]
-                    end_point = seg1.ctrlpoints[-1]
-                    segment = seg0 | seg1
-                    segment.ctrlpoints = (
-                        [start_point]
-                        + list(segment.ctrlpoints[1:-1])
-                        + [end_point]
-                    )
-                    segments[i] = segment
-                    segments.pop(j)
-                    break  # Can unite
-                except ValueError:
-                    pass  # Cannot unite
-            else:  # Cannot unite more segments
-                break
-        self.segments = segments
-        return self
 
     def move(self, point: Point2D) -> JordanCurve:
         """Translate the entire curve by ``point``
@@ -350,9 +299,7 @@ class JordanCurve:
     def __split_segment(self, index: int, nodes: Tuple[float]) -> None:
         nodes = tuple(sorted(nodes))
         segment = self.segments[index]
-        new_segments = segment.split(nodes)
-        for new_segment in new_segments:
-            new_segment.clean()
+        new_segments = tuple(map(clean_segment, segment.split(nodes)))
         points = list(new_segments[0].ctrlpoints)
         points[0] = segment.ctrlpoints[0]
         new_segments[0].ctrlpoints = points
@@ -476,17 +423,12 @@ class JordanCurve:
         Box with vertices (0, 0) and (4, 3)
 
         """
-        box = None
-        for bezier in self.segments:
-            box |= bezier.box()
-        return box
+        return self.piecewise.box()
 
     @property
     def length(self) -> Real:
         """The length of the curve"""
-        if self.__length is None:
-            self.__length = sum(seg.length for seg in self.segments)
-        return self.__length
+        return self.piecewise.length
 
     @property
     def area(self) -> Real:
@@ -496,7 +438,14 @@ class JordanCurve:
         return self.__area
 
     @property
-    def segments(self) -> Tuple[Segment]:
+    def piecewise(self) -> PiecewiseCurve:
+        """
+        Gives the piecewise curve
+        """
+        return self.__piecewise
+
+    @property
+    def segments(self) -> Tuple[Segment, ...]:
         """Segments
 
         When setting, it checks if the points are the same between
@@ -518,7 +467,7 @@ class JordanCurve:
         Planar curve of degree 1 and control points ((0, 0), (4, 0))
 
         """
-        return tuple(self.__segments)
+        return tuple(self.piecewise)
 
     @property
     def vertices(self) -> Tuple[Point2D]:
@@ -550,32 +499,22 @@ class JordanCurve:
         return tuple(vertices)
 
     @segments.setter
-    def segments(self, other: Tuple[Segment]):
-        for segment in other:
-            if not Is.instance(segment, Segment):
-                raise TypeError
-        ncurves = len(other)
-        for i in range(ncurves - 1):
-            end_point = other[i].ctrlpoints[-1]
-            start_point = other[i + 1].ctrlpoints[0]
-            assert start_point == end_point
-            assert id(start_point) == id(end_point)
-        for segment in other:
-            segment.clean()
-        self.__length = None
+    def segments(self, other: Iterable[Segment]):
+        piecewise = PiecewiseCurve(other)
+        if not piecewise_is_closed(piecewise):
+            raise ValueError
+        if piecewise_self_intersect(piecewise):
+            raise ValueError
+        self.__piecewise = clean_piecewise(piecewise)
         self.__area = None
-        segments = []
-        for bezier in other:
-            ctrlpoints = [To.point(point) for point in bezier.ctrlpoints]
-            new_bezier = Segment(ctrlpoints)
-            segments.append(new_bezier)
-        self.__segments = tuple(segments)
 
     def __and__(
         self, other: JordanCurve
     ) -> Tuple[Tuple[int, int, float, float]]:
         """Computes the intersection of two jordan curves"""
-        return self.intersection(other, equal_beziers=False, end_points=False)
+        if not Is.jordan(other):
+            raise TypeError
+        return self.piecewise & other.piecewise
 
     def __str__(self) -> str:
         max_degree = max(curve.degree for curve in self.segments)
@@ -590,12 +529,13 @@ class JordanCurve:
         return msg
 
     def __eq__(self, other: JordanCurve) -> bool:
-        assert Is.instance(other, JordanCurve)
+        if not Is.jordan(other):
+            raise ValueError
         for point in other.points(1):
             if point not in self:
                 return False
-        selcopy = self.__copy__().clean()
-        othcopy = other.__copy__().clean()
+        selcopy = clean_jordan(self.__copy__())
+        othcopy = clean_jordan(other.__copy__())
         if len(selcopy.segments) != len(othcopy.segments):
             return False
         segment1 = othcopy.segments[0]
@@ -616,12 +556,7 @@ class JordanCurve:
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
-        if point not in self.box():
-            return False
-        for bezier in self.segments:
-            if point in bezier:
-                return True
-        return False
+        return point in self.piecewise
 
     def __float__(self) -> float:
         """Returns the lenght of the curve
@@ -647,116 +582,6 @@ class JordanCurve:
         """
         return float(self.length if self.area > 0 else -self.length)
 
-    def __abs__(self) -> JordanCurve:
-        """Returns the same curve, but in positive direction"""
-        curve = self.__copy__()
-        return curve if float(self) > 0 else curve.invert()
-
-    def __intersection(
-        self, other: JordanCurve
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        """Private method of ``intersection``
-
-        Computes the intersection between ``self`` and ``other``
-        returning a list of [(a0, b0, u0, v0), ...]
-        such self.segments[a0](u0) == other.segments[b0](v0)
-
-        If (ui, vi) == (None, None), it means
-        self.segments[a0] == other.segments[b0]
-
-        """
-        intersections = set()
-        for ai, sbezier in enumerate(self.segments):
-            for bj, obezier in enumerate(other.segments):
-                inters = sbezier & obezier
-                if inters is None:
-                    continue
-                if len(inters) == 0:  # Equal curves
-                    intersections.add((ai, bj, None, None))
-                for ui, vj in inters:
-                    intersections.add((ai, bj, ui, vj))
-        return list(intersections)
-
-    def intersection(
-        self,
-        other: JordanCurve,
-        equal_beziers: bool = True,
-        end_points: bool = True,
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        r"""Computes the intersection between two jordan curves
-
-        Finds the values of (:math:`a^{\star}`, :math:`b^{\star}`,
-        :math:`u^{\star}`, :math:`v^{\star}`) such
-
-        .. math::
-            S_{a^{\star}}(u^{\star}) == O_{b^{\star}}(v^{\star})
-
-        It computes the intersection between each pair of segments
-        from ``self`` and ``other`` and returns the matrix of coefficients
-
-        .. math::
-
-            \begin{bmatrix}
-            a_0 & b_0 & u_0 & v_0 \\
-            a_1 & b_1 & u_1 & v_1 \\
-            \vdots & \vdots & \vdots & \vdots \\
-            a_{n} & b_{n} & u_{n} & v_{n}
-            \end{bmatrix}
-
-        If two bezier curves are equal, then ``u_i = v_i = None``
-
-        * ``0 <= a_i < len(self.segments)``
-        * ``0 <= b_i < len(other.segments)``
-        * ``0 <= u_i <= 1`` or ``None``
-        * ``0 <= v_i <= 1`` or ``None``
-
-        Parameters
-        ----------
-        other : JordanCurve
-            The jordan curve which intersects ``self``
-        equal_beziers : bool, default = True
-            Flag to return (or not) when two segments are equal
-
-            If the flag ``equal_beziers`` are inactive,
-            then will remove when ``(ui, vi) == (None, None)``.
-
-        end_points : bool, default = True
-            Flag to return (or not) when jordans intersect at end points
-
-            If the flag ``end_points`` are inactive,
-            then will remove when ``(ui, vi)`` are
-            ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
-
-        :return: The matrix of coefficients ``[(ai, bi, ui, vi)]``
-                 or an empty tuple in case of non-intersection
-        :rtype: tuple[(int, int, float, float)]
-
-
-        Example use
-        -----------
-        >>> from shapepy import JordanCurve
-        >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
-        >>> jordan_a = JordanCurve.from_vertices(vertices_a)
-        >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]
-        >>> jordan_b = JordanCurve.from_vertices(vertices_b)
-        >>> jordan_a.intersection(jordan_b)
-        ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
-
-        """
-        assert Is.instance(other, JordanCurve)
-        intersections = self.__intersection(other)
-        # Filter the values
-        if not equal_beziers:
-            for ai, bi, ui, vi in tuple(intersections):
-                if ui is None:
-                    intersections.remove((ai, bi, ui, vi))
-        if not end_points:
-            for ai, bi, ui, vi in tuple(intersections):
-                if ui is None or (0 < ui < 1) or (0 < vi < 1):
-                    continue
-                intersections.remove((ai, bi, ui, vi))
-        return tuple(sorted(intersections))
-
 
 def compute_area(jordan: JordanCurve) -> Real:
     """
@@ -772,3 +597,99 @@ def compute_area(jordan: JordanCurve) -> Real:
         poly = integrate(xfunc * derivate(yfunc) - yfunc * derivate(xfunc))
         total += poly(1) - poly(0)
     return total / 2
+
+
+def piecewise_is_closed(piecewise: PiecewiseCurve) -> bool:
+    """
+    Tells if the piecewise curve is a closed curve
+    """
+    first_point = piecewise(piecewise.knots[0])
+    last_point = piecewise(piecewise.knots[-1])
+    return piecewise_is_continuous(piecewise) and (first_point == last_point)
+
+
+def piecewise_is_continuous(piecewise: PiecewiseCurve) -> bool:
+    """
+    Tells if the segments are connected forming a continuous curve
+    """
+    segments = tuple(piecewise)
+    return all(
+        segments[i](1) == segments[i + 1](0) for i in range(len(segments) - 1)
+    )
+
+
+def piecewise_self_intersect(piecewise: PiecewiseCurve) -> bool:
+    """
+    Tells if the piecewise intersects itself
+
+    Meaning, if there's at least two different (ta) and (tb)
+    such piecewise(ta) == piecewise(tb)
+    """
+    return any(map(segment_self_intersect, piecewise))
+
+
+def clean_jordan(jordan: JordanCurve) -> JordanCurve:
+    """Cleans the jordan curve
+
+    Removes the uncessary nodes from jordan curve,
+    for example, after calling ``split`` function
+
+    :return: The same curve
+    :rtype: JordanCurve
+
+    Example use
+    -----------
+
+    >>> from shapepy import JordanCurve
+    >>> vertices = [(0, 0), (1, 0), (4, 0), (0, 3)]
+    >>> jordan = JordanCurve.from_vertices(vertices)
+    >>> jordan.clean()
+    Jordan Curve of degree 1 and vertices
+    ((0, 0), (4, 0), (0, 3))
+
+    """
+    piecewise = clean_piecewise(jordan.piecewise)
+    segments = list(piecewise)
+    while True:
+        nsegments = len(segments)
+        for i in range(nsegments):
+            j = (i + 1) % nsegments
+            seg0 = segments[i]
+            seg1 = segments[j]
+            try:
+                start_point = seg0.ctrlpoints[0]
+                end_point = seg1.ctrlpoints[-1]
+                segment = seg0 | seg1
+                segment.ctrlpoints = (
+                    [start_point]
+                    + list(segment.ctrlpoints[1:-1])
+                    + [end_point]
+                )
+                segments[i] = segment
+                segments.pop(j)
+                break  # Can unite
+            except ValueError:
+                pass  # Cannot unite
+        else:  # Cannot unite more segments
+            break
+    piecewise = PiecewiseCurve(segments)
+    return JordanCurve(piecewise)
+
+
+def is_jordan(obj: object) -> bool:
+    """
+    Checks if the parameter is a Jordan Curve
+
+    Parameters
+    ----------
+    obj : The object to be tested
+
+    Returns
+    -------
+    bool
+        True if the obj is a Jordan Curve, False otherwise
+    """
+    return Is.instance(obj, JordanCurve)
+
+
+Is.jordan = is_jordan

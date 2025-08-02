@@ -5,7 +5,7 @@ from shapepy.scalar.bezier import (
     Bezier,
     bezier2polynomial,
     bezier_caract_matrix,
-    clean,
+    clean_bezier,
     inverse_caract_matrix,
     polynomial2bezier,
     split,
@@ -308,7 +308,7 @@ def test_conversions():
 def test_clean():
     ctrlpoints = [1, 2, 3, 4]
     bezier = Bezier(ctrlpoints)
-    assert clean(bezier) == Bezier([1, 4])
+    assert clean_bezier(bezier) == Bezier([1, 4])
 
 
 @pytest.mark.order(4)

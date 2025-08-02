@@ -18,6 +18,7 @@ from shapepy.scalar.reals import To
         "tests/geometry/test_point.py::test_all",
         "tests/geometry/test_box.py::test_all",
         "tests/geometry/test_segment.py::test_all",
+        "tests/geometry/test_piecewise.py::test_all",
         "tests/geometry/test_jordan_polygon.py::test_all",
     ],
     scope="session",
@@ -52,7 +53,7 @@ class TestQuadraticJordan:
         ]
     )
     def test_error_creation(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             JordanCurve("asd")
 
     @pytest.mark.order(16)

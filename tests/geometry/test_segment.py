@@ -6,7 +6,7 @@ from fractions import Fraction
 
 import pytest
 
-from shapepy.geometry.segment import Segment
+from shapepy.geometry.segment import Segment, clean_segment
 
 
 @pytest.mark.order(13)
@@ -71,18 +71,15 @@ class TestOperations:
     @pytest.mark.dependency(depends=["TestOperations::test_begin"])
     def test_clean_segment(self):
         points = [(0, 0), (1, 0)]
-        curve = Segment(points)
-        curve.clean()
+        curve = clean_segment(Segment(points))
         assert curve.degree == 1
 
         points = [(2, 3), (-1, 4)]
-        curve = Segment(points)
-        curve.clean()
+        curve = clean_segment(Segment(points))
         assert curve.degree == 1
 
         points = [(2, 3), (-1, 4)]
-        curve = Segment(points)
-        curve.clean(tolerance=None)
+        curve = clean_segment(Segment(points))
         assert curve.degree == 1
 
     @pytest.mark.order(13)
@@ -97,19 +94,19 @@ class TestOperations:
         points = [(0, 0), (1, 0), (2, 0)]
         curve = Segment(points)
         assert curve.degree == 2
-        curve.clean()
+        curve = clean_segment(curve)
         assert curve.degree == 1
 
         points = [(0, 2), (1, 4), (2, 6)]
         curve = Segment(points)
         assert curve.degree == 2
-        curve.clean()
+        curve = clean_segment(curve)
         assert curve.degree == 1
 
         points = [(2, 3), (-1, 4), (-4, 5)]
         curve = Segment(points)
         assert curve.degree == 2
-        curve.clean(tolerance=None)
+        curve = clean_segment(curve)
         assert curve.degree == 1
 
     @pytest.mark.order(13)

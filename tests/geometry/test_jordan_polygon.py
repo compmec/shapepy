@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from shapepy.geometry.integral import IntegrateJordan
-from shapepy.geometry.jordancurve import JordanCurve
+from shapepy.geometry.jordancurve import JordanCurve, clean_jordan
 
 
 @pytest.mark.order(15)
@@ -17,6 +17,7 @@ from shapepy.geometry.jordancurve import JordanCurve
         "tests/geometry/test_point.py::test_all",
         "tests/geometry/test_box.py::test_all",
         "tests/geometry/test_segment.py::test_all",
+        "tests/geometry/test_piecewise.py::test_all",
     ],
     scope="session",
 )
@@ -49,7 +50,7 @@ class TestJordanPolygon:
         ]
     )
     def test_error_creation(self):
-        with pytest.raises(TypeError):
+        with pytest.raises(ValueError):
             JordanCurve.from_vertices("asd")
 
     @pytest.mark.order(15)
@@ -519,20 +520,20 @@ class TestOthers:
         assert id(jordana) != id(jordanb)
         inters = jordana & jordanb
         assert not bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=False, end_points=False
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=False, end_points=False
         )
         assert not bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=False, end_points=True
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=False, end_points=True
         )
         assert bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=True, end_points=False
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=True, end_points=False
         )
         assert bool(inters)
-        inters = jordana.intersection(
-            jordanb, equal_beziers=True, end_points=True
+        inters = jordana.piecewise.intersection(
+            jordanb.piecewise, equal_beziers=True, end_points=True
         )
         assert bool(inters)
 
@@ -541,28 +542,28 @@ class TestOthers:
     def test_clean(self):
         verticesa = [(-1, 0), (0, 0), (1, 0), (0, 1)]
         jordana = JordanCurve.from_vertices(verticesa)
-        jordana.clean()
+        jordana = clean_jordan(jordana)
         verticesb = [(-1, 0), (1, 0), (0, 1)]
         jordanb = JordanCurve.from_vertices(verticesb)
         assert jordana == jordanb
 
         verticesa = [(-1.0, 0.0), (0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordana = JordanCurve.from_vertices(verticesa)
-        jordana.clean()
+        jordana = clean_jordan(jordana)
         verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordanb = JordanCurve.from_vertices(verticesb)
         assert jordana == jordanb
 
         verticesa = [(0, 0), (1, 0), (0, 1), (-1, 0)]
         jordana = JordanCurve.from_vertices(verticesa)
-        jordana.clean()
+        jordana = clean_jordan(jordana)
         verticesb = [(-1, 0), (1, 0), (0, 1)]
         jordanb = JordanCurve.from_vertices(verticesb)
         assert jordana == jordanb
 
         verticesa = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (-1.0, 0.0)]
         jordana = JordanCurve.from_vertices(verticesa)
-        jordana.clean()
+        jordana = clean_jordan(jordana)
         verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordanb = JordanCurve.from_vertices(verticesb)
         assert jordana == jordanb

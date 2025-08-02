@@ -22,7 +22,7 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
-from ..scalar.bezier import Bezier, clean, split
+from ..scalar.bezier import Bezier, clean_bezier, split
 from ..scalar.calculus import derivate
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
@@ -44,7 +44,7 @@ class Segment:
 
     def __or__(self, other: Segment) -> Segment:
         """Computes the union of two bezier curves"""
-        assert Is.instance(other, Segment)
+        assert Is.segment(other)
         assert self.degree == other.degree
         assert self.ctrlpoints[-1] == other.ctrlpoints[0]
         # Last point of first derivative
@@ -123,7 +123,8 @@ class Segment:
         return msg
 
     def __eq__(self, other: Segment) -> bool:
-        assert Is.instance(other, Segment)
+        if not Is.segment(other):
+            raise ValueError
         if self.npts != other.npts:
             return False
         for pta, ptb in zip(self.ctrlpoints, other.ctrlpoints):
@@ -206,18 +207,6 @@ class Segment:
         ymin = min(point[1] for point in self.ctrlpoints)
         ymax = max(point[1] for point in self.ctrlpoints)
         return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
-
-    def clean(self, tolerance: Optional[float] = 1e-9) -> Segment:
-        """Reduces at maximum the degree of the bezier curve.
-
-        If ``tolerance = None``, then it don't verify the error
-        and stops with a bezier curve of degree ``1`` (linear segment)
-
-        """
-        newplanar = clean(Bezier(self.ctrlpoints))
-        if newplanar.degree != self.degree:
-            self.ctrlpoints = tuple(newplanar)
-        return self
 
     def __copy__(self) -> Segment:
         return self.__deepcopy__(None)
@@ -387,7 +376,7 @@ class Projection:
 
         """
         point = To.point(point)
-        assert Is.instance(curve, Segment)
+        assert Is.segment(curve)
         nsample = 2 + curve.degree
         usample = NodeSampleFactory.closed_linspace(nsample)
         usample = Projection.newton_iteration(point, curve, usample)
@@ -446,3 +435,35 @@ def compute_length(segment: Segment) -> Real:
         return abs(dsegment(node))
 
     return adaptative.integrate(function, (0, 1))
+
+
+def segment_self_intersect(segment: Segment) -> bool:
+    """Tells if the segment intersects itself"""
+    return len(segment.ctrlpoints) > 3
+
+
+def clean_segment(segment: Segment) -> Segment:
+    """Reduces at maximum the degree of the bezier curve"""
+    newplanar = clean_bezier(Bezier(segment.ctrlpoints))
+    if newplanar.degree == segment.degree:
+        return segment
+    return Segment(tuple(newplanar))
+
+
+def is_segment(obj: object) -> bool:
+    """
+    Checks if the parameter is a Segment
+
+    Parameters
+    ----------
+    obj : The object to be tested
+
+    Returns
+    -------
+    bool
+        True if the obj is a Segment, False otherwise
+    """
+    return Is.instance(obj, Segment)
+
+
+Is.segment = is_segment
