@@ -103,7 +103,7 @@ You can also create your custom ``SimpleShape`` by using a passing a ``JordanCur
    
    from shapepy import JordanCurve, SimpleShape
    vertices = [(0, 0), (4, 0), (0, 3)]
-   jordan = JordanCurve.from_vertices(vertices)
+   jordan = FactoryJordan.polygon(vertices)
    simple = SimpleShape(jordan)
 
 It's possible to operate between two simple shapes:

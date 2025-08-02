@@ -32,133 +32,6 @@ class JordanCurve:
 
         self.segments = segments
 
-    @classmethod
-    def from_segments(cls, beziers: Tuple[Segment]) -> JordanCurve:
-        """Initialize a JordanCurve from a list of beziers,
-
-        :param beziers: The list connected planar curves
-        :type beziers: Tuple[Segment]
-        :return: The created jordan curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from shapepy import Segment, JordanCurve
-        >>> segment0 = Segment([(0, 0), (4, 0)])
-        >>> segment1 = Segment([(4, 0), (4, 3), (0, 3)])
-        >>> segment2 = Segment([(0, 3), (0, 0)])
-        >>> JordanCurve.from_segments([segment0, segment1, segment2])
-        Jordan Curve of degree 2 and vertices
-        ((0, 0), (4, 0), (4, 3), (0, 3))
-
-        """
-        nbezs = len(beziers)
-        for i, bezi in enumerate(beziers):
-            j = (i + 1) % nbezs
-            bezj = beziers[j]
-            prev_end_point = bezi.ctrlpoints[-1]
-            next_start_point = bezj.ctrlpoints[0]
-            assert prev_end_point == next_start_point
-            bezi.ctrlpoints = list(bezi.ctrlpoints[:-1]) + [next_start_point]
-        return cls(beziers)
-
-    @classmethod
-    def from_vertices(cls, vertices: Tuple[Point2D]) -> JordanCurve:
-        """Initialize a polygonal JordanCurve from a list of vertices,
-
-        :param vertices: The list vertices
-        :type vertices: Tuple[Point2D]
-        :return: The created jordan curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> all_ctrlpoints = [(0, 0), (4, 0), (0, 3)]
-        >>> JordanCurve.from_vertices(all_ctrlpoints)
-        Jordan Curve of degree 1 and vertices
-        ((0, 0), (4, 0), (0, 3))
-
-        """
-        vertices = list(map(To.point, vertices))
-        nverts = len(vertices)
-        vertices.append(vertices[0])
-        beziers = [0] * nverts
-        for i in range(nverts):
-            ctrlpoints = vertices[i : i + 2]
-            new_bezier = Segment(ctrlpoints)
-            beziers[i] = new_bezier
-        return cls.from_segments(beziers)
-
-    @classmethod
-    def from_ctrlpoints(
-        cls, all_ctrlpoints: Tuple[Tuple[Point2D]]
-    ) -> JordanCurve:
-        """Initialize a JordanCurve from a list of control points,
-
-        :param all_ctrlpoints: The list of bezier control points
-        :type all_ctrlpoints: Tuple[Tuple[Point2D]]
-        :return: The created jordan curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> all_ctrlpoints = [[(0, 0), (4, 0)],
-                              [(4, 0), (4, 3), (0, 3)],
-                              [(0, 3), (0, 0)]]
-        >>> JordanCurve.from_ctrlpoints(all_ctrlpoints)
-        Jordan Curve of degree 2 and vertices
-        ((0, 0), (4, 0), (4, 3), (0, 3))
-
-        """
-        all_ctrlpoints = tuple(
-            tuple(map(To.point, pts) for pts in all_ctrlpoints)
-        )
-        beziers = [0] * len(all_ctrlpoints)
-        for i, ctrlpoints in enumerate(all_ctrlpoints):
-            ctrlpoints = list(ctrlpoints)
-            for j, ctrlpoint in enumerate(ctrlpoints):
-                ctrlpoints[j] = To.point(ctrlpoint)
-            new_bezier = Segment(ctrlpoints)
-            beziers[i] = new_bezier
-        return cls.from_segments(beziers)
-
-    @classmethod
-    def from_full_curve(cls, full_curve) -> JordanCurve:
-        """Initialize a JordanCurve from a full curve,
-
-        :param full_curve: The full curve to split.
-                Ideally ``pynurbs.Curve`` instance
-        :type full_curve: Point2D
-        :return: The created jordan curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> import pynurbs
-        >>> from shapepy import Point2D, JordanCurve
-        >>> knotvector = (0, 0, 0, 0.5, 1, 1, 1)
-        >>> ctrlpoints = [(0, 0), (4, 0), (0, 3), (0, 0)]
-        >>> ctrlpoints = [Point2D(point) for point in ctrlpoints]
-        >>> curve = pynurbs.Curve(knotvector, ctrlpoints)
-        >>> jordan = JordanCurve.from_full_curve(curve)
-        >>> print(jordan)
-        Jordan Curve of degree 2 and vertices
-        ((0.0, 0.0), (4.0, 0.0), (2.0, 1.5), (0.0, 3.0))
-
-        """
-        assert full_curve.ctrlpoints[0] == full_curve.ctrlpoints[-1]
-        beziers = full_curve.split()
-        for bezier in beziers:
-            bezier.clean()
-        all_ctrlpoints = [bezier.ctrlpoints for bezier in beziers]
-        return cls.from_ctrlpoints(all_ctrlpoints)
-
     def __copy__(self) -> JordanCurve:
         return self.__deepcopy__(None)
 
@@ -179,7 +52,7 @@ class JordanCurve:
             points = all_points[i]
             new_segment = segment.__class__(points)
             new_segments.append(new_segment)
-        return self.__class__.from_segments(new_segments)
+        return self.__class__(new_segments)
 
     def move(self, point: Point2D) -> JordanCurve:
         """Translate the entire curve by ``point``
@@ -194,7 +67,7 @@ class JordanCurve:
 
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> jordan.move((2, 3))
         Jordan Curve of degree 1 and vertices
         ((2, 3), (6, 3), (2, 6))
@@ -220,7 +93,7 @@ class JordanCurve:
 
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> jordan.scale(2, 3)
         Jordan Curve of degree 1 and vertices
         ((0, 0), (8, 0), (0, 9))
@@ -251,7 +124,7 @@ class JordanCurve:
         >>> import math
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> jordan.rotate(math.pi)
         Jordan Curve of degree 1 and vertices
         ((-0.0, 0.0), (-4.0, 4.899e-16), (-3.674e-16, -3.0))
@@ -279,7 +152,7 @@ class JordanCurve:
         >>> from matplotlib import pyplot as plt
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> jordan.invert([0, 2], [1/2, 2/3])
         Jordan Curve of degree 1 and vertices
         ((0, 0), (0, 3), (4, 0))
@@ -337,7 +210,7 @@ class JordanCurve:
         >>> from matplotlib import pyplot as plt
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> jordan.split([0, 2], [1/2, 2/3])
         >>> print(jordan)
         Jordan Curve of degree 1 and vertices
@@ -387,7 +260,7 @@ class JordanCurve:
         >>> from matplotlib import pyplot as plt
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> points = jordan.points(3)
         >>> xvals = [point[0] for point in points]
         >>> yvals = [point[1] for point in points]
@@ -418,7 +291,7 @@ class JordanCurve:
 
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> jordan.box()
         Box with vertices (0, 0) and (4, 3)
 
@@ -460,7 +333,7 @@ class JordanCurve:
 
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> print(jordan.segments)
         (Segment (deg 1), Segment (deg 1), Segment (deg 1))
         >>> print(jordan.segments[0])
@@ -484,7 +357,7 @@ class JordanCurve:
 
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> print(jordan.vertices)
         ((0, 0), (4, 0), (0, 3))
 
@@ -571,11 +444,11 @@ class JordanCurve:
 
         >>> from shapepy import JordanCurve
         >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> print(float(jordan))
         12.0
         >>> vertices = [(0, 0), (0, 3), (4, 0)]
-        >>> jordan = JordanCurve.from_vertices(vertices)
+        >>> jordan = FactoryJordan.polygon(vertices)
         >>> print(float(jordan))
         -12.0
 
@@ -642,7 +515,7 @@ def clean_jordan(jordan: JordanCurve) -> JordanCurve:
 
     >>> from shapepy import JordanCurve
     >>> vertices = [(0, 0), (1, 0), (4, 0), (0, 3)]
-    >>> jordan = JordanCurve.from_vertices(vertices)
+    >>> jordan = FactoryJordan.polygon(vertices)
     >>> jordan.clean()
     Jordan Curve of degree 1 and vertices
     ((0, 0), (4, 0), (0, 3))

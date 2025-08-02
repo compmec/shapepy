@@ -15,7 +15,7 @@ from shapepy.bool2d.shape import (
     EmptyShape,
     WholeShape,
 )
-from shapepy.geometry.jordancurve import JordanCurve
+from shapepy.geometry.factory import FactoryJordan
 
 
 @pytest.mark.order(23)
@@ -104,12 +104,12 @@ class TestObjectsInEmptyWhole:
         whole = WholeShape()
 
         vertices = [(0, 0), (1, 0), (0, 1)]
-        jordan = JordanCurve.from_vertices(vertices)
+        jordan = FactoryJordan.polygon(vertices)
         assert jordan not in empty
         assert jordan in whole
 
         vertices = [(0, 0), (0, 1), (1, 0)]
-        jordan = JordanCurve.from_vertices(vertices)
+        jordan = FactoryJordan.polygon(vertices)
         assert jordan not in empty
         assert jordan in whole
 
@@ -202,7 +202,7 @@ class TestObjectsInJordan:
     def test_boundary_point(self):
         # Test if the points are in boundary
         vertices = [(0, 0), (1, 0), (0, 1)]
-        triangle = JordanCurve.from_vertices(vertices)
+        triangle = FactoryJordan.polygon(vertices)
         assert (0, 0) in triangle
         assert (1, 0) in triangle
         assert (0, 1) in triangle
@@ -211,7 +211,7 @@ class TestObjectsInJordan:
         assert (0, 0.5) in triangle
 
         vertices = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        square = JordanCurve.from_vertices(vertices)
+        square = FactoryJordan.polygon(vertices)
         assert (0, 0) in square
         assert (1, 0) in square
         assert (1, 1) in square
@@ -231,11 +231,11 @@ class TestObjectsInJordan:
     def test_interior_point(self):
         # Test if the interior points are not in boundary
         vertices = [(0, 0), (3, 0), (0, 3)]
-        triangle = JordanCurve.from_vertices(vertices)
+        triangle = FactoryJordan.polygon(vertices)
         assert (1, 1) not in triangle
 
         vertices = [(0, 0), (2, 0), (2, 2), (0, 2)]
-        square = JordanCurve.from_vertices(vertices)
+        square = FactoryJordan.polygon(vertices)
         assert (1, 1) not in square
 
     @pytest.mark.order(23)
@@ -247,11 +247,11 @@ class TestObjectsInJordan:
     )
     def test_exterior_point(self):
         # Test if the exterior points are not in boundary
-        triangle = JordanCurve.from_vertices([(0, 0), (1, 0), (0, 1)])
+        triangle = FactoryJordan.polygon([(0, 0), (1, 0), (0, 1)])
         assert (-1, -1) not in triangle
         assert (1, 1) not in triangle
 
-        square = JordanCurve.from_vertices([(0, 0), (1, 0), (1, 1), (0, 1)])
+        square = FactoryJordan.polygon([(0, 0), (1, 0), (1, 1), (0, 1)])
         assert (-1, -1) not in square
         assert (2, 2) not in square
 

@@ -171,7 +171,7 @@ class FollowPath:
             new_bezier = jordans[index_jordan].segments[index_segment]
             new_bezier = copy(new_bezier)
             beziers.append(new_bezier)
-        new_jordan = JordanCurve.from_segments(beziers)
+        new_jordan = JordanCurve(beziers)
         return new_jordan
 
     @staticmethod

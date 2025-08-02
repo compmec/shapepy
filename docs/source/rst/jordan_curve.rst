@@ -55,10 +55,9 @@ Creating a jordan curve
 
 There are 4 ways to create a ``JordanCurve`` instance:
 
-* From vertices: ``JordanCurve.from_vertices``
-* From segments: ``JordanCurve.from_segments``
-* From bezier control points: ``JordanCurve.from_ctrlpoints``
-* From full curve: ``JordanCurve.from_full_curve``
+* From segments: ``JordanCurve`` directly
+* From vertices: ``FactoryJordan.polygon``
+* From spline curve: ``FactoryJordan.spline_curve``
 
 From vertices
 -----------------------
@@ -73,7 +72,7 @@ This method creates polygonal shapes only
    # Create a list of vertices
    vertices = [(1, 2), (4, 0), (-1, -1), (-3, 1)]
    # Creates a quadrilateral jordan
-   jordan = JordanCurve.from_vertices(vertices)
+   jordan = FactoryJordan.polygon(vertices)
 
 .. image:: ../img/jordan_curve/from_vertices.svg
    :width: 50 %
@@ -89,12 +88,12 @@ This method can create shape of any degree
 
 .. code-block:: python
    
-   from shapepy import PlanarBezier, JordanCurve
-   segment0 = PlanarBezier([(0, 0), (4, 0)])
-   segment1 = PlanarBezier([(4, 0), (4, 3), (0, 3)])
-   segment2 = PlanarBezier([(0, 3), (0, 0)])
+   from shapepy import Segment, JordanCurve
+   segment0 = Segment([(0, 0), (4, 0)])
+   segment1 = Segment([(4, 0), (4, 3), (0, 3)])
+   segment2 = Segment([(0, 3), (0, 0)])
    segments = [segment0, segment1, segment2]
-   jordan = JordanCurve.from_segments(segments)
+   jordan = JordanCurve(segments)
 
 .. image:: ../img/jordan_curve/from_segments.svg
    :width: 50 %
@@ -102,28 +101,8 @@ This method can create shape of any degree
    :align: center
 
 
-From control points
--------------------
 
-This is similar to creating ``from_segments``, but we pass directly the control points
-
-
-.. code-block:: python
-   
-   from shapepy import JordanCurve
-   all_ctrlpoints = [[(0, 0), (4, 0)],
-                     [(4, 0), (4, 3), (0, 3)],
-                     [(0, 3), (0, 0)]]
-   jordan = JordanCurve.from_ctrlpoints(all_ctrlpoints)
-
-.. image:: ../img/jordan_curve/from_segments.svg
-   :width: 50 %
-   :alt: Example of jordan curve created from ctrlpoints
-   :align: center
-
-
-
-From full curve
+From spline
 ---------------
 
 For this case, we will use the package ``pynurbs``
@@ -138,7 +117,7 @@ For this case, we will use the package ``pynurbs``
                  (0, 3), (0, 3/2), (0, 0)]
    ctrlpoints = [Point2D(point) for point in ctrlpoints]
    curve = pynurbs.Curve(knotvector, ctrlpoints)
-   jordan = JordanCurve.from_full_curve(curve)
+   jordan = FactoryJordan.spline_curve(curve)
 
 .. image:: ../img/jordan_curve/from_segments.svg
    :width: 50 %
