@@ -8,6 +8,11 @@ on:
     branches:
       - main
   pull_request:
+    paths:
+      - src/**
+      - tests/**
+    branches: [ main ]
+    types: [ready_for_review]
 
 jobs:
   lint:
@@ -26,7 +31,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
 
-      - name: Run coverage
+      - name: Run format
         run: tox -e format
 
     

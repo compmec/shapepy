@@ -9,11 +9,12 @@ on:
       - src/**
       - tests/**
     branches: [ main ]
+    types: [opened, synchronize, reopened]
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  format:
     # The type of runner that the job will run on
     runs-on: ubuntu-latest
 
@@ -31,5 +32,22 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
 
+      - name: Run format
+        run: tox -e format
+  
+  test:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Run format
+        run: tox -e format
+
+  coverage:
+    # The type of runner that the job will run on
+    runs-on: ubuntu-latest
+
+    steps:
       - name: Run coverage
         run: tox -e coverage
+

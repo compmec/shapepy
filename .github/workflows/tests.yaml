@@ -10,6 +10,9 @@ on:
       - tests/**
     branches: [ main ]
   pull_request:
+    paths:
+      - src/**
+      - tests/**
     branches: [ main ]
     types: [ready_for_review]
   workflow_dispatch:
