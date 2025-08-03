@@ -1,0 +1,57 @@
+name: Quick Check for Pull Request
+
+on:
+  pull_request:
+    paths:
+      - src/**
+      - tests/**
+      - .github/**
+    branches: [ main ]
+    types: [opened, synchronize, reopened]
+
+jobs:
+  format:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
+
+      - name: Install virtual enviroment
+        run: tox -e quick-format --recreate --notest
+
+      - name: Run quick format
+        run: tox -e quick-format
+
+  test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install tox dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
+
+      - name: Install virtual enviroment
+        run: tox -e quick-test --notest
+
+      - name: Run test
+        run: tox -e quick-test
