@@ -60,6 +60,61 @@ class IAnalytic(ABC):
     def __matmul__(self, other: Union[Real, IAnalytic]) -> IAnalytic:
         raise NotImplementedError
 
+    @abstractmethod
+    def shift(self, amount: Real) -> IAnalytic:
+        """
+        Transforms the analytic p(t) into p(t-d) by
+        translating the analytic by 'd' to the right.
+
+        Example
+        -------
+        >>> old_poly = Polynomial([0, 0, 0, 1])
+        >>> print(old_poly)
+        t^3
+        >>> new_poly = shift(poly, 1)  # transform to (t-1)^3
+        >>> print(new_poly)
+        - 1 + 3 * t - 3 * t^2 + t^3
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def scale(self, amount: Real) -> IAnalytic:
+        """
+        Transforms the analytic p(t) into p(A*t) by
+        scaling the argument of the analytic by 'A'.
+
+        Example
+        -------
+        >>> old_poly = Polynomial([0, 2, 0, 1])
+        >>> print(old_poly)
+        2 * t + t^3
+        >>> new_poly = scale(poly, 2)
+        >>> print(new_poly)
+        4 * t + 8 * t^3
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def clean(self) -> IAnalytic:
+        """
+        Cleans the curve, removing the unnecessary coefficients
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def integrate(self, times: int = 1) -> IAnalytic:
+        """
+        Integrates the analytic function
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def derivate(self, times: int = 1) -> IAnalytic:
+        """
+        Derivates the analytic function
+        """
+        raise NotImplementedError
+
 
 class BaseAnalytic(IAnalytic):
     """

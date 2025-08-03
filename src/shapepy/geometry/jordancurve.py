@@ -11,8 +11,7 @@ from typing import Iterable, Optional, Tuple
 
 import numpy as np
 
-from ..analytic.bezier import bezier2polynomial
-from ..analytic.calculus import derivate, integrate
+from ..analytic.base import IAnalytic
 from ..scalar.reals import Real
 from ..tools import Is, To
 from .box import Box
@@ -465,14 +464,11 @@ def compute_area(jordan: JordanCurve) -> Real:
 
     total = 0
     for segment in jordan.segments:
-        xfunc = bezier2polynomial(
-            To.bezier(pt[0] for pt in segment.ctrlpoints)
-        )
-        yfunc = bezier2polynomial(
-            To.bezier(pt[1] for pt in segment.ctrlpoints)
-        )
-        poly = integrate(xfunc * derivate(yfunc) - yfunc * derivate(xfunc))
-        total += poly(1) - poly(0)
+        xfunc: IAnalytic = To.bezier(pt[0] for pt in segment.ctrlpoints)
+        yfunc: IAnalytic = To.bezier(pt[1] for pt in segment.ctrlpoints)
+        poly = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
+        ipoly = poly.integrate()
+        total += ipoly(1) - ipoly(0)
     return total / 2
 
 

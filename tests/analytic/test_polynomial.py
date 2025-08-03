@@ -1,12 +1,7 @@
 import numpy as np
 import pytest
 
-from shapepy.analytic.polynomial import (
-    Polynomial,
-    clean_polynomial,
-    scale,
-    shift,
-)
+from shapepy.analytic.polynomial import Polynomial
 
 
 @pytest.mark.order(3)
@@ -267,7 +262,7 @@ def test_shift():
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         polya = Polynomial(coefsa)
-        polyb = shift(polya, 1)
+        polyb = polya.shift(1)
         valuesa = polya(tsample)
         valuese = polyb(1 + tsample)
 
@@ -298,7 +293,7 @@ def test_scale():
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         polya = Polynomial(coefsa)
-        polyb = scale(polya, 2)
+        polyb = polya.scale(2)
         valuesa = polya(2 * tsample)
         valuesb = polyb(tsample)
 
@@ -332,7 +327,7 @@ def test_numpy_array():
     assert tuple(poly[1]) == (0, 0, 0)
     assert tuple(poly[2]) == (0, 0, 0)
     assert tuple(poly[3]) == (0, 0, 0)
-    assert clean_polynomial(poly).degree == 0
+    assert poly.clean().degree == 0
     str(poly)
     repr(poly)
 

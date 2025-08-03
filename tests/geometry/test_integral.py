@@ -3,7 +3,6 @@ import math
 import numpy as np
 import pytest
 
-from shapepy.geometry import integral
 from shapepy.geometry.integral import IntegrateSegment
 from shapepy.geometry.segment import Segment
 
@@ -11,6 +10,8 @@ from shapepy.geometry.segment import Segment
 @pytest.mark.order(14)
 @pytest.mark.dependency(
     depends=[
+        "tests/analytic/test_derivate.py::test_all",
+        "tests/analytic/test_integrate.py::test_all",
         "tests/geometry/test_point.py::test_all",
         "tests/geometry/test_box.py::test_all",
         "tests/geometry/test_segment.py::test_all",

@@ -22,8 +22,8 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
+from ..analytic.base import IAnalytic
 from ..analytic.bezier import split
-from ..analytic.calculus import derivate
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Real
@@ -194,7 +194,8 @@ class Segment:
         """
         if not Is.integer(times) or times <= 0:
             raise ValueError(f"Times must be integer >= 1, not {times}")
-        newplanar = derivate(To.bezier(self.ctrlpoints), times)
+        planar: IAnalytic = To.bezier(self.ctrlpoints)
+        newplanar: IAnalytic = planar.derivate(times)
         return self.__class__(newplanar)
 
     def box(self) -> Box:

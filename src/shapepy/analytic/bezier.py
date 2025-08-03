@@ -4,6 +4,7 @@ Defines the Bezier class, that has the same basis as the Polynomial
 
 from __future__ import annotations
 
+from copy import copy
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
@@ -11,7 +12,7 @@ from ..scalar.quadrature import inner
 from ..scalar.reals import Math, Rational, Real
 from ..tools import Is, To
 from .base import BaseAnalytic
-from .polynomial import Polynomial, clean_polynomial, scale, shift
+from .polynomial import Polynomial
 
 
 @lru_cache(maxsize=None)
@@ -69,13 +70,6 @@ def polynomial2bezier(polynomial: Polynomial) -> Bezier:
     return Bezier(ctrlpoints)
 
 
-def clean_bezier(bezier: Bezier) -> Bezier:
-    """
-    Decreases the degree of the bezier curve if possible
-    """
-    return polynomial2bezier(clean_polynomial(bezier2polynomial(bezier)))
-
-
 class Bezier(BaseAnalytic):
     """
     Defines the Bezier class, that allows evaluating and operating
@@ -128,6 +122,60 @@ class Bezier(BaseAnalytic):
     def __str__(self):
         return str(self.__polynomial)
 
+    def clean(self) -> Bezier:
+        """
+        Decreases the degree of the bezier curve if possible
+        """
+        return polynomial2bezier(bezier2polynomial(self).clean())
+
+    def scale(self, amount: Real) -> Bezier:
+        """
+        Transforms the polynomial p(t) into p(A*t) by
+        scaling the argument of the polynomial by 'A'.
+
+        p(t) = a0 + a1 * t + ... + ap * t^p
+        p(A * t) = a0 + a1 * (A*t) + ... + ap * (A * t)^p
+                = b0 + b1 * t + ... + bp * t^p
+
+        Example
+        -------
+        >>> old_poly = Polynomial([0, 0, 0, 1])
+        >>> print(old_poly)
+        t^3
+        >>> new_poly = scale(poly, 1)  # transform to (t-1)^3
+        >>> print(new_poly)
+        - 1 + 3 * t - 3 * t^2 + t^3
+        """
+        return polynomial2bezier(bezier2polynomial(self).scale(amount))
+
+    def shift(self, amount: Real) -> Bezier:
+        """
+        Transforms the bezier p(t) into p(t-d) by
+        translating the bezier by 'd' to the right.
+        """
+        return polynomial2bezier(bezier2polynomial(self).shift(amount))
+
+    def integrate(self, times: int = 1) -> Bezier:
+        """
+        Integrates the bezier analytic
+
+        Example
+        -------
+        >>> poly = Polynomial([1, 2, 5])
+        >>> print(poly)
+        1 + 2 * t + 5 * t^2
+        >>> ipoly = integrate(poly)
+        >>> print(ipoly)
+        t + t^2 + (5/3) * t^3
+        """
+        return polynomial2bezier(bezier2polynomial(self).integrate(times))
+
+    def derivate(self, times: int = 1) -> Bezier:
+        """
+        Derivate the bezier curve, giving a new one
+        """
+        return polynomial2bezier(bezier2polynomial(self).derivate(times))
+
 
 def split(bezier: Bezier, nodes: Iterable[Real]) -> Iterable[Bezier]:
     """
@@ -137,7 +185,7 @@ def split(bezier: Bezier, nodes: Iterable[Real]) -> Iterable[Bezier]:
     nodes = tuple([0] + sorted(nodes) + [1])
     poly = bezier2polynomial(bezier)
     for knota, knotb in zip(nodes, nodes[1:]):
-        newpoly = scale(shift(poly, -knota), knotb - knota)
+        newpoly = copy(poly).shift(-knota).scale(knotb - knota)
         yield polynomial2bezier(newpoly)
 
 
@@ -145,7 +193,7 @@ def to_bezier(coefs: Iterable[Real]) -> Bezier:
     """
     Creates a Bezier instance
     """
-    return clean_bezier(Bezier(coefs))
+    return Bezier(coefs).clean()
 
 
 To.bezier = to_bezier

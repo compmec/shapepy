@@ -8,8 +8,7 @@ from typing import Optional, Union
 
 import numpy as np
 
-from ..analytic.bezier import bezier2polynomial
-from ..analytic.calculus import derivate, integrate
+from ..analytic.base import IAnalytic
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Math
 from ..tools import Is, To
@@ -33,13 +32,13 @@ class IntegrateSegment:
         """
         assert Is.segment(curve)
 
-        xfunc = bezier2polynomial(To.bezier(pt[0] for pt in curve.ctrlpoints))
-        yfunc = bezier2polynomial(To.bezier(pt[1] for pt in curve.ctrlpoints))
+        xfunc: IAnalytic = To.bezier(pt[0] for pt in curve.ctrlpoints)
+        yfunc: IAnalytic = To.bezier(pt[1] for pt in curve.ctrlpoints)
 
         poly = (xfunc**expx) * (yfunc**expy)
-        poly *= xfunc * derivate(yfunc) - yfunc * derivate(xfunc)
-        poly = integrate(poly)
-        return (poly(1) - poly(0)) / (expx + expy + 2)
+        poly *= xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
+        ipoly = poly.integrate()
+        return (ipoly(1) - ipoly(0)) / (expx + expy + 2)
 
     @staticmethod
     def winding_number(

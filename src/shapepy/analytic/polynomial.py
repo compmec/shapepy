@@ -46,11 +46,9 @@ class Polynomial(BaseAnalytic):
 
     def __eq__(self, other: object) -> bool:
         if Is.instance(other, Polynomial):
-            cself = clean_polynomial(self)
-            cother = clean_polynomial(other)
-            return tuple(cself) == tuple(cother)
+            return tuple(self.clean()) == tuple(other.clean())
         if Is.real(other):
-            cself = clean_polynomial(self)
+            cself = self.clean()
             return cself.degree == 0 and cself[0] == other
         return NotImplemented
 
@@ -122,74 +120,113 @@ class Polynomial(BaseAnalytic):
             msgs.append(msg)
         return " ".join(msgs)
 
+    def clean(self) -> Polynomial:
+        """
+        Decreases the degree of the bezier curve if possible
+        """
+        if Is.real(self[0]):
+            degree = max((i for i, v in enumerate(self) if v), default=0)
+        else:
+            degree = max((i for i, v in enumerate(self) if v @ v), default=0)
+        return Polynomial(self[: degree + 1])
 
-def clean_polynomial(poly: Polynomial) -> Polynomial:
-    """
-    Decreases the degree of the bezier curve if possible
-    """
-    coefs = tuple(poly)
-    if Is.real(coefs[0]):
-        degree = max((i for i, v in enumerate(coefs) if v), default=0)
-    else:
-        degree = max((i for i, v in enumerate(coefs) if v @ v), default=0)
-    return Polynomial(coefs[: degree + 1])
+    def scale(self, amount: Real) -> Polynomial:
+        """
+        Transforms the polynomial p(t) into p(A*t) by
+        scaling the argument of the polynomial by 'A'.
 
+        p(t) = a0 + a1 * t + ... + ap * t^p
+        p(A * t) = a0 + a1 * (A*t) + ... + ap * (A * t)^p
+                = b0 + b1 * t + ... + bp * t^p
 
-def scale(poly: Polynomial, amount: Real) -> Polynomial:
-    """
-    Transforms the polynomial p(t) into p(A*t) by
-    scaling the argument of the polynomial by 'A'.
+        Example
+        -------
+        >>> old_poly = Polynomial([0, 2, 0, 1])
+        >>> print(old_poly)
+        2 * t + t^3
+        >>> new_poly = scale(poly, 2)
+        >>> print(new_poly)
+        4 * t + 8 * t^3
+        """
+        coefs = tuple(coef * amount**i for i, coef in enumerate(self))
+        return Polynomial(coefs)
 
-    p(t) = a0 + a1 * t + ... + ap * t^p
-    p(A * t) = a0 + a1 * (A*t) + ... + ap * (A * t)^p
-            = b0 + b1 * t + ... + bp * t^p
+    def shift(self, amount: Real) -> Polynomial:
+        """
+        Transforms the polynomial p(t) into p(t-d) by
+        translating the polynomial by 'd' to the right.
 
-    Example
-    -------
-    >>> old_poly = Polynomial([0, 0, 0, 1])
-    >>> print(old_poly)
-    t^3
-    >>> new_poly = scale(poly, 1)  # transform to (t-1)^3
-    >>> print(new_poly)
-    - 1 + 3 * t - 3 * t^2 + t^3
-    """
-    coefs = tuple(coef * amount**i for i, coef in enumerate(poly))
-    return Polynomial(coefs)
+        p(t) = a0 + a1 * t + ... + ap * t^p
+        p(t-d) = a0 + a1 * (t-d) + ... + ap * (t-d)^p
+                = b0 + b1 * t + ... + bp * t^p
 
+        Example
+        -------
+        >>> old_poly = Polynomial([0, 0, 0, 1])
+        >>> print(old_poly)
+        t^3
+        >>> new_poly = shift(poly, 1)  # transform to (t-1)^3
+        >>> print(new_poly)
+        - 1 + 3 * t - 3 * t^2 + t^3
+        """
+        newcoefs = list(self)
+        for i, coef in enumerate(self):
+            for j in range(i):
+                value = Math.binom(i, j) * (amount ** (i - j))
+                if (i + j) % 2:
+                    value *= -1
+                newcoefs[j] += coef * value
+        return Polynomial(newcoefs)
 
-def shift(poly: Polynomial, amount: Real) -> Polynomial:
-    """
-    Transforms the polynomial p(t) into p(t-d) by
-    translating the polynomial by 'd' to the right.
+    def integrate(self, times: int = 1) -> Polynomial:
+        """
+        Integrates the polynomial curve
 
-    p(t) = a0 + a1 * t + ... + ap * t^p
-    p(t-d) = a0 + a1 * (t-d) + ... + ap * (t-d)^p
-            = b0 + b1 * t + ... + bp * t^p
+        Example
+        -------
+        >>> poly = Polynomial([1, 2, 5])
+        >>> print(poly)
+        1 + 2 * t + 5 * t^2
+        >>> ipoly = integrate(poly)
+        >>> print(ipoly)
+        t + t^2 + (5/3) * t^3
+        """
+        polynomial = self
+        for _ in range(times):
+            newcoefs = [0 * polynomial[0]]
+            newcoefs += list(
+                coef / (n + 1) for n, coef in enumerate(polynomial)
+            )
+            polynomial = Polynomial(newcoefs)
+        return polynomial
 
-    Example
-    -------
-    >>> old_poly = Polynomial([0, 0, 0, 1])
-    >>> print(old_poly)
-    t^3
-    >>> new_poly = shift(poly, 1)  # transform to (t-1)^3
-    >>> print(new_poly)
-    - 1 + 3 * t - 3 * t^2 + t^3
-    """
-    newcoefs = list(poly)
-    for i, coef in enumerate(poly):
-        for j in range(i):
-            value = Math.binom(i, j) * (amount ** (i - j))
-            if (i + j) % 2:
-                value *= -1
-            newcoefs[j] += coef * value
-    return Polynomial(newcoefs)
+    def derivate(self, times: int = 1) -> Polynomial:
+        """
+        Derivate the polynomial curve, giving a new one
+
+        Example
+        -------
+        >>> poly = Polynomial([1, 2, 5])
+        >>> print(poly)
+        1 + 2 * t + 5 * t^2
+        >>> dpoly = poly.derivate()
+        >>> print(dpoly)
+        2 + 10 * t
+        """
+        if self.degree < times:
+            return Polynomial([0 * self[0]])
+        coefs = (
+            Math.factorial(n + times) // Math.factorial(n) * coef
+            for n, coef in enumerate(self[times:])
+        )
+        return Polynomial(coefs)
 
 
 def to_polynomial(coeficients: Iterable[Real]) -> Polynomial:
     """
     Creates a polynomial instance from given coefficients
     """
-    return clean_polynomial(Polynomial(coeficients))
+    return Polynomial(coeficients).clean()
 
 
 To.polynomial = to_polynomial
