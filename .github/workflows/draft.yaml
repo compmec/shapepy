@@ -1,4 +1,4 @@
-name: Quick Test for Pull Request
+name: Quick Check for Pull Request
 
 on:
   pull_request:
