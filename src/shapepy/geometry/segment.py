@@ -429,7 +429,8 @@ def compute_length(segment: Segment) -> Real:
     """
     domain = (0, 1)
     xfunc, yfunc = extract_xyfunctions(segment)
-    dpsquare = xfunc.derivate() ** 2 + yfunc.derivate() ** 2
+    dpsquare: IAnalytic = xfunc.derivate() ** 2 + yfunc.derivate() ** 2
+    assert Is.analytic(dpsquare)
     if dpsquare == dpsquare(0):  # Check if it's constant
         return (domain[1] - domain[0]) * Math.sqrt(dpsquare(0))
     integrator = IntegratorFactory.clenshaw_curtis(3)

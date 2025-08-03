@@ -468,7 +468,10 @@ def compute_area(jordan: JordanCurve) -> Real:
     total = 0
     for segment in jordan.segments:
         xfunc, yfunc = extract_xyfunctions(segment)
+        assert Is.analytic(xfunc)
+        assert Is.analytic(yfunc)
         poly = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
+        assert Is.analytic(poly)
         ipoly = poly.integrate()
         total += ipoly(1) - ipoly(0)
     return total / 2

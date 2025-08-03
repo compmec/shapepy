@@ -31,8 +31,11 @@ class IntegrateSegment:
         """
 
         xfunc, yfunc = extract_xyfunctions(curve)
+        assert Is.analytic(xfunc)
+        assert Is.analytic(yfunc)
         pcrossdp = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
         function = (xfunc**expx) * (yfunc**expy) * pcrossdp
+        assert Is.analytic(function)
         ipoly = function.integrate()
         return (ipoly(1) - ipoly(0)) / (expx + expy + 2)
 
