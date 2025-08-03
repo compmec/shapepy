@@ -1,6 +1,6 @@
 [![Documentation Status][docs-img]][docs-url]
-[![Build Status][build-img]][build-url]
-[![Lint with Black][lintblack-img]][lintblack-url]
+[![Tests Status][tests-img]][tests-url]
+[![Lint with Black][format-img]][format-url]
 [![Code Coverage][coverage-img]][coverage-url]
 
 [![PyPI Version][pypi-img]][pypi-url]
@@ -35,14 +35,14 @@ Please use the [Issues][issues-url] or refer to the email ```compmecgit@gmail.co
 
 <!-- Badges: -->
 
-[lintblack-img]: https://github.com/compmec/shapepy/actions/workflows/black.yaml/badge.svg
-[lintblack-url]: https://github.com/compmec/shapepy/actions/workflows/black.yaml
+[format-img]: https://github.com/compmec/shapepy/actions/workflows/format.yaml/badge.svg
+[format-url]: https://github.com/compmec/shapepy/actions/workflows/format.yaml
 [docs-img]: https://readthedocs.org/projects/shapepy/badge/?version=latest
 [docs-url]: https://shapepy.readthedocs.io/en/latest/?badge=latest
 [pypi-img]: https://img.shields.io/pypi/v/shapepy
 [pypi-url]: https://pypi.org/project/shapepy/
-[build-img]: https://github.com/compmec/shapepy/actions/workflows/build.yaml/badge.svg
-[build-url]: https://github.com/compmec/shapepy/actions/workflows/build.yaml
+[tests-img]: https://github.com/compmec/shapepy/actions/workflows/tests.yaml/badge.svg
+[tests-url]: https://github.com/compmec/shapepy/actions/workflows/tests.yaml
 [coverage-img]: https://codecov.io/gh/compmec/shapepy/branch/main/graph/badge.svg?token=vfGMPe9W3I
 [coverage-url]: https://codecov.io/gh/compmec/shapepy
 [pyversions-img]: https://img.shields.io/pypi/pyversions/shapepy.svg?style=flat-square
