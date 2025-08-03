@@ -27,6 +27,9 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
 
-      - name: Run quick
-        run: tox -e quick
+      - name: Install virtual enviroment
+        run: tox -e quick --recreate --notest
+
+      - name: Run quick tests
+        run: tox -e quick --recreate --notest
 
