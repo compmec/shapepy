@@ -12,10 +12,8 @@ File that defines the classes
 
 from __future__ import annotations
 
-import math
 from copy import copy
-from fractions import Fraction
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple
 
 import pynurbs
 
@@ -76,42 +74,6 @@ class Segment:
         if finalcurve.degree + 1 != finalcurve.npts:
             raise ValueError("Union is not a bezier curve!")
         return self.__class__(finalcurve.ctrlpoints)
-
-    def __and__(self, other: Segment) -> Union[None, Tuple[Tuple[int]]]:
-        """Computes the intersection between two Planar Curves
-
-        Returns None if there's no intersection
-
-        Returns tuple() if curves are equal
-
-        Returns [(a0, b0), (a1, b1), ...]
-        Which self(ai) == other(bi)
-        """
-        if self.box() & other.box() is None:
-            return None
-        if self == other:
-            return tuple()
-        if self.degree == 1 and other.degree == 1:
-            params = Intersection.lines(self, other)
-            return (params,) if len(params) != 0 else tuple()
-        usample = list(NodeSampleFactory.closed_linspace(self.npts + 3))
-        vsample = list(NodeSampleFactory.closed_linspace(other.npts + 3))
-        pairs = []
-        for ui in usample:
-            pairs += [(ui, vj) for vj in vsample]
-        for _ in range(3):
-            pairs = Intersection.bezier_and_bezier(self, other, pairs)
-            pairs.insert(0, (0, 0))
-            pairs.insert(0, (0, 1))
-            pairs.insert(0, (1, 0))
-            pairs.insert(0, (1, 1))
-            # Filter values by distance of points
-            tol_norm = 1e-6
-            pairs = Intersection.filter_distance(self, other, pairs, tol_norm)
-            # Filter values by distance abs(ui-uj, vi-vj)
-            tol_du = 1e-6
-            pairs = Intersection.filter_parameters(pairs, tol_du)
-        return tuple(pairs)
 
     def __str__(self) -> str:
         msg = f"Planar curve of degree {self.degree} and "
@@ -231,131 +193,6 @@ class Segment:
         """
         beziers = split(self.__planar, nodes)
         return tuple(map(Segment, beziers))
-
-
-class Intersection:
-    """
-    Defines the methods used to compute the intersection between curves
-    """
-
-    tol_du = 1e-9  # tolerance convergence
-    tol_norm = 1e-9  # tolerance convergence
-    max_denom = math.ceil(1 / tol_du)
-
-    @staticmethod
-    def lines(curvea: Segment, curveb: Segment) -> Tuple[float]:
-        """Finds the intersection of two line segments"""
-        assert curvea.degree == 1
-        assert curveb.degree == 1
-        pta0, pta1 = curvea.ctrlpoints
-        ptb0, ptb1 = curveb.ctrlpoints
-        vector0 = pta1 - pta0
-        vector1 = ptb1 - ptb0
-        diff0 = ptb0 - pta0
-        denom = vector0 ^ vector1
-        if denom != 0:  # Lines are not parallel
-            param0 = (diff0 ^ vector1) / denom
-            param1 = (diff0 ^ vector0) / denom
-            if param0 < 0 or 1 < param0:
-                return tuple()
-            if param1 < 0 or 1 < param1:
-                return tuple()
-            return param0, param1
-        # Lines are parallel
-        if vector0 ^ diff0 != 0:
-            return tuple()  # Parallel, but not colinear
-        return tuple()
-
-    # pylint: disable=too-many-locals
-    @staticmethod
-    def bezier_and_bezier(
-        curvea: Segment, curveb: Segment, pairs: Tuple[Tuple[float]]
-    ) -> Tuple[Tuple[float]]:
-        """Finds all the pairs (u*, v*) such A(u*) = B(v*)
-
-        Uses newton's method
-        """
-        dcurvea = curvea.derivate()
-        ddcurvea = dcurvea.derivate()
-        dcurveb = curveb.derivate()
-        ddcurveb = dcurveb.derivate()
-
-        # Start newton iteration
-        for _ in range(20):  # Number of newton iteration
-            new_pairs = set()
-            for u, v in pairs:
-                ssu = curvea(u)
-                dsu = dcurvea(u)
-                ddu = ddcurvea(u)
-                oov = curveb(v)
-                dov = dcurveb(v)
-                ddv = ddcurveb(v)
-
-                dif = ssu - oov
-                vect0 = dsu @ dif
-                vect1 = -dov @ dif
-                mat00 = dsu @ dsu + ddu @ dif
-                mat01 = -dsu @ dov
-                mat11 = dov @ dov - ddv @ dif
-                deter = mat00 * mat11 - mat01**2
-                if abs(deter) < 1e-6:
-                    continue
-                newu = u - (mat11 * vect0 - mat01 * vect1) / deter
-                newv = v - (mat00 * vect1 - mat01 * vect0) / deter
-                pair = (min(1, max(0, newu)), min(1, max(0, newv)))
-                new_pairs.add(pair)
-            pairs = list(new_pairs)
-            for i, (ui, vi) in enumerate(pairs):
-                if Is.instance(ui, Fraction):
-                    ui = ui.limit_denominator(10000)
-                if Is.instance(vi, Fraction):
-                    vi = vi.limit_denominator(10000)
-                pairs[i] = (ui, vi)
-        return pairs
-
-    @staticmethod
-    def filter_distance(
-        curvea: Segment,
-        curveb: Segment,
-        pairs: Tuple[Tuple[float]],
-        max_dist: float,
-    ) -> Tuple[Tuple[float]]:
-        """
-        Filter the pairs values, since the intersection pair
-        (0.5, 1) is almost the same as (1e-6, 0.99999)
-        """
-        pairs = list(pairs)
-        index = 0
-        while index < len(pairs):
-            ui, vi = pairs[index]
-            diff = curvea(ui) - curveb(vi)
-            if abs(diff) < max_dist:
-                index += 1
-            else:
-                pairs.pop(index)
-        return tuple(pairs)
-
-    @staticmethod
-    def filter_parameters(
-        pairs: Tuple[Tuple[float]], max_dist: float
-    ) -> Tuple[Tuple[float]]:
-        """
-        Filter the parameters values, cause 0 is almost the same as 1e-6
-        """
-        pairs = list(pairs)
-        index = 0
-        while index < len(pairs):
-            ui, vi = pairs[index]
-            j = index + 1
-            while j < len(pairs):
-                uj, vj = pairs[j]
-                dist2 = (ui - uj) ** 2 + (vi - vj) ** 2
-                if dist2 < max_dist**2:
-                    pairs.pop(j)
-                else:
-                    j += 1
-            index += 1
-        return tuple(pairs)
 
 
 class Projection:

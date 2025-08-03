@@ -14,6 +14,7 @@ import numpy as np
 from ..scalar.reals import Real
 from ..tools import Is, To
 from .box import Box
+from .intersection import intersect_piecewises
 from .piecewise import PiecewiseCurve, clean_piecewise
 from .point import Point2D
 from .segment import (
@@ -390,7 +391,7 @@ class JordanCurve:
         """Computes the intersection of two jordan curves"""
         if not Is.jordan(other):
             raise TypeError
-        return self.piecewise & other.piecewise
+        return intersect_piecewises(self.piecewise, other.piecewise)
 
     def __str__(self) -> str:
         max_degree = max(curve.degree for curve in self.segments)

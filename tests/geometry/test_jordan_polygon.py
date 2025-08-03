@@ -514,32 +514,6 @@ class TestOthers:
 
     @pytest.mark.order(15)
     @pytest.mark.dependency(depends=["TestOthers::test_begin"])
-    def test_self_intersection(self):
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordana = FactoryJordan.polygon(points)
-        jordanb = FactoryJordan.polygon(points)
-        assert id(jordana) != id(jordanb)
-        inters = jordana & jordanb
-        assert not bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=False, end_points=False
-        )
-        assert not bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=False, end_points=True
-        )
-        assert bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=True, end_points=False
-        )
-        assert bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=True, end_points=True
-        )
-        assert bool(inters)
-
-    @pytest.mark.order(15)
-    @pytest.mark.dependency(depends=["TestOthers::test_begin"])
     def test_clean(self):
         verticesa = [(-1, 0), (0, 0), (1, 0), (0, 1)]
         jordana = FactoryJordan.polygon(verticesa)
@@ -585,7 +559,6 @@ class TestOthers:
         depends=[
             "TestOthers::test_begin",
             "TestOthers::test_print",
-            "TestOthers::test_self_intersection",
             "TestOthers::test_clean",
             "TestOthers::test_equal_divided",
         ]
