@@ -8,7 +8,7 @@ on:
     paths:
       - src/**
       - tests/**
-      - .github/*
+      - .github/**
     branches: [ main ]
     types: [opened, synchronize, reopened]
 
@@ -37,6 +37,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
+
       - name: Run format
         run: tox -e format
   
@@ -44,6 +57,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
+
       - name: Run format
         run: tox -e format
 
@@ -51,6 +77,19 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+      - name: Checkout sources
+        uses: actions/checkout@v2
+
+      - name: Setup Python
+        uses: actions/setup-python@v2
+        with:
+          python-version: "3.x"
+
+      - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
+
       - name: Run coverage
         run: tox -e coverage
 
