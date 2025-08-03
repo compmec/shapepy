@@ -8,13 +8,12 @@ from typing import Optional, Union
 
 import numpy as np
 
-from ..analytic.base import IAnalytic
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Math
-from ..tools import Is, To
+from ..tools import Is
 from .jordancurve import JordanCurve
 from .point import Point2D
-from .segment import Segment
+from .segment import Segment, extract_xyfunctions
 
 
 class IntegrateSegment:
@@ -30,14 +29,11 @@ class IntegrateSegment:
         I = int_D x^expx * y^expy * dA
 
         """
-        assert Is.segment(curve)
 
-        xfunc: IAnalytic = To.bezier(pt[0] for pt in curve.ctrlpoints)
-        yfunc: IAnalytic = To.bezier(pt[1] for pt in curve.ctrlpoints)
-
-        poly = (xfunc**expx) * (yfunc**expy)
-        poly *= xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
-        ipoly = poly.integrate()
+        xfunc, yfunc = extract_xyfunctions(curve)
+        pcrossdp = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
+        function = (xfunc**expx) * (yfunc**expy) * pcrossdp
+        ipoly = function.integrate()
         return (ipoly(1) - ipoly(0)) / (expx + expy + 2)
 
     @staticmethod

@@ -26,7 +26,7 @@ from ..analytic.base import IAnalytic
 from ..analytic.bezier import split
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
-from ..scalar.reals import Real
+from ..scalar.reals import Math, Real
 from ..tools import Is, To, vectorize
 
 
@@ -427,15 +427,18 @@ def compute_length(segment: Segment) -> Real:
     """
     Computes the length of the jordan curve
     """
+    domain = (0, 1)
+    xfunc, yfunc = extract_xyfunctions(segment)
+    dpsquare = xfunc.derivate() ** 2 + yfunc.derivate() ** 2
+    if dpsquare == dpsquare(0):  # Check if it's constant
+        return (domain[1] - domain[0]) * Math.sqrt(dpsquare(0))
     integrator = IntegratorFactory.clenshaw_curtis(3)
     adaptative = AdaptativeIntegrator(integrator, 1e-9, 12)
 
-    dsegment = segment.derivate()
-
     def function(node):
-        return abs(dsegment(node))
+        return Math.sqrt(dpsquare(node))
 
-    return adaptative.integrate(function, (0, 1))
+    return adaptative.integrate(function, domain)
 
 
 def segment_self_intersect(segment: Segment) -> bool:
@@ -449,6 +452,24 @@ def clean_segment(segment: Segment) -> Segment:
     if newplanar.degree == segment.degree:
         return segment
     return Segment(tuple(newplanar))
+
+
+def extract_xyfunctions(segment: Segment) -> Tuple[IAnalytic, IAnalytic]:
+    """
+    Extracts the analytic functions of x(t) and y(t) that defines the segment
+
+    Example
+    -------
+    >>> segment = Segment([(-3, 2), (7, -1)])
+    >>> xfunc, yfunc = extract_xyfunctions(segment)
+    >>> xfunc
+    -3 + 10 * t
+    >>> yfunc
+    2 - 3 * t
+    """
+    xfunc: IAnalytic = To.bezier(pt[0] for pt in segment.ctrlpoints)
+    yfunc: IAnalytic = To.bezier(pt[1] for pt in segment.ctrlpoints)
+    return xfunc, yfunc
 
 
 def is_segment(obj: object) -> bool:
