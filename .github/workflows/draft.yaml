@@ -28,7 +28,7 @@ jobs:
           python -m pip install tox tox-gh-actions
 
       - name: Install virtual enviroment
-        run: tox -e quick-format --recreate --notest
+        run: tox -e quick-format --notest
 
       - name: Run quick format
         run: tox -e quick-format

@@ -2,6 +2,9 @@ name: Lint with Black
 
 on:
   push:
+    paths:
+      - src/**
+      - tests/**
     branches: [ main ]
   pull_request:
     paths:

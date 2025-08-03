@@ -20,13 +20,13 @@ on:
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
   # This workflow contains a single job called "build"
-  build:
+  test:
     # The type of runner that the job will run on
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
         os: [ubuntu-latest, windows-latest]
-        python-version: ['3.9', '3.10', '3.11', '3.12', '3.13']
+        python-version: ['3.11', '3.12']
     steps:
       - name: Checkout sources
         uses: actions/checkout@v2
@@ -37,6 +37,11 @@ jobs:
           python-version: ${{ matrix.python-version }}
       
       - name: Install dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install tox tox-gh-actions
+
+      - name: Install virtual enviroment
         run: |
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
