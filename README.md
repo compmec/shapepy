@@ -43,7 +43,7 @@ Please use the [Issues][issues-url] or refer to the email ```compmecgit@gmail.co
 [pypi-url]: https://pypi.org/project/shapepy/
 [tests-img]: https://github.com/compmec/shapepy/actions/workflows/tests.yaml/badge.svg
 [tests-url]: https://github.com/compmec/shapepy/actions/workflows/tests.yaml
-[coverage-img]: https://codecov.io/gh/compmec/shapepy/branch/main/graph/badge.svg?token=vfGMPe9W3I
+[coverage-img]: https://codecov.io/gh/compmec/shapepy/branch/main/graph/badge.svg?token=MOGxewGPTZ
 [coverage-url]: https://codecov.io/gh/compmec/shapepy
 [pyversions-img]: https://img.shields.io/pypi/pyversions/shapepy.svg?style=flat-square
 [pyversions-url]: https://pypi.org/project/shapepy/
