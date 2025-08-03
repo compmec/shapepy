@@ -10,7 +10,7 @@ on:
     types: [opened, synchronize, reopened]
 
 jobs:
-  all:
+  quick:
     runs-on: ubuntu-latest
 
     steps:
@@ -27,12 +27,6 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install tox tox-gh-actions
 
-      - name: Run format
-        run: tox -e format
-  
-      - name: Run test
+      - name: Run quick
         run: tox -e quick
-
-      - name: Run coverage
-        run: tox -e coverage
 
