@@ -8,11 +8,11 @@ from typing import Optional, Union
 
 import numpy as np
 
-from ..analytic.bezier import Bezier, bezier2polynomial
+from ..analytic.bezier import bezier2polynomial
 from ..analytic.calculus import derivate, integrate
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Math
-from ..tools import Is
+from ..tools import Is, To
 from .jordancurve import JordanCurve
 from .point import Point2D
 from .segment import Segment
@@ -33,8 +33,8 @@ class IntegrateSegment:
         """
         assert Is.segment(curve)
 
-        xfunc = bezier2polynomial(Bezier(pt[0] for pt in curve.ctrlpoints))
-        yfunc = bezier2polynomial(Bezier(pt[1] for pt in curve.ctrlpoints))
+        xfunc = bezier2polynomial(To.bezier(pt[0] for pt in curve.ctrlpoints))
+        yfunc = bezier2polynomial(To.bezier(pt[1] for pt in curve.ctrlpoints))
 
         poly = (xfunc**expx) * (yfunc**expy)
         poly *= xfunc * derivate(yfunc) - yfunc * derivate(xfunc)

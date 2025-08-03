@@ -8,11 +8,11 @@ from numbers import Real
 from typing import Iterable, List, Union
 
 from ..scalar.reals import Math
-from ..tools import Is, pow_keys
-from .base import IAnalytic
+from ..tools import Is, To
+from .base import BaseAnalytic
 
 
-class Polynomial(IAnalytic):
+class Polynomial(BaseAnalytic):
     """
     Defines a polynomial with coefficients
 
@@ -35,19 +35,6 @@ class Polynomial(IAnalytic):
     5
     """
 
-    def __init__(self, coefs: Iterable[Real]):
-        if not Is.iterable(coefs):
-            raise TypeError("Expected an iterable of coefficients")
-        coefs = tuple(coefs)
-        if len(coefs) == 0:
-            raise ValueError("Cannot receive an empty tuple")
-        if Is.real(coefs[0]):
-            degree = max((i for i, v in enumerate(coefs) if v), default=0)
-        else:
-            degree = max((i for i, v in enumerate(coefs) if v @ v), default=0)
-        coefs = coefs[: degree + 1]
-        self.__coefs = tuple(coefs[: degree + 1])
-
     @property
     def degree(self) -> int:
         """
@@ -55,23 +42,17 @@ class Polynomial(IAnalytic):
         highest power of t with a non-zero coefficient.
         If the polynomial is constant, returns 0.
         """
-        return len(self.__coefs) - 1
+        return self.ncoefs - 1
 
-    def __eq__(self, value: object) -> bool:
-        if Is.instance(value, Polynomial):
-            return tuple(self) == tuple(value)
-        if Is.real(value):
-            return self.degree == 0 and value == self[0]
+    def __eq__(self, other: object) -> bool:
+        if Is.instance(other, Polynomial):
+            cself = clean_polynomial(self)
+            cother = clean_polynomial(other)
+            return tuple(cself) == tuple(cother)
+        if Is.real(other):
+            cself = clean_polynomial(self)
+            return cself.degree == 0 and cself[0] == other
         return NotImplemented
-
-    def __iter__(self):
-        yield from self.__coefs
-
-    def __getitem__(self, index):
-        return self.__coefs[index]
-
-    def __neg__(self) -> Polynomial:
-        return self.__class__(-coef for coef in self)
 
     def __add__(self, other: Union[Real, Polynomial]) -> Polynomial:
         if not Is.instance(other, Polynomial):
@@ -103,30 +84,6 @@ class Polynomial(IAnalytic):
             for j, coefj in enumerate(other):
                 coefs[i + j] += coefi @ coefj
         return self.__class__(coefs)
-
-    def __pow__(self, exponent: int) -> Polynomial:
-        if not Is.integer(exponent) or exponent < 0:
-            raise ValueError
-        if not Is.finite(self[0]):
-            raise ValueError
-        if exponent == 0:
-            return self.__class__([1 + 0 * self[0]])
-        cache = {1: self}
-        for n in pow_keys(exponent):
-            cache[n] = cache[n // 2] * cache[n - n // 2]
-        return cache[exponent]
-
-    def __sub__(self, other: Union[Real, Polynomial]) -> Polynomial:
-        return self.__add__(-other)
-
-    def __rsub__(self, other: Real) -> Polynomial:
-        return (-self).__add__(other)
-
-    def __radd__(self, other: Real) -> Polynomial:
-        return self.__add__(other)
-
-    def __rmul__(self, other: Real) -> Polynomial:
-        return self.__mul__(other)
 
     def __call__(self, node: Real) -> Real:
         if self.degree == 0:
@@ -165,18 +122,27 @@ class Polynomial(IAnalytic):
             msgs.append(msg)
         return " ".join(msgs)
 
-    def __repr__(self) -> str:
-        return str(self)
+
+def clean_polynomial(poly: Polynomial) -> Polynomial:
+    """
+    Decreases the degree of the bezier curve if possible
+    """
+    coefs = tuple(poly)
+    if Is.real(coefs[0]):
+        degree = max((i for i, v in enumerate(coefs) if v), default=0)
+    else:
+        degree = max((i for i, v in enumerate(coefs) if v @ v), default=0)
+    return Polynomial(coefs[: degree + 1])
 
 
-def scale(polynomial: Polynomial, amount: Real) -> Polynomial:
+def scale(poly: Polynomial, amount: Real) -> Polynomial:
     """
     Transforms the polynomial p(t) into p(A*t) by
     scaling the argument of the polynomial by 'A'.
 
     p(t) = a0 + a1 * t + ... + ap * t^p
     p(A * t) = a0 + a1 * (A*t) + ... + ap * (A * t)^p
-             = b0 + b1 * t + ... + bp * t^p
+            = b0 + b1 * t + ... + bp * t^p
 
     Example
     -------
@@ -187,11 +153,11 @@ def scale(polynomial: Polynomial, amount: Real) -> Polynomial:
     >>> print(new_poly)
     - 1 + 3 * t - 3 * t^2 + t^3
     """
-    coefs = tuple(coef * amount**i for i, coef in enumerate(polynomial))
+    coefs = tuple(coef * amount**i for i, coef in enumerate(poly))
     return Polynomial(coefs)
 
 
-def shift(polynomial: Polynomial, amount: Real) -> Polynomial:
+def shift(poly: Polynomial, amount: Real) -> Polynomial:
     """
     Transforms the polynomial p(t) into p(t-d) by
     translating the polynomial by 'd' to the right.
@@ -209,11 +175,21 @@ def shift(polynomial: Polynomial, amount: Real) -> Polynomial:
     >>> print(new_poly)
     - 1 + 3 * t - 3 * t^2 + t^3
     """
-    newcoefs = list(polynomial)
-    for i, coef in enumerate(polynomial):
+    newcoefs = list(poly)
+    for i, coef in enumerate(poly):
         for j in range(i):
             value = Math.binom(i, j) * (amount ** (i - j))
             if (i + j) % 2:
                 value *= -1
             newcoefs[j] += coef * value
     return Polynomial(newcoefs)
+
+
+def to_polynomial(coeficients: Iterable[Real]) -> Polynomial:
+    """
+    Creates a polynomial instance from given coefficients
+    """
+    return clean_polynomial(Polynomial(coeficients))
+
+
+To.polynomial = to_polynomial

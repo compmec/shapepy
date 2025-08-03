@@ -22,7 +22,7 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
-from ..analytic.bezier import Bezier, clean_bezier, split
+from ..analytic.bezier import split
 from ..analytic.calculus import derivate
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
@@ -146,7 +146,7 @@ class Segment:
 
     @vectorize(1, 0)
     def __call__(self, node: Real) -> Point2D:
-        planar = Bezier(self.ctrlpoints)
+        planar = To.bezier(self.ctrlpoints)
         return planar(node)
 
     @property
@@ -186,7 +186,7 @@ class Segment:
     def ctrlpoints(self, points: Iterable[Point2D]):
         self.__length = None
         self.__ctrlpoints = list(map(To.point, points))
-        self.__planar = Bezier(self.ctrlpoints)
+        self.__planar = To.bezier(self.ctrlpoints)
 
     def derivate(self, times: Optional[int] = 1) -> Segment:
         """
@@ -194,7 +194,7 @@ class Segment:
         """
         if not Is.integer(times) or times <= 0:
             raise ValueError(f"Times must be integer >= 1, not {times}")
-        newplanar = derivate(Bezier(self.ctrlpoints), times)
+        newplanar = derivate(To.bezier(self.ctrlpoints), times)
         return self.__class__(newplanar)
 
     def box(self) -> Box:
@@ -444,7 +444,7 @@ def segment_self_intersect(segment: Segment) -> bool:
 
 def clean_segment(segment: Segment) -> Segment:
     """Reduces at maximum the degree of the bezier curve"""
-    newplanar = clean_bezier(Bezier(segment.ctrlpoints))
+    newplanar = To.bezier(segment.ctrlpoints)
     if newplanar.degree == segment.degree:
         return segment
     return Segment(tuple(newplanar))

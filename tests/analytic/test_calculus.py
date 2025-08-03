@@ -14,6 +14,7 @@ from shapepy.analytic.calculus import (
     integrate_polynomial,
 )
 from shapepy.analytic.polynomial import Polynomial
+from shapepy.tools import To
 
 
 @pytest.mark.order(9)
@@ -49,18 +50,18 @@ class TestDerivate:
     @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_bezier(self):
-        poly = Bezier([0])
-        assert derivate_bezier(poly, 1) == 0
-        assert derivate_bezier(poly, 2) == 0
+        bezier = To.bezier([0])
+        assert derivate_bezier(bezier, 1) == 0
+        assert derivate_bezier(bezier, 2) == 0
 
-        poly = Bezier([3])
-        assert derivate_bezier(poly, 1) == 0
-        assert derivate_bezier(poly, 2) == 0
+        bezier = To.bezier([3])
+        assert derivate_bezier(bezier, 1) == 0
+        assert derivate_bezier(bezier, 2) == 0
 
-        poly = Bezier([1, 1, 1, 1, 1])
-        assert derivate_bezier(poly, 1) == 0
-        assert derivate_bezier(poly, 2) == 0
-        assert derivate_bezier(poly, 3) == 0
+        bezier = To.bezier([1, 1, 1, 1, 1])
+        assert derivate_bezier(bezier, 1) == 0
+        assert derivate_bezier(bezier, 2) == 0
+        assert derivate_bezier(bezier, 3) == 0
 
     @pytest.mark.order(9)
     @pytest.mark.dependency(
@@ -95,18 +96,18 @@ class TestIntegrate:
     @pytest.mark.order(9)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_bezier(self):
-        poly = Bezier([0])
-        assert integrate_bezier(poly, 1) == 0
-        assert integrate_bezier(poly, 2) == 0
+        bezier = To.bezier([0])
+        assert integrate_bezier(bezier, 1) == 0
+        assert integrate_bezier(bezier, 2) == 0
 
-        poly = Bezier([3])
-        assert integrate_bezier(poly, 1) == Bezier([0, 3])
-        assert integrate_bezier(poly, 2) == Bezier([0, 0, 1.5])
+        bezier = To.bezier([3])
+        assert integrate_bezier(bezier, 1) == Bezier([0, 3])
+        assert integrate_bezier(bezier, 2) == Bezier([0, 0, 1.5])
 
-        poly = Bezier([1, 1, 1, 1, 1])
-        assert integrate_bezier(poly, 1) == Bezier([0, 1])
-        assert integrate_bezier(poly, 2) == Bezier([0, 0, 1 / 2])
-        assert integrate_bezier(poly, 3) == Bezier([0, 0, 0, 1 / 6])
+        bezier = To.bezier([6, 6, 6, 6, 6])
+        assert integrate_bezier(bezier, 1) == Bezier([0, 6])
+        assert integrate_bezier(bezier, 2) == Bezier([0, 0, 3])
+        assert integrate_bezier(bezier, 3) == Bezier([0, 0, 0, 1])
 
     @pytest.mark.order(9)
     @pytest.mark.dependency(
