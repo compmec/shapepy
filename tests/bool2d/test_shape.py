@@ -30,7 +30,6 @@ class TestIntegrate:
     @pytest.mark.order(25)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
-        assert True
         pass
 
     @pytest.mark.order(25)
