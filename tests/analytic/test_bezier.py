@@ -358,7 +358,7 @@ def test_scale():
     for _ in range(ntests):
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
-        beziera = Polynomial(coefsa)
+        beziera = Bezier(coefsa)
         bezierb = beziera.scale(2)
         valuesa = beziera(2 * tsample)
         valuesb = bezierb(tsample)
