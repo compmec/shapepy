@@ -9,8 +9,8 @@ import pytest
 @pytest.mark.dependency(
     depends=[
         "tests/scalar/test_reals.py::test_all",
-        "tests/scalar/test_polynomial.py::test_all",
-        "tests/scalar/test_bezier.py::test_all",
+        "tests/analytic/test_polynomial.py::test_all",
+        "tests/analytic/test_bezier.py::test_all",
         "tests/geometry/test_point.py::test_all",
     ],
     scope="session",

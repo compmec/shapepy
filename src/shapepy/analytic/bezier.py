@@ -4,13 +4,15 @@ Defines the Bezier class, that has the same basis as the Polynomial
 
 from __future__ import annotations
 
+from copy import copy
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
+from ..scalar.quadrature import inner
+from ..scalar.reals import Math, Rational, Real
 from ..tools import Is, To
-from .polynomial import Polynomial, scale, shift
-from .quadrature import inner
-from .reals import Math, Rational, Real
+from .base import BaseAnalytic
+from .polynomial import Polynomial
 
 
 @lru_cache(maxsize=None)
@@ -55,8 +57,8 @@ def bezier2polynomial(bezier: Bezier) -> Polynomial:
     Converts a Bezier instance to Polynomial
     """
     matrix = bezier_caract_matrix(bezier.degree)
-    poly_coefs = tuple(inner(weights, bezier) for weights in matrix)
-    return Polynomial(poly_coefs)
+    poly_coefs = (inner(weights, bezier) for weights in matrix)
+    return To.polynomial(poly_coefs)
 
 
 def polynomial2bezier(polynomial: Polynomial) -> Bezier:
@@ -68,27 +70,14 @@ def polynomial2bezier(polynomial: Polynomial) -> Bezier:
     return Bezier(ctrlpoints)
 
 
-def clean_bezier(bezier: Bezier) -> Bezier:
-    """
-    Decreases the degree of the bezier curve if possible
-    """
-    return polynomial2bezier(bezier2polynomial(bezier))
-
-
-class Bezier:
+class Bezier(BaseAnalytic):
     """
     Defines the Bezier class, that allows evaluating and operating
     such as adding, subtracting, multiplying, etc
     """
 
-    def __init__(self, ctrlpoints: Iterable[Real]):
-
-        if not Is.iterable(ctrlpoints):
-            raise TypeError("Expected an iterable of coefficients")
-        ctrlpoints = tuple(ctrlpoints)
-        if len(ctrlpoints) == 0:
-            raise ValueError("Cannot receive an empty tuple")
-        self.__ctrlpoints = ctrlpoints
+    def __init__(self, coefs: Iterable[Real]):
+        super().__init__(coefs)
         self.__polynomial = bezier2polynomial(self)
 
     @property
@@ -98,7 +87,7 @@ class Bezier:
         highest power of t with a non-zero coefficient.
         If the polynomial is constant, returns 0.
         """
-        return len(self.__ctrlpoints) - 1
+        return self.ncoefs - 1
 
     def __eq__(self, value: object) -> bool:
         if isinstance(value, Bezier):
@@ -109,42 +98,23 @@ class Bezier:
             return all(ctrlpoint == value for ctrlpoint in self)
         return NotImplemented
 
-    def __iter__(self):
-        yield from self.__ctrlpoints
-
-    def __getitem__(self, index):
-        return self.__ctrlpoints[index]
-
-    def __neg__(self) -> Polynomial:
-        return self.__class__(-coef for coef in self)
-
     def __add__(self, other: Union[Real, Polynomial, Bezier]) -> Bezier:
         if Is.instance(other, Bezier):
             other = bezier2polynomial(other)
         sumpoly = self.__polynomial + other
         return polynomial2bezier(sumpoly)
 
-    def __mul__(self, other: Union[Real, Polynomial]) -> Bezier:
+    def __mul__(self, other: Union[Real, Polynomial, Bezier]) -> Bezier:
         if Is.instance(other, Bezier):
             other = bezier2polynomial(other)
         mulpoly = self.__polynomial * other
         return polynomial2bezier(mulpoly)
 
-    def __pow__(self, exponent: int) -> Polynomial:
-        poly = bezier2polynomial(self)
-        return polynomial2bezier(poly**exponent)
-
-    def __sub__(self, other: Union[Real, Polynomial]) -> Polynomial:
-        return self.__add__(-other)
-
-    def __rsub__(self, other: Real) -> Polynomial:
-        return (-self).__add__(other)
-
-    def __radd__(self, other: Real) -> Polynomial:
-        return self.__add__(other)
-
-    def __rmul__(self, other: Real) -> Polynomial:
-        return self.__mul__(other)
+    def __matmul__(self, other: Union[Real, Polynomial, Bezier]) -> Bezier:
+        if Is.instance(other, Bezier):
+            other = bezier2polynomial(other)
+        matmulpoly = self.__polynomial @ other
+        return polynomial2bezier(matmulpoly)
 
     def __call__(self, node: Real) -> Real:
         return self.__polynomial(node)
@@ -152,8 +122,59 @@ class Bezier:
     def __str__(self):
         return str(self.__polynomial)
 
-    def __repr__(self) -> str:
-        return repr(self.__polynomial)
+    def clean(self) -> Bezier:
+        """
+        Decreases the degree of the bezier curve if possible
+        """
+        return polynomial2bezier(bezier2polynomial(self).clean())
+
+    def scale(self, amount: Real) -> Bezier:
+        """
+        Transforms the polynomial p(t) into p(A*t) by
+        scaling the argument of the polynomial by 'A'.
+
+        p(t) = a0 + a1 * t + ... + ap * t^p
+        p(A * t) = a0 + a1 * (A*t) + ... + ap * (A * t)^p
+                = b0 + b1 * t + ... + bp * t^p
+
+        Example
+        -------
+        >>> old_poly = Polynomial([0, 0, 0, 1])
+        >>> print(old_poly)
+        t^3
+        >>> new_poly = scale(poly, 1)  # transform to (t-1)^3
+        >>> print(new_poly)
+        - 1 + 3 * t - 3 * t^2 + t^3
+        """
+        return polynomial2bezier(bezier2polynomial(self).scale(amount))
+
+    def shift(self, amount: Real) -> Bezier:
+        """
+        Transforms the bezier p(t) into p(t-d) by
+        translating the bezier by 'd' to the right.
+        """
+        return polynomial2bezier(bezier2polynomial(self).shift(amount))
+
+    def integrate(self, times: int = 1) -> Bezier:
+        """
+        Integrates the bezier analytic
+
+        Example
+        -------
+        >>> poly = Polynomial([1, 2, 5])
+        >>> print(poly)
+        1 + 2 * t + 5 * t^2
+        >>> ipoly = integrate(poly)
+        >>> print(ipoly)
+        t + t^2 + (5/3) * t^3
+        """
+        return polynomial2bezier(bezier2polynomial(self).integrate(times))
+
+    def derivate(self, times: int = 1) -> Bezier:
+        """
+        Derivate the bezier curve, giving a new one
+        """
+        return polynomial2bezier(bezier2polynomial(self).derivate(times))
 
 
 def split(bezier: Bezier, nodes: Iterable[Real]) -> Iterable[Bezier]:
@@ -164,5 +185,15 @@ def split(bezier: Bezier, nodes: Iterable[Real]) -> Iterable[Bezier]:
     nodes = tuple([0] + sorted(nodes) + [1])
     poly = bezier2polynomial(bezier)
     for knota, knotb in zip(nodes, nodes[1:]):
-        newpoly = scale(shift(poly, -knota), knotb - knota)
+        newpoly = copy(poly).shift(-knota).scale(knotb - knota)
         yield polynomial2bezier(newpoly)
+
+
+def to_bezier(coefs: Iterable[Real]) -> Bezier:
+    """
+    Creates a Bezier instance
+    """
+    return Bezier(coefs).clean()
+
+
+To.bezier = to_bezier

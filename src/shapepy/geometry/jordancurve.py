@@ -11,14 +11,17 @@ from typing import Iterable, Optional, Tuple
 
 import numpy as np
 
-from ..scalar.bezier import Bezier, bezier2polynomial
-from ..scalar.calculus import derivate, integrate
 from ..scalar.reals import Real
 from ..tools import Is, To
 from .box import Box
 from .piecewise import PiecewiseCurve, clean_piecewise
 from .point import Point2D
-from .segment import Segment, clean_segment, segment_self_intersect
+from .segment import (
+    Segment,
+    clean_segment,
+    extract_xyfunctions,
+    segment_self_intersect,
+)
 
 
 class JordanCurve:
@@ -462,13 +465,15 @@ def compute_area(jordan: JordanCurve) -> Real:
 
     If jordan is clockwise, then the area is negative
     """
-
     total = 0
     for segment in jordan.segments:
-        xfunc = bezier2polynomial(Bezier(pt[0] for pt in segment.ctrlpoints))
-        yfunc = bezier2polynomial(Bezier(pt[1] for pt in segment.ctrlpoints))
-        poly = integrate(xfunc * derivate(yfunc) - yfunc * derivate(xfunc))
-        total += poly(1) - poly(0)
+        xfunc, yfunc = extract_xyfunctions(segment)
+        assert Is.analytic(xfunc)
+        assert Is.analytic(yfunc)
+        poly = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
+        assert Is.analytic(poly)
+        ipoly = poly.integrate()
+        total += ipoly(1) - ipoly(0)
     return total / 2
 
 

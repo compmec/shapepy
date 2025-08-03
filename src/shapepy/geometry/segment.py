@@ -22,11 +22,11 @@ import pynurbs
 from shapepy.geometry.box import Box
 from shapepy.geometry.point import Point2D
 
-from ..scalar.bezier import Bezier, clean_bezier, split
-from ..scalar.calculus import derivate
+from ..analytic.base import IAnalytic
+from ..analytic.bezier import split
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
-from ..scalar.reals import Real
+from ..scalar.reals import Math, Real
 from ..tools import Is, To, vectorize
 
 
@@ -146,7 +146,7 @@ class Segment:
 
     @vectorize(1, 0)
     def __call__(self, node: Real) -> Point2D:
-        planar = Bezier(self.ctrlpoints)
+        planar = To.bezier(self.ctrlpoints)
         return planar(node)
 
     @property
@@ -186,7 +186,7 @@ class Segment:
     def ctrlpoints(self, points: Iterable[Point2D]):
         self.__length = None
         self.__ctrlpoints = list(map(To.point, points))
-        self.__planar = Bezier(self.ctrlpoints)
+        self.__planar = To.bezier(self.ctrlpoints)
 
     def derivate(self, times: Optional[int] = 1) -> Segment:
         """
@@ -194,7 +194,8 @@ class Segment:
         """
         if not Is.integer(times) or times <= 0:
             raise ValueError(f"Times must be integer >= 1, not {times}")
-        newplanar = derivate(Bezier(self.ctrlpoints), times)
+        planar: IAnalytic = To.bezier(self.ctrlpoints)
+        newplanar: IAnalytic = planar.derivate(times)
         return self.__class__(newplanar)
 
     def box(self) -> Box:
@@ -426,15 +427,19 @@ def compute_length(segment: Segment) -> Real:
     """
     Computes the length of the jordan curve
     """
+    domain = (0, 1)
+    xfunc, yfunc = extract_xyfunctions(segment)
+    dpsquare: IAnalytic = xfunc.derivate() ** 2 + yfunc.derivate() ** 2
+    assert Is.analytic(dpsquare)
+    if dpsquare == dpsquare(0):  # Check if it's constant
+        return (domain[1] - domain[0]) * Math.sqrt(dpsquare(0))
     integrator = IntegratorFactory.clenshaw_curtis(3)
     adaptative = AdaptativeIntegrator(integrator, 1e-9, 12)
 
-    dsegment = segment.derivate()
-
     def function(node):
-        return abs(dsegment(node))
+        return Math.sqrt(dpsquare(node))
 
-    return adaptative.integrate(function, (0, 1))
+    return adaptative.integrate(function, domain)
 
 
 def segment_self_intersect(segment: Segment) -> bool:
@@ -444,10 +449,28 @@ def segment_self_intersect(segment: Segment) -> bool:
 
 def clean_segment(segment: Segment) -> Segment:
     """Reduces at maximum the degree of the bezier curve"""
-    newplanar = clean_bezier(Bezier(segment.ctrlpoints))
+    newplanar = To.bezier(segment.ctrlpoints)
     if newplanar.degree == segment.degree:
         return segment
     return Segment(tuple(newplanar))
+
+
+def extract_xyfunctions(segment: Segment) -> Tuple[IAnalytic, IAnalytic]:
+    """
+    Extracts the analytic functions of x(t) and y(t) that defines the segment
+
+    Example
+    -------
+    >>> segment = Segment([(-3, 2), (7, -1)])
+    >>> xfunc, yfunc = extract_xyfunctions(segment)
+    >>> xfunc
+    -3 + 10 * t
+    >>> yfunc
+    2 - 3 * t
+    """
+    xfunc: IAnalytic = To.bezier(pt[0] for pt in segment.ctrlpoints)
+    yfunc: IAnalytic = To.bezier(pt[1] for pt in segment.ctrlpoints)
+    return xfunc, yfunc
 
 
 def is_segment(obj: object) -> bool:

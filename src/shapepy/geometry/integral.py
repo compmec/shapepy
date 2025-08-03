@@ -8,14 +8,12 @@ from typing import Optional, Union
 
 import numpy as np
 
-from ..scalar.bezier import Bezier, bezier2polynomial
-from ..scalar.calculus import derivate, integrate
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Math
 from ..tools import Is
 from .jordancurve import JordanCurve
 from .point import Point2D
-from .segment import Segment
+from .segment import Segment, extract_xyfunctions
 
 
 class IntegrateSegment:
@@ -31,15 +29,15 @@ class IntegrateSegment:
         I = int_D x^expx * y^expy * dA
 
         """
-        assert Is.segment(curve)
 
-        xfunc = bezier2polynomial(Bezier(pt[0] for pt in curve.ctrlpoints))
-        yfunc = bezier2polynomial(Bezier(pt[1] for pt in curve.ctrlpoints))
-
-        poly = (xfunc**expx) * (yfunc**expy)
-        poly *= xfunc * derivate(yfunc) - yfunc * derivate(xfunc)
-        poly = integrate(poly)
-        return (poly(1) - poly(0)) / (expx + expy + 2)
+        xfunc, yfunc = extract_xyfunctions(curve)
+        assert Is.analytic(xfunc)
+        assert Is.analytic(yfunc)
+        pcrossdp = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
+        function = (xfunc**expx) * (yfunc**expy) * pcrossdp
+        assert Is.analytic(function)
+        ipoly = function.integrate()
+        return (ipoly(1) - ipoly(0)) / (expx + expy + 2)
 
     @staticmethod
     def winding_number(

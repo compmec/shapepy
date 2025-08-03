@@ -1,22 +1,23 @@
+from fractions import Fraction as frac
+
 import numpy as np
 import pytest
 
-from shapepy.scalar.bezier import (
+from shapepy.analytic.bezier import (
     Bezier,
     bezier2polynomial,
     bezier_caract_matrix,
-    clean_bezier,
     inverse_caract_matrix,
     polynomial2bezier,
     split,
 )
-from shapepy.scalar.polynomial import Polynomial
+from shapepy.analytic.polynomial import Polynomial
 
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
-        "tests/scalar/test_polynomial.py::test_all",
+        "tests/analytic/test_polynomial.py::test_all",
     ],
     scope="session",
 )
@@ -303,12 +304,74 @@ def test_conversions():
             assert bezier == Bezier(ctrlpoints)
 
 
+@pytest.mark.order(3)
+@pytest.mark.dependency(
+    depends=[
+        "test_build",
+        "test_degree",
+        "test_evaluate",
+        "test_add",
+        "test_mul",
+    ]
+)
+def test_shift():
+    """
+    BasisFunctions to test if the polynomials coefficients
+    are correctly computed
+    """
+    np.random.seed(0)
+
+    ntests = 100
+    maxdeg = 6
+    tsample = np.linspace(-1, 1, 17)
+    for _ in range(ntests):
+        dega = np.random.randint(0, maxdeg + 1)
+        coefsa = np.random.uniform(-1, 1, dega + 1)
+        beziera = Bezier(coefsa)
+        bezierb = beziera.shift(1)
+        valuesa = beziera(tsample)
+        valuese = bezierb(1 + tsample)
+
+        np.testing.assert_allclose(valuese, valuesa)
+
+
+@pytest.mark.order(3)
+@pytest.mark.dependency(
+    depends=[
+        "test_build",
+        "test_degree",
+        "test_evaluate",
+        "test_add",
+        "test_mul",
+    ]
+)
+def test_scale():
+    """
+    BasisFunctions to test if the polynomials coefficients
+    are correctly computed
+    """
+    np.random.seed(0)
+
+    ntests = 100
+    maxdeg = 6
+    tsample = np.linspace(-1, 1, 17)
+    for _ in range(ntests):
+        dega = np.random.randint(0, maxdeg + 1)
+        coefsa = np.random.uniform(-1, 1, dega + 1)
+        beziera = Bezier(coefsa)
+        bezierb = beziera.scale(2)
+        valuesa = beziera(2 * tsample)
+        valuesb = bezierb(tsample)
+
+        np.testing.assert_allclose(valuesb, valuesa)
+
+
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_matrices"])
 def test_clean():
     ctrlpoints = [1, 2, 3, 4]
     bezier = Bezier(ctrlpoints)
-    assert clean_bezier(bezier) == Bezier([1, 4])
+    assert bezier.clean() == Bezier([1, 4])
 
 
 @pytest.mark.order(4)
@@ -325,6 +388,38 @@ def test_split():
 
 
 @pytest.mark.order(4)
+@pytest.mark.dependency(depends=["test_build"])
+def test_numpy_array():
+    degree = 3
+    coefs = np.zeros((degree + 1, 3), dtype="int64")
+    bezier = Bezier(coefs)
+    assert bezier.degree == 3
+    assert tuple(bezier[0]) == (0, 0, 0)
+    assert tuple(bezier[1]) == (0, 0, 0)
+    assert tuple(bezier[2]) == (0, 0, 0)
+    assert tuple(bezier[3]) == (0, 0, 0)
+    str(bezier)
+    repr(bezier)
+
+    coefs = ((3, 2), (-4, 1), (1, -3))
+    coefs = np.array(coefs, dtype="int64")
+    bezier = Bezier(coefs)
+    assert bezier.degree == 2
+    assert tuple(bezier[0]) == (3, 2)
+    assert tuple(bezier[1]) == (-4, 1)
+    assert tuple(bezier[2]) == (1, -3)
+    str(bezier)
+    repr(bezier)
+
+    square = bezier @ bezier
+    print(": - ", tuple(square))
+    assert square.degree == 4
+    assert square == Bezier([13, -10, frac(31, 3), -7, 10])
+    point = np.array([2, 1], dtype="int64")
+    assert bezier @ point == Bezier([8, -7, -1])
+
+
+@pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
         "test_build",
@@ -338,8 +433,11 @@ def test_split():
         "test_mul",
         "test_print",
         "test_conversions",
+        "test_scale",
+        "test_shift",
         "test_clean",
         "test_split",
+        "test_numpy_array",
     ]
 )
 def test_all():

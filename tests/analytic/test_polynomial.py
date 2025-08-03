@@ -1,7 +1,7 @@
 import numpy as np
 import pytest
 
-from shapepy.scalar.polynomial import Polynomial, scale, shift
+from shapepy.analytic.polynomial import Polynomial
 
 
 @pytest.mark.order(3)
@@ -262,7 +262,7 @@ def test_shift():
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         polya = Polynomial(coefsa)
-        polyb = shift(polya, 1)
+        polyb = polya.shift(1)
         valuesa = polya(tsample)
         valuese = polyb(1 + tsample)
 
@@ -293,7 +293,7 @@ def test_scale():
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
         polya = Polynomial(coefsa)
-        polyb = scale(polya, 2)
+        polyb = polya.scale(2)
         valuesa = polya(2 * tsample)
         valuesb = polyb(tsample)
 
@@ -322,17 +322,28 @@ def test_numpy_array():
     degree = 3
     coefs = np.zeros((degree + 1, 3), dtype="int64")
     poly = Polynomial(coefs)
-    assert poly.degree == 0
+    assert poly.degree == 3
     assert tuple(poly[0]) == (0, 0, 0)
+    assert tuple(poly[1]) == (0, 0, 0)
+    assert tuple(poly[2]) == (0, 0, 0)
+    assert tuple(poly[3]) == (0, 0, 0)
+    assert poly.clean().degree == 0
     str(poly)
     repr(poly)
 
     coefs = ((3, 2), (-4, 1), (1, -3))
     coefs = np.array(coefs, dtype="int64")
     poly = Polynomial(coefs)
+    assert poly.degree == 2
+    assert tuple(poly[0]) == (3, 2)
+    assert tuple(poly[1]) == (-4, 1)
+    assert tuple(poly[2]) == (1, -3)
     str(poly)
     repr(poly)
 
+    coefs = np.array(coefs, dtype="int64")
+    poly = Polynomial(coefs)
+    assert poly.degree == 2
     square = poly @ poly
     assert square.degree == 4
     assert square == Polynomial([13, -20, 11, -14, 10])
@@ -353,6 +364,7 @@ def test_numpy_array():
         "test_pow",
         "test_shift",
         "test_scale",
+        "test_numpy_array",
     ]
 )
 def test_all():
