@@ -74,16 +74,19 @@ class TestQuadraticJordan:
         curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
         jordana = FactoryJordan.spline_curve(curvea)
+        curvea = jordana.piecewise
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = FactoryJordan.spline_curve(curveb)
+        curveb = jordanb.piecewise
 
-        good = [(0, 0, 1 / 4, 1 / 4), (0, 0, 3 / 4, 3 / 4)]
         test = jordana & jordanb
-        test = np.array(test, dtype="float64")
-        assert np.all(test == good)
+        assert test.all_knots[id(curvea)] == {0, 0.25, 0.75, 1, 2}
+        assert test.all_knots[id(curveb)] == {0, 0.25, 0.75, 1, 2}
+        assert test.all_subsets[id(curvea)] == {0.25, 0.75}
+        assert test.all_subsets[id(curveb)] == {0.25, 0.75}
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)
@@ -103,17 +106,20 @@ class TestQuadraticJordan:
         curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
         jordana = FactoryJordan.spline_curve(curvea)
+        piecea = jordana.piecewise
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         # pointsb = np.array(pointsb, dtype="float64")
         curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = FactoryJordan.spline_curve(curveb)
+        pieceb = jordanb.piecewise
 
-        good = [(0, 0, 0.25, 0.25), (0, 0, 0.75, 0.75)]
         test = jordana & jordanb
-        test = np.array(test, dtype="float64")
-        np.testing.assert_allclose(test, good)
+        assert test.all_knots[id(piecea)] == {0, 0.25, 0.75, 1, 2}
+        assert test.all_knots[id(pieceb)] == {0, 0.25, 0.75, 1, 2}
+        assert test.all_subsets[id(piecea)] == {0.25, 0.75}
+        assert test.all_subsets[id(pieceb)] == {0.25, 0.75}
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)
