@@ -26,9 +26,10 @@ from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
 from ..tools import Is, To, vectorize
+from .base import IGeometricCurve
 
 
-class Segment:
+class Segment(IGeometricCurve):
     """
     Defines a planar curve in the plane,
     that contains a bezier curve inside it
@@ -39,6 +40,7 @@ class Segment:
             raise ValueError("Control points must be iterable")
         self.__length = None
         self.ctrlpoints = list(map(To.point, ctrlpoints))
+        self.__knots = (To.rational(0, 1), To.rational(1, 1))
 
     def __or__(self, other: Segment) -> Segment:
         """Computes the union of two bezier curves"""
@@ -76,7 +78,7 @@ class Segment:
         return self.__class__(finalcurve.ctrlpoints)
 
     def __str__(self) -> str:
-        msg = f"Planar curve of degree {self.degree} and "
+        msg = f"Segment of degree {self.degree} and "
         msg += f"control points {self.ctrlpoints}"
         return msg
 
@@ -136,6 +138,10 @@ class Segment:
         if self.__length is None:
             self.__length = compute_length(self)
         return self.__length
+
+    @property
+    def knots(self) -> Tuple[Real, ...]:
+        return self.__knots
 
     @property
     def ctrlpoints(self) -> Tuple[Point2D, ...]:
