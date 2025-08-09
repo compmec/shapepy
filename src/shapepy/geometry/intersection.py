@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from typing import Dict, Iterable, Set, Tuple
+from typing import Dict, Iterable, Set, Tuple, Union
 
 import rbool
 
@@ -22,16 +22,37 @@ from .segment import Segment
 
 
 class GeometricIntersectionCurves:
+    """
+    Class that stores and computes the intersection between some curves
 
-    def __init__(self, curves: Iterable[IGeometricCurve]):
+    It's a lazy evaluator: it only computes the intersections, which is
+    a heavy tank when requested
+
+    It stores inside 'curves' the a
+    """
+
+    def __init__(
+        self,
+        curves: Iterable[IGeometricCurve],
+        pairs: Union[None, Iterable[Tuple[int, int]]] = None,
+    ):
         curves = tuple(curves)
         if not all(Is.instance(curve, IGeometricCurve) for curve in curves):
             raise TypeError
+        if pairs is None:
+            pairs: Set[Tuple[int, int]] = set()
+            for i in range(len(curves)):
+                for j in range(i + 1, len(curves)):
+                    pairs.add((i, j))
+        else:
+            pairs = ((i, j) if i < j else (j, i) for i, j in pairs)
+            pairs = set(map(tuple, pairs))
+        self.__pairs = pairs
         self.__curves = curves
         self.__all_knots = None
         self.__all_subsets = None
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover  # Debug only
         intercurves = {id(curve): curve for curve in self.__curves}
         msgs = ["Curves:"]
         for i, curve in enumerate(intercurves.values()):
@@ -42,24 +63,60 @@ class GeometricIntersectionCurves:
                 msgs.append(f"        subset: {self.__all_subsets[id(curve)]}")
         return "\n".join(msgs)
 
-    def __repr__(self) -> str:
-        return str(self)
+    @property
+    def pairs(self) -> Iterable[Tuple[int, int]]:
+        """
+        Gives the pairs to be used to compute the intersection
+        For example: suppose there are 4 curves and
+        pairs = [(0, 1), (0, 2), (1, 3), (2, 3)]
+
+        That means, only will be computed
+        * curves[0] & curves[1]
+        * curves[0] & curves[2]
+        * curves[1] & curves[3]
+        * curves[2] & curves[3]
+        And these pairs will not be computed
+        * curves[0] & curves[3]
+        * curves[1] & curves[2]
+        """
+        return self.__pairs
 
     @property
     def curves(self) -> Tuple[IGeometricCurve, ...]:
         """
-        Gives the curves of intersections
+        Gives the curves that will be used to compute the intersection
         """
         return self.__curves
 
     @property
     def all_subsets(self) -> Dict[int, rbool.SubSetR1]:
+        """
+        A dictionnary that contains, for each curve,
+        the parameters of that curve that are shared with other curve
+
+        For example, if curves[0] intersects curves[1]
+        with parameters ui, vj, that means
+        * curves[0](ui) = curves[1](vj)
+        And,
+        * all_subsets[id(curves[0])] contains ui
+        * all_subsets[id(curves[1])] contains vj
+        """
         if self.__all_subsets is None:
             self.evaluate()
         return self.__all_subsets
 
     @property
     def all_knots(self) -> Dict[int, Set[Real]]:
+        """
+        A dictionnary that contais, for each curve,
+        the knots that intersects any other curve.
+
+        It's similar to all_subsets, but it stores the
+        usual knots of the given curve,
+        and all_subsets loses the information that a curve
+        should break at some given parameter if
+        another curve overlaps the first one
+        """
         if self.__all_knots is None:
             self.evaluate()
         return self.__all_knots
@@ -70,14 +127,16 @@ class GeometricIntersectionCurves:
         """
         self.__all_knots = {id(c): set(c.knots) for c in self.curves}
         self.__all_subsets = {id(c): rbool.Empty() for c in self.curves}
-        for i, curvei in enumerate(self.curves):
-            for curvej in self.curves[i + 1 :]:
-                self.__evaluate_two(curvei, curvej)
+        for i, j in self.pairs:
+            self.__evaluate_two(self.curves[i], self.curves[j])
 
     def __evaluate_two(self, curvea: IGeometricCurve, curveb: IGeometricCurve):
         """
         Private function two compute the intersection between two curves
         """
+        if id(curvea) == id(curveb):  # Check if curves are equal
+            self.all_subsets[id(curvea)] |= [curvea.knots[0], curveb.knots[-1]]
+            return
         if curvea.box() & curveb.box() is None:
             return
         if Is.piecewise(curvea) and Is.piecewise(curveb):
