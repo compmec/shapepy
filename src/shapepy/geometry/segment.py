@@ -78,9 +78,7 @@ class Segment(IGeometricCurve):
         return self.__class__(finalcurve.ctrlpoints)
 
     def __str__(self) -> str:
-        msg = f"Segment of degree {self.degree} and "
-        msg += f"control points {self.ctrlpoints}"
-        return msg
+        return f"Bezier Segment {tuple(self.ctrlpoints)}"
 
     def __repr__(self) -> str:
         msg = f"Segment (deg {self.degree})"
@@ -193,10 +191,11 @@ class Segment(IGeometricCurve):
         self.ctrlpoints = (points[i] for i in range(self.degree, -1, -1))
         return self
 
-    def split(self, nodes: Tuple[float]) -> Tuple[Segment]:
+    def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
         """
         Splits the curve into more segments
         """
+        nodes = sorted(nodes)
         beziers = split(self.__planar, nodes)
         return tuple(map(Segment, beziers))
 

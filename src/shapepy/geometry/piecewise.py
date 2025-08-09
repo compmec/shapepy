@@ -35,6 +35,14 @@ class PiecewiseCurve(IGeometricCurve):
         self.__segments = segments
         self.__knots = knots
 
+    def __str__(self):
+        msgs = []
+        for i, segmenti in enumerate(self.__segments):
+            interval = [self.knots[i], self.knots[i + 1]]
+            msg = f"{interval}: {segmenti}"
+            msgs.append(msg)
+        return r"{" + ", ".join(msgs) + r"}"
+
     @property
     def knots(self) -> Tuple[Real]:
         """
@@ -67,6 +75,17 @@ class PiecewiseCurve(IGeometricCurve):
     def span(self, node: Real) -> Union[int, None]:
         """
         Finds the index of the node
+
+        Example
+        -------
+        >>> piecewise.knots
+        (0, 1, 5, 6, 7)
+        >>> piecewise.span(0)
+        0  # It's inside [0, 1)
+        >>> piecewise.span(1)
+        1  # It's inside [1, 5)
+        >>> piecewise.span(2)
+        1  # It's inside [1, 5)
         """
         if not Is.real(node):
             raise ValueError

@@ -379,7 +379,7 @@ class JordanCurve:
     def segments(self, other: Iterable[Segment]):
         piecewise = PiecewiseCurve(other)
         if not piecewise_is_closed(piecewise):
-            raise ValueError
+            raise ValueError(f"Given piecewise is not closed: {piecewise}")
         if piecewise_self_intersect(piecewise):
             raise ValueError
         self.__piecewise = clean_piecewise(piecewise)

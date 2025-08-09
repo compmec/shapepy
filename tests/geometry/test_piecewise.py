@@ -77,12 +77,29 @@ def test_evaluate():
 
 
 @pytest.mark.order(14)
+@pytest.mark.dependency(depends=["test_build"])
+def test_print():
+    points = [
+        ((0, 0), (1, 0)),
+        ((1, 0), (1, 1)),
+        ((1, 1), (0, 1)),
+        ((0, 1), (0, 0)),
+    ]
+    knots = range(len(points) + 1)
+    segments = tuple(map(Segment, points))
+    piecewise = PiecewiseCurve(segments, knots)
+    str(piecewise)
+    repr(piecewise)
+
+
+@pytest.mark.order(14)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
         "test_build",
         "test_box",
         "test_evaluate",
+        "test_print",
     ]
 )
 def test_all():
