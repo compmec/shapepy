@@ -12,15 +12,17 @@ from __future__ import annotations
 import abc
 from copy import copy
 from fractions import Fraction
-from typing import Any, Optional, Tuple, Union
+from typing import Any, Iterable, Optional, Tuple, Union
 
 import numpy as np
+from rbool import Empty
 
 from shapepy.geometry.box import Box
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D
 
 from ..geometry.integral import IntegrateJordan
+from ..geometry.intersection import GeometricIntersectionCurves
 from ..tools import Is, To
 
 
@@ -49,25 +51,26 @@ class FollowPath:
     """
 
     @staticmethod
-    def split_two_jordans(jordana: JordanCurve, jordanb: JordanCurve):
+    def split_on_intersection(
+        all_group_jordans: Iterable[Iterable[JordanCurve]],
+    ):
         """
         Find the intersections between two jordan curves and call split on the
         nodes which intersects
         """
-        assert Is.jordan(jordana)
-        assert Is.jordan(jordanb)
-        if jordana.box() & jordanb.box() is None:
-            return
-        all_positions = (set(), set())
-        inters = jordana & jordanb
-        for ai, bj, ui, vj in inters:
-            all_positions[0].add((ai, ui))
-            all_positions[1].add((bj, vj))
-        all_positions = [tuple(sorted(nodes)) for nodes in all_positions]
-        for positions, jordan in zip(all_positions, (jordana, jordanb)):
-            indexs = [position[0] for position in positions]
-            nodes = [position[1] for position in positions]
-            jordan.split(indexs, nodes)
+        intersection = GeometricIntersectionCurves([])
+        all_group_jordans = tuple(map(tuple, all_group_jordans))
+        for i, jordansi in enumerate(all_group_jordans):
+            for j in range(i + 1, len(all_group_jordans)):
+                jordansj = all_group_jordans[j]
+                for jordana in jordansi:
+                    for jordanb in jordansj:
+                        intersection |= jordana & jordanb
+        intersection.evaluate()
+        for jordans in all_group_jordans:
+            for jordan in jordans:
+                piece = jordan.piecewise
+                piece.snap(intersection.all_knots[id(piece)])
 
     @staticmethod
     def pursue_path(
@@ -249,9 +252,7 @@ class FollowPath:
         """
         assert Is.instance(shapea, BaseShape)
         assert Is.instance(shapeb, BaseShape)
-        for jordana in shapea.jordans:
-            for jordanb in shapeb.jordans:
-                FollowPath.split_two_jordans(jordana, jordanb)
+        FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
         indexs = FollowPath.midpoints_shapes(
             shapea, shapeb, closed=True, inside=False
         )
@@ -267,9 +268,7 @@ class FollowPath:
         """
         assert Is.instance(shapea, BaseShape)
         assert Is.instance(shapeb, BaseShape)
-        for jordana in shapea.jordans:
-            for jordanb in shapeb.jordans:
-                FollowPath.split_two_jordans(jordana, jordanb)
+        FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
         indexs = FollowPath.midpoints_shapes(
             shapea, shapeb, closed=False, inside=True
         )
@@ -814,23 +813,18 @@ class SimpleShape(DefinedShape):
     def _contains_jordan(
         self, jordan: JordanCurve, boundary: Optional[bool] = True
     ) -> bool:
-        for point in jordan.points(0):
-            if not self.contains_point(point, boundary):
-                return False
+        piecewise = jordan.piecewise
+        vertices = map(piecewise, piecewise.knots)
+        if not all(map(self.contains_point, vertices)):
+            return False
         inters = jordan & self.jordans[0]
-        uvals = {}
-        for a, _, u, _ in inters:
-            if a not in uvals:
-                uvals[a] = set()
-            uvals[a].add(u)
-        for a, us in uvals.items():
-            us = sorted(us)
-            umids = tuple((u0 + u1) / 2 for u0, u1 in zip(us[:-1], us[1:]))
-            points = jordan.segments[a](umids)
-            for point in points:
-                if not self.contains_point(point, boundary):
-                    return False
-        return True
+        inters.evaluate()
+        if inters.all_subsets[id(piecewise)] is not Empty():
+            return True
+        knots = sorted(inters.all_knots[id(jordan.piecewise)])
+        midknots = ((k0 + k1) / 2 for k0, k1 in zip(knots, knots[1:]))
+        midpoints = map(piecewise, midknots)
+        return all(map(self.contains_point, midpoints))
 
     def _contains_shape(self, other: DefinedShape) -> bool:
         assert Is.instance(other, DefinedShape)
