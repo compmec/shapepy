@@ -153,6 +153,19 @@ class GeometricIntersectionCurves:
         self.all_subsets[id(curveb)] |= subsetb
         self.all_knots[id(curveb)] |= set(rbool.extract_knots(subsetb))
 
+    def __or__(
+        self, other: GeometricIntersectionCurves
+    ) -> GeometricIntersectionCurves:
+        n = len(self.curves)
+        newcurves = list(self.curves) + list(other.curves)
+        newparis = list(self.pairs)
+        for i, j in other.pairs:
+            newparis.append((i + n, j + n))
+        for i in range(len(self.curves)):
+            for j in range(len(other.curves)):
+                newparis.append((i, n + j))
+        return GeometricIntersectionCurves(newcurves, newparis)
+
 
 def segment_and_segment(
     curvea: IGeometricCurve, curveb: IGeometricCurve
