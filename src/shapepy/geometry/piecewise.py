@@ -4,6 +4,7 @@ Defines the piecewise curve class
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Iterable, Tuple, Union
 
 from ..scalar.reals import Real
@@ -86,6 +87,38 @@ class PiecewiseCurve(IGeometricCurve):
         for bezier in self:
             box |= bezier.box()
         return box
+
+    def snap(self, nodes: Iterable[Real]):
+        """
+        Creates an opening in the piecewise curve
+
+        Example
+        >>> piecewise.knots
+        (0, 1, 2, 3)
+        >>> piecewise.snap([0.5, 1.2])
+        >>> piecewise.knots
+        (0, 0.5, 1, 1.2, 2, 3)
+        """
+        nodes = set(map(To.finite, nodes)) - set(self.knots)
+        spansnodes = defaultdict(set)
+        for node in nodes:
+            span = self.span(node)
+            if span is not None:
+                spansnodes[span].add(node)
+        if len(spansnodes) == 0:
+            return
+        newsegments = []
+        for i, segmenti in enumerate(self):
+            if i not in spansnodes:
+                newsegments.append(segmenti)
+                continue
+            knota, knotb = self.knots[i], self.knots[i + 1]
+            unit_nodes = (
+                (knot - knota) / (knotb - knota) for knot in spansnodes[i]
+            )
+            newsegments += list(segmenti.split(unit_nodes))
+        self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
+        self.__segments = tuple(newsegments)
 
     def __call__(self, node: float) -> Point2D:
         index = self.span(node)
