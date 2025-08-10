@@ -139,13 +139,14 @@ class PiecewiseCurve(IGeometricCurve, IParametrizedCurve):
         self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
         self.__segments = tuple(newsegments)
 
-    def __call__(self, node: float) -> Point2D:
+    def __call__(self, node: float, derivate: int = 0) -> Point2D:
         index = self.span(node)
         if index is None:
             raise ValueError(f"Node {node} is out of bounds")
         knota, knotb = self.knots[index], self.knots[index + 1]
         unitparam = (node - knota) / (knotb - knota)
-        return self[index](unitparam)
+        segment = self[index]
+        return segment(unitparam, derivate)
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""

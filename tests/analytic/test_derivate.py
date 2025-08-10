@@ -37,6 +37,11 @@ def test_polynomial():
     assert poly.derivate(2) == Polynomial([2, 6, 12])
     assert poly.derivate(3) == Polynomial([6, 24])
 
+    assert poly(0, 1) == 1
+    assert poly(1, 1) == 10
+    assert poly(0, 2) == 2
+    assert poly(1, 2) == 20
+
 
 @pytest.mark.order(9)
 @pytest.mark.dependency(depends=["test_begin"])
@@ -53,6 +58,9 @@ def test_bezier():
     assert bezier.derivate(1) == 0
     assert bezier.derivate(2) == 0
     assert bezier.derivate(3) == 0
+
+    assert bezier(0, 1) == 0
+    assert bezier(1, 1) == 0
 
 
 @pytest.mark.order(9)

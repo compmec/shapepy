@@ -45,7 +45,7 @@ class IAnalytic(ABC):
     """
 
     @abstractmethod
-    def __call__(self, node: Real) -> Real:
+    def __call__(self, node: Real, derivate: int = 0) -> Real:
         raise NotImplementedError
 
     @abstractmethod
