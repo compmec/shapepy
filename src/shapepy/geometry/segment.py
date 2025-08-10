@@ -60,14 +60,29 @@ class Segment(IGeometricCurve, IParametrizedCurve):
         point = To.point(point)
         if point not in self.box():
             return False
-        xfunc, yfunc = extract_xyfunctions(self)
-        dist_square = (xfunc - point[0]) ** 2 + (yfunc - point[1]) ** 2
+        dist_square = (self.xfunc - point[0]) ** 2 + (
+            self.yfunc - point[1]
+        ) ** 2
         return find_minimum(dist_square, [0, 1]) < 1e-12
 
     @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Point2D:
         planar = To.bezier(self.ctrlpoints)
         return planar(node, derivate)
+
+    @property
+    def xfunc(self) -> IAnalytic:
+        """
+        Gives the analytic function x(t) from p(t) = (x(t), y(t))
+        """
+        return To.bezier(pt[0] for pt in self.ctrlpoints)
+
+    @property
+    def yfunc(self) -> IAnalytic:
+        """
+        Gives the analytic function y(t) from p(t) = (x(t), y(t))
+        """
+        return To.bezier(pt[1] for pt in self.ctrlpoints)
 
     @property
     def degree(self) -> int:
@@ -163,8 +178,9 @@ def compute_length(segment: Segment) -> Real:
     Computes the length of the jordan curve
     """
     domain = (0, 1)
-    xfunc, yfunc = extract_xyfunctions(segment)
-    dpsquare: IAnalytic = xfunc.derivate() ** 2 + yfunc.derivate() ** 2
+    dpsquare: IAnalytic = (
+        segment.xfunc.derivate() ** 2 + segment.yfunc.derivate() ** 2
+    )
     assert Is.analytic(dpsquare)
     if dpsquare == dpsquare(0):  # Check if it's constant
         return (domain[1] - domain[0]) * Math.sqrt(dpsquare(0))
@@ -188,24 +204,6 @@ def clean_segment(segment: Segment) -> Segment:
     if newplanar.degree == segment.degree:
         return segment
     return Segment(tuple(newplanar))
-
-
-def extract_xyfunctions(segment: Segment) -> Tuple[IAnalytic, IAnalytic]:
-    """
-    Extracts the analytic functions of x(t) and y(t) that defines the segment
-
-    Example
-    -------
-    >>> segment = Segment([(-3, 2), (7, -1)])
-    >>> xfunc, yfunc = extract_xyfunctions(segment)
-    >>> xfunc
-    -3 + 10 * t
-    >>> yfunc
-    2 - 3 * t
-    """
-    xfunc: IAnalytic = To.bezier(pt[0] for pt in segment.ctrlpoints)
-    yfunc: IAnalytic = To.bezier(pt[1] for pt in segment.ctrlpoints)
-    return xfunc, yfunc
 
 
 def is_segment(obj: object) -> bool:

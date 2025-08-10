@@ -17,12 +17,7 @@ from .base import Future, IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve, clean_piecewise
 from .point import Point2D
-from .segment import (
-    Segment,
-    clean_segment,
-    extract_xyfunctions,
-    segment_self_intersect,
-)
+from .segment import Segment, clean_segment, segment_self_intersect
 
 
 class JordanCurve(IGeometricCurve):
@@ -459,9 +454,8 @@ def compute_area(jordan: JordanCurve) -> Real:
     """
     total = 0
     for segment in jordan.segments:
-        xfunc, yfunc = extract_xyfunctions(segment)
-        assert Is.analytic(xfunc)
-        assert Is.analytic(yfunc)
+        xfunc = segment.xfunc
+        yfunc = segment.yfunc
         poly = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
         assert Is.analytic(poly)
         ipoly = poly.integrate()

@@ -13,7 +13,7 @@ from ..scalar.reals import Math
 from ..tools import Is
 from .jordancurve import JordanCurve
 from .point import Point2D
-from .segment import Segment, extract_xyfunctions
+from .segment import Segment
 
 
 class IntegrateSegment:
@@ -29,10 +29,9 @@ class IntegrateSegment:
         I = int_D x^expx * y^expy * dA
 
         """
-
-        xfunc, yfunc = extract_xyfunctions(curve)
-        assert Is.analytic(xfunc)
-        assert Is.analytic(yfunc)
+        assert Is.instance(curve, Segment)
+        xfunc = curve.xfunc
+        yfunc = curve.yfunc
         pcrossdp = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
         function = (xfunc**expx) * (yfunc**expy) * pcrossdp
         assert Is.analytic(function)
