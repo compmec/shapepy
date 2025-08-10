@@ -8,7 +8,7 @@ from numbers import Real
 from typing import Iterable, List, Union
 
 from ..scalar.reals import Math
-from ..tools import Is, To
+from ..tools import Is, To, vectorize
 from .base import BaseAnalytic
 
 
@@ -83,10 +83,18 @@ class Polynomial(BaseAnalytic):
                 coefs[i + j] += coefi @ coefj
         return self.__class__(coefs)
 
+    @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Real:
         if derivate == 0:
+            node = To.real(node)
             if self.degree == 0:
                 return self[0]
+            if Is.infinity(node):
+                return self[self.degree] * (
+                    Math.NEGINF
+                    if self.degree % 2 and node == Math.NEGINF
+                    else Math.POSINF
+                )
             result: Real = 0 * self[0]
             for coef in self[::-1]:
                 result = node * result + coef

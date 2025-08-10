@@ -16,6 +16,7 @@ from shapepy.geometry.segment import Segment, clean_segment
         "tests/analytic/test_polynomial.py::test_all",
         "tests/analytic/test_derivate.py::test_all",
         "tests/analytic/test_integrate.py::test_all",
+        "tests/analytic/test_tools.py::test_all",
         "tests/geometry/test_point.py::test_all",
         "tests/geometry/test_box.py::test_all",
     ],

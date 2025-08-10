@@ -1,7 +1,10 @@
+import random
+
 import numpy as np
 import pytest
 
 from shapepy.analytic.polynomial import Polynomial
+from shapepy.scalar.reals import Math
 
 
 @pytest.mark.order(3)
@@ -352,6 +355,33 @@ def test_numpy_array():
 
 
 @pytest.mark.order(3)
+@pytest.mark.dependency(depends=["test_evaluate"])
+def test_infinity_evaluation():
+    for const in range(-10, 11):
+        poly = Polynomial([const])
+        assert poly(Math.NEGINF) == const
+        assert poly(Math.POSINF) == const
+
+    for degree in range(1, 8, 2):
+        subcoefs = list(random.randint(-10, 10) for _ in range(degree))
+        poly = Polynomial(subcoefs + [1])
+        assert poly(Math.NEGINF) == Math.NEGINF
+        assert poly(Math.POSINF) == Math.POSINF
+        poly = Polynomial(subcoefs + [-1])
+        assert poly(Math.NEGINF) == Math.POSINF
+        assert poly(Math.POSINF) == Math.NEGINF
+
+    for degree in range(2, 9, 2):
+        subcoefs = list(random.randint(-10, 10) for _ in range(degree))
+        poly = Polynomial(subcoefs + [1])
+        assert poly(Math.NEGINF) == Math.POSINF
+        assert poly(Math.POSINF) == Math.POSINF
+        poly = Polynomial(subcoefs + [-1])
+        assert poly(Math.NEGINF) == Math.NEGINF
+        assert poly(Math.POSINF) == Math.NEGINF
+
+
+@pytest.mark.order(3)
 @pytest.mark.dependency(
     depends=[
         "test_build",
@@ -365,6 +395,7 @@ def test_numpy_array():
         "test_shift",
         "test_scale",
         "test_numpy_array",
+        "test_infinity_evaluation",
     ]
 )
 def test_all():
