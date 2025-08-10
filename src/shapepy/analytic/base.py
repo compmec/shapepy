@@ -180,4 +180,12 @@ def is_analytic(obj: object) -> bool:
     return Is.instance(obj, IAnalytic)
 
 
+def derivate_analytic(ana: IAnalytic) -> IAnalytic:
+    """
+    Computes the derivative of an Analytic function
+    """
+    assert is_analytic(ana)
+    return ana.derivate()
+
+
 Is.analytic = is_analytic
