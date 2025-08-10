@@ -61,7 +61,7 @@ class FactoryJordan:
         >>> from shapepy import Point2D, JordanCurve
         >>> knotvector = (0, 0, 0, 0.5, 1, 1, 1)
         >>> ctrlpoints = [(0, 0), (4, 0), (0, 3), (0, 0)]
-        >>> ctrlpoints = [Point2D(point
+        >>> ctrlpoints = [cartesian(point
         ) for point in ctrlpoints]
         >>> curve = pynurbs.Curve(knotvector, ctrlpoints)
         >>> jordan = FactoryJordan.spline_curve(curve)
