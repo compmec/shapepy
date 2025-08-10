@@ -15,8 +15,6 @@ from __future__ import annotations
 from copy import copy
 from typing import Iterable, Optional, Tuple
 
-import pynurbs
-
 from ..analytic.base import IAnalytic
 from ..analytic.bezier import split
 from ..scalar.nodes_sample import NodeSampleFactory
@@ -40,41 +38,6 @@ class Segment(IGeometricCurve, IParametrizedCurve):
         self.__length = None
         self.ctrlpoints = list(map(To.point, ctrlpoints))
         self.__knots = (To.rational(0, 1), To.rational(1, 1))
-
-    def __or__(self, other: Segment) -> Segment:
-        """Computes the union of two bezier curves"""
-        assert Is.segment(other)
-        assert self.degree == other.degree
-        assert self.ctrlpoints[-1] == other.ctrlpoints[0]
-        # Last point of first derivative
-        dapt = self.ctrlpoints[-1] - self.ctrlpoints[-2]
-        # First point of first derivative
-        dbpt = other.ctrlpoints[1] - other.ctrlpoints[0]
-        if abs(dapt ^ dbpt) > 1e-6:
-            node = To.rational(1, 2)
-        else:
-            dsumpt = dapt + dbpt
-            denomin = dsumpt @ dsumpt
-            node = dapt @ dsumpt / denomin
-        knotvectora = pynurbs.GeneratorKnotVector.bezier(
-            self.degree, To.rational
-        )
-        knotvectora.scale(node)
-        knotvectorb = pynurbs.GeneratorKnotVector.bezier(
-            other.degree, To.rational
-        )
-        knotvectorb.scale(1 - node).shift(node)
-        newknotvector = tuple(knotvectora) + tuple(
-            knotvectorb[self.degree + 1 :]
-        )
-        finalcurve = pynurbs.Curve(newknotvector)
-        finalcurve.ctrlpoints = tuple(self.ctrlpoints) + tuple(
-            other.ctrlpoints
-        )
-        finalcurve.knot_clean((node,))
-        if finalcurve.degree + 1 != finalcurve.npts:
-            raise ValueError("Union is not a bezier curve!")
-        return self.__class__(finalcurve.ctrlpoints)
 
     def __str__(self) -> str:
         return f"Bezier Segment {tuple(self.ctrlpoints)}"

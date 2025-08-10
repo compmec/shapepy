@@ -13,7 +13,7 @@ import numpy as np
 
 from ..scalar.reals import Real
 from ..tools import Is, To
-from .base import IGeometricCurve
+from .base import Future, IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve, clean_piecewise
 from .point import Point2D
@@ -33,7 +33,6 @@ class JordanCurve(IGeometricCurve):
 
     def __init__(self, segments: Iterable[Segment]):
         self.__area = None
-
         self.segments = segments
 
     def __copy__(self) -> JordanCurve:
@@ -521,29 +520,7 @@ def clean_jordan(jordan: JordanCurve) -> JordanCurve:
     """
     piecewise = clean_piecewise(jordan.piecewise)
     segments = list(piecewise)
-    while True:
-        nsegments = len(segments)
-        for i in range(nsegments):
-            j = (i + 1) % nsegments
-            seg0 = segments[i]
-            seg1 = segments[j]
-            try:
-                start_point = seg0.ctrlpoints[0]
-                end_point = seg1.ctrlpoints[-1]
-                segment = seg0 | seg1
-                segment.ctrlpoints = (
-                    [start_point]
-                    + list(segment.ctrlpoints[1:-1])
-                    + [end_point]
-                )
-                segments[i] = segment
-                segments.pop(j)
-                break  # Can unite
-            except ValueError:
-                pass  # Cannot unite
-        else:  # Cannot unite more segments
-            break
-    piecewise = PiecewiseCurve(segments)
+    piecewise = Future.concatenate(segments)
     return JordanCurve(piecewise)
 
 

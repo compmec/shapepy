@@ -5,7 +5,7 @@ Defines the base class for Geometric curves
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Tuple
+from typing import Iterable, Tuple
 
 from ..scalar.reals import Real
 from .box import Box
@@ -26,6 +26,16 @@ class Future:
         """
         raise NotImplementedError
 
+    @staticmethod
+    def concatenate(
+        curves: Iterable[IParametrizedCurve],
+    ) -> IParametrizedCurve:
+        """Method that computes the concatenation of two curves
+
+        It is overwritten to `concatenate` function in `concatenate.py`
+        """
+        raise NotImplementedError
+
 
 class IParametrizedCurve(ABC):
     """
@@ -42,8 +52,11 @@ class IParametrizedCurve(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, node: Real) -> Point2D:
+    def __call__(self, node: Real, derivate: int = 0) -> Point2D:
         raise NotImplementedError
+
+    def __or__(self, other: IParametrizedCurve) -> IParametrizedCurve:
+        return Future.concatenate((self, other))
 
 
 class IGeometricCurve(ABC):
