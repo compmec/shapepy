@@ -3,6 +3,7 @@ This file contains tests functions to test the module polygon.py
 """
 
 from fractions import Fraction
+from typing import Set
 
 import numpy as np
 import pynurbs
@@ -11,6 +12,30 @@ import pytest
 from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.scalar.reals import To
+
+
+def equal_sets(
+    seta: Set[float], setb: Set[float], tolerance: float = 1e-9
+) -> bool:
+    seta = set(seta)
+    setb = set(setb)
+    lista = sorted(seta - setb)
+    listb = sorted(setb - seta)
+    if len(lista) != len(listb):
+        return False
+    return all(abs(a - b) < tolerance for a, b in zip(lista, listb))
+
+
+def equal_rbool_sets(
+    seta: Set[float], setb: Set[float], tolerance: float = 1e-9
+) -> bool:
+    seta = set(v.internal for v in seta)
+    setb = set(v for v in setb)
+    lista = sorted(seta - setb)
+    listb = sorted(setb - seta)
+    if len(lista) != len(listb):
+        return False
+    return all(abs(a - b) < tolerance for a, b in zip(lista, listb))
 
 
 @pytest.mark.order(16)
@@ -80,10 +105,11 @@ class TestQuadraticJordan:
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = FactoryJordan.spline_curve(curveb)
 
-        good = [(0, 0, 1 / 4, 1 / 4), (0, 0, 3 / 4, 3 / 4)]
         test = jordana & jordanb
-        test = np.array(test, dtype="float64")
-        assert np.all(test == good)
+        assert test.all_knots[id(jordana)] == {0, 0.25, 0.75, 1, 2}
+        assert test.all_knots[id(jordanb)] == {0, 0.25, 0.75, 1, 2}
+        assert test.all_subsets[id(jordana)] == {0.25, 0.75}
+        assert test.all_subsets[id(jordanb)] == {0.25, 0.75}
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)
@@ -99,21 +125,22 @@ class TestQuadraticJordan:
         knotvector = [0.0, 0.0, 0.0, 1.0, 1.0, 2.0, 2.0, 2.0]
 
         pointsa = [(0, -2), (4, 0), (0, 2), (0, 0), (0, -2)]
-        # pointsa = np.array(pointsa, dtype="float64")
+        pointsa = np.array(pointsa, dtype="float64")
         curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
         jordana = FactoryJordan.spline_curve(curvea)
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
-        # pointsb = np.array(pointsb, dtype="float64")
+        pointsb = np.array(pointsb, dtype="float64")
         curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = FactoryJordan.spline_curve(curveb)
 
-        good = [(0, 0, 0.25, 0.25), (0, 0, 0.75, 0.75)]
         test = jordana & jordanb
-        test = np.array(test, dtype="float64")
-        np.testing.assert_allclose(test, good)
+        assert equal_sets(test.all_knots[id(jordana)], {0, 0.25, 0.75, 1, 2})
+        assert equal_sets(test.all_knots[id(jordanb)], {0, 0.25, 0.75, 1, 2})
+        assert equal_rbool_sets(test.all_subsets[id(jordana)], {0.25, 0.75})
+        assert equal_rbool_sets(test.all_subsets[id(jordanb)], {0.25, 0.75})
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)

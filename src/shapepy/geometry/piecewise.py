@@ -4,16 +4,18 @@ Defines the piecewise curve class
 
 from __future__ import annotations
 
+from collections import defaultdict
 from typing import Iterable, Tuple, Union
 
 from ..scalar.reals import Real
 from ..tools import Is, To
+from .base import IGeometricCurve, IParametrizedCurve
 from .box import Box
 from .point import Point2D
 from .segment import Segment, clean_segment
 
 
-class PiecewiseCurve:
+class PiecewiseCurve(IGeometricCurve, IParametrizedCurve):
     """
     Defines a piecewise curve that is the concatenation of several segments.
     """
@@ -32,6 +34,14 @@ class PiecewiseCurve:
             knots = tuple(sorted(map(To.real, knots)))
         self.__segments = segments
         self.__knots = knots
+
+    def __str__(self):
+        msgs = []
+        for i, segmenti in enumerate(self.__segments):
+            interval = [self.knots[i], self.knots[i + 1]]
+            msg = f"{interval}: {segmenti}"
+            msgs.append(msg)
+        return r"{" + ", ".join(msgs) + r"}"
 
     @property
     def knots(self) -> Tuple[Real]:
@@ -65,6 +75,17 @@ class PiecewiseCurve:
     def span(self, node: Real) -> Union[int, None]:
         """
         Finds the index of the node
+
+        Example
+        -------
+        >>> piecewise.knots
+        (0, 1, 5, 6, 7)
+        >>> piecewise.span(0)
+        0  # It's inside [0, 1)
+        >>> piecewise.span(1)
+        1  # It's inside [1, 5)
+        >>> piecewise.span(2)
+        1  # It's inside [1, 5)
         """
         if not Is.real(node):
             raise ValueError
@@ -86,6 +107,38 @@ class PiecewiseCurve:
             box |= bezier.box()
         return box
 
+    def snap(self, nodes: Iterable[Real]):
+        """
+        Creates an opening in the piecewise curve
+
+        Example
+        >>> piecewise.knots
+        (0, 1, 2, 3)
+        >>> piecewise.snap([0.5, 1.2])
+        >>> piecewise.knots
+        (0, 0.5, 1, 1.2, 2, 3)
+        """
+        nodes = set(map(To.finite, nodes)) - set(self.knots)
+        spansnodes = defaultdict(set)
+        for node in nodes:
+            span = self.span(node)
+            if span is not None:
+                spansnodes[span].add(node)
+        if len(spansnodes) == 0:
+            return
+        newsegments = []
+        for i, segmenti in enumerate(self):
+            if i not in spansnodes:
+                newsegments.append(segmenti)
+                continue
+            knota, knotb = self.knots[i], self.knots[i + 1]
+            unit_nodes = (
+                (knot - knota) / (knotb - knota) for knot in spansnodes[i]
+            )
+            newsegments += list(segmenti.split(unit_nodes))
+        self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
+        self.__segments = tuple(newsegments)
+
     def __call__(self, node: float) -> Point2D:
         index = self.span(node)
         if index is None:
@@ -97,117 +150,6 @@ class PiecewiseCurve:
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
-
-    def __and__(
-        self, other: PiecewiseCurve
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        """Computes the intersection of two jordan curves"""
-        return self.intersection(other, equal_beziers=False, end_points=False)
-
-    def __intersection(
-        self, other: PiecewiseCurve
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        """Private method of ``intersection``
-
-        Computes the intersection between ``self`` and ``other``
-        returning a list of [(a0, b0, u0, v0), ...]
-        such self.segments[a0](u0) == other.segments[b0](v0)
-
-        If (ui, vi) == (None, None), it means
-        self.segments[a0] == other.segments[b0]
-
-        """
-        intersections = set()
-        for ai, sbezier in enumerate(self):
-            for bj, obezier in enumerate(other):
-                inters = sbezier & obezier
-                if inters is None:
-                    continue
-                if len(inters) == 0:  # Equal curves
-                    intersections.add((ai, bj, None, None))
-                for ui, vj in inters:
-                    intersections.add((ai, bj, ui, vj))
-        return list(intersections)
-
-    def intersection(
-        self,
-        other: PiecewiseCurve,
-        equal_beziers: bool = True,
-        end_points: bool = True,
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        r"""Computes the intersection between two jordan curves
-
-        Finds the values of (:math:`a^{\star}`, :math:`b^{\star}`,
-        :math:`u^{\star}`, :math:`v^{\star}`) such
-
-        .. math::
-            S_{a^{\star}}(u^{\star}) == O_{b^{\star}}(v^{\star})
-
-        It computes the intersection between each pair of segments
-        from ``self`` and ``other`` and returns the matrix of coefficients
-
-        .. math::
-
-            \begin{bmatrix}
-            a_0 & b_0 & u_0 & v_0 \\
-            a_1 & b_1 & u_1 & v_1 \\
-            \vdots & \vdots & \vdots & \vdots \\
-            a_{n} & b_{n} & u_{n} & v_{n}
-            \end{bmatrix}
-
-        If two bezier curves are equal, then ``u_i = v_i = None``
-
-        * ``0 <= a_i < len(self.segments)``
-        * ``0 <= b_i < len(other.segments)``
-        * ``0 <= u_i <= 1`` or ``None``
-        * ``0 <= v_i <= 1`` or ``None``
-
-        Parameters
-        ----------
-        other : JordanCurve
-            The jordan curve which intersects ``self``
-        equal_beziers : bool, default = True
-            Flag to return (or not) when two segments are equal
-
-            If the flag ``equal_beziers`` are inactive,
-            then will remove when ``(ui, vi) == (None, None)``.
-
-        end_points : bool, default = True
-            Flag to return (or not) when jordans intersect at end points
-
-            If the flag ``end_points`` are inactive,
-            then will remove when ``(ui, vi)`` are
-            ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
-
-        :return: The matrix of coefficients ``[(ai, bi, ui, vi)]``
-                 or an empty tuple in case of non-intersection
-        :rtype: tuple[(int, int, float, float)]
-
-
-        Example use
-        -----------
-        >>> from shapepy import JordanCurve
-        >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
-        >>> jordan_a = FactoryJordan.polygon(vertices_a)
-        >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]
-        >>> jordan_b = FactoryJordan.polygon(vertices_b)
-        >>> jordan_a.intersection(jordan_b)
-        ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
-
-        """
-        assert Is.piecewise(other)
-        intersections = self.__intersection(other)
-        # Filter the values
-        if not equal_beziers:
-            for ai, bi, ui, vi in tuple(intersections):
-                if ui is None:
-                    intersections.remove((ai, bi, ui, vi))
-        if not end_points:
-            for ai, bi, ui, vi in tuple(intersections):
-                if ui is None or (0 < ui < 1) or (0 < vi < 1):
-                    continue
-                intersections.remove((ai, bi, ui, vi))
-        return tuple(sorted(intersections))
 
 
 def clean_piecewise(piecewise: PiecewiseCurve) -> PiecewiseCurve:

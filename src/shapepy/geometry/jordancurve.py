@@ -13,6 +13,7 @@ import numpy as np
 
 from ..scalar.reals import Real
 from ..tools import Is, To
+from .base import IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve, clean_piecewise
 from .point import Point2D
@@ -24,7 +25,7 @@ from .segment import (
 )
 
 
-class JordanCurve:
+class JordanCurve(IGeometricCurve):
     """
     Jordan Curve is an arbitrary closed curve which doesn't intersect itself.
     It stores a list of 'segments', each segment is a bezier curve
@@ -378,19 +379,11 @@ class JordanCurve:
     def segments(self, other: Iterable[Segment]):
         piecewise = PiecewiseCurve(other)
         if not piecewise_is_closed(piecewise):
-            raise ValueError
+            raise ValueError(f"Given piecewise is not closed: {piecewise}")
         if piecewise_self_intersect(piecewise):
             raise ValueError
         self.__piecewise = clean_piecewise(piecewise)
         self.__area = None
-
-    def __and__(
-        self, other: JordanCurve
-    ) -> Tuple[Tuple[int, int, float, float]]:
-        """Computes the intersection of two jordan curves"""
-        if not Is.jordan(other):
-            raise TypeError
-        return self.piecewise & other.piecewise
 
     def __str__(self) -> str:
         max_degree = max(curve.degree for curve in self.segments)

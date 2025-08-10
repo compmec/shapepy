@@ -174,37 +174,50 @@ class TestJordanPolygon:
         vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
         square1 = FactoryJordan.polygon(vertices1)
 
-        equal_squares = tuple()
-        assert square0 & square0 == equal_squares
-        assert square1 & square1 == equal_squares
-        good = [(0, 0, 0.5, 0.5), (3, 3, 0.5, 0.5)]
-        test = np.array(square0 & square1, dtype="float64")
-        assert np.all(test == good)
-        test = np.array(square1 & square0, dtype="float64")
-        assert np.all(test == good)
+        inters = square0 & square0
+        assert inters.all_subsets[id(square0)] == [0, 4]
+        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
+        inters = square1 & square1
+        assert inters.all_subsets[id(square1)] == [0, 4]
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
+
+        inters = square0 & square1
+        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
+        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square1)] == {0.5, 3.5}
+        assert inters.all_knots[id(square1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
 
         vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
         square1 = FactoryJordan.polygon(vertices1)
 
-        assert square0 & square0 == equal_squares
-        assert square1 & square1 == equal_squares
-        good = [(0, 3, 0.5, 0.5), (3, 0, 0.5, 0.5)]
-        test = np.array(square0 & square1, dtype="float64")
-        assert np.all(test == good)
-        test = np.array(square1 & square0, dtype="float64")
-        assert np.all(test == good)
+        inters = square0 & square0
+        assert inters.all_subsets[id(square0)] == [0, 4]
+        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
+        inters = square1 & square1
+        assert inters.all_subsets[id(square1)] == [0, 4]
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
+
+        inters = square0 & square1
+        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
+        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square1)] == {0.5, 3.5}
+        assert inters.all_knots[id(square1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
 
         vertices1 = [(1, -2), (3, 0), (1, 2), (-1, 0)]
         square1 = FactoryJordan.polygon(vertices1)
 
-        assert square0 & square0 == equal_squares
-        assert square1 & square1 == equal_squares
-        good = [(0, 2, 0.5, 0.5), (3, 3, 0.5, 0.5)]
-        test = np.array(square0 & square1, dtype="float64")
-        assert np.all(test == good)
-        good = [(2, 0, 0.5, 0.5), (3, 3, 0.5, 0.5)]
-        test = np.array(square1 & square0, dtype="float64")
-        assert np.all(test == good)
+        inters = square0 & square0
+        assert inters.all_subsets[id(square0)] == [0, 4]
+        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
+        inters = square1 & square1
+        assert inters.all_subsets[id(square1)] == [0, 4]
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
+
+        inters = square0 & square1
+        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
+        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square1)] == {2.5, 3.5}
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 2.5, 3, 3.5, 4}
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
@@ -514,32 +527,6 @@ class TestOthers:
 
     @pytest.mark.order(15)
     @pytest.mark.dependency(depends=["TestOthers::test_begin"])
-    def test_self_intersection(self):
-        points = [(0, 0), (1, 0), (0, 1)]
-        jordana = FactoryJordan.polygon(points)
-        jordanb = FactoryJordan.polygon(points)
-        assert id(jordana) != id(jordanb)
-        inters = jordana & jordanb
-        assert not bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=False, end_points=False
-        )
-        assert not bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=False, end_points=True
-        )
-        assert bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=True, end_points=False
-        )
-        assert bool(inters)
-        inters = jordana.piecewise.intersection(
-            jordanb.piecewise, equal_beziers=True, end_points=True
-        )
-        assert bool(inters)
-
-    @pytest.mark.order(15)
-    @pytest.mark.dependency(depends=["TestOthers::test_begin"])
     def test_clean(self):
         verticesa = [(-1, 0), (0, 0), (1, 0), (0, 1)]
         jordana = FactoryJordan.polygon(verticesa)
@@ -585,7 +572,6 @@ class TestOthers:
         depends=[
             "TestOthers::test_begin",
             "TestOthers::test_print",
-            "TestOthers::test_self_intersection",
             "TestOthers::test_clean",
             "TestOthers::test_equal_divided",
         ]
