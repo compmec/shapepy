@@ -587,6 +587,7 @@ class TestOthers:
         "TestJordanPolygon::test_end",
         "TestTransformationPolygon::test_end",
         "TestIntegrateJordan::test_end",
+        "TestOthers::test_end",
     ]
 )
 def test_all():
