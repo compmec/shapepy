@@ -116,8 +116,8 @@ class Bezier(BaseAnalytic):
         matmulpoly = self.__polynomial @ other
         return polynomial2bezier(matmulpoly)
 
-    def __call__(self, node: Real) -> Real:
-        return self.__polynomial(node)
+    def __call__(self, node: Real, derivate: int = 0) -> Real:
+        return self.__polynomial(node, derivate)
 
     def __str__(self):
         return str(self.__polynomial)

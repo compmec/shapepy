@@ -106,9 +106,9 @@ class Segment(IGeometricCurve, IParametrizedCurve):
         return False
 
     @vectorize(1, 0)
-    def __call__(self, node: Real) -> Point2D:
+    def __call__(self, node: Real, derivate: int = 0) -> Point2D:
         planar = To.bezier(self.ctrlpoints)
-        return planar(node)
+        return planar(node, derivate)
 
     @property
     def degree(self) -> int:

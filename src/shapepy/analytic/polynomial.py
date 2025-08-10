@@ -83,13 +83,15 @@ class Polynomial(BaseAnalytic):
                 coefs[i + j] += coefi @ coefj
         return self.__class__(coefs)
 
-    def __call__(self, node: Real) -> Real:
-        if self.degree == 0:
-            return self[0]
-        result: Real = 0 * self[0]
-        for coef in self[::-1]:
-            result = node * result + coef
-        return result
+    def __call__(self, node: Real, derivate: int = 0) -> Real:
+        if derivate == 0:
+            if self.degree == 0:
+                return self[0]
+            result: Real = 0 * self[0]
+            for coef in self[::-1]:
+                result = node * result + coef
+            return result
+        return self.derivate(derivate)(node)
 
     def __str__(self):
         if self.degree == 0:
