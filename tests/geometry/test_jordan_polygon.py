@@ -173,55 +173,51 @@ class TestJordanPolygon:
         square0 = FactoryJordan.polygon(vertices0)
         vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
         square1 = FactoryJordan.polygon(vertices1)
-        curve0 = square0.piecewise
-        curve1 = square1.piecewise
 
         inters = square0 & square0
-        assert inters.all_subsets[id(curve0)] == [0, 4]
-        assert inters.all_knots[id(curve0)] == {0, 1, 2, 3, 4}
+        assert inters.all_subsets[id(square0)] == [0, 4]
+        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
         inters = square1 & square1
-        assert inters.all_subsets[id(curve1)] == [0, 4]
-        assert inters.all_knots[id(curve1)] == {0, 1, 2, 3, 4}
+        assert inters.all_subsets[id(square1)] == [0, 4]
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
 
         inters = square0 & square1
-        assert inters.all_subsets[id(curve0)] == {0.5, 3.5}
-        assert inters.all_knots[id(curve0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
-        assert inters.all_subsets[id(curve1)] == {0.5, 3.5}
-        assert inters.all_knots[id(curve1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
+        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square1)] == {0.5, 3.5}
+        assert inters.all_knots[id(square1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
 
         vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
         square1 = FactoryJordan.polygon(vertices1)
-        curve1 = square1.piecewise
 
         inters = square0 & square0
-        assert inters.all_subsets[id(curve0)] == [0, 4]
-        assert inters.all_knots[id(curve0)] == {0, 1, 2, 3, 4}
+        assert inters.all_subsets[id(square0)] == [0, 4]
+        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
         inters = square1 & square1
-        assert inters.all_subsets[id(curve1)] == [0, 4]
-        assert inters.all_knots[id(curve1)] == {0, 1, 2, 3, 4}
+        assert inters.all_subsets[id(square1)] == [0, 4]
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
 
         inters = square0 & square1
-        assert inters.all_subsets[id(curve0)] == {0.5, 3.5}
-        assert inters.all_knots[id(curve0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
-        assert inters.all_subsets[id(curve1)] == {0.5, 3.5}
-        assert inters.all_knots[id(curve1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
+        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square1)] == {0.5, 3.5}
+        assert inters.all_knots[id(square1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
 
         vertices1 = [(1, -2), (3, 0), (1, 2), (-1, 0)]
         square1 = FactoryJordan.polygon(vertices1)
-        curve1 = square1.piecewise
 
         inters = square0 & square0
-        assert inters.all_subsets[id(curve0)] == [0, 4]
-        assert inters.all_knots[id(curve0)] == {0, 1, 2, 3, 4}
+        assert inters.all_subsets[id(square0)] == [0, 4]
+        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
         inters = square1 & square1
-        assert inters.all_subsets[id(curve1)] == [0, 4]
-        assert inters.all_knots[id(curve1)] == {0, 1, 2, 3, 4}
+        assert inters.all_subsets[id(square1)] == [0, 4]
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
 
         inters = square0 & square1
-        assert inters.all_subsets[id(curve0)] == {0.5, 3.5}
-        assert inters.all_knots[id(curve0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
-        assert inters.all_subsets[id(curve1)] == {2.5, 3.5}
-        assert inters.all_knots[id(curve1)] == {0, 1, 2, 2.5, 3, 3.5, 4}
+        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
+        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(square1)] == {2.5, 3.5}
+        assert inters.all_knots[id(square1)] == {0, 1, 2, 2.5, 3, 3.5, 4}
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)

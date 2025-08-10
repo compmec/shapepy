@@ -26,10 +26,10 @@ from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
 from ..tools import Is, To, vectorize
-from .base import IGeometricCurve
+from .base import IGeometricCurve, IParametrizedCurve
 
 
-class Segment(IGeometricCurve):
+class Segment(IGeometricCurve, IParametrizedCurve):
     """
     Defines a planar curve in the plane,
     that contains a bezier curve inside it

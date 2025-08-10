@@ -9,13 +9,13 @@ from typing import Iterable, Tuple, Union
 
 from ..scalar.reals import Real
 from ..tools import Is, To
-from .base import IGeometricCurve
+from .base import IGeometricCurve, IParametrizedCurve
 from .box import Box
 from .point import Point2D
 from .segment import Segment, clean_segment
 
 
-class PiecewiseCurve(IGeometricCurve):
+class PiecewiseCurve(IGeometricCurve, IParametrizedCurve):
     """
     Defines a piecewise curve that is the concatenation of several segments.
     """

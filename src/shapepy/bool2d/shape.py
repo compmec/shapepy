@@ -70,7 +70,7 @@ class FollowPath:
         for jordans in all_group_jordans:
             for jordan in jordans:
                 piece = jordan.piecewise
-                piece.snap(intersection.all_knots[id(piece)])
+                piece.snap(intersection.all_knots[id(jordan)])
 
     @staticmethod
     def pursue_path(
@@ -817,7 +817,7 @@ class SimpleShape(DefinedShape):
         vertices = map(piecewise, piecewise.knots)
         if not all(map(self.contains_point, vertices)):
             return False
-        inters = jordan & self.jordans[0]
+        inters = piecewise & self.jordans[0]
         inters.evaluate()
         if inters.all_subsets[id(piecewise)] is not Empty():
             return True

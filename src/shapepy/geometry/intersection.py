@@ -1,4 +1,7 @@
 """
+This file computes the intersection between two any curves
+
+The curves can be analytic,
 Defines the Geometric Intersection Curves class
 that is the result of intersecting two curves
 
@@ -11,14 +14,40 @@ import math
 from fractions import Fraction
 from typing import Dict, Iterable, Set, Tuple, Union
 
-import rbool
+from rbool import (
+    Empty,
+    Interval,
+    SingleValue,
+    SubSetR1,
+    extract_knots,
+    from_any,
+)
 
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Real
-from ..tools import Is
-from .base import IGeometricCurve
+from ..tools import Is, NotExpectedError
+from .base import IGeometricCurve, IParametrizedCurve
+from .jordancurve import JordanCurve
 from .piecewise import PiecewiseCurve
 from .segment import Segment
+
+
+def parametrize(curve: IGeometricCurve) -> IParametrizedCurve:
+    """Parametrizes a curve, if it's not already parametrized"""
+    if Is.instance(curve, IParametrizedCurve):
+        return curve
+    if Is.instance(curve, JordanCurve):
+        return curve.piecewise
+    raise NotExpectedError
+
+
+def intersect(
+    curvea: IGeometricCurve, curveb: IGeometricCurve
+) -> GeometricIntersectionCurves:
+    """
+    Computes the intersection beteween two curves
+    """
+    return GeometricIntersectionCurves([curvea, curveb])
 
 
 class GeometricIntersectionCurves:
@@ -89,7 +118,7 @@ class GeometricIntersectionCurves:
         return self.__curves
 
     @property
-    def all_subsets(self) -> Dict[int, rbool.SubSetR1]:
+    def all_subsets(self) -> Dict[int, SubSetR1]:
         """
         A dictionnary that contains, for each curve,
         the parameters of that curve that are shared with other curve
@@ -125,8 +154,12 @@ class GeometricIntersectionCurves:
         """
         Computes the intersection between all the curves
         """
-        self.__all_knots = {id(c): set(c.knots) for c in self.curves}
-        self.__all_subsets = {id(c): rbool.Empty() for c in self.curves}
+        self.__all_knots = {}
+        self.__all_subsets = {}
+        for curve in self.curves:
+            knots = parametrize(curve).knots
+            self.__all_knots[id(curve)] = set(knots)
+            self.__all_subsets[id(curve)] = Empty()
         for i, j in self.pairs:
             self.__evaluate_two(self.curves[i], self.curves[j])
 
@@ -134,24 +167,24 @@ class GeometricIntersectionCurves:
         """
         Private function two compute the intersection between two curves
         """
-        if id(curvea) == id(curveb):  # Check if curves are equal
-            self.all_subsets[id(curvea)] |= [curvea.knots[0], curveb.knots[-1]]
+        subseta, subsetb = self.__compute_two(curvea, curveb)
+        if Is.instance(subseta, Empty):
             return
-        if curvea.box() & curveb.box() is None:
-            return
-        if Is.piecewise(curvea) and Is.piecewise(curveb):
-            subseta, subsetb = intersect_piecewises(curvea, curveb)
-        elif Is.segment(curvea) and Is.segment(curveb):
-            subseta, subsetb = segment_and_segment(curvea, curveb)
-        else:
-            raise NotImplementedError
-        if subseta is rbool.Empty():
-            return
-
         self.all_subsets[id(curvea)] |= subseta
-        self.all_knots[id(curvea)] |= set(rbool.extract_knots(subseta))
+        self.all_knots[id(curvea)] |= set(extract_knots(subseta))
         self.all_subsets[id(curveb)] |= subsetb
-        self.all_knots[id(curveb)] |= set(rbool.extract_knots(subsetb))
+        self.all_knots[id(curveb)] |= set(extract_knots(subsetb))
+
+    def __compute_two(
+        self, curvea: IGeometricCurve, curveb: IGeometricCurve
+    ) -> Tuple[SubSetR1, SubSetR1]:
+        if curvea.box() & curveb.box() is None:
+            return Empty(), Empty()
+        if id(curvea) == id(curveb):  # Check if curves are equal
+            curvea = parametrize(curvea)
+            subset = Interval(curvea.knots[0], curvea.knots[-1])
+            return subset, subset
+        return curve_and_curve(curvea, curveb)
 
     def __or__(
         self, other: GeometricIntersectionCurves
@@ -167,20 +200,38 @@ class GeometricIntersectionCurves:
         return GeometricIntersectionCurves(newcurves, newparis)
 
 
-def segment_and_segment(
+def curve_and_curve(
     curvea: IGeometricCurve, curveb: IGeometricCurve
-) -> Tuple[rbool.SubSetR1, rbool.SubSetR1]:
-    """Computes the intersection between two geometric curves"""
-    assert Is.segment(curvea)
-    assert Is.segment(curveb)
+) -> Tuple[SubSetR1, SubSetR1]:
+    """Computes the intersection between two curves"""
+    return param_and_param(parametrize(curvea), parametrize(curveb))
+
+
+def param_and_param(
+    curvea: IParametrizedCurve, curveb: IParametrizedCurve
+) -> Tuple[SubSetR1, SubSetR1]:
+    """Computes the intersection between two parametrized curves"""
+    assert Is.instance(curvea, IParametrizedCurve)
+    assert Is.instance(curveb, IParametrizedCurve)
+    if Is.segment(curvea) and Is.segment(curveb):
+        return segment_and_segment(curvea, curveb)
+    if Is.piecewise(curvea) and Is.piecewise(curveb):
+        return intersect_piecewises(curvea, curveb)
+    raise NotExpectedError
+
+
+def segment_and_segment(
+    curvea: Segment, curveb: Segment
+) -> Tuple[SubSetR1, SubSetR1]:
+    """Computes the intersection between two segment curves"""
+    assert Is.instance(curvea, Segment)
+    assert Is.instance(curveb, Segment)
     if curvea.box() & curveb.box() is None:
-        return rbool.Empty(), rbool.Empty()
+        return Empty(), Empty()
     if curvea == curveb:
-        return rbool.Interval(0, 1), rbool.Interval(0, 1)
+        return Interval(0, 1), Interval(0, 1)
     if curvea.degree == 1 and curveb.degree == 1:
         subseta, subsetb = IntersectionSegments.lines(curvea, curveb)
-        subseta &= [0, 1]
-        subsetb &= [0, 1]
         return subseta, subsetb
     usample = list(NodeSampleFactory.closed_linspace(curvea.npts + 3))
     vsample = list(NodeSampleFactory.closed_linspace(curveb.npts + 3))
@@ -201,8 +252,8 @@ def segment_and_segment(
         # Filter values by distance abs(ui-uj, vi-vj)
         tol_du = 1e-6
         pairs = IntersectionSegments.filter_parameters(pairs, tol_du)
-    subseta = rbool.from_any({pair[0] for pair in pairs})
-    subsetb = rbool.from_any({pair[1] for pair in pairs})
+    subseta = from_any({pair[0] for pair in pairs})
+    subsetb = from_any({pair[1] for pair in pairs})
     return subseta, subsetb
 
 
@@ -217,13 +268,11 @@ class IntersectionSegments:
 
     # pylint: disable=invalid-name, too-many-return-statements, too-many-locals
     @staticmethod
-    def lines(
-        curvea: Segment, curveb: Segment
-    ) -> Tuple[rbool.SubSetR1, rbool.SubSetR1]:
+    def lines(curvea: Segment, curveb: Segment) -> Tuple[SubSetR1, SubSetR1]:
         """Finds the intersection of two line segments"""
         assert curvea.degree == 1
         assert curveb.degree == 1
-        empty = rbool.Empty()
+        empty = Empty()
         A0, A1 = curvea.ctrlpoints
         B0, B1 = curveb.ctrlpoints
         dA = A1 - A0
@@ -237,7 +286,7 @@ class IntersectionSegments:
             u0 = (B0mA0 ^ dA) / dAxdB
             if u0 < 0 or 1 < u0:
                 return empty, empty
-            return rbool.SingleValue(t0), rbool.SingleValue(u0)
+            return SingleValue(t0), SingleValue(u0)
         # Lines are parallel
         if dA ^ B0mA0 != 0:
             return empty, empty  # Parallel, but not colinear
@@ -260,8 +309,8 @@ class IntersectionSegments:
         u0 = min(max(0, u0), 1)
         u1 = min(max(0, u1), 1)
         if t0 == t1 or u0 == u1:
-            return rbool.SingleValue(t0), rbool.SingleValue(u1)
-        return rbool.Interval(t0, t1), rbool.Interval(u0, u1)
+            return SingleValue(t0), SingleValue(u1)
+        return Interval(t0, t1), Interval(u0, u1)
 
     # pylint: disable=too-many-locals
     @staticmethod
@@ -358,7 +407,7 @@ class IntersectionSegments:
 def intersect_piecewises(
     curvea: PiecewiseCurve,
     curveb: PiecewiseCurve,
-) -> Tuple[rbool.SubSetR1, rbool.SubSetR1]:
+) -> Tuple[SubSetR1, SubSetR1]:
     r"""Computes the intersection between two jordan curves
 
     Finds the values of (:math:`a^{\star}`, :math:`b^{\star}`,
@@ -422,7 +471,7 @@ def intersect_piecewises(
     assert Is.piecewise(curvea)
     assert Is.piecewise(curveb)
 
-    subseta, subsetb = rbool.Empty(), rbool.Empty()
+    subseta, subsetb = Empty(), Empty()
     for ai, sbezier in enumerate(curvea):
         for bj, obezier in enumerate(curveb):
             suba, subb = segment_and_segment(sbezier, obezier)
