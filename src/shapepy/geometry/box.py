@@ -8,7 +8,7 @@ from __future__ import annotations
 from typing import Union
 
 from ..tools import To
-from .point import Point2D
+from .point import Point2D, cartesian
 
 
 class Box:
@@ -57,7 +57,7 @@ class Box:
         ymin = min(self.lowpt[1], other.lowpt[1])
         xmax = max(self.toppt[0], other.toppt[0])
         ymax = max(self.toppt[1], other.toppt[1])
-        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
+        return Box(cartesian(xmin, ymin), cartesian(xmax, ymax))
 
     def __ror__(self, other) -> Box:
         return self
@@ -71,4 +71,4 @@ class Box:
         ymax = min(self.toppt[1], other.toppt[1])
         if ymax < ymin:
             return None
-        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
+        return Box(cartesian(xmin, ymin), cartesian(xmax, ymax))

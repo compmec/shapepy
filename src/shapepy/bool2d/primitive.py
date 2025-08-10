@@ -14,7 +14,7 @@ import numpy as np
 
 from ..geometry.factory import FactoryJordan
 from ..geometry.jordancurve import JordanCurve
-from ..geometry.point import Point2D
+from ..geometry.point import Point2D, cartesian
 from ..geometry.segment import Segment
 from ..tools import Is, To
 from .shape import EmptyShape, SimpleShape, WholeShape
@@ -222,8 +222,8 @@ class Primitive:
         angle = math.tau / ndivangle
         height = np.tan(angle / 2)
 
-        start_point = radius * Point2D(1, 0)
-        middle_point = radius * Point2D(1, height)
+        start_point = radius * cartesian(1, 0)
+        middle_point = radius * cartesian(1, height)
         beziers = []
         for _ in range(ndivangle - 1):
             end_point = copy(start_point).rotate(angle)

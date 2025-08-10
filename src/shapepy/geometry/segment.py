@@ -17,9 +17,6 @@ from typing import Iterable, Optional, Tuple
 
 import pynurbs
 
-from shapepy.geometry.box import Box
-from shapepy.geometry.point import Point2D
-
 from ..analytic.base import IAnalytic
 from ..analytic.bezier import split
 from ..scalar.nodes_sample import NodeSampleFactory
@@ -27,6 +24,8 @@ from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
 from ..tools import Is, To, vectorize
 from .base import IGeometricCurve, IParametrizedCurve
+from .box import Box
+from .point import Point2D, cartesian
 
 
 class Segment(IGeometricCurve, IParametrizedCurve):
@@ -173,7 +172,7 @@ class Segment(IGeometricCurve, IParametrizedCurve):
         xmax = max(point[0] for point in self.ctrlpoints)
         ymin = min(point[1] for point in self.ctrlpoints)
         ymax = max(point[1] for point in self.ctrlpoints)
-        return Box(Point2D(xmin, ymin), Point2D(xmax, ymax))
+        return Box(cartesian(xmin, ymin), cartesian(xmax, ymax))
 
     def __copy__(self) -> Segment:
         return self.__deepcopy__(None)

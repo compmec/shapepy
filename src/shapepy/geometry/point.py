@@ -13,31 +13,90 @@ from ..tools import Is, To
 TOLERANCE = 1e-9
 
 
+def cartesian(xcoord: Real, ycoord: Real) -> Point2D:
+    """
+    Creates a Point with cartesian coordinates
+    """
+    xcoord = To.real(xcoord)
+    ycoord = To.real(ycoord)
+    return Point2D(xcoord, ycoord, None, None)
+
+
+def polar(radius: Real, angle: Angle) -> Point2D:
+    """
+    Creates a Point with polar coordinates
+    """
+    radius = To.real(radius)
+    angle = Angle.degrees(0) if radius == 0 else To.angle(angle)
+    return Point2D(None, None, radius, angle)
+
+
 class Point2D:
     """
-    Defines a Point in the plane, that has 2 coordinates (x, y)
+    Defines a Point in the plane,
+
+    It can be described in cartesian way: (x, y)
+    Or also in a polar way: (radius:angle)
     """
 
-    def __init__(self, x: Real, y: Real):
-        self.__x = To.real(x)
-        self.__y = To.real(y)
+    def __init__(
+        self,
+        xcoord: Real = None,
+        ycoord: Real = None,
+        radius: Real = None,
+        angle: Angle = None,
+    ):
+        self.__xcoord = xcoord
+        self.__ycoord = ycoord
+        self.__radius = radius
+        self.__angle = angle
+
+    @property
+    def xcoord(self) -> Real:
+        """The horizontal coordinate of the point"""
+        if self.__xcoord is None:
+            cos = self.__angle.cos()
+            self.__xcoord = self.__radius * cos if cos != 0 else To.finite(0)
+        return self.__xcoord
+
+    @property
+    def ycoord(self) -> Real:
+        """The vertical coordinate of the point"""
+        if self.__ycoord is None:
+            sin = self.__angle.sin()
+            self.__ycoord = self.__radius * sin if sin != 0 else To.finite(0)
+        return self.__ycoord
+
+    @property
+    def radius(self) -> Real:
+        """The norm L2 of the point: sqrt(x*x + y*y)"""
+        if self.__radius is None:
+            self.__radius = Math.sqrt(self.__xcoord**2 + self.__ycoord**2)
+        return self.__radius
+
+    @property
+    def angle(self) -> Angle:
+        """The angle the point (x, y) forms with respect to the horizontal"""
+        if self.__angle is None:
+            self.__angle = Angle.arg(self.__xcoord, self.__ycoord)
+        return self.__angle
 
     def __copy__(self) -> Point2D:
         return +self
 
-    def __deepcopy__(self, memo) -> Point2D:
-        """Creates a deepcopy of the object"""
-        return self.__class__(self.__x, self.__y)
-
     def __iter__(self):
-        yield self.__x
-        yield self.__y
+        yield self.__xcoord
+        yield self.__ycoord
 
     def __getitem__(self, index: int) -> Real:
-        return self.__x if index == 0 else self.__y
+        return self.__xcoord if index == 0 else self.__ycoord
 
     def __str__(self) -> str:
-        return f"({self[0]}, {self[1]})"
+        return (
+            f"({self.xcoord}, {self.ycoord})"
+            if Is.finite(self.radius)
+            else f"({self.radius}:{self.angle})"
+        )
 
     def __repr__(self) -> str:
         return self.__str__()
@@ -49,28 +108,35 @@ class Point2D:
         )
 
     def __neg__(self) -> Point2D:
-        return self.__class__(-self[0], -self[1])
+        return self.__class__(
+            -self.xcoord,
+            -self.ycoord,
+            self.radius,
+            self.angle + Angle.degrees(180),
+        )
 
     def __pos__(self) -> Point2D:
-        return self.__class__(self[0], self[1])
+        return self.__class__(
+            self.xcoord, self.ycoord, self.radius, self.angle
+        )
 
     def __iadd__(self, other: Point2D) -> Point2D:
         return self.move(other)
 
     def __add__(self, other: Point2D) -> Point2D:
         other = To.point(other)
-        return self.__class__(self[0] + other[0], self[1] + other[1])
+        return cartesian(self[0] + other[0], self[1] + other[1])
 
     def __sub__(self, other: Point2D) -> Point2D:
         other = To.point(other)
-        return self.__class__(self[0] - other[0], self[1] - other[1])
+        return cartesian(self[0] - other[0], self[1] - other[1])
 
     def __mul__(self, other: float) -> Point2D:
         if Is.point(other):
             return self.__matmul__(other)
         if not Is.finite(other):
             raise TypeError(f"Multiplication with non-real number: {other}")
-        return self.__class__(self[0] * other, self[1] * other)
+        return cartesian(self[0] * other, self[1] * other)
 
     def __rmul__(self, other: float) -> Point2D:
         return self.__mul__(other)
@@ -80,8 +146,7 @@ class Point2D:
         return self[0] * other[0] + self[1] * other[1]
 
     def __xor__(self, other: Point2D) -> float:
-        if not Is.point(other):
-            raise TypeError(f"Cross product with non-Point2D object: {other}")
+        other = To.point(other)
         return self[0] * other[1] - self[1] * other[0]
 
     def __abs__(self) -> float:
@@ -105,8 +170,8 @@ class Point2D:
             The moved point
         """
         vector = To.point(vector)
-        self.__x += vector[0]
-        self.__y += vector[1]
+        self.__xcoord += vector[0]
+        self.__ycoord += vector[1]
         return self
 
     def scale(self, xscale: float, yscale: float) -> Point2D:
@@ -125,8 +190,8 @@ class Point2D:
         Point2D
             The scaled point
         """
-        self.__x *= xscale
-        self.__y *= yscale
+        self.__xcoord *= xscale
+        self.__ycoord *= yscale
         return self
 
     def rotate(self, angle: Angle) -> Point2D:
@@ -148,8 +213,8 @@ class Point2D:
         sin_angle = angle.sin()
         x_new = self[0] * cos_angle - self[1] * sin_angle
         y_new = self[0] * sin_angle + self[1] * cos_angle
-        self.__x = x_new
-        self.__y = y_new
+        self.__xcoord = x_new
+        self.__ycoord = y_new
         return self
 
 
@@ -171,7 +236,7 @@ def to_point(point: Point2D | tuple[Real, Real]) -> Point2D:
         return point
     xcoord = To.finite(point[0])
     ycoord = To.finite(point[1])
-    return Point2D(xcoord, ycoord)
+    return cartesian(xcoord, ycoord)
 
 
 def is_point(point: Point2D | tuple[Real, Real]) -> bool:
