@@ -5,13 +5,9 @@ Which are in fact positive shapes defined only by one jordan curve
 
 import pytest
 
+from shapepy.bool2d.base import Empty, Whole
 from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import (
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    WholeShape,
-)
+from shapepy.bool2d.shape import ConnectedShape, DisjointShape
 
 
 @pytest.mark.order(31)
@@ -44,8 +40,8 @@ class TestEqualSquare:
         square = Primitive.square(side=1, center=(0, 0))
         assert float(square) > 0
         assert square | square == square
-        assert square | (~square) is WholeShape()
-        assert (~square) | square is WholeShape()
+        assert square | (~square) is Whole()
+        assert (~square) | square is Whole()
         assert (~square) | (~square) == ~square
 
     @pytest.mark.order(31)
@@ -57,8 +53,8 @@ class TestEqualSquare:
         square = Primitive.square(side=1, center=(0, 0))
         assert float(square) > 0
         assert square & square == square
-        assert square & (~square) is EmptyShape()
-        assert (~square) & square is EmptyShape()
+        assert square & (~square) is Empty()
+        assert (~square) & square is Empty()
         assert (~square) & (~square) == ~square
 
     @pytest.mark.order(31)
@@ -72,10 +68,10 @@ class TestEqualSquare:
     def test_sub(self):
         square = Primitive.square(side=1, center=(0, 0))
         assert float(square) > 0
-        assert square - square is EmptyShape()
+        assert square - square is Empty()
         assert square - (~square) == square
         assert (~square) - square == ~square
-        assert (~square) - (~square) is EmptyShape()
+        assert (~square) - (~square) is Empty()
 
     @pytest.mark.order(31)
     @pytest.mark.timeout(40)
@@ -90,10 +86,10 @@ class TestEqualSquare:
     def test_xor(self):
         square = Primitive.square(side=1, center=(0, 0))
         assert float(square) > 0
-        assert square ^ square is EmptyShape()
-        assert square ^ (~square) is WholeShape()
-        assert (~square) ^ square is WholeShape()
-        assert (~square) ^ (~square) is EmptyShape()
+        assert square ^ square is Empty()
+        assert square ^ (~square) is Whole()
+        assert (~square) ^ square is Whole()
+        assert (~square) ^ (~square) is Empty()
 
     @pytest.mark.order(31)
     @pytest.mark.dependency(
@@ -136,8 +132,8 @@ class TestTwoCenteredSquares:
         assert square1 | square2 == square2
         assert square2 | square1 == square2
         assert square1 | (~square2) == DisjointShape([square1, ~square2])
-        assert square2 | (~square1) is WholeShape()
-        assert (~square1) | square2 is WholeShape()
+        assert square2 | (~square1) is Whole()
+        assert (~square1) | square2 is Whole()
         assert (~square2) | square1 == DisjointShape([square1, ~square2])
         assert (~square1) | (~square2) == ~square1
         assert (~square2) | (~square1) == ~square1
@@ -153,10 +149,10 @@ class TestTwoCenteredSquares:
 
         assert square1 & square2 == square1
         assert square2 & square1 == square1
-        assert square1 & (~square2) is EmptyShape()
+        assert square1 & (~square2) is Empty()
         assert square2 & (~square1) == ConnectedShape([square2, ~square1])
         assert (~square1) & square2 == ConnectedShape([square2, ~square1])
-        assert (~square2) & square1 is EmptyShape()
+        assert (~square2) & square1 is Empty()
         assert (~square1) & (~square2) == ~square2
         assert (~square2) & (~square1) == ~square2
 
@@ -169,14 +165,14 @@ class TestTwoCenteredSquares:
         assert float(square1) > 0
         assert float(square2) > 0
 
-        assert square1 - square2 is EmptyShape()
+        assert square1 - square2 is Empty()
         assert square2 - square1 == ConnectedShape([square2, ~square1])
         assert square1 - (~square2) == square1
         assert square2 - (~square1) == square1
         assert (~square1) - square2 == ~square2
         assert (~square2) - square1 == ~square2
         assert (~square1) - (~square2) == ConnectedShape([square2, ~square1])
-        assert (~square2) - (~square1) is EmptyShape()
+        assert (~square2) - (~square1) is Empty()
 
     @pytest.mark.order(31)
     @pytest.mark.timeout(40)
@@ -243,8 +239,8 @@ class TestTwoDisjointSquares:
         assert right | (~left) == ~left
         assert (~left) | right == ~left
         assert (~right) | left == ~right
-        assert (~left) | (~right) is WholeShape()
-        assert (~right) | (~left) is WholeShape()
+        assert (~left) | (~right) is Whole()
+        assert (~right) | (~left) is Whole()
 
     @pytest.mark.order(31)
     @pytest.mark.timeout(40)
@@ -255,8 +251,8 @@ class TestTwoDisjointSquares:
         assert float(left) > 0
         assert float(right) > 0
 
-        assert left & right is EmptyShape()
-        assert right & left is EmptyShape()
+        assert left & right is Empty()
+        assert right & left is Empty()
         assert left & (~right) == left
         assert right & (~left) == right
         assert (~left) & right == right
@@ -275,8 +271,8 @@ class TestTwoDisjointSquares:
 
         assert left - right == left
         assert right - left == right
-        assert left - (~right) is EmptyShape()
-        assert right - (~left) is EmptyShape()
+        assert left - (~right) is Empty()
+        assert right - (~left) is Empty()
         assert (~left) - right == ConnectedShape([~left, ~right])
         assert (~right) - left == ConnectedShape([~left, ~right])
         assert (~left) - (~right) == right
@@ -333,8 +329,8 @@ class TestEqualHollowSquare:
         square = big - small
         assert float(square) > 0
         assert square | square == square
-        assert square | (~square) is WholeShape()
-        assert (~square) | square is WholeShape()
+        assert square | (~square) is Whole()
+        assert (~square) | square is Whole()
         assert (~square) | (~square) == ~square
 
     @pytest.mark.order(31)
@@ -351,8 +347,8 @@ class TestEqualHollowSquare:
         square = big - small
         assert float(square) > 0
         assert square & square == square
-        assert square & (~square) is EmptyShape()
-        assert (~square) & square is EmptyShape()
+        assert square & (~square) is Empty()
+        assert (~square) & square is Empty()
         assert (~square) & (~square) == ~square
 
     @pytest.mark.order(31)
@@ -368,10 +364,10 @@ class TestEqualHollowSquare:
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
         assert float(square) > 0
-        assert square - square is EmptyShape()
+        assert square - square is Empty()
         assert square - (~square) == square
         assert (~square) - square == ~square
-        assert (~square) - (~square) is EmptyShape()
+        assert (~square) - (~square) is Empty()
 
     @pytest.mark.order(31)
     @pytest.mark.timeout(40)
@@ -388,10 +384,10 @@ class TestEqualHollowSquare:
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
         assert float(square) > 0
-        assert square ^ square is EmptyShape()
-        assert square ^ (~square) is WholeShape()
-        assert (~square) ^ square is WholeShape()
-        assert (~square) ^ (~square) is EmptyShape()
+        assert square ^ square is Empty()
+        assert square ^ (~square) is Whole()
+        assert (~square) ^ square is Whole()
+        assert (~square) ^ (~square) is Empty()
 
     @pytest.mark.order(31)
     @pytest.mark.dependency(
@@ -447,8 +443,8 @@ class TestTwoDisjHollowSquares:
         assert right | (~left) == ~left
         assert (~left) | right == ~left
         assert (~right) | left == ~right
-        assert (~left) | (~right) is WholeShape()
-        assert (~right) | (~left) is WholeShape()
+        assert (~left) | (~right) is Whole()
+        assert (~right) | (~left) is Whole()
 
     @pytest.mark.order(31)
     @pytest.mark.timeout(40)
@@ -463,8 +459,8 @@ class TestTwoDisjHollowSquares:
         assert float(left) > 0
         assert float(right) > 0
 
-        assert left & right is EmptyShape()
-        assert right & left is EmptyShape()
+        assert left & right is Empty()
+        assert right & left is Empty()
         assert left & (~right) == left
         assert right & (~left) == right
         assert (~left) & right == right
@@ -489,8 +485,8 @@ class TestTwoDisjHollowSquares:
 
         assert left - right == left
         assert right - left == right
-        assert left - (~right) is EmptyShape()
-        assert right - (~left) is EmptyShape()
+        assert left - (~right) is Empty()
+        assert right - (~left) is Empty()
         external = ConnectedShape([~left_big, ~right_big])
         good = DisjointShape([left_sma, right_sma, external])
         assert (~left) & (~right) == good

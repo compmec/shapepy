@@ -7,14 +7,9 @@ For the moment, it only uses polygon shapes:
 
 import importlib
 
+from shapepy.bool2d.base import Empty, Whole
 from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import (
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    SimpleShape,
-    WholeShape,
-)
+from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SimpleShape
 from shapepy.geometry.integral import IntegrateJordan
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D

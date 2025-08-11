@@ -17,7 +17,8 @@ from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D, cartesian
 from ..geometry.segment import Segment
 from ..tools import Is, To
-from .shape import EmptyShape, SimpleShape, WholeShape
+from .base import Empty, Whole
+from .shape import SimpleShape
 
 
 class Primitive:
@@ -30,8 +31,8 @@ class Primitive:
 
     """
 
-    empty = EmptyShape()
-    whole = WholeShape()
+    empty = Empty()
+    whole = Whole()
 
     @staticmethod
     def regular_polygon(
