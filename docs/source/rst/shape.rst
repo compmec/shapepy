@@ -10,8 +10,8 @@ Introduction
 
 A ``shape`` represents a region on the plane and are divided in 5 types:
 
-* ``Empty``, mathematically it's the empty set with no interior points
-* ``Whole``, mathematically it's the set with all the points in plane
+* ``EmptyShape``, mathematically it's the empty set with no interior points
+* ``WholeShape``, mathematically it's the set with all the points in plane
 * ``SimpleShape``, is represented by only one jordan curve, 
 * ``ConnectedShape``, is the intersection some ``SimpleShape``
 * ``DisjointShape``, is the union of some ``ConnectedShape``
@@ -36,10 +36,10 @@ For example, there are some sta
 
 .. code-block:: python
    
-   from shapepy import Empty, Whole
+   from shapepy import EmptyShape, WholeShape
    
-   empty = Empty()
-   whole = Whole()
+   empty = EmptyShape()
+   whole = WholeShape()
 
    empty | whole is whole  # OR
    empty & whole is empty  # AND

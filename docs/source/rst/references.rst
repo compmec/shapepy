@@ -115,14 +115,14 @@ Boolean 2D
 
 ----------------------------------------------------
 
-.. autoclass:: shapepy.bool2d.shape.Empty
+.. autoclass:: shapepy.bool2d.shape.EmptyShape
     :members:
     :inherited-members:
     :undoc-members:
 
 ----------------------------------------------------
 
-.. autoclass:: shapepy.bool2d.shape.Whole
+.. autoclass:: shapepy.bool2d.shape.WholeShape
     :members:
     :inherited-members:
     :undoc-members:
