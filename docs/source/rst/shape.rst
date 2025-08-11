@@ -10,8 +10,8 @@ Introduction
 
 A ``shape`` represents a region on the plane and are divided in 5 types:
 
-* ``Empty``, mathematically it's the empty set with no interior points
-* ``Whole``, mathematically it's the set with all the points in plane
+* ``EmptyShape``, mathematically it's the empty set with no interior points
+* ``WholeShape``, mathematically it's the set with all the points in plane
 * ``SimpleShape``, is represented by only one jordan curve, 
 * ``ConnectedShape``, is the intersection some ``SimpleShape``
 * ``DisjointShape``, is the union of some ``ConnectedShape``
@@ -26,7 +26,7 @@ For any pair of shapes, you can use operators:
 * ``in`` - Contains
 
 ---------------
-Empty and Whole
+EmptyShape and WholeShape
 ---------------
 
 They are singleton objects which are used to be returned in boolean operations.
@@ -36,10 +36,10 @@ For example, there are some sta
 
 .. code-block:: python
    
-   from shapepy import Empty, Whole
+   from shapepy import EmptyShape, WholeShape
    
-   empty = Empty()
-   whole = Whole()
+   empty = EmptyShape()
+   whole = WholeShape()
 
    empty | whole is whole  # OR
    empty & whole is empty  # AND
@@ -55,11 +55,11 @@ They are returned when, for any ``shape``:
 
 .. code-block:: python
    
-   shape | (~shape)  # Whole
-   shape & (~shape)  # Empty
-   shape - shape  # Empty
-   shape ^ shape  # Empty
-   shape ^ (~shape)  # Whole
+   shape | (~shape)  # WholeShape
+   shape & (~shape)  # EmptyShape
+   shape - shape  # EmptyShape
+   shape ^ shape  # EmptyShape
+   shape ^ (~shape)  # WholeShape
 
 
 -------------------------------------------------------------------------------

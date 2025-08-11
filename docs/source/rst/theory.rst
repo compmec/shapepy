@@ -3,7 +3,7 @@
 This page contains all the theory used to develop this packaged.
 It can be resumed as a mix of set theory, analitic and parametric geometry on the plane :math:`\mathbb{R}^2`.
 
-Hereafter we describe the main objects used in this study (`Empty`, `Whole`, `Point`, `Curve` and `Shape`),
+Hereafter we describe the main objects used in this study (`EmptyShape`, `WholeShape`, `Point`, `Curve` and `Shape`),
 and how they interact with each other.
 
 
@@ -413,7 +413,7 @@ Contains
 Deciding if a set :math:`A` is (or not) a subset of :math:`B` is not a trivial.
 This section describes the algorithms to decide it.
 
-Basically either :math:`A` and :math:`B` can assume the forms of **Empty**, **Point**, **Curve**, **Shape**, **Whole**
+Basically either :math:`A` and :math:`B` can assume the forms of **EmptyShape**, **Point**, **Curve**, **Shape**, **WholeShape**
 
 That means, :math:`5 \times 5 = 25` possibilities.
 The table here after reduces the quantity of verifications to 6, 
@@ -423,9 +423,9 @@ which are represented by the empty spaces
     :align: center
 
     +-------+-------+-------+-------+-------+-------+
-    |       | Empty | Point | Curve | Shape | Whole |
+    |       | EmptyShape | Point | Curve | Shape | WholeShape |
     +=======+=======+=======+=======+=======+=======+
-    | Empty |   T   |   T   |   T   |   T   |   T   |
+    | EmptyShape |   T   |   T   |   T   |   T   |   T   |
     +-------+-------+-------+-------+-------+-------+
     | Point |   F   |       |       |       |   T   |
     +-------+-------+-------+-------+-------+-------+
@@ -433,7 +433,7 @@ which are represented by the empty spaces
     +-------+-------+-------+-------+-------+-------+
     | Shape |   F   |   F   |   F   |       |   T   |
     +-------+-------+-------+-------+-------+-------+
-    | Whole |   F   |   F   |   F   |   F   |   T   |
+    | WholeShape |   F   |   F   |   F   |   F   |   T   |
     +-------+-------+-------+-------+-------+-------+
 
 The next sections verifies these 6 missing verifications.
@@ -879,8 +879,8 @@ True and False entities
 
 For this package, to represent the quantities :
 
-* **Empty**: False, void set
-* **Whole**: True, whole plane
+* **EmptyShape**: False, void set
+* **WholeShape**: True, whole plane
 
 .. _theory_bool_not:
 

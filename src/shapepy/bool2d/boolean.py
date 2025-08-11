@@ -13,7 +13,7 @@ from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..tools import Is
-from .base import Empty, SubSetR2, Whole
+from .base import EmptyShape, SubSetR2, WholeShape
 from .shape import shape_from_jordans
 
 
@@ -35,7 +35,7 @@ def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
     assert len(subsets) == 2
     new_jordans = FollowPath.or_shapes(subsets[0], subsets[1])
     if len(new_jordans) == 0:
-        return Whole()
+        return WholeShape()
     return shape_from_jordans(new_jordans)
 
 
@@ -57,7 +57,7 @@ def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
     assert len(subsets) == 2
     new_jordans = FollowPath.and_shapes(subsets[0], subsets[1])
     if len(new_jordans) == 0:
-        return Empty()
+        return EmptyShape()
     return shape_from_jordans(new_jordans)
 
 

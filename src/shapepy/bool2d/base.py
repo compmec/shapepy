@@ -2,8 +2,8 @@
 Defines the base classes used in the bool2d submodule
 
 * SubSetR2: Base class for all classes
-* Empty: Represents an empty set
-* Whole: Represents the entire plane
+* EmptyShape: Represents an empty set
+* WholeShape: Represents the entire plane
 """
 
 from __future__ import annotations
@@ -65,15 +65,15 @@ class SubSetR2:
         return float(self) > 0
 
 
-class Empty(SubSetR2):
-    """Empty is a singleton class to represent an empty shape
+class EmptyShape(SubSetR2):
+    """EmptyShape is a singleton class to represent an empty shape
 
     Example use
     -----------
-    >>> from shapepy import Empty
-    >>> empty = Empty()
+    >>> from shapepy import EmptyShape
+    >>> empty = EmptyShape()
     >>> print(empty)
-    Empty
+    EmptyShape
     >>> print(float(empty))  # Area
     0.0
     >>> (0, 0) in empty
@@ -84,13 +84,13 @@ class Empty(SubSetR2):
 
     def __new__(cls):
         if cls.__instance is None:
-            cls.__instance = super(Empty, cls).__new__(cls)
+            cls.__instance = super(EmptyShape, cls).__new__(cls)
         return cls.__instance
 
-    def __copy__(self) -> Empty:
+    def __copy__(self) -> EmptyShape:
         return self
 
-    def __deepcopy__(self, memo) -> Empty:
+    def __deepcopy__(self, memo) -> EmptyShape:
         return self
 
     def __or__(self, other: SubSetR2) -> SubSetR2:
@@ -106,27 +106,27 @@ class Empty(SubSetR2):
         return float(0)
 
     def __invert__(self) -> SubSetR2:
-        return Whole()
+        return WholeShape()
 
     def __contains__(self, other: SubSetR2) -> bool:
         return self is other
 
     def __str__(self) -> str:
-        return "Empty"
+        return "EmptyShape"
 
     def __repr__(self) -> str:
         return self.__str__()
 
 
-class Whole(SubSetR2):
-    """Whole is a singleton class to represent all plane
+class WholeShape(SubSetR2):
+    """WholeShape is a singleton class to represent all plane
 
     Example use
     -----------
-    >>> from shapepy import Whole
-    >>> whole = Whole()
+    >>> from shapepy import WholeShape
+    >>> whole = WholeShape()
     >>> print(whole)
-    Whole
+    WholeShape
     >>> print(float(whole))  # Area
     inf
     >>> (0, 0) in whole
@@ -137,16 +137,16 @@ class Whole(SubSetR2):
 
     def __new__(cls):
         if cls.__instance is None:
-            cls.__instance = super(Whole, cls).__new__(cls)
+            cls.__instance = super(WholeShape, cls).__new__(cls)
         return cls.__instance
 
-    def __copy__(self) -> Whole:
+    def __copy__(self) -> WholeShape:
         return self
 
-    def __deepcopy__(self, memo) -> Whole:
+    def __deepcopy__(self, memo) -> WholeShape:
         return self
 
-    def __or__(self, other: SubSetR2) -> Whole:
+    def __or__(self, other: SubSetR2) -> WholeShape:
         return self
 
     def __and__(self, other: SubSetR2) -> SubSetR2:
@@ -156,13 +156,13 @@ class Whole(SubSetR2):
         return float("inf")
 
     def __invert__(self) -> SubSetR2:
-        return Empty()
+        return EmptyShape()
 
     def __contains__(self, other: SubSetR2) -> bool:
         return True
 
     def __str__(self) -> str:
-        return "Whole"
+        return "WholeShape"
 
     def __repr__(self) -> str:
         return self.__str__()

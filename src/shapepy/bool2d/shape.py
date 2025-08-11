@@ -22,7 +22,7 @@ from shapepy.geometry.point import Point2D
 
 from ..geometry.integral import IntegrateJordan
 from ..tools import Is, To
-from .base import Empty, SubSetR2, Whole
+from .base import EmptyShape, SubSetR2
 
 
 class Future:

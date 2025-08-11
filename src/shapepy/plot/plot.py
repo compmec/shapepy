@@ -11,7 +11,7 @@ import matplotlib
 import numpy as np
 from matplotlib import pyplot
 
-from shapepy.bool2d.base import Empty, Whole
+from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SubSetR2
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.segment import Segment
@@ -139,12 +139,12 @@ class ShapePloter:
     # pylint: disable=too-many-locals
     def plot_subset(self, shape: SubSetR2, *, kwargs):
         """
-        Plots a SubSetR2, which can be Empty, Whole, Simple, etc
+        Plots a SubSetR2, which can be EmptyShape, WholeShape, Simple, etc
         """
         assert Is.instance(shape, SubSetR2)
-        if Is.instance(shape, Empty):
+        if Is.instance(shape, EmptyShape):
             return
-        if Is.instance(shape, Whole):
+        if Is.instance(shape, WholeShape):
             self.gca().set_facecolor("#BFFFBF")
             return
         attrs = ["pos_color", "neg_color", "fill_color", "alpha", "marker"]

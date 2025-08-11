@@ -8,7 +8,7 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
-from shapepy.bool2d.base import Empty, Whole
+from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape
 from shapepy.geometry.factory import FactoryJordan
@@ -38,10 +38,10 @@ class TestObjectsInEmptyWhole:
     @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInEmptyWhole::test_begin"])
     def test_singleton(self):
-        empty0 = Empty()
-        whole0 = Whole()
-        empty1 = Empty()
-        whole1 = Whole()
+        empty0 = EmptyShape()
+        whole0 = WholeShape()
+        empty1 = EmptyShape()
+        whole1 = WholeShape()
 
         assert empty0 is empty1
         assert empty0 != whole0
@@ -56,8 +56,8 @@ class TestObjectsInEmptyWhole:
         ]
     )
     def test_empty(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert empty in empty
         assert empty in whole
 
@@ -69,8 +69,8 @@ class TestObjectsInEmptyWhole:
         ]
     )
     def test_whole(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert whole not in empty
         assert whole in whole
 
@@ -82,8 +82,8 @@ class TestObjectsInEmptyWhole:
         ]
     )
     def test_point(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         for point in [(0, 0), (1, 1), (0, -1)]:
             assert point not in empty
             assert point in whole
@@ -96,8 +96,8 @@ class TestObjectsInEmptyWhole:
         ]
     )
     def test_jordan(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
 
         vertices = [(0, 0), (1, 0), (0, 1)]
         jordan = FactoryJordan.polygon(vertices)
@@ -117,8 +117,8 @@ class TestObjectsInEmptyWhole:
         ]
     )
     def test_simple_shape(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
 
         shape = Primitive.triangle()
         assert shape not in empty
@@ -132,8 +132,8 @@ class TestObjectsInEmptyWhole:
         ]
     )
     def test_connected_shape(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
 
         big_square = Primitive.square(side=2)
         small_square = Primitive.square(side=1)
@@ -149,8 +149,8 @@ class TestObjectsInEmptyWhole:
         ]
     )
     def test_disjoint_shape(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
 
         square0 = Primitive.square(center=(-3, 0))
         square1 = Primitive.square(center=(3, 0))
@@ -284,7 +284,7 @@ class TestObjectsInSimple:
     @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInSimple::test_begin"])
     def test_empty(self):
-        empty = Empty()
+        empty = EmptyShape()
         square = Primitive.square()
         assert empty in square
         assert square not in empty
@@ -292,7 +292,7 @@ class TestObjectsInSimple:
     @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInSimple::test_begin"])
     def test_whole(self):
-        whole = Whole()
+        whole = WholeShape()
         square = Primitive.square()
         assert whole not in square
         assert square in whole
@@ -546,7 +546,7 @@ class TestObjectsInConnected:
     @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInConnected::test_begin"])
     def test_empty(self):
-        empty = Empty()
+        empty = EmptyShape()
         square = ~Primitive.square()
         assert empty in square
         assert square not in empty
@@ -554,7 +554,7 @@ class TestObjectsInConnected:
     @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInConnected::test_begin"])
     def test_whole(self):
-        whole = Whole()
+        whole = WholeShape()
         square = ~Primitive.square()
         assert whole not in square
         assert square in whole
@@ -713,7 +713,7 @@ class TestObjectsInDisjoint:
     @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInDisjoint::test_begin"])
     def test_empty(self):
-        empty = Empty()
+        empty = EmptyShape()
         squarea = Primitive.square(center=(-3, 0))
         squareb = Primitive.square(center=(3, 0))
         disj_shape = DisjointShape([squarea, squareb])
@@ -724,7 +724,7 @@ class TestObjectsInDisjoint:
     @pytest.mark.order(23)
     @pytest.mark.dependency(depends=["TestObjectsInDisjoint::test_begin"])
     def test_whole(self):
-        whole = Whole()
+        whole = WholeShape()
         squarea = Primitive.square(center=(-3, 0))
         squareb = Primitive.square(center=(3, 0))
         disj_shape = DisjointShape([squarea, squareb])

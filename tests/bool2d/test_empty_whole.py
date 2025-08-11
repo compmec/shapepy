@@ -1,5 +1,5 @@
 """
-Tests related to 'Empty' and 'Whole' which describes a empty set
+Tests related to 'EmptyShape' and 'WholeShape' which describes a empty set
 and the whole domain
 """
 
@@ -7,7 +7,7 @@ from copy import copy
 
 import pytest
 
-from shapepy.bool2d.base import Empty, Whole
+from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
 
 
@@ -36,8 +36,8 @@ class TestBoolean:
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_or(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert empty | empty is empty
         assert empty | whole is whole
         assert whole | empty is whole
@@ -51,8 +51,8 @@ class TestBoolean:
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_and(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert empty & empty is empty
         assert empty & whole is empty
         assert whole & empty is empty
@@ -66,8 +66,8 @@ class TestBoolean:
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_xor(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert empty ^ empty is empty
         assert empty ^ whole is whole
         assert whole ^ empty is whole
@@ -76,8 +76,8 @@ class TestBoolean:
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_sub(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert empty - empty is empty
         assert empty - whole is empty
         assert whole - empty is whole
@@ -86,24 +86,24 @@ class TestBoolean:
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_bool(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert bool(empty) is False
         assert bool(whole) is True
 
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_float(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert float(empty) == float(0)
         assert float(whole) == float("inf")
 
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_invert(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert ~empty is whole
         assert ~whole is empty
         assert ~(~empty) is empty
@@ -112,8 +112,8 @@ class TestBoolean:
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_copy(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         assert copy(empty) is empty
         assert copy(whole) is whole
 
@@ -150,8 +150,8 @@ class TestBoolShape:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_simple(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         vertices = [(0, 0), (1, 0), (0, 1)]
         shape = Primitive.polygon(vertices)
         assert float(shape) > 0
@@ -184,8 +184,8 @@ class TestBoolShape:
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_connected(self):
-        empty = Empty()
-        whole = Whole()
+        empty = EmptyShape()
+        whole = WholeShape()
         vertices = [(0, 0), (0, 1), (1, 0)]
         shape = Primitive.polygon(vertices)
         assert float(shape) < 0
