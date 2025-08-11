@@ -7,8 +7,8 @@ from copy import copy
 
 import pytest
 
+from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import EmptyShape, WholeShape
 
 
 @pytest.mark.order(24)

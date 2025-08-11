@@ -5,13 +5,9 @@ Which are in fact positive shapes defined only by one jordan curve
 
 import pytest
 
+from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import (
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    WholeShape,
-)
+from shapepy.bool2d.shape import ConnectedShape, DisjointShape
 
 
 @pytest.mark.order(31)

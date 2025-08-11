@@ -8,13 +8,9 @@ from fractions import Fraction
 import numpy as np
 import pytest
 
+from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import (
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    WholeShape,
-)
+from shapepy.bool2d.shape import ConnectedShape, DisjointShape
 from shapepy.geometry.factory import FactoryJordan
 
 

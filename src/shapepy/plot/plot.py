@@ -11,13 +11,8 @@ import matplotlib
 import numpy as np
 from matplotlib import pyplot
 
-from shapepy.bool2d.shape import (
-    BaseShape,
-    ConnectedShape,
-    DisjointShape,
-    EmptyShape,
-    WholeShape,
-)
+from shapepy.bool2d.base import EmptyShape, WholeShape
+from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SubSetR2
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.segment import Segment
 
@@ -137,16 +132,16 @@ class ShapePloter:
         """
         A wrapper of the matplotlib.pyplot.plt.plot
         """
-        if Is.instance(args[0], BaseShape):
-            return self.plot_shape(args[0], kwargs=kwargs)
+        if Is.instance(args[0], SubSetR2):
+            return self.plot_subset(args[0], kwargs=kwargs)
         return self.gca().plot(*args, **kwargs)
 
     # pylint: disable=too-many-locals
-    def plot_shape(self, shape: BaseShape, *, kwargs):
+    def plot_subset(self, shape: SubSetR2, *, kwargs):
         """
-        Plots a BaseShape, which can be Empty, Whole, Simple, etc
+        Plots a SubSetR2, which can be EmptyShape, WholeShape, Simple, etc
         """
-        assert Is.instance(shape, BaseShape)
+        assert Is.instance(shape, SubSetR2)
         if Is.instance(shape, EmptyShape):
             return
         if Is.instance(shape, WholeShape):

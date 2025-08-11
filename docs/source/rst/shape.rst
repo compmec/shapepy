@@ -55,11 +55,11 @@ They are returned when, for any ``shape``:
 
 .. code-block:: python
    
-   shape | (~shape)  # WholeShape
-   shape & (~shape)  # EmptyShape
-   shape - shape  # EmptyShape
-   shape ^ shape  # EmptyShape
-   shape ^ (~shape)  # WholeShape
+   shape | (~shape)  # Whole
+   shape & (~shape)  # Empty
+   shape - shape  # Empty
+   shape ^ shape  # Empty
+   shape ^ (~shape)  # Whole
 
 
 -------------------------------------------------------------------------------
