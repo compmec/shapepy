@@ -11,63 +11,17 @@ from __future__ import annotations
 
 import abc
 from copy import copy
-from typing import Iterable, Optional, Tuple, Union
+from typing import Optional, Tuple, Union
 
 import numpy as np
 import rbool
 
-from shapepy.geometry.box import Box
-from shapepy.geometry.jordancurve import JordanCurve
-from shapepy.geometry.point import Point2D
-
+from ..geometry.box import Box
 from ..geometry.integral import IntegrateJordan
+from ..geometry.jordancurve import JordanCurve
+from ..geometry.point import Point2D
 from ..tools import Is, To
 from .base import EmptyShape, SubSetR2
-
-
-class Future:
-    """
-    Class that stores methods that are further defined.
-    They are overrided by other methods in __init__.py file
-
-    Although the classes Empty and Whole don't need the
-    child classes to make the union/intersection, or to verify
-    if a SubSetR2 instance is inside Whole for example,
-    the command bellow
-    >>> (0, 0) in Whole()
-    that checks if a point is inside Whole, needs the conversion
-    to a SinglePoint instance, which is not defined in this file
-
-    Another example is the definition of `__add__` method,
-    which must call the function `simplify` after the `__or__`.
-    The function `simplify` must know all the childs classes of SubSetR2,
-    but it would lead to a circular import.
-
-    A solution, which was considered worst is:
-    * Place all the classes and the functions in a single file,
-    so all the classes know all the other classes and we avoid
-    a circular import.
-    """
-
-    @staticmethod
-    def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
-        """
-        Computes the union of some SubSetR2 instances
-
-        This function is overrided by a function defined
-        in the `shapepy.bool2d.boolean.py` file
-        """
-        raise NotImplementedError
-
-    @staticmethod
-    def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
-        """
-        Computes the intersection of some SubSetR2 instances
-
-        This function is overrided by a function defined
-        in the `shapepy.bool2d.boolean.py` file
-        """
-        raise NotImplementedError
 
 
 # pylint: disable=no-member
@@ -105,37 +59,13 @@ class DefinedShape(SubSetR2):
             box |= jordan.box()
         return box
 
-    def __or__(self, other: SubSetR2) -> SubSetR2:
-        assert Is.instance(other, SubSetR2)
-        if Is.instance(other, Whole):
-            return Whole()
-        if Is.instance(other, Empty):
-            return copy(self)
-        if other in self:
-            return copy(self)
-        if self in other:
-            return copy(other)
-        return Future.unite((self, other))
-
-    def __and__(self, other: SubSetR2) -> SubSetR2:
-        assert Is.instance(other, SubSetR2)
-        if Is.instance(other, Whole):
-            return copy(self)
-        if Is.instance(other, Empty):
-            return Empty()
-        if other in self:
-            return copy(other)
-        if self in other:
-            return copy(self)
-        return Future.intersect((self, other))
-
     def __contains__(
         self, other: Union[Point2D, JordanCurve, SubSetR2]
     ) -> bool:
         if Is.instance(other, DefinedShape):
             return self.contains_shape(other)
         if Is.instance(other, SubSetR2):
-            return Is.instance(other, Empty)
+            return Is.instance(other, EmptyShape)
         if Is.instance(other, JordanCurve):
             return self.contains_jordan(other)
         point = To.point(other)
@@ -615,10 +545,10 @@ class DisjointShape(DefinedShape):
 
     def __new__(cls, subshapes: Tuple[ConnectedShape]):
         subshapes = list(subshapes)
-        while Empty() in subshapes:
-            subshapes.remove(Empty())
+        while EmptyShape() in subshapes:
+            subshapes.remove(EmptyShape())
         if len(subshapes) == 0:
-            return Empty()
+            return EmptyShape()
         for subshape in subshapes:
             assert Is.instance(subshape, (SimpleShape, ConnectedShape))
         if len(subshapes) == 1:
@@ -808,7 +738,7 @@ def shape_from_jordans(jordans: Tuple[JordanCurve]) -> SubSetR2:
     Example
     ----------
     >>> shape_from_jordans([])
-    Empty
+    EmptyShape
     """
     assert len(jordans) != 0
     simples = tuple(map(SimpleShape, jordans))

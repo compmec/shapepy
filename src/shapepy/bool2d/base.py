@@ -10,6 +10,7 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from copy import copy
+from typing import Iterable
 
 
 class SubSetR2:
@@ -24,13 +25,13 @@ class SubSetR2:
     def __invert__(self) -> SubSetR2:
         """Invert shape"""
 
-    @abstractmethod
     def __or__(self, other: SubSetR2) -> SubSetR2:
         """Union shapes"""
+        return Future.unite((self, other))
 
-    @abstractmethod
     def __and__(self, other: SubSetR2) -> SubSetR2:
         """Intersection shapes"""
+        return Future.intersect((self, other))
 
     @abstractmethod
     def __copy__(self) -> SubSetR2:
@@ -169,3 +170,48 @@ class WholeShape(SubSetR2):
 
     def __sub__(self, other: SubSetR2) -> SubSetR2:
         return ~other
+
+
+class Future:
+    """
+    Class that stores methods that are further defined.
+    They are overrided by other methods in __init__.py file
+
+    Although the classes EmptyShape and WholeShape don't need the
+    child classes to make the union/intersection, or to verify
+    if a SubSetR2 instance is inside WholeShape for example,
+    the command bellow
+    >>> (0, 0) in WholeShape()
+    that checks if a point is inside WholeShape, needs the conversion
+    to a SinglePoint instance, which is not defined in this file
+
+    Another example is the definition of `__add__` method,
+    which must call the function `simplify` after the `__or__`.
+    The function `simplify` must know all the childs classes of SubSetR2,
+    but it would lead to a circular import.
+
+    A solution, which was considered worst is:
+    * Place all the classes and the functions in a single file,
+    so all the classes know all the other classes and we avoid
+    a circular import.
+    """
+
+    @staticmethod
+    def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
+        """
+        Computes the union of some SubSetR2 instances
+
+        This function is overrided by a function defined
+        in the `shapepy.bool2d.boolean.py` file
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
+        """
+        Computes the intersection of some SubSetR2 instances
+
+        This function is overrided by a function defined
+        in the `shapepy.bool2d.boolean.py` file
+        """
+        raise NotImplementedError

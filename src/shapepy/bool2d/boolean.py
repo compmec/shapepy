@@ -33,6 +33,16 @@ def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     subsets = tuple(subsets)
     assert len(subsets) == 2
+    assert Is.instance(subsets[0], SubSetR2)
+    assert Is.instance(subsets[1], SubSetR2)
+    if Is.instance(subsets[1], WholeShape):
+        return WholeShape()
+    if Is.instance(subsets[1], EmptyShape):
+        return copy(subsets[0])
+    if subsets[1] in subsets[0]:
+        return copy(subsets[0])
+    if subsets[0] in subsets[1]:
+        return copy(subsets[1])
     new_jordans = FollowPath.or_shapes(subsets[0], subsets[1])
     if len(new_jordans) == 0:
         return WholeShape()
@@ -55,6 +65,16 @@ def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     subsets = tuple(subsets)
     assert len(subsets) == 2
+    assert Is.instance(subsets[0], SubSetR2)
+    assert Is.instance(subsets[1], SubSetR2)
+    if Is.instance(subsets[1], WholeShape):
+        return copy(subsets[0])
+    if Is.instance(subsets[1], EmptyShape):
+        return EmptyShape()
+    if subsets[1] in subsets[0]:
+        return copy(subsets[1])
+    if subsets[0] in subsets[1]:
+        return copy(subsets[0])
     new_jordans = FollowPath.and_shapes(subsets[0], subsets[1])
     if len(new_jordans) == 0:
         return EmptyShape()
