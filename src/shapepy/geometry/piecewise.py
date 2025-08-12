@@ -107,7 +107,7 @@ class PiecewiseCurve(IGeometricCurve, IParametrizedCurve):
             box |= bezier.box()
         return box
 
-    def snap(self, nodes: Iterable[Real]):
+    def split(self, nodes: Iterable[Real]) -> None:
         """
         Creates an opening in the piecewise curve
 
