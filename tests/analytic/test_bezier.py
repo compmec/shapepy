@@ -2,6 +2,7 @@ from fractions import Fraction as frac
 
 import numpy as np
 import pytest
+from rbool import Interval
 
 from shapepy.analytic.bezier import (
     Bezier,
@@ -73,21 +74,25 @@ def test_matrices():
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_degree", "test_matrices"])
 def test_compare():
-    bezier = Bezier([1])
-    assert bezier == Polynomial([1])
+    domain = Interval(0, 1)
+    bezier = Bezier([1], domain)
+    assert bezier == Polynomial([1], domain)
     assert bezier == 1
 
-    bezier = Bezier([1, 1, 1])
-    assert bezier == Polynomial([1])
+    bezier = Bezier([1, 1, 1], domain)
+    assert bezier == Polynomial([1], domain)
     assert bezier == 1
 
-    bezier = Bezier([1, 2])
-    assert bezier == Polynomial([1, 1])
-    bezier = Bezier([1, 2, 3])
-    assert bezier == Polynomial([1, 2])
+    bezier = Bezier([1, 2], domain)
+    assert bezier == Polynomial([1, 1], domain)
+    bezier = Bezier([1, 2, 3], domain)
+    assert bezier == Polynomial([1, 2], domain)
 
     assert bezier != 1
     assert bezier != "asd"
+
+    assert Bezier([1, 1, 1]) == Bezier([1])
+    assert Bezier([1, 1], [0, 1]) != Bezier([1], [-1, 2])
 
 
 @pytest.mark.order(4)
@@ -324,11 +329,14 @@ def test_shift():
     ntests = 100
     maxdeg = 6
     tsample = np.linspace(-1, 1, 17)
+    domain = Interval(-1, 1)
     for _ in range(ntests):
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
-        beziera = Bezier(coefsa)
+        beziera = Bezier(coefsa, domain)
         bezierb = beziera.shift(1)
+        assert beziera.domain == [-1, 1]
+        assert bezierb.domain == [0, 2]
         valuesa = beziera(tsample)
         valuese = bezierb(1 + tsample)
 
@@ -355,13 +363,16 @@ def test_scale():
     ntests = 100
     maxdeg = 6
     tsample = np.linspace(-1, 1, 17)
+    domain = Interval(-1, 1)
     for _ in range(ntests):
         dega = np.random.randint(0, maxdeg + 1)
         coefsa = np.random.uniform(-1, 1, dega + 1)
-        beziera = Bezier(coefsa)
+        beziera = Bezier(coefsa, domain)
         bezierb = beziera.scale(2)
-        valuesa = beziera(2 * tsample)
-        valuesb = bezierb(tsample)
+        assert beziera.domain == [-1, 1]
+        assert bezierb.domain == [-2, 2]
+        valuesa = beziera(tsample)
+        valuesb = bezierb(2 * tsample)
 
         np.testing.assert_allclose(valuesb, valuesa)
 
@@ -412,7 +423,6 @@ def test_numpy_array():
     repr(bezier)
 
     square = bezier @ bezier
-    print(": - ", tuple(square))
     assert square.degree == 4
     assert square == Bezier([13, -10, frac(31, 3), -7, 10])
     point = np.array([2, 1], dtype="int64")
@@ -426,6 +436,7 @@ def test_numpy_array():
         "test_coefficients",
         "test_degree",
         "test_matrices",
+        "test_compare",
         "test_evaluate",
         "test_neg",
         "test_add",

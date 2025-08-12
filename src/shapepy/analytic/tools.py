@@ -30,6 +30,7 @@ def find_polynomial_roots(
     """
     assert Is.instance(polynomial, Polynomial)
     polynomial = polynomial.clean()
+    domain &= polynomial.domain
     if polynomial.degree == 0:
         return domain if polynomial[0] == 0 else Empty()
     if polynomial.degree == 1:
@@ -57,6 +58,7 @@ def where_minimum_polynomial(
     Finds the value of t* such poly(t*) is minimal
     """
     assert Is.instance(polynomial, Polynomial)
+    domain &= polynomial.domain
     if polynomial.degree == 0:
         return domain
     if domain == Whole() and polynomial.degree % 2:

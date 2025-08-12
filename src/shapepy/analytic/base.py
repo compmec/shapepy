@@ -9,7 +9,9 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import Iterable, Set, Union
 
-from ..scalar.reals import Real
+from rbool import SubSetR1, Whole, from_any, infimum, supremum
+
+from ..scalar.reals import Math, Real
 from ..tools import Is
 
 
@@ -43,6 +45,14 @@ class IAnalytic(ABC):
     """
     Interface Class for Analytic classes
     """
+
+    @property
+    @abstractmethod
+    def domain(self) -> SubSetR1:
+        """
+        Defines the domain in which the Analytic function is defined
+        """
+        raise NotImplementedError
 
     @abstractmethod
     def __call__(self, node: Real, derivate: int = 0) -> Real:
@@ -121,13 +131,22 @@ class BaseAnalytic(IAnalytic):
     Base class parent of Analytic classes
     """
 
-    def __init__(self, coefs: Iterable[Real]):
+    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = Whole()):
         if not Is.iterable(coefs):
             raise TypeError("Expected an iterable of coefficients")
         coefs = tuple(coefs)
         if len(coefs) == 0:
             raise ValueError("Cannot receive an empty tuple")
         self.__coefs = coefs
+        self.domain = domain
+
+    @property
+    def domain(self) -> SubSetR1:
+        return self.__domain
+
+    @domain.setter
+    def domain(self, subset: SubSetR1):
+        self.__domain = from_any(subset)
 
     @property
     def ncoefs(self) -> int:
@@ -170,7 +189,18 @@ class BaseAnalytic(IAnalytic):
         return self.__mul__(other)
 
     def __repr__(self) -> str:
-        return str(self)
+        if self.domain is Whole():
+            return str(self)
+        return f"{self.domain}: {self}"
+
+
+def is_bounded(subset: SubSetR1) -> bool:
+    """
+    Tells if the given subset on real line is bounded
+
+    Meaning, returns false if -inf or +inf are inside subset
+    """
+    return infimum(subset) != Math.NEGINF and supremum(subset) != Math.POSINF
 
 
 def is_analytic(obj: object) -> bool:

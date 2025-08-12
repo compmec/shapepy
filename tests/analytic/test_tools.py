@@ -70,7 +70,7 @@ def test_polynomial_roots():
 @pytest.mark.dependency(depends=["test_begin"])
 def test_bezier_roots():
     bezier = Bezier([0])
-    assert find_roots(bezier) == Whole()
+    assert find_roots(bezier) == [0, 1]
     assert find_roots(bezier, [0, 1]) == [0, 1]
 
     bezier = Bezier([1, -1])

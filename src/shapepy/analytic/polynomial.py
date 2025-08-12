@@ -7,6 +7,8 @@ from __future__ import annotations
 from numbers import Real
 from typing import Iterable, List, Union
 
+from rbool import move, scale
+
 from ..scalar.reals import Math
 from ..tools import Is, To, vectorize
 from .base import BaseAnalytic
@@ -56,13 +58,13 @@ class Polynomial(BaseAnalytic):
         if not Is.instance(other, Polynomial):
             coefs = list(self)
             coefs[0] += other
-            return self.__class__(coefs)
+            return self.__class__(coefs, self.domain)
         coefs = [0] * (1 + max(self.degree, other.degree))
         for i, coef in enumerate(self):
             coefs[i] += coef
         for i, coef in enumerate(other):
             coefs[i] += coef
-        return self.__class__(coefs)
+        return self.__class__(coefs, self.domain)
 
     def __mul__(self, other: Union[Real, Polynomial]) -> Polynomial:
         if Is.instance(other, Polynomial):
@@ -70,18 +72,17 @@ class Polynomial(BaseAnalytic):
             for i, coefi in enumerate(self):
                 for j, coefj in enumerate(other):
                     coefs[i + j] += coefi * coefj
-        else:
-            coefs = tuple(other * coef for coef in self)
-        return self.__class__(coefs)
+            return self.__class__(coefs, self.domain & other.domain)
+        return self.__class__((other * coef for coef in self), self.domain)
 
     def __matmul__(self, other: Union[Real, Polynomial]) -> Polynomial:
         if not isinstance(other, Polynomial):
-            return self.__class__((coef @ other for coef in self))
+            return self.__class__((coef @ other for coef in self), self.domain)
         coefs = [0 * (self[0] @ self[0])] * (self.degree + other.degree + 1)
         for i, coefi in enumerate(self):
             for j, coefj in enumerate(other):
                 coefs[i + j] += coefi @ coefj
-        return self.__class__(coefs)
+        return self.__class__(coefs, self.domain & other.domain)
 
     @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Real:
@@ -138,7 +139,7 @@ class Polynomial(BaseAnalytic):
             degree = max((i for i, v in enumerate(self) if v), default=0)
         else:
             degree = max((i for i, v in enumerate(self) if v @ v), default=0)
-        return Polynomial(self[: degree + 1])
+        return Polynomial(self[: degree + 1], self.domain)
 
     def scale(self, amount: Real) -> Polynomial:
         """
@@ -159,7 +160,7 @@ class Polynomial(BaseAnalytic):
         4 * t + 8 * t^3
         """
         coefs = tuple(coef * amount**i for i, coef in enumerate(self))
-        return Polynomial(coefs)
+        return Polynomial(coefs, scale(self.domain, amount))
 
     def shift(self, amount: Real) -> Polynomial:
         """
@@ -186,7 +187,7 @@ class Polynomial(BaseAnalytic):
                 if (i + j) % 2:
                     value *= -1
                 newcoefs[j] += coef * value
-        return Polynomial(newcoefs)
+        return Polynomial(newcoefs, move(self.domain, amount))
 
     def integrate(self, times: int = 1) -> Polynomial:
         """
@@ -207,7 +208,7 @@ class Polynomial(BaseAnalytic):
             newcoefs += list(
                 coef / (n + 1) for n, coef in enumerate(polynomial)
             )
-            polynomial = Polynomial(newcoefs)
+            polynomial = Polynomial(newcoefs, self.domain)
         return polynomial
 
     def derivate(self, times: int = 1) -> Polynomial:
@@ -224,12 +225,12 @@ class Polynomial(BaseAnalytic):
         2 + 10 * t
         """
         if self.degree < times:
-            return Polynomial([0 * self[0]])
+            return Polynomial([0 * self[0]], self.domain)
         coefs = (
             Math.factorial(n + times) // Math.factorial(n) * coef
             for n, coef in enumerate(self[times:])
         )
-        return Polynomial(coefs)
+        return Polynomial(coefs, self.domain)
 
 
 def to_polynomial(coeficients: Iterable[Real]) -> Polynomial:
