@@ -17,7 +17,7 @@ from .base import Future, IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve, clean_piecewise
 from .point import Point2D
-from .segment import Segment, clean_segment, segment_self_intersect
+from .segment import Segment, segment_self_intersect
 
 
 class JordanCurve(IGeometricCurve):
@@ -166,77 +166,6 @@ class JordanCurve(IGeometricCurve):
             new_segments.append(segments[i].invert())
         self.segments = tuple(new_segments)
         return self
-
-    def __split_segment(self, index: int, nodes: Tuple[float]) -> None:
-        nodes = tuple(sorted(nodes))
-        segment = self.segments[index]
-        new_segments = tuple(map(clean_segment, segment.split(nodes)))
-        points = list(new_segments[0].ctrlpoints)
-        points[0] = segment.ctrlpoints[0]
-        new_segments[0].ctrlpoints = points
-        points = list(new_segments[-1].ctrlpoints)
-        points[-1] = segment.ctrlpoints[-1]
-        new_segments[-1].ctrlpoints = points
-        for i in range(len(nodes)):
-            points = list(new_segments[i + 1].ctrlpoints)
-            points[0] = new_segments[i].ctrlpoints[-1]
-            new_segments[i + 1].ctrlpoints = points
-        total_segments = list(self.segments)
-        total_segments.pop(index)
-        for i, segment in enumerate(new_segments):
-            total_segments.insert(index + i, segment)
-        self.segments = total_segments
-
-    def split(self, indexs: Tuple[int], nodes: Tuple[float]) -> None:
-        """Divides the jordan curve in some nodes
-
-        Given ``indexs = [a0, a1, ..., an]`` and ``nodes = [u0, u1, ..., un]``
-        then for each pair ``(ai, ui)``,
-        split the ``self.segments[ai]`` at ``ui``
-
-        .. note: ``node = 0`` or ``node = 1`` are ignored
-
-        :param indexs: The number of interior points,
-                       ``0 <= index < len(segments)``
-        :type indexs: tuple[int]
-        :param nodes: The nodes to split, ``0 <= node <= 1``
-        :type nodes: tuple[float]
-
-        Example use
-        -----------
-
-        >>> from matplotlib import pyplot as plt
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> jordan.split([0, 2], [1/2, 2/3])
-        >>> print(jordan)
-        Jordan Curve of degree 1 and vertices
-        ((0, 0), (2.0, 0.0), (4, 0), (0, 3), (0.0, 1.0))
-
-        """
-        for index in indexs:
-            assert Is.integer(index) and 0 <= index
-            assert index < len(self.segments)
-        for node in nodes:
-            assert Is.finite(node) and 0 <= node <= 1
-        assert len(indexs) == len(nodes)
-        # Clean boundary nodes, when node = 0 or 1
-        pairs = sorted(zip(indexs, nodes))
-        i = 0
-        while i < len(pairs):
-            node = pairs[i][1]
-            if abs(node) < 1e-6 or abs(node - 1) < 1e-6:
-                pairs.pop(i)
-            else:
-                i += 1
-        shift = 0
-        for ind in range(len(self.segments)):
-            new_nodes = tuple(node for index, node in pairs if index == ind)
-            if len(new_nodes) == 0:
-                continue
-            self.__split_segment(ind + shift, new_nodes)
-            shift += len(new_nodes)
 
     def points(self, subnpts: Optional[int] = None) -> Tuple[Tuple[float]]:
         """Return sample points in jordan curve for plotting curve

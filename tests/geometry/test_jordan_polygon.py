@@ -337,7 +337,7 @@ class TestTransformationPolygon:
         square_pts = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
         good_square = FactoryJordan.polygon(square_pts)
         test_square = FactoryJordan.polygon(square_pts)
-        test_square.split((0, 2, 3), (0.5, 0.5, 0.5))
+        test_square.piecewise.split([0.5, 2.5, 3.5])
         assert test_square == good_square
 
     @pytest.mark.order(15)

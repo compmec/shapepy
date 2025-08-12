@@ -107,8 +107,7 @@ class FollowPath:
         intersection.evaluate()
         for jordans in all_group_jordans:
             for jordan in jordans:
-                piece = jordan.piecewise
-                piece.snap(intersection.all_knots[id(jordan)])
+                jordan.piecewise.split(intersection.all_knots[id(jordan)])
 
     @staticmethod
     def pursue_path(
