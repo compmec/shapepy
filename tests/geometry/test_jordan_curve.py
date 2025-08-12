@@ -106,10 +106,10 @@ class TestQuadraticJordan:
         jordanb = FactoryJordan.spline_curve(curveb)
 
         test = jordana & jordanb
-        assert test.all_knots[id(jordana)] == {0, 0.25, 0.75, 1, 2}
-        assert test.all_knots[id(jordanb)] == {0, 0.25, 0.75, 1, 2}
-        assert test.all_subsets[id(jordana)] == {0.25, 0.75}
-        assert test.all_subsets[id(jordanb)] == {0.25, 0.75}
+        assert equal_sets(test.all_knots[id(jordana)], {0, 0.25, 0.75, 1, 2})
+        assert equal_sets(test.all_knots[id(jordanb)], {0, 0.25, 0.75, 1, 2})
+        assert equal_rbool_sets(test.all_subsets[id(jordana)], {0.25, 0.75})
+        assert equal_rbool_sets(test.all_subsets[id(jordanb)], {0.25, 0.75})
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)
