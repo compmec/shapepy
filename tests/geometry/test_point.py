@@ -6,7 +6,7 @@ from fractions import Fraction as frac
 
 import pytest
 
-from shapepy.geometry.point import cartesian, polar
+from shapepy.geometry.point import cartesian, cross, inner, polar
 from shapepy.scalar.angle import Angle
 
 
@@ -306,18 +306,18 @@ def test_norm():
 def test_inner():
     pointa = cartesian(0, 0)
     pointb = cartesian(0, 0)
-    assert pointa @ pointb == 0
-    assert pointb @ pointa == 0
+    assert inner(pointa, pointb) == 0
+    assert inner(pointb, pointa) == 0
 
     pointa = cartesian(1, 0)
     pointb = cartesian(0, 1)
-    assert pointa @ pointb == 0
-    assert pointb @ pointa == 0
+    assert inner(pointa, pointb) == 0
+    assert inner(pointb, pointa) == 0
 
     pointa = cartesian(1, 1)
     pointb = cartesian(1, 1)
-    assert pointa @ pointb == 2
-    assert pointb @ pointa == 2
+    assert inner(pointa, pointb) == 2
+    assert inner(pointb, pointa) == 2
 
 
 @pytest.mark.order(11)
@@ -328,18 +328,18 @@ def test_inner():
 def test_cross():
     pointa = cartesian(0, 0)
     pointb = cartesian(0, 0)
-    assert pointa ^ pointb == 0
-    assert pointb ^ pointa == 0
+    assert cross(pointa, pointb) == 0
+    assert cross(pointb, pointa) == 0
 
     pointa = cartesian(1, 0)
     pointb = cartesian(0, 1)
-    assert pointa ^ pointb == 1
-    assert pointb ^ pointa == -1
+    assert cross(pointa, pointb) == 1
+    assert cross(pointb, pointa) == -1
 
     pointa = cartesian(1, 1)
     pointb = cartesian(1, 1)
-    assert pointa ^ pointb == 0
-    assert pointb ^ pointa == 0
+    assert cross(pointa, pointb) == 0
+    assert cross(pointb, pointa) == 0
 
 
 @pytest.mark.order(11)
@@ -354,13 +354,12 @@ def test_cross():
     ]
 )
 def test_equivalent_expression():
-    return
     pta = cartesian(frac(5, 13), frac(12, 13))
     ptb = cartesian(frac(3, 5), frac(4, 5))
-    assert pta * ptb == pta[0] * ptb[0] + pta[1] * ptb[1]
-    assert ptb * pta == pta[0] * ptb[0] + pta[1] * ptb[1]
-    assert pta ^ ptb == pta[0] * ptb[1] - pta[1] * ptb[0]
-    assert ptb ^ pta == pta[0] * ptb[1] - pta[1] * ptb[0]
+    assert inner(pta, ptb) == pta[0] * ptb[0] + pta[1] * ptb[1]
+    assert inner(ptb, pta) == pta[0] * ptb[0] + pta[1] * ptb[1]
+    assert cross(pta, ptb) == pta[0] * ptb[1] - pta[1] * ptb[0]
+    assert cross(ptb, pta) == pta[1] * ptb[0] - pta[0] * ptb[1]
 
 
 @pytest.mark.order(11)

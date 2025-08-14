@@ -9,6 +9,7 @@ import pynurbs
 from ..tools import Is, NotExpectedError, To
 from .base import IParametrizedCurve
 from .piecewise import PiecewiseCurve
+from .point import cross, inner
 from .segment import Segment
 
 
@@ -80,12 +81,12 @@ def bezier_and_bezier(
     dapt = curvea.ctrlpoints[-1] - curvea.ctrlpoints[-2]
     # First point of first derivative
     dbpt = curveb.ctrlpoints[1] - curveb.ctrlpoints[0]
-    if abs(dapt ^ dbpt) > 1e-6:
+    if abs(cross(dapt, dbpt)) > 1e-6:
         node = To.rational(1, 2)
     else:
         dsumpt = dapt + dbpt
-        denomin = dsumpt @ dsumpt
-        node = dapt @ dsumpt / denomin
+        denomin = inner(dsumpt, dsumpt)
+        node = inner(dapt, dsumpt) / denomin
     knotvectora = pynurbs.GeneratorKnotVector.bezier(
         curvea.degree, To.rational
     )

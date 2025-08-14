@@ -133,7 +133,7 @@ class Point2D:
 
     def __mul__(self, other: float) -> Point2D:
         if Is.point(other):
-            return self.__matmul__(other)
+            return inner(self, other)
         if not Is.finite(other):
             raise TypeError(f"Multiplication with non-real number: {other}")
         return cartesian(self[0] * other, self[1] * other)
@@ -141,17 +141,9 @@ class Point2D:
     def __rmul__(self, other: float) -> Point2D:
         return self.__mul__(other)
 
-    def __matmul__(self, other: Point2D) -> float:
-        other = To.point(other)
-        return self[0] * other[0] + self[1] * other[1]
-
-    def __xor__(self, other: Point2D) -> float:
-        other = To.point(other)
-        return self[0] * other[1] - self[1] * other[0]
-
     def __abs__(self) -> float:
         """Returns the norm of the point, the distance to the origin"""
-        return Math.sqrt(self @ self)
+        return self.radius
 
     def move(self, vector: tuple[Real, Real]) -> Point2D:
         """
@@ -216,6 +208,16 @@ class Point2D:
         self.__xcoord = x_new
         self.__ycoord = y_new
         return self
+
+
+def inner(pointa: Point2D, pointb: Point2D) -> Real:
+    """Compute the cross product between two points"""
+    return pointa.xcoord * pointb.xcoord + pointa.ycoord * pointb.ycoord
+
+
+def cross(pointa: Point2D, pointb: Point2D) -> Real:
+    """Compute the cross product between two points"""
+    return pointa.xcoord * pointb.ycoord - pointa.ycoord * pointb.xcoord
 
 
 def to_point(point: Point2D | tuple[Real, Real]) -> Point2D:

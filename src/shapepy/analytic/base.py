@@ -67,10 +67,6 @@ class IAnalytic(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def __matmul__(self, other: Union[Real, IAnalytic]) -> IAnalytic:
-        raise NotImplementedError
-
-    @abstractmethod
     def shift(self, amount: Real) -> IAnalytic:
         """
         Transforms the analytic p(t) into p(t-d) by

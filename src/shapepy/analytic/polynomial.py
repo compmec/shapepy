@@ -75,15 +75,6 @@ class Polynomial(BaseAnalytic):
             return self.__class__(coefs, self.domain & other.domain)
         return self.__class__((other * coef for coef in self), self.domain)
 
-    def __matmul__(self, other: Union[Real, Polynomial]) -> Polynomial:
-        if not isinstance(other, Polynomial):
-            return self.__class__((coef @ other for coef in self), self.domain)
-        coefs = [0 * (self[0] @ self[0])] * (self.degree + other.degree + 1)
-        for i, coefi in enumerate(self):
-            for j, coefj in enumerate(other):
-                coefs[i + j] += coefi @ coefj
-        return self.__class__(coefs, self.domain & other.domain)
-
     @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Real:
         if derivate == 0:
@@ -106,13 +97,6 @@ class Polynomial(BaseAnalytic):
         if self.degree == 0:
             return str(self[0])
         msgs: List[str] = []
-        if not Is.real(self[0]):
-            msgs.append(f"({self[0]})")
-            if self.degree > 0:
-                msgs.append(f"({self[1]}) * t")
-            for i, coef in enumerate(self[2:]):
-                msgs.append(f"({coef}) * t^{i+2}")
-            return " + ".join(msgs)
         flag = False
         for i, coef in enumerate(self):
             if coef == 0:
@@ -135,10 +119,7 @@ class Polynomial(BaseAnalytic):
         """
         Decreases the degree of the bezier curve if possible
         """
-        if Is.real(self[0]):
-            degree = max((i for i, v in enumerate(self) if v), default=0)
-        else:
-            degree = max((i for i, v in enumerate(self) if v @ v), default=0)
+        degree = max((i for i, v in enumerate(self) if v * v > 0), default=0)
         return Polynomial(self[: degree + 1], self.domain)
 
     def scale(self, amount: Real) -> Polynomial:
