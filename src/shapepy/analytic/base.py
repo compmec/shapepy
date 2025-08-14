@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import Iterable, Set, Union
 
-from rbool import SubSetR1, Whole, from_any, infimum, supremum
+from rbool import SubSetR1, Whole, from_any
 
-from ..scalar.reals import Math, Real
+from ..scalar.reals import Real
 from ..tools import Is
 
 
