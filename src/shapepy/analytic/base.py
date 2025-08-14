@@ -190,15 +190,6 @@ class BaseAnalytic(IAnalytic):
         return f"{self.domain}: {self}"
 
 
-def is_bounded(subset: SubSetR1) -> bool:
-    """
-    Tells if the given subset on real line is bounded
-
-    Meaning, returns false if -inf or +inf are inside subset
-    """
-    return infimum(subset) != Math.NEGINF and supremum(subset) != Math.POSINF
-
-
 def is_analytic(obj: object) -> bool:
     """
     Tells if given object is an analytic function
