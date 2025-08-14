@@ -125,12 +125,6 @@ class Bezier(BaseAnalytic):
         mulpoly = self.__polynomial * other
         return polynomial2bezier(mulpoly)
 
-    def __matmul__(self, other: Union[Real, Polynomial, Bezier]) -> Bezier:
-        if Is.instance(other, Bezier):
-            other = bezier2polynomial(other)
-        matmulpoly = self.__polynomial @ other
-        return polynomial2bezier(matmulpoly)
-
     def __call__(self, node: Real, derivate: int = 0) -> Real:
         node = (node - self.__start) / (self.__end - self.__start)
         return self.__polynomial(node, derivate)

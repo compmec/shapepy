@@ -399,37 +399,6 @@ def test_split():
 
 
 @pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build"])
-def test_numpy_array():
-    degree = 3
-    coefs = np.zeros((degree + 1, 3), dtype="int64")
-    bezier = Bezier(coefs)
-    assert bezier.degree == 3
-    assert tuple(bezier[0]) == (0, 0, 0)
-    assert tuple(bezier[1]) == (0, 0, 0)
-    assert tuple(bezier[2]) == (0, 0, 0)
-    assert tuple(bezier[3]) == (0, 0, 0)
-    str(bezier)
-    repr(bezier)
-
-    coefs = ((3, 2), (-4, 1), (1, -3))
-    coefs = np.array(coefs, dtype="int64")
-    bezier = Bezier(coefs)
-    assert bezier.degree == 2
-    assert tuple(bezier[0]) == (3, 2)
-    assert tuple(bezier[1]) == (-4, 1)
-    assert tuple(bezier[2]) == (1, -3)
-    str(bezier)
-    repr(bezier)
-
-    square = bezier @ bezier
-    assert square.degree == 4
-    assert square == Bezier([13, -10, frac(31, 3), -7, 10])
-    point = np.array([2, 1], dtype="int64")
-    assert bezier @ point == Bezier([8, -7, -1])
-
-
-@pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
         "test_build",
@@ -448,7 +417,6 @@ def test_numpy_array():
         "test_shift",
         "test_clean",
         "test_split",
-        "test_numpy_array",
     ]
 )
 def test_all():

@@ -29,6 +29,7 @@ from ..tools import Is, NotExpectedError
 from .base import IGeometricCurve, IParametrizedCurve
 from .jordancurve import JordanCurve
 from .piecewise import PiecewiseCurve
+from .point import cross, inner
 from .segment import Segment
 
 
@@ -278,30 +279,30 @@ class IntersectionSegments:
         dA = A1 - A0
         dB = B1 - B0
         B0mA0 = B0 - A0
-        dAxdB = dA ^ dB
+        dAxdB = cross(dA, dB)
         if dAxdB != 0:  # Lines are not parallel
-            t0 = (B0mA0 ^ dB) / dAxdB
+            t0 = cross(B0mA0, dB) / dAxdB
             if t0 < 0 or 1 < t0:
                 return empty, empty
-            u0 = (B0mA0 ^ dA) / dAxdB
+            u0 = cross(B0mA0, dA) / dAxdB
             if u0 < 0 or 1 < u0:
                 return empty, empty
             return SingleValue(t0), SingleValue(u0)
         # Lines are parallel
-        if dA ^ B0mA0 != 0:
+        if cross(dA, B0mA0) != 0:
             return empty, empty  # Parallel, but not colinear
         # Compute the projections
-        dAodA = dA @ dA
-        dBodB = dB @ dB
-        t0 = (B0 - A0) @ dA / dAodA
-        t1 = (B1 - A0) @ dA / dAodA
+        dAodA = inner(dA, dA)
+        dBodB = inner(dB, dB)
+        t0 = inner(B0 - A0, dA) / dAodA
+        t1 = inner(B1 - A0, dA) / dAodA
         if t1 < t0:
             t0, t1 = t1, t0
         if t1 < 0 or 1 < t0:
             return empty, empty
 
-        u0 = (A0 - B0) @ dB / dBodB
-        u1 = (A1 - B0) @ dB / dBodB
+        u0 = inner(A0 - B0, dB) / dBodB
+        u1 = inner(A1 - B0, dB) / dBodB
         if u1 < u0:
             u0, u1 = u1, u0
         t0 = min(max(0, t0), 1)
@@ -338,11 +339,11 @@ class IntersectionSegments:
                 ddv = ddcurveb(v)
 
                 dif = ssu - oov
-                vect0 = dsu @ dif
-                vect1 = -dov @ dif
-                mat00 = dsu @ dsu + ddu @ dif
-                mat01 = -dsu @ dov
-                mat11 = dov @ dov - ddv @ dif
+                vect0 = inner(dsu, dif)
+                vect1 = -inner(dov, dif)
+                mat00 = inner(dsu, dsu) + inner(ddu, dif)
+                mat01 = -inner(dsu, dov)
+                mat11 = inner(dov, dov) - inner(ddv, dif)
                 deter = mat00 * mat11 - mat01**2
                 if abs(deter) < 1e-6:
                     continue
