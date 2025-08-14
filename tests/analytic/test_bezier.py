@@ -10,7 +10,6 @@ from shapepy.analytic.bezier import (
     bezier_caract_matrix,
     inverse_caract_matrix,
     polynomial2bezier,
-    split,
 )
 from shapepy.analytic.polynomial import Polynomial
 
@@ -145,124 +144,20 @@ def test_neg():
     assert -beziera == bezierb
 
 
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
-def test_add():
-    """
-    BasisFunctions to test if the polynomials coefficients
-    are correctly computed
-    """
-    np.random.seed(0)
-
-    ntests = 100
-    maxdeg = 6
-    tsample = np.linspace(0, 1, 17)
-    for _ in range(ntests):
-        dega, degb = np.random.randint(0, maxdeg + 1, 2)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        coefsb = np.random.uniform(-1, 1, degb + 1)
-        beziera = Bezier(coefsa)
-        bezierb = Bezier(coefsb)
-        bezierc = beziera + bezierb
-        valuesa = beziera(tsample)
-        valuesb = bezierb(tsample)
-        valuesc = bezierc(tsample)
-
-        np.testing.assert_allclose(valuesa + valuesb, valuesc)
-
-    for _ in range(ntests):
-        dega = np.random.randint(0, maxdeg + 1)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        const = np.random.uniform(-1, 1)
-        beziera = Bezier(coefsa)
-        bezierb = beziera + const
-        bezierc = const + beziera
-        valuesa = beziera(tsample)
-        valuesb = bezierb(tsample)
-        valuesc = bezierc(tsample)
-
-        np.testing.assert_allclose(valuesa + const, valuesb)
-        np.testing.assert_allclose(const + valuesa, valuesc)
-
-
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
-def test_sub():
-    """
-    BasisFunctions to test if the polynomials coefficients
-    are correctly computed
-    """
-    np.random.seed(0)
-
-    ntests = 100
-    maxdeg = 6
-    tsample = np.linspace(0, 1, 17)
-    for _ in range(ntests):
-        dega, degb = np.random.randint(0, maxdeg + 1, 2)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        coefsb = np.random.uniform(-1, 1, degb + 1)
-        beziera = Bezier(coefsa)
-        bezierb = Bezier(coefsb)
-        bezierc = beziera - bezierb
-        valuesa = beziera(tsample)
-        valuesb = bezierb(tsample)
-        valuesc = bezierc(tsample)
-
-        np.testing.assert_allclose(valuesa - valuesb, valuesc)
-
-    for _ in range(ntests):
-        dega = np.random.randint(0, maxdeg + 1)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        const = np.random.uniform(-1, 1)
-        beziera = Bezier(coefsa)
-        bezierb = beziera - const
-        bezierc = const - beziera
-        valuesa = beziera(tsample)
-        valuesb = bezierb(tsample)
-        valuesc = bezierc(tsample)
-
-        np.testing.assert_allclose(valuesa - const, valuesb)
-        np.testing.assert_allclose(const - valuesa, valuesc)
-
-
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build", "test_degree", "test_evaluate"])
+@pytest.mark.order(3)
+@pytest.mark.dependency(
+    depends=[
+        "test_build",
+        "test_degree",
+        "test_evaluate",
+        "test_compare",
+    ]
+)
 def test_mul():
-    """
-    BasisFunctions to test if the polynomials coefficients
-    are correctly computed
-    """
-    np.random.seed(0)
-
-    ntests = 100
-    maxdeg = 6
-    tsample = np.linspace(0, 1, 17)
-    for _ in range(ntests):
-        dega, degb = np.random.randint(0, maxdeg + 1, 2)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        coefsb = np.random.uniform(-1, 1, degb + 1)
-        beziera = Bezier(coefsa)
-        bezierb = Bezier(coefsb)
-        bezierc = beziera * bezierb
-        valuesa = beziera(tsample)
-        valuesb = bezierb(tsample)
-        valuesc = bezierc(tsample)
-
-        np.testing.assert_allclose(valuesa * valuesb, valuesc)
-
-    for _ in range(ntests):
-        dega = np.random.randint(0, maxdeg + 1)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        const = np.random.uniform(-1, 1)
-        beziera = Bezier(coefsa)
-        bezierb = beziera * const
-        bezierc = const * beziera
-        valuesa = beziera(tsample)
-        valuesb = bezierb(tsample)
-        valuesc = bezierc(tsample)
-
-        np.testing.assert_allclose(valuesa * const, valuesb)
-        np.testing.assert_allclose(const * valuesa, valuesc)
+    bezier = Bezier([-1, 1])
+    assert 1 * bezier == Bezier([-1, 1])
+    assert 2 * bezier == Bezier([-2, 2])
+    assert bezier * bezier == Bezier([1, -1, 1])
 
 
 @pytest.mark.order(3)
@@ -309,93 +204,12 @@ def test_conversions():
             assert bezier == Bezier(ctrlpoints)
 
 
-@pytest.mark.order(3)
-@pytest.mark.dependency(
-    depends=[
-        "test_build",
-        "test_degree",
-        "test_evaluate",
-        "test_add",
-        "test_mul",
-    ]
-)
-def test_shift():
-    """
-    BasisFunctions to test if the polynomials coefficients
-    are correctly computed
-    """
-    np.random.seed(0)
-
-    ntests = 100
-    maxdeg = 6
-    tsample = np.linspace(-1, 1, 17)
-    domain = Interval(-1, 1)
-    for _ in range(ntests):
-        dega = np.random.randint(0, maxdeg + 1)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        beziera = Bezier(coefsa, domain)
-        bezierb = beziera.shift(1)
-        assert beziera.domain == [-1, 1]
-        assert bezierb.domain == [0, 2]
-        valuesa = beziera(tsample)
-        valuese = bezierb(1 + tsample)
-
-        np.testing.assert_allclose(valuese, valuesa)
-
-
-@pytest.mark.order(3)
-@pytest.mark.dependency(
-    depends=[
-        "test_build",
-        "test_degree",
-        "test_evaluate",
-        "test_add",
-        "test_mul",
-    ]
-)
-def test_scale():
-    """
-    BasisFunctions to test if the polynomials coefficients
-    are correctly computed
-    """
-    np.random.seed(0)
-
-    ntests = 100
-    maxdeg = 6
-    tsample = np.linspace(-1, 1, 17)
-    domain = Interval(-1, 1)
-    for _ in range(ntests):
-        dega = np.random.randint(0, maxdeg + 1)
-        coefsa = np.random.uniform(-1, 1, dega + 1)
-        beziera = Bezier(coefsa, domain)
-        bezierb = beziera.scale(2)
-        assert beziera.domain == [-1, 1]
-        assert bezierb.domain == [-2, 2]
-        valuesa = beziera(tsample)
-        valuesb = bezierb(2 * tsample)
-
-        np.testing.assert_allclose(valuesb, valuesa)
-
-
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_matrices"])
 def test_clean():
     ctrlpoints = [1, 2, 3, 4]
     bezier = Bezier(ctrlpoints)
     assert bezier.clean() == Bezier([1, 4])
-
-
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build", "test_matrices"])
-def test_split():
-    bezier = Bezier([1, 3, 2, -1])
-    bez0, bez1 = tuple(split(bezier, [0.5]))
-    assert bez0(0.0) == bezier(0.00)
-    assert bez0(0.5) == bezier(0.25)
-    assert bez0(1.0) == bezier(0.50)
-    assert bez1(0.0) == bezier(0.50)
-    assert bez1(0.5) == bezier(0.75)
-    assert bez1(1.0) == bezier(1.00)
 
 
 @pytest.mark.order(4)
@@ -408,15 +222,9 @@ def test_split():
         "test_compare",
         "test_evaluate",
         "test_neg",
-        "test_add",
-        "test_sub",
-        "test_mul",
         "test_print",
         "test_conversions",
-        "test_scale",
-        "test_shift",
         "test_clean",
-        "test_split",
     ]
 )
 def test_all():

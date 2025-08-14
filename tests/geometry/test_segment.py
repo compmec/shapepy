@@ -14,6 +14,7 @@ from shapepy.geometry.segment import Segment, clean_segment
     depends=[
         "tests/analytic/test_bezier.py::test_all",
         "tests/analytic/test_polynomial.py::test_all",
+        "tests/analytic/test_random.py::test_all",
         "tests/analytic/test_derivate.py::test_all",
         "tests/analytic/test_integrate.py::test_all",
         "tests/analytic/test_tools.py::test_all",

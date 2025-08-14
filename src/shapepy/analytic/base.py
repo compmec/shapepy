@@ -9,9 +9,9 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import Iterable, Set, Union
 
-from rbool import SubSetR1, Whole, from_any, infimum, supremum
+from rbool import SubSetR1, Whole, from_any
 
-from ..scalar.reals import Math, Real
+from ..scalar.reals import Real
 from ..tools import Is
 
 
@@ -188,15 +188,6 @@ class BaseAnalytic(IAnalytic):
         if self.domain is Whole():
             return str(self)
         return f"{self.domain}: {self}"
-
-
-def is_bounded(subset: SubSetR1) -> bool:
-    """
-    Tells if the given subset on real line is bounded
-
-    Meaning, returns false if -inf or +inf are inside subset
-    """
-    return infimum(subset) != Math.NEGINF and supremum(subset) != Math.POSINF
 
 
 def is_analytic(obj: object) -> bool:

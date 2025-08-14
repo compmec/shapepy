@@ -4,16 +4,15 @@ Defines the Bezier class, that has the same basis as the Polynomial
 
 from __future__ import annotations
 
-from copy import copy
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
-from rbool import Interval, from_any, infimum, move, scale, supremum
+from rbool import SubSetR1, Whole
 
 from ..scalar.quadrature import inner
 from ..scalar.reals import Math, Rational, Real
 from ..tools import Is, NotExpectedError, To
-from .base import BaseAnalytic, IAnalytic, is_bounded
+from .base import BaseAnalytic, IAnalytic
 from .polynomial import Polynomial
 
 
@@ -80,14 +79,7 @@ class Bezier(BaseAnalytic):
     such as adding, subtracting, multiplying, etc
     """
 
-    def __init__(
-        self, coefs: Iterable[Real], domain: Union[Interval, None] = None
-    ):
-        domain = Interval(0, 1) if domain is None else from_any(domain)
-        if not is_bounded(domain):
-            raise ValueError(f"Invalid domain {domain} for Bezier")
-        self.__start = infimum(domain)
-        self.__end = supremum(domain)
+    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = Whole()):
         super().__init__(coefs, domain)
         self.__polynomial = bezier2polynomial(self)
 
@@ -126,7 +118,6 @@ class Bezier(BaseAnalytic):
         return polynomial2bezier(mulpoly)
 
     def __call__(self, node: Real, derivate: int = 0) -> Real:
-        node = (node - self.__start) / (self.__end - self.__start)
         return self.__polynomial(node, derivate)
 
     def __str__(self):
@@ -156,14 +147,14 @@ class Bezier(BaseAnalytic):
         >>> print(new_poly)
         - 1 + 3 * t - 3 * t^2 + t^3
         """
-        return Bezier(self, scale(self.domain, amount))
+        return polynomial2bezier(bezier2polynomial(self).scale(amount))
 
     def shift(self, amount: Real) -> Bezier:
         """
         Transforms the bezier p(t) into p(t-d) by
         translating the bezier by 'd' to the right.
         """
-        return Bezier(self, move(self.domain, amount))
+        return polynomial2bezier(bezier2polynomial(self).shift(amount))
 
     def integrate(self, times: int = 1) -> Bezier:
         """
@@ -185,21 +176,6 @@ class Bezier(BaseAnalytic):
         Derivate the bezier curve, giving a new one
         """
         return polynomial2bezier(bezier2polynomial(self).derivate(times))
-
-
-def split(bezier: Bezier, nodes: Iterable[Real]) -> Iterable[Bezier]:
-    """
-    Splits the bezier curve into segments
-    """
-    assert Is.instance(bezier, Bezier)
-    nodes = (node for node in nodes if 0 < node < 1)
-    nodes = tuple([0] + sorted(nodes) + [1])
-    poly = bezier2polynomial(bezier)
-    assert poly.domain == bezier.domain
-    for knota, knotb in zip(nodes, nodes[1:]):
-        newpoly = copy(poly).shift(-knota).scale(knotb - knota)
-        newpoly.domain = poly.domain
-        yield polynomial2bezier(newpoly)
 
 
 def to_bezier(coefs: Iterable[Real]) -> Bezier:

@@ -16,7 +16,7 @@ from copy import copy
 from typing import Iterable, Optional, Tuple
 
 from ..analytic.base import IAnalytic
-from ..analytic.bezier import split
+from ..analytic.bezier import Bezier
 from ..analytic.tools import find_minimum
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
@@ -168,9 +168,13 @@ class Segment(IGeometricCurve, IParametrizedCurve):
         """
         Splits the curve into more segments
         """
-        nodes = sorted(nodes)
-        beziers = split(self.__planar, nodes)
-        return tuple(map(Segment, beziers))
+        nodes = (n for n in nodes if self.knots[0] <= n <= self.knots[-1])
+        nodes = sorted(set(nodes) | set(self.knots))
+        segments = []
+        for ka, kb in zip(nodes, nodes[1:]):
+            bezier = Bezier(self.__planar).shift(-ka).scale(1 / (kb - ka))
+            segments.append(Segment(bezier))
+        return tuple(segments)
 
 
 def compute_length(segment: Segment) -> Real:

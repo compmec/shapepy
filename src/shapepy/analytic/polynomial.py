@@ -11,7 +11,7 @@ from rbool import move, scale
 
 from ..scalar.reals import Math
 from ..tools import Is, To, vectorize
-from .base import BaseAnalytic
+from .base import BaseAnalytic, IAnalytic
 
 
 class Polynomial(BaseAnalytic):
@@ -55,10 +55,12 @@ class Polynomial(BaseAnalytic):
         return NotImplemented
 
     def __add__(self, other: Union[Real, Polynomial]) -> Polynomial:
-        if not Is.instance(other, Polynomial):
+        if not Is.instance(other, IAnalytic):
             coefs = list(self)
             coefs[0] += other
             return self.__class__(coefs, self.domain)
+        if not Is.instance(other, Polynomial):
+            return NotImplemented
         coefs = [0] * (1 + max(self.degree, other.degree))
         for i, coef in enumerate(self):
             coefs[i] += coef
@@ -67,13 +69,15 @@ class Polynomial(BaseAnalytic):
         return self.__class__(coefs, self.domain)
 
     def __mul__(self, other: Union[Real, Polynomial]) -> Polynomial:
-        if Is.instance(other, Polynomial):
-            coefs = [0 * self[0]] * (self.degree + other.degree + 1)
-            for i, coefi in enumerate(self):
-                for j, coefj in enumerate(other):
-                    coefs[i + j] += coefi * coefj
-            return self.__class__(coefs, self.domain & other.domain)
-        return self.__class__((other * coef for coef in self), self.domain)
+        if not Is.instance(other, IAnalytic):
+            return self.__class__((other * coef for coef in self), self.domain)
+        if not Is.instance(other, Polynomial):
+            return NotImplemented
+        coefs = [0 * self[0]] * (self.degree + other.degree + 1)
+        for i, coefi in enumerate(self):
+            for j, coefj in enumerate(other):
+                coefs[i + j] += coefi * coefj
+        return self.__class__(coefs, self.domain & other.domain)
 
     @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Real:
@@ -140,7 +144,8 @@ class Polynomial(BaseAnalytic):
         >>> print(new_poly)
         4 * t + 8 * t^3
         """
-        coefs = tuple(coef * amount**i for i, coef in enumerate(self))
+        inv = 1 / amount
+        coefs = tuple(coef * inv**i for i, coef in enumerate(self))
         return Polynomial(coefs, scale(self.domain, amount))
 
     def shift(self, amount: Real) -> Polynomial:

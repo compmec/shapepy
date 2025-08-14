@@ -1,7 +1,3 @@
-import random
-from fractions import Fraction
-from typing import Iterable, Union
-
 import pytest
 
 from shapepy.analytic.bezier import Bezier
