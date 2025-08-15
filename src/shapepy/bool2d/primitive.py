@@ -16,6 +16,7 @@ from ..geometry.factory import FactoryJordan
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D, cartesian
 from ..geometry.segment import Segment
+from ..geometry.unparam import USegment
 from ..tools import Is, To
 from .base import EmptyShape, WholeShape
 from .shape import SimpleShape
@@ -236,7 +237,7 @@ class Primitive:
         new_bezier = Segment([start_point, middle_point, end_point])
         beziers.append(new_bezier)
 
-        jordan_curve = JordanCurve(beziers)
+        jordan_curve = JordanCurve(map(USegment, beziers))
         jordan_curve.move(center)
         circle = SimpleShape(jordan_curve)
         return circle

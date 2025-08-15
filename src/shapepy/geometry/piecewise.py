@@ -9,13 +9,13 @@ from typing import Iterable, Tuple, Union
 
 from ..scalar.reals import Real
 from ..tools import Is, To
-from .base import IGeometricCurve, IParametrizedCurve
+from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D
-from .segment import Segment, clean_segment
+from .segment import Segment
 
 
-class PiecewiseCurve(IGeometricCurve, IParametrizedCurve):
+class PiecewiseCurve(IParametrizedCurve):
     """
     Defines a piecewise curve that is the concatenation of several segments.
     """
@@ -26,12 +26,15 @@ class PiecewiseCurve(IGeometricCurve, IParametrizedCurve):
         knots: Union[None, Iterable[Real]] = None,
     ):
         segments = tuple(segments)
-        if not all(map(Is.segment, segments)):
+        if not all(Is.instance(seg, Segment) for seg in segments):
             raise ValueError("All segments must be instances of Segment")
         if knots is None:
             knots = tuple(map(To.rational, range(len(segments) + 1)))
         else:
-            knots = tuple(sorted(map(To.real, knots)))
+            knots = tuple(sorted(map(To.finite, knots)))
+        for segi, segj in zip(segments, segments[1:]):
+            if segi(1) != segj(0):
+                raise ValueError("Not Continuous curve")
         self.__segments = segments
         self.__knots = knots
 
@@ -151,13 +154,6 @@ class PiecewiseCurve(IGeometricCurve, IParametrizedCurve):
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
-
-
-def clean_piecewise(piecewise: PiecewiseCurve) -> PiecewiseCurve:
-    """
-    Cleans the piecewise curve, keeping the current parametrisation
-    """
-    return PiecewiseCurve(map(clean_segment, piecewise))
 
 
 def is_piecewise(obj: object) -> bool:

@@ -73,8 +73,8 @@ class IntegrateJordan:
         """
         assert Is.jordan(jordan)
         return sum(
-            IntegrateSegment.polynomial(segment, expx, expy)
-            for segment in jordan.segments
+            IntegrateSegment.polynomial(usegment.parametrize(), expx, expy)
+            for usegment in jordan.usegments
         )
 
     @staticmethod
@@ -89,11 +89,13 @@ class IntegrateJordan:
         """
         wind = 0
         if center in jordan.box():
-            for bezier in jordan.segments:
-                if center in bezier:
+            for usegment in jordan.usegments:
+                if center in usegment:
                     return 0.5 if jordan.area > 0 else -0.5
-        for bezier in jordan.segments:
-            wind += IntegrateSegment.winding_number(bezier, center, nnodes)
+        for usegment in jordan.usegments:
+            wind += IntegrateSegment.winding_number(
+                usegment.parametrize(), center, nnodes
+            )
         return round(wind)
 
 

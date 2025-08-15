@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from typing import Union
 
-from ..tools import To
+from ..tools import Is, To
 from .point import Point2D, cartesian
 
 
@@ -29,6 +29,11 @@ class Box:
     def __init__(self, lowpt: Point2D, toppt: Point2D):
         self.lowpt = To.point(lowpt)
         self.toppt = To.point(toppt)
+
+    def __eq__(self, other: Box) -> Box:
+        if not Is.instance(other, Box):
+            raise TypeError
+        return self.lowpt == other.lowpt and self.toppt == other.toppt
 
     def __str__(self) -> str:
         return f"Box with vertices {self.lowpt} and {self.toppt}"

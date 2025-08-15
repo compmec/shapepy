@@ -37,28 +37,6 @@ class Future:
         raise NotImplementedError
 
 
-class IParametrizedCurve(ABC):
-    """
-    Class interface for parametrized curves
-    """
-
-    @property
-    @abstractmethod
-    def knots(self) -> Tuple[Real, ...]:
-        """
-        The length of the curve
-        If the curve is not bounded, returns infinity
-        """
-        raise NotImplementedError
-
-    @abstractmethod
-    def __call__(self, node: Real, derivate: int = 0) -> Point2D:
-        raise NotImplementedError
-
-    def __or__(self, other: IParametrizedCurve) -> IParametrizedCurve:
-        return Future.concatenate((self, other))
-
-
 class IGeometricCurve(ABC):
     """
     Class interface for geometric curves
@@ -80,5 +58,36 @@ class IGeometricCurve(ABC):
         """
         raise NotImplementedError
 
-    def __and__(self, other: IGeometricCurve):
+    @abstractmethod
+    def parametrize(self) -> IParametrizedCurve:
+        """Gives a parametrized curve"""
+        raise NotImplementedError
+
+    def __or__(self, other: IGeometricCurve) -> IGeometricCurve:
+        return Future.concatenate((self, other))
+
+
+class IParametrizedCurve(IGeometricCurve):
+    """
+    Class interface for parametrized curves
+    """
+
+    @property
+    @abstractmethod
+    def knots(self) -> Tuple[Real, ...]:
+        """
+        The length of the curve
+        If the curve is not bounded, returns infinity
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def __call__(self, node: Real, derivate: int = 0) -> Point2D:
+        raise NotImplementedError
+
+    def __and__(self, other: IParametrizedCurve):
         return Future.intersect(self, other)
+
+    def parametrize(self) -> IParametrizedCurve:
+        """Gives a parametrized curve"""
+        return self

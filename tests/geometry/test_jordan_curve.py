@@ -99,17 +99,19 @@ class TestQuadraticJordan:
         curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
         jordana = FactoryJordan.spline_curve(curvea)
+        piecea = jordana.parametrize()
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = FactoryJordan.spline_curve(curveb)
+        pieceb = jordanb.parametrize()
 
-        test = jordana & jordanb
-        assert equal_sets(test.all_knots[id(jordana)], {0, 0.25, 0.75, 1, 2})
-        assert equal_sets(test.all_knots[id(jordanb)], {0, 0.25, 0.75, 1, 2})
-        assert equal_rbool_sets(test.all_subsets[id(jordana)], {0.25, 0.75})
-        assert equal_rbool_sets(test.all_subsets[id(jordanb)], {0.25, 0.75})
+        test = piecea & pieceb
+        assert equal_sets(test.all_knots[id(piecea)], {0, 0.25, 0.75, 1, 2})
+        assert equal_sets(test.all_knots[id(pieceb)], {0, 0.25, 0.75, 1, 2})
+        assert equal_rbool_sets(test.all_subsets[id(piecea)], {0.25, 0.75})
+        assert equal_rbool_sets(test.all_subsets[id(pieceb)], {0.25, 0.75})
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)
@@ -129,18 +131,20 @@ class TestQuadraticJordan:
         curvea = pynurbs.Curve(knotvector)
         curvea.ctrlpoints = [To.point(pt) for pt in pointsa]
         jordana = FactoryJordan.spline_curve(curvea)
+        piecea = jordana.parametrize()
 
         pointsb = [(3, -2), (-1, 0), (3, 2), (3, 0), (3, -2)]
         pointsb = np.array(pointsb, dtype="float64")
         curveb = pynurbs.Curve(knotvector)
         curveb.ctrlpoints = [To.point(pt) for pt in pointsb]
         jordanb = FactoryJordan.spline_curve(curveb)
+        pieceb = jordanb.parametrize()
 
-        test = jordana & jordanb
-        assert equal_sets(test.all_knots[id(jordana)], {0, 0.25, 0.75, 1, 2})
-        assert equal_sets(test.all_knots[id(jordanb)], {0, 0.25, 0.75, 1, 2})
-        assert equal_rbool_sets(test.all_subsets[id(jordana)], {0.25, 0.75})
-        assert equal_rbool_sets(test.all_subsets[id(jordanb)], {0.25, 0.75})
+        test = piecea & pieceb
+        assert equal_sets(test.all_knots[id(piecea)], {0, 0.25, 0.75, 1, 2})
+        assert equal_sets(test.all_knots[id(pieceb)], {0, 0.25, 0.75, 1, 2})
+        assert equal_rbool_sets(test.all_subsets[id(piecea)], {0.25, 0.75})
+        assert equal_rbool_sets(test.all_subsets[id(pieceb)], {0.25, 0.75})
 
     @pytest.mark.order(16)
     @pytest.mark.timeout(10)

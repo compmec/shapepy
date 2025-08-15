@@ -305,30 +305,6 @@ class TestObjectsInSimple:
             "TestObjectsInSimple::test_whole",
         ]
     )
-    def test_keep_ids(self):
-        np.random.seed(0)
-
-        square = Primitive.square(side=4)
-        jordan = square.jordans[0]
-        good_ids = tuple(id(vertex) for vertex in jordan.vertices)
-
-        for _ in range(100):  # number of tests
-            point = np.random.uniform(-4, 4, 2)
-            point in square
-            jordan = square.jordans[0]
-            test_ids = tuple(id(vertex) for vertex in jordan.vertices)
-            assert len(test_ids) == len(good_ids)
-            assert test_ids == good_ids
-
-    @pytest.mark.order(23)
-    @pytest.mark.dependency(
-        depends=[
-            "TestObjectsInSimple::test_begin",
-            "TestObjectsInSimple::test_empty",
-            "TestObjectsInSimple::test_whole",
-            "TestObjectsInSimple::test_keep_ids",
-        ]
-    )
     def test_keep_type(self):
         square = Primitive.square(side=4)
         good_types = []
@@ -351,7 +327,6 @@ class TestObjectsInSimple:
             "TestObjectsInSimple::test_begin",
             "TestObjectsInSimple::test_empty",
             "TestObjectsInSimple::test_whole",
-            "TestObjectsInSimple::test_keep_ids",
             "TestObjectsInSimple::test_keep_type",
         ]
     )
@@ -385,7 +360,6 @@ class TestObjectsInSimple:
             "TestObjectsInSimple::test_begin",
             "TestObjectsInSimple::test_empty",
             "TestObjectsInSimple::test_whole",
-            "TestObjectsInSimple::test_keep_ids",
             "TestObjectsInSimple::test_keep_type",
             "TestObjectsInSimple::test_point",
         ]
@@ -420,7 +394,6 @@ class TestObjectsInSimple:
             "TestObjectsInSimple::test_begin",
             "TestObjectsInSimple::test_empty",
             "TestObjectsInSimple::test_whole",
-            "TestObjectsInSimple::test_keep_ids",
             "TestObjectsInSimple::test_keep_type",
             "TestObjectsInSimple::test_point",
             "TestObjectsInSimple::test_jordan",

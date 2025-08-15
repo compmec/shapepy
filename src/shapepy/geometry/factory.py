@@ -8,6 +8,7 @@ from ..tools import To
 from .jordancurve import JordanCurve
 from .point import Point2D
 from .segment import Segment, clean_segment
+from .unparam import USegment
 
 
 class FactoryJordan:
@@ -37,11 +38,11 @@ class FactoryJordan:
         vertices = list(map(To.point, vertices))
         nverts = len(vertices)
         vertices.append(vertices[0])
-        beziers = [0] * nverts
+        beziers = [None] * nverts
         for i in range(nverts):
             ctrlpoints = vertices[i : i + 2]
             new_bezier = Segment(ctrlpoints)
-            beziers[i] = new_bezier
+            beziers[i] = USegment(new_bezier)
         return JordanCurve(beziers)
 
     @staticmethod
@@ -74,4 +75,4 @@ class FactoryJordan:
         segments = (
             clean_segment(Segment(bezier.ctrlpoints)) for bezier in beziers
         )
-        return JordanCurve(segments)
+        return JordanCurve(map(USegment, segments))
