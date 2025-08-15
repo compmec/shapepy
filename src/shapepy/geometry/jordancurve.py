@@ -7,11 +7,11 @@ from __future__ import annotations
 
 from collections import deque
 from copy import copy
-from typing import Deque, Iterable, Tuple
+from typing import Deque, Iterable, Tuple, Union
 
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
-from ..tools import Is, To, pairs, reverse
+from ..tools import Is, pairs, reverse
 from .base import IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve
@@ -36,88 +36,16 @@ class JordanCurve(IGeometricCurve):
         """Returns a deep copy of the jordan curve"""
         return self.__class__(map(copy, self.usegments))
 
-    def move(self, point: Point2D) -> JordanCurve:
-        """Translate the entire curve by ``point``
-
-        :param point: The translation amount
-        :type point: Point2D
-        :return: The same curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> jordan.move((2, 3))
-        Jordan Curve of degree 1 and vertices
-        ((2, 3), (6, 3), (2, 6))
-
-        """
-        point = To.point(point)
-        for ctrlpt in get_ctrlpoints(self):
-            ctrlpt.move(point)
+    def move(self, vector: Point2D) -> JordanCurve:
+        self.__piecewise = self.piecewise.move(vector)
         return self
 
-    def scale(self, xscale: float, yscale: float) -> JordanCurve:
-        """Scale the entire curve in horizontal and vertical direction
-
-        :param xscale: The scale in horizontal direction
-        :type xscale: float
-        :param yscale: The scale in vertical direction
-        :type yscale: float
-        :return: The same curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> jordan.scale(2, 3)
-        Jordan Curve of degree 1 and vertices
-        ((0, 0), (8, 0), (0, 9))
-        >>> jordan.scale(1/2, 1/3)
-        Jordan Curve of degree 1 and vertices
-        ((0.0, 0.0), (4.0, 0.0), (0.0, 3.0))
-
-        """
-        xscale = To.finite(xscale)
-        yscale = To.finite(yscale)
-        for ctrlpt in get_ctrlpoints(self):
-            ctrlpt.scale(xscale, yscale)
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
+        self.__piecewise = self.piecewise.scale(amount)
         return self
 
-    def rotate(self, angle: float, degrees: bool = False) -> JordanCurve:
-        """Rotate the entire curve around the origin
-
-        :param angle: The amount to rotate
-        :type angle: float
-        :param degrees: If the angle is in radians (``degrees=False``)
-        :type degrees: bool(, optional)
-        :return: The same curve
-        :rtype: JordanCurve
-
-        Example use
-        -----------
-
-        >>> import math
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> jordan.rotate(math.pi)
-        Jordan Curve of degree 1 and vertices
-        ((-0.0, 0.0), (-4.0, 4.899e-16), (-3.674e-16, -3.0))
-        >>> jordan.rotate(180, degrees=True)
-        Jordan Curve of degree 1 and vertices
-        ((0.0, -0.0), (4.0, -9.797e-16), (7.348e-16, 3.0))
-
-        """
-        angle = To.angle(angle) if not degrees else Angle.degrees(angle)
-        for ctrlpt in get_ctrlpoints(self):
-            ctrlpt.rotate(angle)
+    def rotate(self, angle: Angle) -> JordanCurve:
+        self.__piecewise = self.piecewise.rotate(angle)
         return self
 
     def box(self) -> Box:

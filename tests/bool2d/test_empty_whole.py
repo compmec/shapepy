@@ -3,12 +3,14 @@ Tests related to 'EmptyShape' and 'WholeShape' which describes a empty set
 and the whole domain
 """
 
-from copy import copy
+from copy import copy, deepcopy
 
 import pytest
 
+from shapepy import move, rotate, scale
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
+from shapepy.scalar.angle import Angle
 
 
 @pytest.mark.order(24)
@@ -23,107 +25,160 @@ def test_begin():
     pass
 
 
-class TestBoolean:
-    """
-    Test boolean with special cases, a empty shape and whole domain
-    """
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_begin"])
+def test_singleton():
+    assert EmptyShape() is EmptyShape()
+    assert WholeShape() is WholeShape()
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["test_begin"])
-    def test_begin(self):
-        pass
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_or(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert empty | empty is empty
-        assert empty | whole is whole
-        assert whole | empty is whole
-        assert whole | whole is whole
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_invert():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert ~empty is whole
+    assert ~whole is empty
+    assert ~(~empty) is empty
+    assert ~(~whole) is whole
 
-        assert empty + empty is empty
-        assert empty + whole is whole
-        assert whole + empty is whole
-        assert whole + whole is whole
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_and(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert empty & empty is empty
-        assert empty & whole is empty
-        assert whole & empty is empty
-        assert whole & whole is whole
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton", "test_invert"])
+def test_neg():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert -empty is whole
+    assert -whole is empty
+    assert -(-empty) is empty
+    assert -(-whole) is whole
 
-        assert empty * empty is empty
-        assert empty * whole is empty
-        assert whole * empty is empty
-        assert whole * whole is whole
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_xor(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert empty ^ empty is empty
-        assert empty ^ whole is whole
-        assert whole ^ empty is whole
-        assert whole ^ whole is empty
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_or():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert empty | empty is empty
+    assert empty | whole is whole
+    assert whole | empty is whole
+    assert whole | whole is whole
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_sub(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert empty - empty is empty
-        assert empty - whole is empty
-        assert whole - empty is whole
-        assert whole - whole is empty
+    assert empty + empty is empty
+    assert empty + whole is whole
+    assert whole + empty is whole
+    assert whole + whole is whole
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_bool(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert bool(empty) is False
-        assert bool(whole) is True
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_invert(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert ~empty is whole
-        assert ~whole is empty
-        assert ~(~empty) is empty
-        assert ~(~whole) is whole
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_and():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert empty & empty is empty
+    assert empty & whole is empty
+    assert whole & empty is empty
+    assert whole & whole is whole
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_copy(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert copy(empty) is empty
-        assert copy(whole) is whole
+    assert empty * empty is empty
+    assert empty * whole is empty
+    assert whole * empty is empty
+    assert whole * whole is whole
 
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(
-        depends=[
-            "TestBoolean::test_begin",
-            "TestBoolean::test_or",
-            "TestBoolean::test_and",
-            "TestBoolean::test_xor",
-            "TestBoolean::test_sub",
-            "TestBoolean::test_bool",
-            "TestBoolean::test_invert",
-            "TestBoolean::test_copy",
-        ]
-    )
-    def test_end(self):
-        pass
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(
+    depends=["test_singleton", "test_or", "test_and", "test_invert"]
+)
+def test_xor():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert empty ^ empty is empty
+    assert empty ^ whole is whole
+    assert whole ^ empty is whole
+    assert whole ^ whole is empty
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(
+    depends=["test_singleton", "test_or", "test_and", "test_invert"]
+)
+def test_sub():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert empty - empty is empty
+    assert empty - whole is empty
+    assert whole - empty is whole
+    assert whole - whole is empty
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_bool():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert bool(empty) is False
+    assert bool(whole) is True
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_copy():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert copy(empty) is empty
+    assert copy(whole) is whole
+    assert deepcopy(empty) is empty
+    assert deepcopy(whole) is whole
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_move():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert empty.move((1, 0)) is empty
+    assert whole.move((1, 0)) is whole
+
+    assert move(empty, (1, 0)) is empty
+    assert move(whole, (1, 0)) is whole
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_scale():
+    empty = EmptyShape()
+    whole = WholeShape()
+    assert empty.scale((2, 1)) is empty
+    assert whole.scale((3, 2)) is whole
+
+    assert scale(empty, (2, 3)) is empty
+    assert scale(whole, (3, 2)) is whole
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_rotate():
+    empty = EmptyShape()
+    whole = WholeShape()
+    angle = Angle.degrees(30)
+    assert empty.rotate(angle) is empty
+    assert whole.rotate(angle) is whole
+
+    assert rotate(empty, angle) is empty
+    assert rotate(whole, angle) is whole
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_print():
+    empty = EmptyShape()
+    whole = WholeShape()
+
+    assert str(empty) == "EmptyShape"
+    assert str(whole) == "WholeShape"
+    assert isinstance(repr(empty), str)
+    assert isinstance(repr(whole), str)
 
 
 class TestBoolShape:
@@ -131,7 +186,19 @@ class TestBoolShape:
     @pytest.mark.dependency(
         depends=[
             "test_begin",
-            "TestBoolean::test_end",
+            "test_singleton",
+            "test_invert",
+            "test_neg",
+            "test_or",
+            "test_and",
+            "test_xor",
+            "test_sub",
+            "test_bool",
+            "test_copy",
+            "test_move",
+            "test_scale",
+            "test_rotate",
+            "test_print",
         ]
     )
     def test_begin(self):
@@ -230,7 +297,19 @@ class TestBoolShape:
 @pytest.mark.dependency(
     depends=[
         "test_begin",
-        "TestBoolean::test_end",
+        "test_singleton",
+        "test_invert",
+        "test_neg",
+        "test_or",
+        "test_and",
+        "test_xor",
+        "test_sub",
+        "test_bool",
+        "test_copy",
+        "test_move",
+        "test_scale",
+        "test_rotate",
+        "test_print",
         "TestBoolShape::test_end",
     ]
 )

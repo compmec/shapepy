@@ -10,7 +10,11 @@ from __future__ import annotations
 
 from abc import abstractmethod
 from copy import copy
-from typing import Iterable
+from typing import Iterable, Tuple, Union
+
+from ..geometry.point import Point2D
+from ..scalar.angle import Angle
+from ..scalar.reals import Real
 
 
 class SubSetR2:
@@ -64,6 +68,75 @@ class SubSetR2:
     def __repr__(self) -> str:  # pragma: no cover
         return str(self)
 
+    @abstractmethod
+    def move(self, vector: Point2D) -> SubSetR2:
+        """
+        Moves/translate entire shape by an amount
+
+        Parameters
+        ----------
+
+        point : Point2D
+            The amount to move
+
+        :return: The same instance
+        :rtype: SubSetR2
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.move(1, 2)
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> SubSetR2:
+        """
+        Scales entire subset by an amount
+
+        Parameters
+        ----------
+
+        amount : Real | Tuple[Real, Real]
+            The amount to scale in horizontal and vertical direction
+
+        :return: The same instance
+        :rtype: SubSetR2
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.scale((2, 3))
+
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def rotate(self, angle: Angle) -> SubSetR2:
+        """
+        Rotates entire shape around the origin by an amount
+
+        Parameters
+        ----------
+
+        angle : Angle
+            The amount to rotate around origin
+
+        :return: The same instance
+        :rtype: SubSetR2
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.rotate(Angle.degrees(90))
+
+        """
+        raise NotImplementedError
+
 
 class EmptyShape(SubSetR2):
     """EmptyShape is a singleton class to represent an empty shape
@@ -114,6 +187,15 @@ class EmptyShape(SubSetR2):
     def __bool__(self) -> bool:
         return False
 
+    def move(self, _):
+        return self
+
+    def scale(self, _):
+        return self
+
+    def rotate(self, _):
+        return self
+
 
 class WholeShape(SubSetR2):
     """WholeShape is a singleton class to represent all plane
@@ -163,6 +245,15 @@ class WholeShape(SubSetR2):
 
     def __bool__(self) -> bool:
         return True
+
+    def move(self, _):
+        return self
+
+    def scale(self, _):
+        return self
+
+    def rotate(self, _):
+        return self
 
 
 class Future:
