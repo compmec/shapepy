@@ -161,7 +161,7 @@ class ShapePloter:
         )
         for connected in connecteds:
             path = path_shape(connected)
-            if float(connected) > 0:
+            if connected.area > 0:
                 patch = PathPatch(path, color=fill_color, alpha=alpha)
             else:
                 self.gca().set_facecolor("#BFFFBF")
@@ -169,7 +169,7 @@ class ShapePloter:
             self.gca().add_patch(patch)
             for jordan in connected.jordans:
                 path = path_jordan(jordan)
-                color = pos_color if float(jordan) > 0 else neg_color
+                color = pos_color if jordan.area > 0 else neg_color
                 patch = PathPatch(
                     path, edgecolor=color, facecolor="none", lw=2
                 )

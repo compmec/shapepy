@@ -38,7 +38,7 @@ class TestEqualSquare:
     @pytest.mark.dependency(depends=["TestEqualSquare::test_begin"])
     def test_or(self):
         square = Primitive.square(side=1, center=(0, 0))
-        assert float(square) > 0
+        assert square.area > 0
         assert square | square == square
         assert square | (~square) is WholeShape()
         assert (~square) | square is WholeShape()
@@ -51,7 +51,7 @@ class TestEqualSquare:
     )
     def test_and(self):
         square = Primitive.square(side=1, center=(0, 0))
-        assert float(square) > 0
+        assert square.area > 0
         assert square & square == square
         assert square & (~square) is EmptyShape()
         assert (~square) & square is EmptyShape()
@@ -67,7 +67,7 @@ class TestEqualSquare:
     )
     def test_sub(self):
         square = Primitive.square(side=1, center=(0, 0))
-        assert float(square) > 0
+        assert square.area > 0
         assert square - square is EmptyShape()
         assert square - (~square) == square
         assert (~square) - square == ~square
@@ -85,7 +85,7 @@ class TestEqualSquare:
     )
     def test_xor(self):
         square = Primitive.square(side=1, center=(0, 0))
-        assert float(square) > 0
+        assert square.area > 0
         assert square ^ square is EmptyShape()
         assert square ^ (~square) is WholeShape()
         assert (~square) ^ square is WholeShape()
@@ -126,8 +126,8 @@ class TestTwoCenteredSquares:
     def test_or(self):
         square1 = Primitive.square(side=1)
         square2 = Primitive.square(side=2)
-        assert float(square1) > 0
-        assert float(square2) > 0
+        assert square1.area > 0
+        assert square2.area > 0
 
         assert square1 | square2 == square2
         assert square2 | square1 == square2
@@ -144,8 +144,8 @@ class TestTwoCenteredSquares:
     def test_and(self):
         square1 = Primitive.square(side=1)
         square2 = Primitive.square(side=2)
-        assert float(square1) > 0
-        assert float(square2) > 0
+        assert square1.area > 0
+        assert square2.area > 0
 
         assert square1 & square2 == square1
         assert square2 & square1 == square1
@@ -162,8 +162,8 @@ class TestTwoCenteredSquares:
     def test_sub(self):
         square1 = Primitive.square(side=1)
         square2 = Primitive.square(side=2)
-        assert float(square1) > 0
-        assert float(square2) > 0
+        assert square1.area > 0
+        assert square2.area > 0
 
         assert square1 - square2 is EmptyShape()
         assert square2 - square1 == ConnectedShape([square2, ~square1])
@@ -180,8 +180,8 @@ class TestTwoCenteredSquares:
     def test_xor(self):
         square1 = Primitive.square(side=1)
         square2 = Primitive.square(side=2)
-        assert float(square1) > 0
-        assert float(square2) > 0
+        assert square1.area > 0
+        assert square2.area > 0
 
         assert square1 ^ square2 == ConnectedShape([square2, ~square1])
         assert square2 ^ square1 == ConnectedShape([square2, ~square1])
@@ -230,8 +230,8 @@ class TestTwoDisjointSquares:
     def test_or(self):
         left = Primitive.square(side=2, center=(-2, 0))
         right = Primitive.square(side=2, center=(2, 0))
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left | right == DisjointShape([left, right])
         assert right | left == DisjointShape([left, right])
@@ -248,8 +248,8 @@ class TestTwoDisjointSquares:
     def test_and(self):
         left = Primitive.square(side=2, center=(-2, 0))
         right = Primitive.square(side=2, center=(2, 0))
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left & right is EmptyShape()
         assert right & left is EmptyShape()
@@ -266,8 +266,8 @@ class TestTwoDisjointSquares:
     def test_sub(self):
         left = Primitive.square(side=2, center=(-2, 0))
         right = Primitive.square(side=2, center=(2, 0))
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left - right == left
         assert right - left == right
@@ -284,8 +284,8 @@ class TestTwoDisjointSquares:
     def test_xor(self):
         left = Primitive.square(side=1, center=(-2, 0))
         right = Primitive.square(side=1, center=(2, 0))
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left ^ right == DisjointShape([left, right])
         assert right ^ left == DisjointShape([left, right])
@@ -327,7 +327,7 @@ class TestEqualHollowSquare:
         big = Primitive.square(side=2, center=(0, 0))
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
-        assert float(square) > 0
+        assert square.area > 0
         assert square | square == square
         assert square | (~square) is WholeShape()
         assert (~square) | square is WholeShape()
@@ -345,7 +345,7 @@ class TestEqualHollowSquare:
         big = Primitive.square(side=2, center=(0, 0))
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
-        assert float(square) > 0
+        assert square.area > 0
         assert square & square == square
         assert square & (~square) is EmptyShape()
         assert (~square) & square is EmptyShape()
@@ -363,7 +363,7 @@ class TestEqualHollowSquare:
         big = Primitive.square(side=2, center=(0, 0))
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
-        assert float(square) > 0
+        assert square.area > 0
         assert square - square is EmptyShape()
         assert square - (~square) == square
         assert (~square) - square == ~square
@@ -383,7 +383,7 @@ class TestEqualHollowSquare:
         big = Primitive.square(side=2, center=(0, 0))
         small = Primitive.square(side=1, center=(0, 0))
         square = big - small
-        assert float(square) > 0
+        assert square.area > 0
         assert square ^ square is EmptyShape()
         assert square ^ (~square) is WholeShape()
         assert (~square) ^ square is WholeShape()
@@ -434,8 +434,8 @@ class TestTwoDisjHollowSquares:
         right_sma = Primitive.square(side=1, center=(2, 0))
         left = left_big - left_sma
         right = right_big - right_sma
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left | right == DisjointShape([left, right])
         assert right | left == DisjointShape([left, right])
@@ -456,8 +456,8 @@ class TestTwoDisjHollowSquares:
         right_sma = Primitive.square(side=1, center=(2, 0))
         left = left_big - left_sma
         right = right_big - right_sma
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left & right is EmptyShape()
         assert right & left is EmptyShape()
@@ -480,8 +480,8 @@ class TestTwoDisjHollowSquares:
         right_sma = Primitive.square(side=1, center=(2, 0))
         left = left_big - left_sma
         right = right_big - right_sma
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left - right == left
         assert right - left == right
@@ -504,8 +504,8 @@ class TestTwoDisjHollowSquares:
         right_sma = Primitive.square(side=1, center=(2, 0))
         left = left_big - left_sma
         right = right_big - right_sma
-        assert float(left) > 0
-        assert float(right) > 0
+        assert left.area > 0
+        assert right.area > 0
 
         assert left ^ right == DisjointShape([left, right])
         assert right ^ left == DisjointShape([left, right])

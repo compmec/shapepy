@@ -424,15 +424,13 @@ class TestIntegrateJordan:
     def test_lenght_triangle(self):
         vertices = [(0, 0), (3, 0), (0, 4)]
         jordan_curve = FactoryJordan.polygon(vertices)
-        test = float(jordan_curve)
-        good = 12
-        assert abs(test - good) < 1e-3
+        assert jordan_curve.length == 12
+        assert jordan_curve.area == 6
 
         vertices = [(0, 0), (0, 4), (3, 0)]
         jordan_curve = FactoryJordan.polygon(vertices)
-        test = float(jordan_curve)
-        good = -12
-        assert abs(test - good) < 1e-3
+        assert jordan_curve.length == 12
+        assert jordan_curve.area == -6
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
@@ -451,9 +449,8 @@ class TestIntegrateJordan:
             (-side / 2, side / 2),
         ]
         jordan_curve = FactoryJordan.polygon(square_vertices)
-        lenght = float(jordan_curve)
-        assert lenght > 0
-        assert abs(lenght - 4 * side) < 1e-9
+        assert jordan_curve.length == 4 * side
+        assert jordan_curve.area == side * side
 
         side = 3
         square_vertices = [
@@ -463,9 +460,8 @@ class TestIntegrateJordan:
             (side / 2, -side / 2),
         ]
         jordan_curve = FactoryJordan.polygon(square_vertices)
-        lenght = float(jordan_curve)
-        assert lenght < 0
-        assert abs(lenght + 4 * side) < 1e-9
+        assert jordan_curve.length == 4 * side
+        assert jordan_curve.area == -side * side
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
@@ -479,10 +475,12 @@ class TestIntegrateJordan:
     def test_lenght_regular_polygon(self):
         for nsides in range(3, 10):
             lenght = 2 * nsides * np.sin(math.pi / nsides)
+            area = nsides * np.sin(2 * math.pi / nsides) / 2
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             jordan_curve = FactoryJordan.polygon(ctrlpoints)
-            assert (float(jordan_curve) - lenght) < 1e-9
+            assert abs(jordan_curve.length - lenght) < 1e-15
+            assert abs(jordan_curve.area - area) < 1e-15
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
