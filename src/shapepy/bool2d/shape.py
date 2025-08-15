@@ -283,7 +283,7 @@ class SimpleShape(DefinedShape):
         return f"Simple Shape of area {area:.2f} with vertices:\n{vertices}"
 
     def __repr__(self) -> str:
-        area, vertices = self.area, self.jordans[0].vertices
+        area, vertices = float(self.area), self.jordans[0].vertices
         msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
         return msg
 
