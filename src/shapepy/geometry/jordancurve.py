@@ -7,11 +7,12 @@ from __future__ import annotations
 
 from collections import deque
 from copy import copy
-from typing import Deque, Iterable, Tuple, Union
+from typing import Iterable, Tuple, Union
 
+from ..common import clean
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
-from ..tools import Is, pairs, reverse
+from ..tools import CyclicContainer, Is, pairs, reverse
 from .base import IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve
@@ -95,7 +96,7 @@ class JordanCurve(IGeometricCurve):
         return self.__piecewise
 
     @property
-    def usegments(self) -> Deque[USegment]:
+    def usegments(self) -> CyclicContainer[USegment]:
         """Unparametrized Segments
 
         When setting, it checks if the points are the same between
@@ -117,7 +118,7 @@ class JordanCurve(IGeometricCurve):
         Planar curve of degree 1 and control points ((0, 0), (4, 0))
 
         """
-        return deque(map(USegment, self.parametrize()))
+        return CyclicContainer(map(USegment, self.parametrize()))
 
     @property
     def vertices(self) -> Tuple[Point2D]:
@@ -180,13 +181,7 @@ class JordanCurve(IGeometricCurve):
             or not all(point in self for point in other.vertices)
         ):
             return False
-        susegs = copy(self).clean().usegments
-        ousegs = copy(other).clean().usegments
-        for _ in range(len(susegs)):
-            if susegs == ousegs:
-                return True
-            susegs.rotate()
-        return False
+        return clean(self).usegments == clean(other).usegments
 
     def invert(self) -> JordanCurve:
         """Invert the current curve's orientation, doesn't create a copy

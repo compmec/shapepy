@@ -7,13 +7,13 @@ from __future__ import annotations
 
 from copy import copy
 from fractions import Fraction
-from typing import Any, Iterable, Tuple
+from typing import Iterable, Tuple
 
 from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
-from ..tools import Is
+from ..tools import CyclicContainer, Is
 from .base import EmptyShape, SubSetR2, WholeShape
 from .shape import shape_from_jordans
 
@@ -114,7 +114,7 @@ class FollowPath:
     @staticmethod
     def pursue_path(
         index_jordan: int, index_segment: int, jordans: Tuple[JordanCurve]
-    ) -> Tuple[Tuple[int]]:
+    ) -> CyclicContainer[Tuple[int, int]]:
         """
         Given a list of jordans, it returns a matrix of integers like
         [(a1, b1), (a2, b2), (a3, b3), ..., (an, bn)] such
@@ -152,54 +152,12 @@ class FollowPath:
                 if segj.ctrlpoints[0] == last_point:
                     index_segment = j
                     break
-        return tuple(matrix)
-
-    @staticmethod
-    def is_rotation(oneobj: Tuple[Any], other: Tuple[Any]) -> bool:
-        """
-        Tells if a list is equal to another
-        """
-        assert Is.iterable(oneobj)
-        assert Is.iterable(other)
-        oneobj = tuple(oneobj)
-        other = tuple(other)
-        if len(oneobj) != len(other):
-            return False
-        rotation = 0
-        for elem in oneobj:
-            if elem == other[0]:
-                break
-            rotation += 1
-        else:
-            return False
-        nelems = len(other)
-        for i, elem in enumerate(other):
-            j = (i + rotation) % nelems
-            if elem != oneobj[j]:
-                return False
-        return True
-
-    @staticmethod
-    def filter_rotations(matrix: Tuple[Tuple[Any]]):
-        """
-        Remove repeted elements in matrix such they are only rotations
-
-        Example:
-        filter_tuples([[A, B, C], [B, C, A]]) -> [[A, B, C]]
-        filter_tuples([[A, B, C], [C, B, A]]) -> [[A, B, C], [C, B, A]]
-        """
-        filtered = []
-        for line in matrix:
-            for fline in filtered:
-                if FollowPath.is_rotation(line, fline):
-                    break
-            else:
-                filtered.append(line)
-        return tuple(filtered)
+        return CyclicContainer(matrix)
 
     @staticmethod
     def indexs_to_jordan(
-        jordans: Tuple[JordanCurve], matrix_indexs: Tuple[Tuple[int, int]]
+        jordans: Tuple[JordanCurve],
+        matrix_indexs: CyclicContainer[Tuple[int, int]],
     ) -> JordanCurve:
         """
         Given 'n' jordan curves, and a matrix of integers
@@ -228,8 +186,8 @@ class FollowPath:
         bez_indexs = []
         for ind_jord, ind_seg in start_indexs:
             indices_matrix = FollowPath.pursue_path(ind_jord, ind_seg, jordans)
-            bez_indexs.append(indices_matrix)
-        bez_indexs = FollowPath.filter_rotations(bez_indexs)
+            if indices_matrix not in bez_indexs:
+                bez_indexs.append(indices_matrix)
         new_jordans = []
         for indices_matrix in bez_indexs:
             jordan = FollowPath.indexs_to_jordan(jordans, indices_matrix)
