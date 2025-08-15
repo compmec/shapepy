@@ -61,9 +61,8 @@ class SubSetR2:
         """XOR of SubSetR2"""
         return (self - other) | (other - self)
 
-    def __bool__(self) -> bool:
-        """Area is positive ?"""
-        return float(self) > 0
+    def __repr__(self) -> str:  # pragma: no cover
+        return str(self)
 
 
 class EmptyShape(SubSetR2):
@@ -103,9 +102,6 @@ class EmptyShape(SubSetR2):
     def __sub__(self, other: SubSetR2) -> SubSetR2:
         return self
 
-    def __float__(self) -> float:
-        return float(0)
-
     def __invert__(self) -> SubSetR2:
         return WholeShape()
 
@@ -115,8 +111,8 @@ class EmptyShape(SubSetR2):
     def __str__(self) -> str:
         return "EmptyShape"
 
-    def __repr__(self) -> str:
-        return self.__str__()
+    def __bool__(self) -> bool:
+        return False
 
 
 class WholeShape(SubSetR2):
@@ -153,9 +149,6 @@ class WholeShape(SubSetR2):
     def __and__(self, other: SubSetR2) -> SubSetR2:
         return copy(other)
 
-    def __float__(self) -> float:
-        return float("inf")
-
     def __invert__(self) -> SubSetR2:
         return EmptyShape()
 
@@ -165,11 +158,11 @@ class WholeShape(SubSetR2):
     def __str__(self) -> str:
         return "WholeShape"
 
-    def __repr__(self) -> str:
-        return self.__str__()
-
     def __sub__(self, other: SubSetR2) -> SubSetR2:
         return ~other
+
+    def __bool__(self) -> bool:
+        return True
 
 
 class Future:

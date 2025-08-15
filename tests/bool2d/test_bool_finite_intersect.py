@@ -42,8 +42,8 @@ class TestIntersectionSimple:
         square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
         square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
-        assert float(square0) > 0
-        assert float(square1) > 0
+        assert square0.area > 0
+        assert square1.area > 0
 
         good_points = [(0, 1), (-1, 2), (-3, 0), (-1, -2)]
         good_points += [(0, -1), (1, -2), (3, 0), (1, 2)]

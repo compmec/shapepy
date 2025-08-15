@@ -689,7 +689,7 @@ For example, the first good information from the table is given by:
     shapea = SimpleShape(jordana)
     shapeb = SimpleShape(jordanb) 
     # Decide if shapea in shapeb
-    if float(shapea) < 0 and float(shapeb) > 0:
+    if shapea.area < 0 and shapeb.area > 0:
         # For any presented cases it happens
         return False
     # continue ...
@@ -715,7 +715,7 @@ For example, the first good information from the table is given by:
 .. code-block:: python
 
     # ... continue
-    if float(shapea) > 0 and float(shapeb) < 0:
+    if shapea.area > 0 and shapeb.area < 0:
         # Only for case 1
         return (jordana in shapeb) and (jordanb not in shapea)
     # continue ...
@@ -765,7 +765,7 @@ Taking out the already extracted values, and separating by when ``areaA > areaB`
 .. code-block:: python
 
     # ... continue
-    if float(shapea) > float(shapeb):
+    if shapea.area > shapeb.area:
         return False
     # continue ...
 

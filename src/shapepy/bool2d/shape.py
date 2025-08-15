@@ -20,6 +20,7 @@ from ..geometry.box import Box
 from ..geometry.integral import IntegrateJordan
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
+from ..scalar.reals import Real
 from ..tools import Is, To
 from .base import EmptyShape, SubSetR2
 
@@ -70,9 +71,6 @@ class DefinedShape(SubSetR2):
             return self.contains_jordan(other)
         point = To.point(other)
         return self.contains_point(point)
-
-    def __float__(self) -> float:
-        return float(sum(jordan.area for jordan in self.jordans))
 
     def move(self, point: Point2D) -> SubSetR2:
         """
@@ -279,17 +277,10 @@ class SimpleShape(DefinedShape):
         return SimpleShape(copy(self.__jordancurve))
 
     def __str__(self) -> str:
-        area = float(self)
-        vertices = self.jordans[0].vertices
-        vertices = tuple(tuple(vertex) for vertex in vertices)
-        msg = f"Simple Shape of area {area:.2f} with vertices:\n"
-        msg += str(np.array(vertices, dtype="float64"))
-        return msg
-
-    def __repr__(self) -> str:
-        area, vertices = float(self), self.jordans[0].vertices
-        msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
-        return msg
+        area = float(self.area)
+        vertices = tuple(map(tuple, self.jordans[0].vertices))
+        vertices = np.array(vertices, dtype="float64")
+        return f"Simple Shape of area {area:.2f} with vertices:\n{vertices}"
 
     def __eq__(self, other: SubSetR2) -> bool:
         """Compare two shapes
@@ -303,14 +294,19 @@ class SimpleShape(DefinedShape):
         """
         if not Is.instance(other, SubSetR2):
             raise ValueError
-        if not Is.instance(other, SimpleShape):
-            return False
-        if float(self) != float(other):
-            return False
-        return self.__jordancurve == other.jordans[0]
+        return (
+            Is.instance(other, SimpleShape)
+            and self.area == other.area
+            and self.__jordancurve == other.jordans[0]
+        )
 
     def __invert__(self) -> SimpleShape:
         return self.__class__(~self.__jordancurve)
+
+    @property
+    def area(self) -> Real:
+        """The internal area that is enclosed by the shape"""
+        return self.__jordancurve.area
 
     @property
     def jordans(self) -> Tuple[JordanCurve]:
@@ -357,9 +353,11 @@ class SimpleShape(DefinedShape):
     ) -> bool:
         jordan = self.jordans[0]
         wind = IntegrateJordan.winding_number(jordan, center=point)
-        if float(jordan) > 0:
-            return wind > 0 if boundary else wind == 1
-        return wind > -1 if boundary else wind == 0
+        return (
+            (wind > 0 if boundary else wind == 1)
+            if jordan.area > 0
+            else wind > -1 if boundary else wind == 0
+        )
 
     def _contains_jordan(
         self, jordan: JordanCurve, boundary: Optional[bool] = True
@@ -403,8 +401,8 @@ class SimpleShape(DefinedShape):
     # pylint: disable=chained-comparison
     def __contains_simple(self, other: SimpleShape) -> bool:
         assert Is.instance(other, SimpleShape)
-        areaa = float(other)
-        areab = float(self)
+        areaa = other.area
+        areab = self.area
         jordana = other.jordans[0]
         jordanb = self.jordans[0]
         if areaa < 0 and areab > 0:
@@ -437,23 +435,20 @@ class ConnectedShape(DefinedShape):
         simples = tuple(map(copy, self.subshapes))
         return ConnectedShape(simples)
 
-    def __float__(self) -> float:
-        return sum(map(float, self.subshapes))
+    @property
+    def area(self) -> Real:
+        """The internal area that is enclosed by the shape"""
+        return sum(simple.area for simple in self.subshapes)
 
     def __str__(self) -> str:
-        msg = f"Connected shape total area {float(self)}"
-        return msg
-
-    def __repr__(self) -> str:
-        return str(self)
+        return f"Connected shape total area {self.area}"
 
     def __eq__(self, other: SubSetR2) -> bool:
         assert Is.instance(other, SubSetR2)
-        if not Is.instance(other, ConnectedShape):
-            return False
-        if abs(float(self) - float(other)) > 1e-6:
-            return False
-        return True
+        return (
+            Is.instance(other, ConnectedShape)
+            and abs(self.area - other.area) < 1e-6
+        )
 
     def __invert__(self) -> DisjointShape:
         simples = [~simple for simple in self.subshapes]
@@ -500,17 +495,17 @@ class ConnectedShape(DefinedShape):
         return self.__subshapes
 
     @subshapes.setter
-    def subshapes(self, values: Tuple[SimpleShape]):
-        for value in values:
-            assert Is.instance(value, SimpleShape)
-        areas = map(float, values)
+    def subshapes(self, simples: Tuple[SimpleShape]):
+        if not all(Is.instance(simple, SimpleShape) for simple in simples):
+            raise TypeError
+        areas = (simple.area for simple in simples)
 
         def algori(pair):
             return pair[0]
 
-        values = sorted(zip(areas, values), key=algori, reverse=True)
-        values = tuple(val[1] for val in values)
-        self.__subshapes = tuple(values)
+        simples = sorted(zip(areas, simples), key=algori, reverse=True)
+        simples = tuple(val[1] for val in simples)
+        self.__subshapes = tuple(simples)
 
     def _contains_point(
         self, point: Point2D, boundary: Optional[bool] = True
@@ -568,17 +563,16 @@ class DisjointShape(DefinedShape):
         new_jordans = tuple(~jordan for jordan in self.jordans)
         return shape_from_jordans(new_jordans)
 
-    def __float__(self) -> float:
-        total = 0
-        for subshape in self.subshapes:
-            total += float(subshape)
-        return float(total)
+    @property
+    def area(self) -> Real:
+        """The internal area that is enclosed by the shape"""
+        return sum(sub.area for sub in self.subshapes)
 
     def __eq__(self, other: SubSetR2):
         assert Is.instance(other, SubSetR2)
         if not Is.instance(other, DisjointShape):
             return False
-        if float(self) != float(other):
+        if self.area != other.area:
             return False
         self_subshapes = list(self.subshapes)
         othe_subshapes = list(other.subshapes)
@@ -594,12 +588,9 @@ class DisjointShape(DefinedShape):
         return not (len(self_subshapes) or len(othe_subshapes))
 
     def __str__(self) -> str:
-        msg = f"Disjoint shape with total area {float(self)} and "
+        msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self.subshapes)} subshapes"
         return msg
-
-    def __repr__(self) -> str:
-        return self.__str__()
 
     def _contains_point(
         self, point: Point2D, boundary: Optional[bool] = True
@@ -676,10 +667,12 @@ class DisjointShape(DefinedShape):
 
     @subshapes.setter
     def subshapes(self, values: Tuple[SubSetR2]):
-        for value in values:
-            assert Is.instance(value, (SimpleShape, ConnectedShape))
-        areas = map(float, values)
-        lenghts = map(float, [val.jordans[0] for val in values])
+        if not all(
+            Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
+        ):
+            raise ValueError
+        areas = tuple(sub.area for sub in values)
+        lenghts = tuple(sub.jordans[0].length for sub in values)
 
         def algori(triple):
             return triple[:2]
@@ -706,7 +699,7 @@ def divide_connecteds(
     connected = []
     simples = list(simples)
     while len(simples) != 0:
-        areas = map(float, simples)
+        areas = (s.area for s in simples)
         absareas = tuple(map(abs, areas))
         index = absareas.index(max(absareas))
         connected.append(simples.pop(index))

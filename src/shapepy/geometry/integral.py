@@ -91,7 +91,7 @@ class IntegrateJordan:
         if center in jordan.box():
             for bezier in jordan.segments:
                 if center in bezier:
-                    return 0.5 if float(jordan) > 0 else -0.5
+                    return 0.5 if jordan.area > 0 else -0.5
         for bezier in jordan.segments:
             wind += IntegrateSegment.winding_number(bezier, center, nnodes)
         return round(wind)

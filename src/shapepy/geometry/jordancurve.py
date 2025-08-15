@@ -350,30 +350,6 @@ class JordanCurve(IGeometricCurve):
         """Tells if the point is on the boundary"""
         return point in self.piecewise
 
-    def __float__(self) -> float:
-        """Returns the lenght of the curve
-
-        If jordan curve is clockwise, then lenght < 0
-
-        :getter: Returns the total lenght of the jordan curve
-        :type: float
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> print(float(jordan))
-        12.0
-        >>> vertices = [(0, 0), (0, 3), (4, 0)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> print(float(jordan))
-        -12.0
-
-        """
-        return float(self.length if self.area > 0 else -self.length)
-
 
 def compute_area(jordan: JordanCurve) -> Real:
     """

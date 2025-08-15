@@ -93,14 +93,6 @@ class TestBoolean:
 
     @pytest.mark.order(24)
     @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
-    def test_float(self):
-        empty = EmptyShape()
-        whole = WholeShape()
-        assert float(empty) == float(0)
-        assert float(whole) == float("inf")
-
-    @pytest.mark.order(24)
-    @pytest.mark.dependency(depends=["TestBoolean::test_begin"])
     def test_invert(self):
         empty = EmptyShape()
         whole = WholeShape()
@@ -126,7 +118,6 @@ class TestBoolean:
             "TestBoolean::test_xor",
             "TestBoolean::test_sub",
             "TestBoolean::test_bool",
-            "TestBoolean::test_float",
             "TestBoolean::test_invert",
             "TestBoolean::test_copy",
         ]
@@ -154,7 +145,7 @@ class TestBoolShape:
         whole = WholeShape()
         vertices = [(0, 0), (1, 0), (0, 1)]
         shape = Primitive.polygon(vertices)
-        assert float(shape) > 0
+        assert shape.area > 0
 
         # OR
         assert shape | empty == shape
@@ -188,7 +179,7 @@ class TestBoolShape:
         whole = WholeShape()
         vertices = [(0, 0), (0, 1), (1, 0)]
         shape = Primitive.polygon(vertices)
-        assert float(shape) < 0
+        assert shape.area < 0
         assert shape | empty == shape
         assert shape | whole is whole
 
