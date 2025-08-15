@@ -1,3 +1,68 @@
+.. _v1.1.7:
+
+======
+v1.1.7
+======
+
+Fixes
+-----
+* Scaling and shifting Polynomial and Bezier analytics by @carlos-adir in https://github.com/compmec/shapepy/pull/54
+
+Features
+--------
+* Allow creating points at infinity with polar coordinates by @carlos-adir in https://github.com/compmec/shapepy/pull/46
+* Add parameter `derivative` in analytic or parameter curve call by @carlos-adir in https://github.com/compmec/shapepy/pull/47
+* Use the `Polynomial` class to speed up computation of  __contains__ from segment by @carlos-adir in https://github.com/compmec/shapepy/pull/49
+* Add domain property for Polynomial and Bezier by @carlos-adir in https://github.com/compmec/shapepy/pull/51
+* Add `USegment`, which parametrization doesn't matter by @carlos-adir in https://github.com/compmec/shapepy/pull/57
+* Add transformation functions to most 2D classes by @carlos-adir in https://github.com/compmec/shapepy/pull/58
+* Add CyclicContainer to clean comparation in JordanCurve by @carlos-adir in https://github.com/compmec/shapepy/pull/59
+
+
+Refactor
+--------
+* Move concatenation of geometric curves into separate file by @carlos-adir in https://github.com/compmec/shapepy/pull/48
+* Divide submodule `bool2d/shape` into more parts to better maintainability by @carlos-adir in https://github.com/compmec/shapepy/pull/50
+* Move split method from JordanCurve into PiecewiseCurve by @carlos-adir in https://github.com/compmec/shapepy/pull/52
+
+Breaking changes
+----------------
+* Remove `^` and `@` operators for `Point2D` and Analytics in general by @carlos-adir in https://github.com/compmec/shapepy/pull/55
+* Remove cast operations for bool2d instances by @carlos-adir in https://github.com/compmec/shapepy/pull/56
+
+
+
+
+.. _v1.1.6:
+
+======
+v1.1.6
+======
+
+Fixes
+-----
+* Fix sphinx docs error due to bad format and position of staticmethod decorator by @carlos-adir in #38
+
+Features
+--------
+* Create factory for Jordan Curve by @carlos-adir in #39
+* Add base class for Polynomial and Bezier by @carlos-adir in #40
+
+Tests
+-----
+* Set seed for random module to have reproducible tests by @carlos-adir in #37
+* Add new Github Action to speed up check of PR in draft mode by @carlos-adir in #42
+
+Refactor
+--------
+* Divide responsibilities of Jordan Curve by @carlos-adir in #36
+* Refactor intersection of geometric curves by @carlos-adir in #44
+
+Others
+------
+* Fix github actions triggers and badges by @carlos-adir in #43
+
+
 .. _v1.1.5:
 
 ======

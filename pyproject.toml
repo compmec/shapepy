@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "shapepy"
-version = "1.1.6"
+version = "1.1.7"
 description = "Geometric 2D library"
 authors = ["Carlos Adir <carlos.adir.leite@gmail.com>"]
 readme = "README.md"
