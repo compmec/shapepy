@@ -5,7 +5,6 @@ from typing import Any, Tuple
 
 from .scalar.angle import Angle
 from .scalar.reals import Real
-from .tools import To
 
 
 def move(obj: Any, vector: Tuple[Real, Real]) -> Any:
@@ -25,13 +24,10 @@ def move(obj: Any, vector: Tuple[Real, Real]) -> Any:
     -----------
     >>> from shapepy import Primitive
     >>> circle = Primitive.circle()
-    >>> circle.move(1, 2)
+    >>> circle.move((1, 2))
 
     """
-    vector = To.point(vector)
-    if hasattr(obj, "move"):
-        return deepcopy(obj).move(vector)
-    raise ValueError(f"Cannot move the object of type {type(obj)}")
+    return deepcopy(obj).move(vector)
 
 
 def scale(obj: Any, amount: Tuple[Real, Tuple[Real, Real]]) -> Any:
@@ -51,12 +47,10 @@ def scale(obj: Any, amount: Tuple[Real, Tuple[Real, Real]]) -> Any:
     -----------
     >>> from shapepy import Primitive
     >>> circle = Primitive.circle()
-    >>> circle.move(1, 2)
+    >>> circle.scale((1, 2))
 
     """
-    if hasattr(obj, "scale"):
-        return deepcopy(obj).scale(amount)
-    raise ValueError(f"Cannot scale the object of type {type(obj)}")
+    return deepcopy(obj).scale(amount)
 
 
 def rotate(obj: Any, angle: Angle) -> Any:
@@ -80,3 +74,10 @@ def rotate(obj: Any, angle: Angle) -> Any:
 
     """
     return deepcopy(obj).rotate(angle)
+
+
+def clean(obj: Any) -> Any:
+    """
+    Cleans the object, removing the unecessary data
+    """
+    return deepcopy(obj).clean()

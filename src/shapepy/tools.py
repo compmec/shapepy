@@ -6,8 +6,9 @@ logging, errors, debugging, etc.
 from __future__ import annotations
 
 import types
+from collections import deque
 from functools import wraps
-from typing import Any, Iterable, Tuple
+from typing import Any, Generic, Iterable, Tuple, TypeVar
 
 import numpy as np
 
@@ -129,3 +130,43 @@ def pairs(objs: Iterable[Any]) -> Iterable[Tuple[Any, Any]]:
 
 class NotExpectedError(Exception):
     """Raised when arrives in a section that were not expected"""
+
+
+T = TypeVar("T")
+
+
+class CyclicContainer(Generic[T]):
+    """
+    Class that allows checking if there's a circular similarity
+
+    For example, all these lists are equal cause they are cyclic:
+    [0, 1, 2, 3]
+    [3, 0, 1, 2]
+    [2, 3, 0, 1]
+    [1, 2, 3, 0]
+    """
+
+    def __init__(self, values: Iterable[T]):
+        self.__values = tuple(values)
+
+    def __iter__(self) -> Iterable[T]:
+        yield from self.__values
+
+    def __getitem__(self, index):
+        return self.__values[index]
+
+    def __len__(self) -> int:
+        return len(self.__values)
+
+    def __eq__(self, other):
+        if not Is.instance(other, CyclicContainer):
+            raise ValueError
+        if len(self) != len(other):
+            return False
+        temp = deque(self)
+        other = deque(other)
+        for _ in range(len(self)):
+            if temp == other:
+                return True
+            temp.rotate()
+        return False
