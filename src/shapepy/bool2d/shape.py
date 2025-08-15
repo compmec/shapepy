@@ -277,11 +277,10 @@ class SimpleShape(DefinedShape):
         return SimpleShape(copy(self.__jordancurve))
 
     def __str__(self) -> str:
-        vertices = self.jordans[0].vertices
-        vertices = tuple(tuple(vertex) for vertex in vertices)
-        msg = f"Simple Shape of area {self.area:.2f} with vertices:\n"
-        msg += str(np.array(vertices, dtype="float64"))
-        return msg
+        area = float(self.area)
+        vertices = tuple(map(tuple, self.jordans[0].vertices))
+        vertices = np.array(vertices, dtype="float64")
+        return f"Simple Shape of area {area:.2f} with vertices:\n{vertices}"
 
     def __repr__(self) -> str:
         area, vertices = self.area, self.jordans[0].vertices
