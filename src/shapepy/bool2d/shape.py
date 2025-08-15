@@ -20,6 +20,7 @@ from ..geometry.box import Box
 from ..geometry.integral import IntegrateJordan
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
+from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, To
 from .base import EmptyShape, SubSetR2
@@ -71,83 +72,6 @@ class DefinedShape(SubSetR2):
             return self.contains_jordan(other)
         point = To.point(other)
         return self.contains_point(point)
-
-    def move(self, point: Point2D) -> SubSetR2:
-        """
-        Moves/translate entire shape by an amount
-
-        Parameters
-        ----------
-
-        point : Point2D
-            The amount to move
-
-        :return: The same instance
-        :rtype: SubSetR2
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.move(1, 2)
-
-        """
-        point = To.point(point)
-        for jordan in self.jordans:
-            jordan.move(point)
-        return self
-
-    def scale(self, xscale: float, yscale: float) -> SubSetR2:
-        """
-        Scales entire shape by an amount
-
-        Parameters
-        ----------
-
-        xscale : float
-            The amount to scale in horizontal direction
-        yscale : float
-            The amount to scale in vertical direction
-
-        :return: The same instance
-        :rtype: SubSetR2
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.scale(2, 3)
-
-        """
-        for jordan in self.jordans:
-            jordan.scale(xscale, yscale)
-        return self
-
-    def rotate(self, angle: float, degrees: bool = False) -> SubSetR2:
-        """
-        Rotates entire shape around the origin by an amount
-
-        Parameters
-        ----------
-
-        angle : float
-            The amount to rotate around origin
-        degrees : bool, default = False
-            Flag to indicate if ``angle`` is in radians or degrees
-
-        :return: The same instance
-        :rtype: SubSetR2
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.rotate(angle = 90, degrees = True)
-
-        """
-        for jordan in self.jordans:
-            jordan.rotate(angle, degrees)
-        return self
 
     def contains_point(
         self, point: Point2D, boundary: Optional[bool] = True
@@ -419,6 +343,18 @@ class SimpleShape(DefinedShape):
         # may happens error here
         return True
 
+    def move(self, vector: Point2D) -> JordanCurve:
+        self.__jordancurve = self.__jordancurve.move(vector)
+        return self
+
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
+        self.__jordancurve = self.__jordancurve.scale(amount)
+        return self
+
+    def rotate(self, angle: Angle) -> JordanCurve:
+        self.__jordancurve = self.__jordancurve.rotate(angle)
+        return self
+
 
 class ConnectedShape(DefinedShape):
     """
@@ -528,6 +464,23 @@ class ConnectedShape(DefinedShape):
             if not subshape.contains_shape(other):
                 return False
         return True
+
+    def move(self, vector: Point2D) -> JordanCurve:
+        vector = To.point(vector)
+        for subshape in self.subshapes:
+            subshape.move(vector)
+        return self
+
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
+        for subshape in self.subshapes:
+            subshape.scale(amount)
+        return self
+
+    def rotate(self, angle: Angle) -> JordanCurve:
+        angle = To.angle(angle)
+        for subshape in self.subshapes:
+            subshape.rotate(angle)
+        return self
 
 
 class DisjointShape(DefinedShape):
@@ -680,6 +633,23 @@ class DisjointShape(DefinedShape):
         values = sorted(zip(areas, lenghts, values), key=algori, reverse=True)
         values = tuple(val[2] for val in values)
         self.__subshapes = tuple(values)
+
+    def move(self, vector: Point2D) -> JordanCurve:
+        vector = To.point(vector)
+        for subshape in self.subshapes:
+            subshape.move(vector)
+        return self
+
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
+        for subshape in self.subshapes:
+            subshape.scale(amount)
+        return self
+
+    def rotate(self, angle: Angle) -> JordanCurve:
+        angle = To.angle(angle)
+        for subshape in self.subshapes:
+            subshape.rotate(angle)
+        return self
 
 
 def divide_connecteds(

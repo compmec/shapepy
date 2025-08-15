@@ -10,6 +10,7 @@ import importlib
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SimpleShape
+from shapepy.common import move, rotate, scale
 from shapepy.geometry.integral import IntegrateJordan
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.point import Point2D

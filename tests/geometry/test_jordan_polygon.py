@@ -10,6 +10,7 @@ import pytest
 from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.integral import IntegrateJordan
 from shapepy.geometry.jordancurve import clean_jordan
+from shapepy.scalar.angle import Angle
 
 
 @pytest.mark.order(15)
@@ -19,6 +20,7 @@ from shapepy.geometry.jordancurve import clean_jordan
         "tests/geometry/test_box.py::test_all",
         "tests/geometry/test_segment.py::test_all",
         "tests/geometry/test_piecewise.py::test_all",
+        "tests/geometry/test_usegment.py::test_all",
     ],
     scope="session",
 )
@@ -252,7 +254,7 @@ class TestTransformationPolygon:
         good_rectangle = FactoryJordan.polygon(good_rectangle_pts)
         test_rectangle_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_rectangle = FactoryJordan.polygon(test_rectangle_pts)
-        test_rectangle.scale(2, 3)
+        test_rectangle.scale((2, 3))
         assert test_rectangle == good_rectangle
 
     @pytest.mark.order(15)
@@ -271,9 +273,9 @@ class TestTransformationPolygon:
         test_square = FactoryJordan.polygon(test_square_pts)
 
         assert test_square == good_square
-        test_square.rotate(np.pi / 6)  # 30 degrees
+        test_square.rotate(Angle.radians(np.pi / 6))  # 30 degrees
         assert test_square != good_square
-        test_square.rotate(60, degrees=True)
+        test_square.rotate(Angle.degrees(60))
         assert test_square == good_square
 
     @pytest.mark.order(15)

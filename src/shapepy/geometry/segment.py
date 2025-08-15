@@ -13,11 +13,12 @@ File that defines the classes
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Optional, Tuple
+from typing import Iterable, Optional, Tuple, Union
 
 from ..analytic.base import IAnalytic
 from ..analytic.bezier import Bezier
 from ..analytic.tools import find_minimum
+from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
 from ..tools import Is, To, vectorize
@@ -174,6 +175,20 @@ class Segment(IParametrizedCurve):
             bezier = Bezier(self.__planar).shift(-ka).scale(1 / (kb - ka))
             segments.append(Segment(bezier))
         return tuple(segments)
+
+    def move(self, vector: Point2D) -> Segment:
+        vector = To.point(vector)
+        self.ctrlpoints = (copy(pt).move(vector) for pt in self.ctrlpoints)
+        return self
+
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
+        self.ctrlpoints = (copy(pt).scale(amount) for pt in self.ctrlpoints)
+        return self
+
+    def rotate(self, angle: Angle) -> Segment:
+        angle = To.angle(angle)
+        self.ctrlpoints = (copy(pt).rotate(angle) for pt in self.ctrlpoints)
+        return self
 
 
 def compute_length(segment: Segment) -> Real:

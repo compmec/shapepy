@@ -6,6 +6,8 @@ They are used to encapsulate some commands
 
 from __future__ import annotations
 
+from typing import Tuple, Union
+
 from ..scalar.angle import Angle
 from ..scalar.reals import Math, Real
 from ..tools import Is, To
@@ -166,7 +168,7 @@ class Point2D:
         self.__ycoord += vector[1]
         return self
 
-    def scale(self, xscale: float, yscale: float) -> Point2D:
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Point2D:
         """
         Scales the point by the given factors
 
@@ -182,6 +184,7 @@ class Point2D:
         Point2D
             The scaled point
         """
+        xscale, yscale = (amount, amount) if Is.real(amount) else amount
         self.__xcoord *= xscale
         self.__ycoord *= yscale
         return self
