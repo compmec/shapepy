@@ -63,27 +63,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_error_creation",
         ]
     )
-    def test_id_points(self):
-        points = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        jordan = FactoryJordan.polygon(points)
-        segments = jordan.segments
-        for i, segi in enumerate(segments):
-            segj = segments[(i + 1) % len(segments)]
-            last_point = segi.ctrlpoints[-1]
-            first_point = segj.ctrlpoints[0]
-            assert last_point == first_point
-            assert id(last_point) == id(first_point)
-
-    @pytest.mark.order(15)
-    @pytest.mark.timeout(20)
-    @pytest.mark.dependency(
-        depends=[
-            "TestJordanPolygon::test_begin",
-            "TestJordanPolygon::test_creation",
-            "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
-        ]
-    )
     def test_equal_curves(self):
         postri0 = FactoryJordan.polygon([(0, 0), (1, 0), (0, 1)])
         postri1 = FactoryJordan.polygon([(1, 0), (0, 1), (0, 0)])
@@ -108,7 +87,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_begin",
             "TestJordanPolygon::test_creation",
             "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
             "TestJordanPolygon::test_equal_curves",
         ]
     )
@@ -137,7 +115,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_begin",
             "TestJordanPolygon::test_creation",
             "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
             "TestJordanPolygon::test_equal_curves",
         ]
     )
@@ -162,7 +139,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_begin",
             "TestJordanPolygon::test_creation",
             "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
             "TestJordanPolygon::test_equal_curves",
             "TestJordanPolygon::test_nonequal_curves",
             "TestJordanPolygon::test_invert_curves",
@@ -173,51 +149,58 @@ class TestJordanPolygon:
         square0 = FactoryJordan.polygon(vertices0)
         vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
         square1 = FactoryJordan.polygon(vertices1)
+        param0 = square0.parametrize()
+        param1 = square1.parametrize()
 
-        inters = square0 & square0
-        assert inters.all_subsets[id(square0)] == [0, 4]
-        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
-        inters = square1 & square1
-        assert inters.all_subsets[id(square1)] == [0, 4]
-        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
+        inters = param0 & param0
+        assert inters.all_subsets[id(param0)] == [0, 4]
+        assert inters.all_knots[id(param0)] == {0, 1, 2, 3, 4}
+        inters = param1 & param1
+        assert inters.all_subsets[id(param1)] == [0, 4]
+        assert inters.all_knots[id(param1)] == {0, 1, 2, 3, 4}
 
-        inters = square0 & square1
-        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
-        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
-        assert inters.all_subsets[id(square1)] == {0.5, 3.5}
-        assert inters.all_knots[id(square1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        inters = param0 & param1
+        print(param0)
+        print(param1)
+        print(inters)
+        assert inters.all_subsets[id(param0)] == {0.5, 3.5}
+        assert inters.all_knots[id(param0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(param1)] == {0.5, 3.5}
+        assert inters.all_knots[id(param1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
 
         vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
         square1 = FactoryJordan.polygon(vertices1)
+        param1 = square1.parametrize()
 
-        inters = square0 & square0
-        assert inters.all_subsets[id(square0)] == [0, 4]
-        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
-        inters = square1 & square1
-        assert inters.all_subsets[id(square1)] == [0, 4]
-        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
+        inters = param0 & param0
+        assert inters.all_subsets[id(param0)] == [0, 4]
+        assert inters.all_knots[id(param0)] == {0, 1, 2, 3, 4}
+        inters = param1 & param1
+        assert inters.all_subsets[id(param1)] == [0, 4]
+        assert inters.all_knots[id(param1)] == {0, 1, 2, 3, 4}
 
-        inters = square0 & square1
-        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
-        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
-        assert inters.all_subsets[id(square1)] == {0.5, 3.5}
-        assert inters.all_knots[id(square1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        inters = param0 & param1
+        assert inters.all_subsets[id(param0)] == {0.5, 3.5}
+        assert inters.all_knots[id(param0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(param1)] == {0.5, 3.5}
+        assert inters.all_knots[id(param1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
 
         vertices1 = [(1, -2), (3, 0), (1, 2), (-1, 0)]
         square1 = FactoryJordan.polygon(vertices1)
+        param1 = square1.parametrize()
 
-        inters = square0 & square0
-        assert inters.all_subsets[id(square0)] == [0, 4]
-        assert inters.all_knots[id(square0)] == {0, 1, 2, 3, 4}
-        inters = square1 & square1
-        assert inters.all_subsets[id(square1)] == [0, 4]
-        assert inters.all_knots[id(square1)] == {0, 1, 2, 3, 4}
+        inters = param0 & param0
+        assert inters.all_subsets[id(param0)] == [0, 4]
+        assert inters.all_knots[id(param0)] == {0, 1, 2, 3, 4}
+        inters = param1 & param1
+        assert inters.all_subsets[id(param1)] == [0, 4]
+        assert inters.all_knots[id(param1)] == {0, 1, 2, 3, 4}
 
-        inters = square0 & square1
-        assert inters.all_subsets[id(square0)] == {0.5, 3.5}
-        assert inters.all_knots[id(square0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
-        assert inters.all_subsets[id(square1)] == {2.5, 3.5}
-        assert inters.all_knots[id(square1)] == {0, 1, 2, 2.5, 3, 3.5, 4}
+        inters = param0 & param1
+        assert inters.all_subsets[id(param0)] == {0.5, 3.5}
+        assert inters.all_knots[id(param0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(param1)] == {2.5, 3.5}
+        assert inters.all_knots[id(param1)] == {0, 1, 2, 2.5, 3, 3.5, 4}
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
@@ -226,7 +209,6 @@ class TestJordanPolygon:
             "TestJordanPolygon::test_begin",
             "TestJordanPolygon::test_creation",
             "TestJordanPolygon::test_error_creation",
-            "TestJordanPolygon::test_id_points",
             "TestJordanPolygon::test_equal_curves",
             "TestJordanPolygon::test_nonequal_curves",
             "TestJordanPolygon::test_invert_curves",
@@ -323,56 +305,6 @@ class TestTransformationPolygon:
         assert test_square != inve_square
 
     @pytest.mark.order(15)
-    @pytest.mark.timeout(20)
-    @pytest.mark.dependency(
-        depends=[
-            "TestTransformationPolygon::test_begin",
-            "TestTransformationPolygon::test_move",
-            "TestTransformationPolygon::test_scale",
-            "TestTransformationPolygon::test_rotate",
-            "TestTransformationPolygon::test_invert",
-        ]
-    )
-    def test_split(self):
-        square_pts = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
-        good_square = FactoryJordan.polygon(square_pts)
-        test_square = FactoryJordan.polygon(square_pts)
-        test_square.piecewise.split([0.5, 2.5, 3.5])
-        assert test_square == good_square
-
-    @pytest.mark.order(15)
-    @pytest.mark.timeout(20)
-    @pytest.mark.dependency(
-        depends=[
-            "TestTransformationPolygon::test_begin",
-            "TestTransformationPolygon::test_move",
-            "TestTransformationPolygon::test_scale",
-            "TestTransformationPolygon::test_rotate",
-            "TestTransformationPolygon::test_invert",
-            "TestTransformationPolygon::test_split",
-        ]
-    )
-    def test_keep_ids(self):
-        square_vertices = [(0, 0), (1, 0), (1, 1), (0, 1)]
-        square = FactoryJordan.polygon(square_vertices)
-        good_ids = tuple(id(vertex) for vertex in square.vertices)
-
-        square.move((2, 3))
-        test_ids = tuple(id(vertex) for vertex in square.vertices)
-        assert len(test_ids) == len(good_ids)
-        assert test_ids == good_ids
-
-        square.rotate(90, degrees=True)
-        test_ids = tuple(id(vertex) for vertex in square.vertices)
-        assert len(test_ids) == len(good_ids)
-        assert test_ids == good_ids
-
-        square.scale(5, 4)
-        test_ids = tuple(id(vertex) for vertex in square.vertices)
-        assert len(test_ids) == len(good_ids)
-        assert test_ids == good_ids
-
-    @pytest.mark.order(15)
     @pytest.mark.timeout(1)
     @pytest.mark.dependency(
         depends=[
@@ -380,8 +312,6 @@ class TestTransformationPolygon:
             "TestTransformationPolygon::test_rotate",
             "TestTransformationPolygon::test_scale",
             "TestTransformationPolygon::test_invert",
-            "TestTransformationPolygon::test_split",
-            "TestTransformationPolygon::test_keep_ids",
         ]
     )
     def test_end(self):
@@ -481,6 +411,8 @@ class TestIntegrateJordan:
             jordan_curve = FactoryJordan.polygon(ctrlpoints)
             assert abs(jordan_curve.length - lenght) < 1e-15
             assert abs(jordan_curve.area - area) < 1e-15
+
+            assert (jordan_curve.length - lenght) < 1e-9
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)

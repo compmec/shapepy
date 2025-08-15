@@ -362,7 +362,7 @@ class SimpleShape(DefinedShape):
     def _contains_jordan(
         self, jordan: JordanCurve, boundary: Optional[bool] = True
     ) -> bool:
-        piecewise = jordan.piecewise
+        piecewise = jordan.parametrize()
         vertices = map(piecewise, piecewise.knots)
         if not all(map(self.contains_point, vertices)):
             return False
@@ -370,7 +370,7 @@ class SimpleShape(DefinedShape):
         inters.evaluate()
         if inters.all_subsets[id(piecewise)] is not rbool.Empty():
             return True
-        knots = sorted(inters.all_knots[id(jordan.piecewise)])
+        knots = sorted(inters.all_knots[id(piecewise)])
         midknots = ((k0 + k1) / 2 for k0, k1 in zip(knots, knots[1:]))
         midpoints = map(piecewise, midknots)
         return all(map(self.contains_point, midpoints))

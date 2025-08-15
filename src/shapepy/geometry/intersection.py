@@ -27,19 +27,9 @@ from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Real
 from ..tools import Is, NotExpectedError
 from .base import IGeometricCurve, IParametrizedCurve
-from .jordancurve import JordanCurve
 from .piecewise import PiecewiseCurve
 from .point import cross, inner
 from .segment import Segment
-
-
-def parametrize(curve: IGeometricCurve) -> IParametrizedCurve:
-    """Parametrizes a curve, if it's not already parametrized"""
-    if Is.instance(curve, IParametrizedCurve):
-        return curve
-    if Is.instance(curve, JordanCurve):
-        return curve.piecewise
-    raise NotExpectedError
 
 
 def intersect(
@@ -158,7 +148,7 @@ class GeometricIntersectionCurves:
         self.__all_knots = {}
         self.__all_subsets = {}
         for curve in self.curves:
-            knots = parametrize(curve).knots
+            knots = curve.parametrize().knots
             self.__all_knots[id(curve)] = set(knots)
             self.__all_subsets[id(curve)] = Empty()
         for i, j in self.pairs:
@@ -182,7 +172,7 @@ class GeometricIntersectionCurves:
         if curvea.box() & curveb.box() is None:
             return Empty(), Empty()
         if id(curvea) == id(curveb):  # Check if curves are equal
-            curvea = parametrize(curvea)
+            curvea = curvea.parametrize()
             subset = Interval(curvea.knots[0], curvea.knots[-1])
             return subset, subset
         return curve_and_curve(curvea, curveb)
@@ -205,7 +195,7 @@ def curve_and_curve(
     curvea: IGeometricCurve, curveb: IGeometricCurve
 ) -> Tuple[SubSetR1, SubSetR1]:
     """Computes the intersection between two curves"""
-    return param_and_param(parametrize(curvea), parametrize(curveb))
+    return param_and_param(curvea.parametrize(), curveb.parametrize())
 
 
 def param_and_param(

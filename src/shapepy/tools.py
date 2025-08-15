@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import types
 from functools import wraps
-from typing import Any
+from typing import Any, Iterable, Tuple
 
 import numpy as np
 
@@ -103,6 +103,28 @@ def vectorize(position: int = 0, dimension: int = 0):
         return wrapper
 
     return decorator
+
+
+def reverse(objs: Iterable[Any]) -> Iterable[Any]:
+    """Reverts the list/tuple"""
+    return tuple(objs)[::-1]
+
+
+def pairs(objs: Iterable[Any]) -> Iterable[Tuple[Any, Any]]:
+    """Gives pairs of the objects in sequence
+
+    Example
+    -------
+    >>> A = [0, 1, 2, 3]
+    >>> list(pairs(A))
+    [(0, 1), (1, 2), (2, 3), (3, 0)]
+    """
+    objs = tuple(objs)
+    if len(objs) <= 1:
+        raise ValueError(f"objs = {objs}")
+    if len(objs) > 1:
+        yield from zip(objs, objs[1:])
+        yield (objs[-1], objs[0])
 
 
 class NotExpectedError(Exception):

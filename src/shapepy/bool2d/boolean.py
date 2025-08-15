@@ -12,6 +12,7 @@ from typing import Any, Iterable, Tuple
 from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
+from ..geometry.unparam import USegment
 from ..tools import Is
 from .base import EmptyShape, SubSetR2, WholeShape
 from .shape import shape_from_jordans
@@ -103,11 +104,12 @@ class FollowPath:
                 jordansj = all_group_jordans[j]
                 for jordana in jordansi:
                     for jordanb in jordansj:
-                        intersection |= jordana & jordanb
+                        intersection |= jordana.piecewise & jordanb.piecewise
         intersection.evaluate()
         for jordans in all_group_jordans:
             for jordan in jordans:
-                jordan.piecewise.split(intersection.all_knots[id(jordan)])
+                split_knots = intersection.all_knots[id(jordan.piecewise)]
+                jordan.piecewise.split(split_knots)
 
     @staticmethod
     def pursue_path(
@@ -128,7 +130,7 @@ class FollowPath:
         We suppose there's no triple intersection
         """
         matrix = []
-        all_segments = [jordan.segments for jordan in jordans]
+        all_segments = [tuple(jordan.piecewise) for jordan in jordans]
         while True:
             index_segment %= len(all_segments[index_jordan])
             segment = all_segments[index_jordan][index_segment]
@@ -208,9 +210,9 @@ class FollowPath:
         """
         beziers = []
         for index_jordan, index_segment in matrix_indexs:
-            new_bezier = jordans[index_jordan].segments[index_segment]
+            new_bezier = jordans[index_jordan].piecewise[index_segment]
             new_bezier = copy(new_bezier)
-            beziers.append(new_bezier)
+            beziers.append(USegment(new_bezier))
         new_jordan = JordanCurve(beziers)
         return new_jordan
 
@@ -253,7 +255,7 @@ class FollowPath:
         insiders = []
         outsiders = []
         for i, jordan in enumerate(shapea.jordans):
-            for j, segment in enumerate(jordan.segments):
+            for j, segment in enumerate(jordan.piecewise):
                 mid_point = segment(Fraction(1, 2))
                 if shapeb.contains_point(mid_point, closed):
                     insiders.append((i, j))

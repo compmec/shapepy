@@ -8,7 +8,6 @@ from __future__ import annotations
 from typing import Optional
 
 import matplotlib
-import numpy as np
 from matplotlib import pyplot
 
 from shapepy.bool2d.base import EmptyShape, WholeShape
@@ -26,6 +25,7 @@ def patch_segment(segment: Segment):
     """
     Creates the commands for matplotlib to plot the segment
     """
+    assert Is.instance(segment, Segment)
     vertices = []
     commands = []
     if segment.degree == 1:
@@ -44,9 +44,10 @@ def path_shape(connected: ConnectedShape) -> Path:
     vertices = []
     commands = []
     for jordan in connected.jordans:
-        vertices.append(jordan.segments[0].ctrlpoints[0])
+        segments = tuple(useg.parametrize() for useg in jordan.usegments)
+        vertices.append(segments[0].ctrlpoints[0])
         commands.append(Path.MOVETO)
-        for segment in jordan.segments:
+        for segment in segments:
             verts, comms = patch_segment(segment)
             vertices += verts
             commands += comms
@@ -60,9 +61,10 @@ def path_jordan(jordan: JordanCurve) -> Path:
     """
     Creates the commands for matplotlib to plot the jordan curve
     """
-    vertices = [jordan.segments[0].ctrlpoints[0]]
+    segments = tuple(useg.parametrize() for useg in jordan.usegments)
+    vertices = [segments[0].ctrlpoints[0]]
     commands = [Path.MOVETO]
-    for segment in jordan.segments:
+    for segment in segments:
         verts, comms = patch_segment(segment)
         vertices += verts
         commands += comms
@@ -174,5 +176,5 @@ class ShapePloter:
                     path, edgecolor=color, facecolor="none", lw=2
                 )
                 self.gca().add_patch(patch)
-                xvals, yvals = np.array(jordan.points(0), dtype="float64").T
+                xvals, yvals = zip(*jordan.vertices)
                 self.gca().scatter(xvals, yvals, color=color, marker=marker)

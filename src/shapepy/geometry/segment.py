@@ -21,12 +21,12 @@ from ..analytic.tools import find_minimum
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
 from ..tools import Is, To, vectorize
-from .base import IGeometricCurve, IParametrizedCurve
+from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D, cartesian
 
 
-class Segment(IGeometricCurve, IParametrizedCurve):
+class Segment(IParametrizedCurve):
     """
     Defines a planar curve in the plane,
     that contains a bezier curve inside it
@@ -40,11 +40,10 @@ class Segment(IGeometricCurve, IParametrizedCurve):
         self.__knots = (To.rational(0, 1), To.rational(1, 1))
 
     def __str__(self) -> str:
-        return f"Bezier Segment {tuple(self.ctrlpoints)}"
+        return f"BS[{len(self.ctrlpoints)-1}:{self(0)}->{self(1)}]"
 
     def __repr__(self) -> str:
-        msg = f"Segment (deg {self.degree})"
-        return msg
+        return str(self)
 
     def __eq__(self, other: Segment) -> bool:
         if not Is.segment(other):
@@ -195,11 +194,6 @@ def compute_length(segment: Segment) -> Real:
         return Math.sqrt(dpsquare(node))
 
     return adaptative.integrate(function, domain)
-
-
-def segment_self_intersect(segment: Segment) -> bool:
-    """Tells if the segment intersects itself"""
-    return len(segment.ctrlpoints) > 3
 
 
 def clean_segment(segment: Segment) -> Segment:
