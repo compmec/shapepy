@@ -282,11 +282,6 @@ class SimpleShape(DefinedShape):
         vertices = np.array(vertices, dtype="float64")
         return f"Simple Shape of area {area:.2f} with vertices:\n{vertices}"
 
-    def __repr__(self) -> str:
-        area, vertices = float(self.area), self.jordans[0].vertices
-        msg = f"Simple shape of area {area:.2f} with {len(vertices)} vertices"
-        return msg
-
     def __eq__(self, other: SubSetR2) -> bool:
         """Compare two shapes
 
@@ -448,9 +443,6 @@ class ConnectedShape(DefinedShape):
     def __str__(self) -> str:
         return f"Connected shape total area {self.area}"
 
-    def __repr__(self) -> str:
-        return str(self)
-
     def __eq__(self, other: SubSetR2) -> bool:
         assert Is.instance(other, SubSetR2)
         return (
@@ -599,9 +591,6 @@ class DisjointShape(DefinedShape):
         msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self.subshapes)} subshapes"
         return msg
-
-    def __repr__(self) -> str:
-        return self.__str__()
 
     def _contains_point(
         self, point: Point2D, boundary: Optional[bool] = True
