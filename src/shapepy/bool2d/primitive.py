@@ -17,6 +17,7 @@ from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D, cartesian
 from ..geometry.segment import Segment
 from ..geometry.unparam import USegment
+from ..loggers import debug
 from ..tools import Is, To
 from .base import EmptyShape, WholeShape
 from .shape import SimpleShape
@@ -36,6 +37,7 @@ class Primitive:
     whole = WholeShape()
 
     @staticmethod
+    @debug("shapepy.bool2d.primitive")
     def regular_polygon(
         nsides: int, radius: float = 1, center: Point2D = (0, 0)
     ) -> SimpleShape:
@@ -86,6 +88,7 @@ class Primitive:
         return Primitive.polygon(vertices)
 
     @staticmethod
+    @debug("shapepy.bool2d.primitive")
     def polygon(vertices: Tuple[Point2D]) -> SimpleShape:
         """
         Creates a generic polygon
@@ -112,6 +115,7 @@ class Primitive:
         return SimpleShape(jordan_curve)
 
     @staticmethod
+    @debug("shapepy.bool2d.primitive")
     def triangle(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
         """
         Create a right triangle
@@ -142,6 +146,7 @@ class Primitive:
         return Primitive.polygon(vertices)
 
     @staticmethod
+    @debug("shapepy.bool2d.primitive")
     def square(side: float = 1, center: Point2D = (0, 0)) -> SimpleShape:
         """
         Creates a square with sides aligned with axis
@@ -179,6 +184,7 @@ class Primitive:
         return Primitive.polygon(vertices)
 
     @staticmethod
+    @debug("shapepy.bool2d.primitive")
     def circle(
         radius: float = 1, center: Point2D = (0, 0), ndivangle: int = 16
     ) -> SimpleShape:

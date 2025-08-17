@@ -13,6 +13,7 @@ from copy import copy
 from typing import Iterable, Tuple, Union
 
 from ..geometry.point import Point2D
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 
@@ -29,10 +30,12 @@ class SubSetR2:
     def __invert__(self) -> SubSetR2:
         """Invert shape"""
 
+    @debug("shapepy.bool2d.base")
     def __or__(self, other: SubSetR2) -> SubSetR2:
         """Union shapes"""
         return Future.unite((self, other))
 
+    @debug("shapepy.bool2d.base")
     def __and__(self, other: SubSetR2) -> SubSetR2:
         """Intersection shapes"""
         return Future.intersect((self, other))
@@ -49,18 +52,22 @@ class SubSetR2:
         """Invert the SubSetR2"""
         return ~self
 
+    @debug("shapepy.bool2d.base")
     def __add__(self, other: SubSetR2):
         """Union of SubSetR2"""
         return self | other
 
+    @debug("shapepy.bool2d.base")
     def __mul__(self, value: SubSetR2):
         """Intersection of SubSetR2"""
         return self & value
 
+    @debug("shapepy.bool2d.base")
     def __sub__(self, value: SubSetR2):
         """Subtraction of SubSetR2"""
         return self & (~value)
 
+    @debug("shapepy.bool2d.base")
     def __xor__(self, other: SubSetR2):
         """XOR of SubSetR2"""
         return (self - other) | (other - self)

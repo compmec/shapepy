@@ -7,6 +7,7 @@ from __future__ import annotations
 from collections import defaultdict
 from typing import Iterable, Tuple, Union
 
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, To, vectorize
@@ -76,6 +77,7 @@ class PiecewiseCurve(IParametrizedCurve):
         """
         return len(self.__segments)
 
+    @debug("shapepy.geometry.piecewise")
     def span(self, node: Real) -> Union[int, None]:
         """
         Finds the index of the node

@@ -9,6 +9,7 @@ from typing import Iterable, List, Union
 
 from rbool import move, scale
 
+from ..loggers import debug
 from ..scalar.reals import Math
 from ..tools import Is, To, vectorize
 from .base import BaseAnalytic, IAnalytic
@@ -103,9 +104,9 @@ class Polynomial(BaseAnalytic):
         msgs: List[str] = []
         flag = False
         for i, coef in enumerate(self):
-            if coef == 0:
+            if coef * coef == 0:
                 continue
-            msg = "- " if coef < 0 else "+ " if flag else ""
+            msg = "- " if Is.real(coef) and coef < 0 else "+ " if flag else ""
             flag = True
             coef = abs(coef)
             if coef != 1 or i == 0:
@@ -119,6 +120,7 @@ class Polynomial(BaseAnalytic):
             msgs.append(msg)
         return " ".join(msgs)
 
+    @debug("shapepy.analytic.polynomial")
     def clean(self) -> Polynomial:
         """
         Decreases the degree of the bezier curve if possible
@@ -126,6 +128,7 @@ class Polynomial(BaseAnalytic):
         degree = max((i for i, v in enumerate(self) if v * v > 0), default=0)
         return Polynomial(self[: degree + 1], self.domain)
 
+    @debug("shapepy.analytic.polynomial")
     def scale(self, amount: Real) -> Polynomial:
         """
         Transforms the polynomial p(t) into p(A*t) by
@@ -148,6 +151,7 @@ class Polynomial(BaseAnalytic):
         coefs = tuple(coef * inv**i for i, coef in enumerate(self))
         return Polynomial(coefs, scale(self.domain, amount))
 
+    @debug("shapepy.analytic.polynomial")
     def shift(self, amount: Real) -> Polynomial:
         """
         Transforms the polynomial p(t) into p(t-d) by
@@ -175,6 +179,7 @@ class Polynomial(BaseAnalytic):
                 newcoefs[j] += coef * value
         return Polynomial(newcoefs, move(self.domain, amount))
 
+    @debug("shapepy.analytic.polynomial")
     def integrate(self, times: int = 1) -> Polynomial:
         """
         Integrates the polynomial curve
@@ -197,6 +202,7 @@ class Polynomial(BaseAnalytic):
             polynomial = Polynomial(newcoefs, self.domain)
         return polynomial
 
+    @debug("shapepy.analytic.polynomial")
     def derivate(self, times: int = 1) -> Polynomial:
         """
         Derivate the polynomial curve, giving a new one

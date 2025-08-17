@@ -12,8 +12,6 @@ from __future__ import annotations
 from copy import copy
 from typing import Iterable, Set, Tuple, Union
 
-import numpy as np
-
 from ..geometry.box import Box
 from ..geometry.integral import winding_number
 from ..geometry.jordancurve import JordanCurve
@@ -48,8 +46,7 @@ class SimpleShape(SubSetR2):
     def __str__(self) -> str:  # pragma: no cover  # For debug
         area = float(self.area)
         vertices = tuple(map(tuple, self.jordan.vertices))
-        vertices = np.array(vertices, dtype="float64")
-        return f"Simple Shape of area {area:.2f} with vertices:\n{vertices}"
+        return f"SimpleShape[{area:.2f}]:[{vertices}]"
 
     def __eq__(self, other: SubSetR2) -> bool:
         """Compare two shapes

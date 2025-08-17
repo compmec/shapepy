@@ -11,3 +11,6 @@ exclude_lines =
     raise NotExpectedError
     raise ValueError
     raise TypeError
+omit =
+    loggers.py
+    __init__.py
