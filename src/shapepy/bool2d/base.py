@@ -69,6 +69,10 @@ class SubSetR2:
         return str(self)
 
     @abstractmethod
+    def __hash__(self):
+        raise NotImplementedError
+
+    @abstractmethod
     def move(self, vector: Point2D) -> SubSetR2:
         """
         Moves/translate entire shape by an amount
@@ -187,6 +191,9 @@ class EmptyShape(SubSetR2):
     def __bool__(self) -> bool:
         return False
 
+    def __hash__(self):
+        return 0
+
     def move(self, _):
         return self
 
@@ -245,6 +252,9 @@ class WholeShape(SubSetR2):
 
     def __bool__(self) -> bool:
         return True
+
+    def __hash__(self):
+        return 1
 
     def move(self, _):
         return self

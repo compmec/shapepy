@@ -17,7 +17,6 @@ from shapepy.scalar.angle import Angle
 @pytest.mark.dependency(
     depends=[
         "tests/bool2d/test_primitive.py::test_end",
-        "tests/bool2d/test_contains.py::test_end",
     ],
     scope="session",
 )
@@ -181,6 +180,25 @@ def test_print():
     assert isinstance(repr(whole), str)
 
 
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_hash():
+    assert hash(EmptyShape()) == 0
+    assert hash(WholeShape()) == 1
+
+
+@pytest.mark.order(24)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_contains():
+    empty = EmptyShape()
+    whole = WholeShape()
+
+    assert empty in empty
+    assert empty in whole
+    assert whole not in empty
+    assert whole in whole
+
+
 class TestBoolShape:
     @pytest.mark.order(24)
     @pytest.mark.dependency(
@@ -199,6 +217,8 @@ class TestBoolShape:
             "test_scale",
             "test_rotate",
             "test_print",
+            "test_hash",
+            "test_contains",
         ]
     )
     def test_begin(self):
@@ -310,6 +330,8 @@ class TestBoolShape:
         "test_scale",
         "test_rotate",
         "test_print",
+        "test_hash",
+        "test_contains",
         "TestBoolShape::test_end",
     ]
 )
