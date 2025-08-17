@@ -8,6 +8,7 @@ import pytest
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape
+from shapepy.loggers import enable_logger, get_logger
 
 
 @pytest.mark.order(31)
@@ -66,7 +67,7 @@ class TestEqualSquare:
         ]
     )
     def test_sub(self):
-        square = Primitive.square(side=1, center=(0, 0))
+        square = Primitive.square(side=2, center=(0, 0))
         assert square.area > 0
         assert square - square is EmptyShape()
         assert square - (~square) == square
@@ -219,6 +220,7 @@ class TestTwoDisjointSquares:
         depends=[
             "test_begin",
             "TestEqualSquare::test_end",
+            "TestTwoCenteredSquares::test_end",
         ]
     )
     def test_begin(self):
@@ -316,7 +318,9 @@ class TestEqualHollowSquare:
     """
 
     @pytest.mark.order(31)
-    @pytest.mark.dependency(depends=["test_begin"])
+    @pytest.mark.dependency(
+        depends=["test_begin", "TestEqualSquare::test_end"]
+    )
     def test_begin(self):
         pass
 

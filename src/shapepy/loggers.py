@@ -15,7 +15,7 @@ from typing import Dict, Optional
 class LogConfiguration:
     """Contains the configuration values for the loggers"""
 
-    indent_size = 4
+    indent_str = "|   "
     log_enabled = False
 
 
@@ -37,7 +37,7 @@ class IndentingLoggerAdapter(logging.LoggerAdapter):
         """
         Inserts spaces proportional to `indent_level` before the message
         """
-        indent_str = " " * LogConfiguration.indent_size * self.indent_level
+        indent_str = LogConfiguration.indent_str * self.indent_level
         return f"{indent_str}{msg}", kwargs
 
 
@@ -89,11 +89,11 @@ def setup_logger(name, level=logging.INFO):
     adapter.logger.setLevel(logging.DEBUG)
 
     formatter = logging.Formatter(
-        "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+        "%(asctime)s - %(levelname)s - %(message)s - %(name)s"
     )
-    formatter = logging.Formatter("%(asctime)s - %(levelname)s - %(message)s")
+    formatter = logging.Formatter("%(asctime)s:%(name)s:%(message)s")
     # formatter = logging.Formatter("%(asctime)s - %(message)s")
-    # formatter = logging.Formatter("%(message)s")
+    formatter = logging.Formatter("%(name)s:%(message)s")
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(level)
@@ -119,6 +119,27 @@ def indent():
         yield
     finally:
         IndentingLoggerAdapter.indent_level -= 1
+
+
+@contextmanager
+def enable_logger(base: str, /, *, level: logging._Level):
+    """Enables temporarily the given logger"""
+    current_enable = LogConfiguration.log_enabled
+    current_levels = {}
+    for name, logger in IndentingLoggerAdapter.instances.items():
+        if base in name:
+            current_levels[name] = logger.getEffectiveLevel()
+    try:
+        LogConfiguration.log_enabled = True
+        for name, logger in IndentingLoggerAdapter.instances.items():
+            if name in current_levels:
+                logger.setLevel(level)
+        yield
+    finally:
+        LogConfiguration.log_enabled = current_enable
+        for name, logger in IndentingLoggerAdapter.instances.items():
+            if name in current_levels:
+                logger.setLevel(current_levels[name])
 
 
 # Create decorator to use in functions

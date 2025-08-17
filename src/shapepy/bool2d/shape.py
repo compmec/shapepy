@@ -66,7 +66,7 @@ class SimpleShape(SubSetR2):
             and self.jordan == other.jordan
         )
 
-    def __invert__(self) -> SimpleShape:
+    def __neg__(self) -> SimpleShape:
         return self.__class__(~self.jordan)
 
     @property
@@ -256,9 +256,6 @@ class ConnectedShape(SubSetR2):
             and self.subshapes == other.subshapes
         )
 
-    def __invert__(self) -> DisjointShape:
-        return DisjointShape(~simple for simple in self.subshapes)
-
     def __hash__(self):
         return hash(self.area)
 
@@ -383,10 +380,6 @@ class DisjointShape(SubSetR2):
     def __deepcopy__(self, memo):
         subshapes = tuple(map(copy, self.subshapes))
         return DisjointShape(subshapes)
-
-    def __invert__(self):
-        new_jordans = tuple(~jordan for jordan in self.jordans)
-        return shape_from_jordans(new_jordans)
 
     def __contains__(self, other: SubSetR2) -> bool:
         if Is.instance(other, DisjointShape):
@@ -518,64 +511,3 @@ class DisjointShape(SubSetR2):
             if wind > 0:
                 return wind
         return 0
-
-
-def divide_connecteds(
-    simples: Tuple[SimpleShape],
-) -> Tuple[Union[SimpleShape, ConnectedShape]]:
-    """
-    Divides the simples in groups of connected shapes
-
-    The idea is get the simple shape with maximum abs area,
-    this is the biggest shape of all we start from it.
-
-    We them separate all shapes in inside and outside
-    """
-    if len(simples) == 0:
-        return tuple()
-    externals = []
-    connected = []
-    simples = list(simples)
-    while len(simples) != 0:
-        areas = (s.area for s in simples)
-        absareas = tuple(map(abs, areas))
-        index = absareas.index(max(absareas))
-        connected.append(simples.pop(index))
-        internal = []
-        while len(simples) != 0:  # Divide in two groups
-            simple = simples.pop(0)
-            jordan = simple.jordan
-            for subsimple in connected:
-                subjordan = subsimple.jordan
-                if jordan not in subsimple or subjordan not in simple:
-                    externals.append(simple)
-                    break
-            else:
-                internal.append(simple)
-        simples = internal
-    if len(connected) == 1:
-        connected = connected[0]
-    else:
-        connected = ConnectedShape(connected)
-    return (connected,) + divide_connecteds(externals)
-
-
-def shape_from_jordans(jordans: Tuple[JordanCurve]) -> SubSetR2:
-    """Returns the correspondent shape
-
-    This function don't do entry validation
-    as verify if one shape is inside other
-
-    Example
-    ----------
-    >>> shape_from_jordans([])
-    EmptyShape
-    """
-    assert len(jordans) != 0
-    simples = tuple(map(SimpleShape, jordans))
-    if len(simples) == 1:
-        return simples[0]
-    connecteds = divide_connecteds(simples)
-    if len(connecteds) == 1:
-        return connecteds[0]
-    return DisjointShape(connecteds)
