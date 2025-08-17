@@ -15,7 +15,7 @@ from .geometry.integral import IntegrateJordan
 from .geometry.jordancurve import JordanCurve
 from .geometry.point import Point2D
 from .geometry.segment import Segment
-from .loggers import set_level
+from .loggers import enable_logger, set_level
 from .plot.plot import ShapePloter
 
 __version__ = importlib.metadata.version("shapepy")

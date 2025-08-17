@@ -14,18 +14,22 @@ from shapepy.geometry.jordancurve import JordanCurve
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
 from ..loggers import debug
-from ..tools import CyclicContainer, Is
+from ..tools import CyclicContainer, Is, NotExpectedError
 from .base import EmptyShape, SubSetR2, WholeShape
-from .shape import (
-    ConnectedShape,
-    DisjointShape,
-    SimpleShape,
-    shape_from_jordans,
+from .container import (
+    LazyAnd,
+    LazyNot,
+    LazyOr,
+    expand_morgans,
+    recipe_and,
+    recipe_not,
+    recipe_or,
 )
+from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 
 @debug("shapepy.bool2d.boolean")
-def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
+def unite_bool2d(subsets: Iterable[SubSetR2], clean: bool = True) -> SubSetR2:
     """
     Computes the union of given subsets
 
@@ -39,26 +43,14 @@ def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The united subset
     """
-    subsets = tuple(subsets)
-    assert len(subsets) == 2
-    assert Is.instance(subsets[0], SubSetR2)
-    assert Is.instance(subsets[1], SubSetR2)
-    if Is.instance(subsets[1], WholeShape):
-        return WholeShape()
-    if Is.instance(subsets[1], EmptyShape):
-        return copy(subsets[0])
-    if subsets[1] in subsets[0]:
-        return copy(subsets[0])
-    if subsets[0] in subsets[1]:
-        return copy(subsets[1])
-    new_jordans = FollowPath.or_shapes(subsets[0], subsets[1])
-    if len(new_jordans) == 0:
-        return WholeShape()
-    return shape_from_jordans(new_jordans)
+    recipe = recipe_or(subsets)
+    return recipe if not clean else clean_bool2d(recipe)
 
 
 @debug("shapepy.bool2d.boolean")
-def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
+def intersect_bool2d(
+    subsets: Iterable[SubSetR2], clean: bool = True
+) -> SubSetR2:
     """
     Computes the intersection of given subsets
 
@@ -72,22 +64,112 @@ def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    subsets = tuple(subsets)
-    assert len(subsets) == 2
-    assert Is.instance(subsets[0], SubSetR2)
-    assert Is.instance(subsets[1], SubSetR2)
-    if Is.instance(subsets[1], WholeShape):
-        return copy(subsets[0])
-    if Is.instance(subsets[1], EmptyShape):
-        return EmptyShape()
-    if subsets[1] in subsets[0]:
-        return copy(subsets[1])
-    if subsets[0] in subsets[1]:
-        return copy(subsets[0])
-    new_jordans = FollowPath.and_shapes(subsets[0], subsets[1])
-    if len(new_jordans) == 0:
-        return EmptyShape()
-    return shape_from_jordans(new_jordans)
+    recipe = recipe_and(subsets)
+    return recipe if not clean else clean_bool2d(recipe)
+
+
+@debug("shapepy.bool2d.boolean")
+def invert_bool2d(subset: SubSetR2, clean=True) -> SubSetR2:
+    """
+    Computes the complementar of the give subset
+
+    Parameters
+    ----------
+    subset: SubSetR2
+        The subset to be inverted
+
+    Return
+    ------
+    SubSetR2
+        The complementar subset
+    """
+    recipe = recipe_not(subset)
+    return recipe if not clean else clean_bool2d(recipe)
+
+
+# pylint: disable=too-many-branches,too-many-return-statements
+@debug("shapepy.bool2d.boolean")
+def clean_bool2d(subset: SubSetR2) -> SubSetR2:
+    """
+    Cleans or Simplifies the given subset
+    """
+    subset = filter_xor(subset)
+    subset = expand_morgans(subset)
+    subset = filter_xor(subset)
+    subset = expand_morgans(subset)
+    if not Is.instance(subset, (LazyAnd, LazyNot, LazyOr)):
+        return copy(subset)
+    if Is.instance(subset, LazyNot):
+        return simplifies_inverse(~subset)
+    assert len(subset) == 2
+    shapea, shapeb = subset
+    if not Is.instance(shapea, (SimpleShape, ConnectedShape, DisjointShape)):
+        shapea = clean_bool2d(shapea)
+    if not Is.instance(shapeb, (SimpleShape, ConnectedShape, DisjointShape)):
+        shapeb = clean_bool2d(shapeb)
+    if shapea in shapeb:
+        return copy(shapea if Is.instance(subset, LazyAnd) else shapeb)
+    if shapeb in shapea:
+        return copy(shapeb if Is.instance(subset, LazyAnd) else shapea)
+    if Is.instance(subset, LazyAnd):
+        new_jordans = FollowPath.and_shapes(shapea, shapeb)
+        if len(new_jordans) == 0:
+            return EmptyShape()
+    elif Is.instance(subset, LazyOr):
+        new_jordans = FollowPath.or_shapes(shapea, shapeb)
+        if len(new_jordans) == 0:
+            return WholeShape()
+    else:
+        raise NotExpectedError
+    simples = map(SimpleShape, new_jordans)
+    return shape_from_simples(simples)
+
+
+@debug("shapepy.bool2d.boolean")
+def simplifies_inverse(invsubset: SubSetR2) -> SubSetR2:
+    """Simplifies the value of (~subset)"""
+    if Is.instance(invsubset, (EmptyShape, WholeShape, SimpleShape)):
+        return -invsubset
+    if Is.instance(invsubset, ConnectedShape):
+        return DisjointShape(-simple for simple in invsubset.subshapes)
+    if Is.instance(invsubset, DisjointShape):
+        simples = []
+        for subsubshape in invsubset.subshapes:
+            if Is.instance(subsubshape, SimpleShape):
+                simples.append(invert_bool2d(subsubshape))
+            elif Is.instance(subsubshape, ConnectedShape):
+                simples += list(map(invert_bool2d, subsubshape.subshapes))
+            else:
+                raise NotExpectedError(str(type(subsubshape)))
+        return shape_from_simples(simples)
+    raise NotExpectedError(str(type(invsubset)))
+
+
+@debug("shapepy.bool2d.boolean")
+def filter_xor(subset: SubSetR2) -> SubSetR2:
+    """Simplifies the subset searching for XOR operations
+
+    * AND[X, NOT[X]] -> EmptyShape
+    * OR[X, NOT[X]] -> WholeShape
+    """
+    if not Is.instance(subset, (LazyAnd, LazyOr)):
+        return subset
+    internals = tuple(filter_xor(i) for i in subset)
+    lazynots = tuple(i for i in internals if Is.instance(i, LazyNot))
+    notlazys = tuple(i for i in internals if not Is.instance(i, LazyNot))
+    for lazyn in lazynots:
+        for nlazy in notlazys:
+            if ~lazyn == nlazy:
+                return (
+                    WholeShape()
+                    if Is.instance(subset, LazyOr)
+                    else EmptyShape()
+                )
+    return (
+        recipe_or(internals)
+        if Is.instance(subset, LazyOr)
+        else recipe_and(internals)
+    )
 
 
 class FollowPath:
@@ -229,6 +311,7 @@ class FollowPath:
                     yield (i, j)
 
     @staticmethod
+    @debug("shapepy.bool2d.boolean")
     def midpoints_shapes(
         shapea: SubSetR2, shapeb: SubSetR2, closed: bool, inside: bool
     ) -> Tuple[Tuple[int, int]]:
@@ -249,13 +332,22 @@ class FollowPath:
         return tuple(indexsa)
 
     @staticmethod
-    def or_shapes(shapea: SubSetR2, shapeb: SubSetR2) -> Tuple[JordanCurve]:
+    @debug("shapepy.bool2d.boolean")
+    def or_shapes(
+        shapea: SubSetR2, shapeb: SubSetR2
+    ) -> Tuple[JordanCurve, ...]:
         """
         Computes the set of jordan curves that defines the boundary of
         the union between the two base shapes
         """
-        assert Is.instance(shapea, SubSetR2)
-        assert Is.instance(shapeb, SubSetR2)
+        if not Is.instance(
+            shapea, (SimpleShape, ConnectedShape, DisjointShape)
+        ):
+            raise TypeError(str(type(shapea)))
+        if not Is.instance(
+            shapeb, (SimpleShape, ConnectedShape, DisjointShape)
+        ):
+            raise TypeError(str(type(shapeb)))
         FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
         indexs = FollowPath.midpoints_shapes(
             shapea, shapeb, closed=True, inside=False
@@ -265,13 +357,22 @@ class FollowPath:
         return new_jordans
 
     @staticmethod
-    def and_shapes(shapea: SubSetR2, shapeb: SubSetR2) -> Tuple[JordanCurve]:
+    @debug("shapepy.bool2d.boolean")
+    def and_shapes(
+        shapea: SubSetR2, shapeb: SubSetR2
+    ) -> Tuple[JordanCurve, ...]:
         """
         Computes the set of jordan curves that defines the boundary of
         the intersection between the two base shapes
         """
-        assert Is.instance(shapea, SubSetR2)
-        assert Is.instance(shapeb, SubSetR2)
+        if not Is.instance(
+            shapea, (SimpleShape, ConnectedShape, DisjointShape)
+        ):
+            raise TypeError(str(type(shapea)))
+        if not Is.instance(
+            shapeb, (SimpleShape, ConnectedShape, DisjointShape)
+        ):
+            raise TypeError(str(type(shapeb)))
         FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
         indexs = FollowPath.midpoints_shapes(
             shapea, shapeb, closed=False, inside=True
@@ -279,3 +380,70 @@ class FollowPath:
         all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
         new_jordans = FollowPath.follow_path(all_jordans, indexs)
         return new_jordans
+
+
+def divide_connecteds(
+    simples: Tuple[SimpleShape],
+) -> Tuple[Union[SimpleShape, ConnectedShape]]:
+    """
+    Divides the simples in groups of connected shapes
+
+    The idea is get the simple shape with maximum abs area,
+    this is the biggest shape of all we start from it.
+
+    We them separate all shapes in inside and outside
+    """
+    simples = list(simples)
+    if len(simples) == 0:
+        return tuple()
+    for simple in simples:
+        if not Is.instance(simple, SimpleShape):
+            raise TypeError(f"Invalid type {type(simple)}")
+    externals = []
+    connected = []
+    while len(simples) != 0:
+        areas = (s.area for s in simples)
+        absareas = tuple(map(abs, areas))
+        index = absareas.index(max(absareas))
+        connected.append(simples.pop(index))
+        internal = []
+        while len(simples) != 0:  # Divide in two groups
+            simple = simples.pop(0)
+            jordan = simple.jordan
+            for subsimple in connected:
+                subjordan = subsimple.jordan
+                if jordan not in subsimple or subjordan not in simple:
+                    externals.append(simple)
+                    break
+            else:
+                internal.append(simple)
+        simples = internal
+    if len(connected) == 1:
+        connected = connected[0]
+    else:
+        connected = ConnectedShape(connected)
+    return (connected,) + divide_connecteds(externals)
+
+
+def shape_from_simples(simples: Tuple[SimpleShape, ...]) -> SubSetR2:
+    """Returns the correspondent shape
+
+    This function don't do entry validation
+    as verify if one shape is inside other
+
+    Example
+    ----------
+    >>> shape_from_jordans([])
+    EmptyShape
+    """
+    simples = tuple(simples)
+    for simple in simples:
+        if not Is.instance(simple, SimpleShape):
+            raise TypeError(f"Invalid type = {type(simple)}")
+    assert len(simples) != 0
+    if len(simples) == 1:
+        return simples[0]
+    connecteds = divide_connecteds(simples)
+    if len(connecteds) == 1:
+        return connecteds[0]
+    return DisjointShape(connecteds)

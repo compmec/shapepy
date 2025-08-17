@@ -355,7 +355,7 @@ class TestIntegrateJordan:
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrateJordan::test_begin"])
-    def test_lenght_triangle(self):
+    def test_length_triangle(self):
         vertices = [(0, 0), (3, 0), (0, 4)]
         jordan_curve = FactoryJordan.polygon(vertices)
         assert jordan_curve.length == 12
@@ -371,10 +371,10 @@ class TestIntegrateJordan:
     @pytest.mark.dependency(
         depends=[
             "TestIntegrateJordan::test_begin",
-            "TestIntegrateJordan::test_lenght_triangle",
+            "TestIntegrateJordan::test_length_triangle",
         ]
     )
-    def test_lenght_square(self):
+    def test_length_square(self):
         side = 3
         square_vertices = [
             (-side / 2, -side / 2),
@@ -402,21 +402,21 @@ class TestIntegrateJordan:
     @pytest.mark.dependency(
         depends=[
             "TestIntegrateJordan::test_begin",
-            "TestIntegrateJordan::test_lenght_triangle",
-            "TestIntegrateJordan::test_lenght_square",
+            "TestIntegrateJordan::test_length_triangle",
+            "TestIntegrateJordan::test_length_square",
         ]
     )
-    def test_lenght_regular_polygon(self):
+    def test_length_regular_polygon(self):
         for nsides in range(3, 10):
-            lenght = 2 * nsides * np.sin(math.pi / nsides)
+            length = 2 * nsides * np.sin(math.pi / nsides)
             area = nsides * np.sin(2 * math.pi / nsides) / 2
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             jordan_curve = FactoryJordan.polygon(ctrlpoints)
-            assert abs(jordan_curve.length - lenght) < 1e-15
+            assert abs(jordan_curve.length - length) < 1e-15
             assert abs(jordan_curve.area - area) < 1e-15
 
-            assert (jordan_curve.length - lenght) < 1e-9
+            assert (jordan_curve.length - length) < 1e-9
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
@@ -424,9 +424,9 @@ class TestIntegrateJordan:
         depends=[
             "TestIntegrateJordan::test_begin",
             "TestIntegrateJordan::test_winding_regular_polygon",
-            "TestIntegrateJordan::test_lenght_triangle",
-            "TestIntegrateJordan::test_lenght_square",
-            "TestIntegrateJordan::test_lenght_regular_polygon",
+            "TestIntegrateJordan::test_length_triangle",
+            "TestIntegrateJordan::test_length_square",
+            "TestIntegrateJordan::test_length_regular_polygon",
         ]
     )
     def test_end(self):
