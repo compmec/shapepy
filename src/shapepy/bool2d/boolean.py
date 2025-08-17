@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from copy import copy
 from fractions import Fraction
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
 
@@ -15,7 +15,12 @@ from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
 from ..tools import CyclicContainer, Is
 from .base import EmptyShape, SubSetR2, WholeShape
-from .shape import shape_from_jordans
+from .shape import (
+    ConnectedShape,
+    DisjointShape,
+    SimpleShape,
+    shape_from_jordans,
+)
 
 
 def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
@@ -196,8 +201,11 @@ class FollowPath:
 
     @staticmethod
     def midpoints_one_shape(
-        shapea: SubSetR2, shapeb: SubSetR2, closed: bool, inside: bool
-    ) -> Tuple[Tuple[int]]:
+        shapea: Union[SimpleShape, ConnectedShape, DisjointShape],
+        shapeb: Union[SimpleShape, ConnectedShape, DisjointShape],
+        closed: bool,
+        inside: bool,
+    ) -> Iterable[Tuple[int, int]]:
         """
         Returns a matrix [(a0, b0), (a1, b1), ...]
         such the middle point of
@@ -209,22 +217,18 @@ class FollowPath:
         If ``closed=False``, a boundary point is outside
 
         """
-
-        insiders = []
-        outsiders = []
         for i, jordan in enumerate(shapea.jordans):
             for j, segment in enumerate(jordan.piecewise):
                 mid_point = segment(Fraction(1, 2))
-                if shapeb.contains_point(mid_point, closed):
-                    insiders.append((i, j))
-                else:
-                    outsiders.append((i, j))
-        return tuple(insiders) if inside else tuple(outsiders)
+                wind = shapeb.winding(mid_point)
+                mid_point_in = (wind > 0 and closed) or wind == 1
+                if not inside ^ mid_point_in:
+                    yield (i, j)
 
     @staticmethod
     def midpoints_shapes(
         shapea: SubSetR2, shapeb: SubSetR2, closed: bool, inside: bool
-    ) -> Tuple[Tuple[int]]:
+    ) -> Tuple[Tuple[int, int]]:
         """
         This function computes the indexes of the midpoints from
         both shapes, shifting the indexs of shapeb.jordans

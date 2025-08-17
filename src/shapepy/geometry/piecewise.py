@@ -9,7 +9,7 @@ from typing import Iterable, Tuple, Union
 
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
-from ..tools import Is, To
+from ..tools import Is, To, vectorize
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D
@@ -143,6 +143,7 @@ class PiecewiseCurve(IParametrizedCurve):
         self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
         self.__segments = tuple(newsegments)
 
+    @vectorize(1, 0)
     def __call__(self, node: float, derivate: int = 0) -> Point2D:
         index = self.span(node)
         if index is None:

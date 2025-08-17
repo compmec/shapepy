@@ -4,18 +4,22 @@ Contains functions to integrate over a segment
 
 from __future__ import annotations
 
+from functools import partial
 from typing import Optional, Union
 
-import numpy as np
-
-from ..scalar.nodes_sample import NodeSampleFactory
+from ..analytic.base import IAnalytic
+from ..analytic.tools import find_minimum
+from ..common import derivate
+from ..scalar.angle import Angle
+from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math
-from ..tools import Is
+from ..tools import Is, To
 from .jordancurve import JordanCurve
-from .point import Point2D
+from .point import Point2D, cross, inner
 from .segment import Segment
 
 
+# pylint: disable=too-few-public-methods
 class IntegrateSegment:
     """
     Defines methods to integrates over a segment
@@ -38,25 +42,6 @@ class IntegrateSegment:
         ipoly = function.integrate()
         return (ipoly(1) - ipoly(0)) / (expx + expy + 2)
 
-    @staticmethod
-    def winding_number(
-        curve: Segment,
-        center: Point2D = (0.0, 0.0),
-        nnodes: Union[None, int] = None,
-    ) -> float:
-        """
-        Computes the integral for a bezier curve of given control points
-        """
-        assert Is.segment(curve)
-        nnodes = curve.npts if nnodes is None else nnodes
-        nodes = NodeSampleFactory.closed_linspace(nnodes)
-        total = 0
-        for nodea, nodeb in zip(nodes[:-1], nodes[1:]):
-            pointa = curve(nodea)
-            pointb = curve(nodeb)
-            total += winding_number_linear(pointa, pointb, center)
-        return total
-
 
 class IntegrateJordan:
     """
@@ -77,43 +62,45 @@ class IntegrateJordan:
             for usegment in jordan.usegments
         )
 
-    @staticmethod
-    def winding_number(
-        jordan: JordanCurve,
-        center: Optional[Point2D] = (0.0, 0.0),
-        nnodes: Optional[int] = None,
-    ) -> Union[int, float]:
-        """Computes the winding number from jordan curve
 
-        Returns [-1, -0.5, 0, 0.5 or 1]
-        """
-        wind = 0
-        if center in jordan.box():
-            for usegment in jordan.usegments:
-                if center in usegment:
-                    return 0.5 if jordan.area > 0 else -0.5
-        for usegment in jordan.usegments:
-            wind += IntegrateSegment.winding_number(
-                usegment.parametrize(), center, nnodes
-            )
-        return round(wind)
+# pylint: disable=too-many-locals
+def winding_number(
+    jordan: JordanCurve, center: Optional[Point2D] = (0.0, 0.0)
+) -> Union[int, float]:
+    """Computes the winding number from jordan curve
 
-
-def winding_number_linear(
-    pointa: Point2D, pointb: Point2D, center: Point2D
-) -> float:
+    Returns [-1, -0.5, 0, 0.5 or 1]
     """
-    Computes the winding number defined by the given points.
-    It means, it's the angle made between the vector
-    (pointb - center) and (pointa - center)
-    """
-    anglea = np.arctan2(
-        float(pointa[1] - center[1]), float(pointa[0] - center[0])
-    )
-    angleb = np.arctan2(
-        float(pointb[1] - center[1]), float(pointb[0] - center[0])
-    )
-    wind = (angleb - anglea) / Math.tau
-    if abs(wind) < 0.5:
+    center = To.point(center)
+    box = jordan.box()
+    if center not in box:
+        wind = 0 if jordan.area > 0 else 1
         return wind
-    return wind - 1 if wind > 0 else wind + 1
+
+    segments = tuple(jordan.parametrize())
+    for i, segmenti in enumerate(segments):
+        if center == segmenti(0):
+            segmentj = segments[(i - 1) % len(segments)]
+            deltapi = segmenti(0, 1)
+            deltapj = segmentj(1, 1)
+            innerval = inner(deltapi, deltapj)
+            crossval = cross(deltapi, deltapj)
+            angle = Angle.arg(-innerval, -crossval)
+            return float(angle) / Math.tau
+
+    direct = IntegratorFactory.closed_newton_cotes(3)
+    integrator = AdaptativeIntegrator(direct, 1e-6)
+    radangle = 0
+    for segment in segments:
+        deltax: IAnalytic = segment.xfunc - center.xcoord
+        deltay: IAnalytic = segment.yfunc - center.ycoord
+        radius_square = deltax * deltax + deltay * deltay
+        if find_minimum(radius_square, [0, 1]) < 1e-6:
+            return 0.5
+        crossf = deltax * derivate(deltay) - deltay * derivate(deltax)
+        function = partial(
+            lambda t, cf, rs: cf(t) / rs(t), cf=crossf, rs=radius_square
+        )
+        radangle += integrator.integrate(function, [0, 1])
+    wind = round(radangle / Math.tau)
+    return wind if jordan.area > 0 else 1 + wind
