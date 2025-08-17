@@ -9,15 +9,13 @@ or even unconnected shapes.
 
 from __future__ import annotations
 
-import abc
 from copy import copy
-from typing import Optional, Tuple, Union
+from typing import Iterable, Tuple, Union
 
 import numpy as np
-import rbool
 
 from ..geometry.box import Box
-from ..geometry.integral import IntegrateJordan
+from ..geometry.integral import winding_number
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
 from ..scalar.angle import Angle
@@ -26,164 +24,7 @@ from ..tools import Is, To
 from .base import EmptyShape, SubSetR2
 
 
-# pylint: disable=no-member
-class DefinedShape(SubSetR2):
-    """
-    DefinedShape is the base class for SimpleShape,
-    ConnectedShape and DisjointShape
-
-    """
-
-    def __copy__(self) -> DefinedShape:
-        return self.__deepcopy__(None)
-
-    def box(self) -> Box:
-        """
-        Box that encloses all jordan curves
-
-        Parameters
-        ----------
-
-        :return: The box that encloses all
-        :rtype: Box
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive, IntegrateShape
-        >>> circle = Primitive.circle(radius = 1)
-        >>> circle.box()
-        Box with vertices (-1.0, -1.0) and (1., 1.0)
-
-        """
-        box = None
-        for jordan in self.jordans:
-            box |= jordan.box()
-        return box
-
-    def __contains__(
-        self, other: Union[Point2D, JordanCurve, SubSetR2]
-    ) -> bool:
-        if Is.instance(other, DefinedShape):
-            return self.contains_shape(other)
-        if Is.instance(other, SubSetR2):
-            return Is.instance(other, EmptyShape)
-        if Is.instance(other, JordanCurve):
-            return self.contains_jordan(other)
-        point = To.point(other)
-        return self.contains_point(point)
-
-    def contains_point(
-        self, point: Point2D, boundary: Optional[bool] = True
-    ) -> bool:
-        """
-        Checks if given point is inside the shape
-
-        Parameters
-        ----------
-
-        point : Point2D
-            The point to verify if is inside
-        boundary : bool, default = True
-            The flag to decide if a boundary point is considered
-            inside or outside.
-            If ``True``, then a boundary point is considered inside.
-
-        :return: Whether the point is inside or not
-        :rtype: bool
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> square = Primitive.square()
-        >>> square.contains_point((0, 0))
-        True
-        >>> square.contains_point((0.5, 0), True)
-        True
-        >>> square.contains_point((0.5, 0), False)
-        False
-
-        """
-        point = To.point(point)
-        assert Is.bool(boundary)
-        return self._contains_point(point, boundary)
-
-    def contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
-    ) -> bool:
-        """
-        Checks if the all points of jordan are inside the shape
-
-        Parameters
-        ----------
-
-        jordan : JordanCurve
-            The jordan curve to verify
-        boundary : bool, default = True
-            The flag to check if jordan is inside a closed (True)
-            or open (False) set
-
-        :return: Whether the jordan is inside or not
-        :rtype: bool
-
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> square = Primitive.square()
-        >>> jordan = small_square.jordans[0]
-        >>> square.contains_jordan(jordan)
-        True
-
-        """
-        assert Is.jordan(jordan)
-        assert Is.bool(boundary)
-        return self._contains_jordan(jordan, boundary)
-
-    def contains_shape(self, other: SubSetR2) -> bool:
-        """
-        Checks if the all points of given shape are inside the shape
-
-        Mathematically speaking, checks if ``other`` is a subset of ``self``
-
-        Parameters
-        ----------
-
-        other : SubSetR2
-            The shape to be verified if is inside
-
-        :return: Whether the ``other`` shape is inside or not
-        :rtype: bool
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> square = Primitive.regular_polygon(4)
-        >>> circle = Primitive.circle()
-        >>> circle.contains_shape(square)
-        True
-
-        """
-        assert Is.instance(other, DefinedShape)
-        return self._contains_shape(other)
-
-    @abc.abstractmethod
-    def _contains_point(self, point: Point2D, boundary: Optional[bool] = True):
-        pass
-
-    @abc.abstractmethod
-    def _contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
-    ):
-        pass
-
-    @abc.abstractmethod
-    def _contains_shape(self, other: SubSetR2):
-        pass
-
-
-class SimpleShape(DefinedShape):
+class SimpleShape(SubSetR2):
     """
     SimpleShape class
 
@@ -193,16 +34,20 @@ class SimpleShape(DefinedShape):
 
     """
 
-    def __init__(self, jordancurve: JordanCurve):
+    def __init__(self, jordancurve: JordanCurve, boundary: bool = True):
         assert Is.jordan(jordancurve)
         self.__jordancurve = jordancurve
+        self.boundary = boundary
 
-    def __deepcopy__(self, memo) -> DefinedShape:
+    def __copy__(self) -> SimpleShape:
+        return self.__deepcopy__(None)
+
+    def __deepcopy__(self, memo) -> SimpleShape:
         return SimpleShape(copy(self.__jordancurve))
 
     def __str__(self) -> str:
         area = float(self.area)
-        vertices = tuple(map(tuple, self.jordans[0].vertices))
+        vertices = tuple(map(tuple, self.jordan.vertices))
         vertices = np.array(vertices, dtype="float64")
         return f"Simple Shape of area {area:.2f} with vertices:\n{vertices}"
 
@@ -221,25 +66,35 @@ class SimpleShape(DefinedShape):
         return (
             Is.instance(other, SimpleShape)
             and self.area == other.area
-            and self.__jordancurve == other.jordans[0]
+            and self.jordan == other.jordan
         )
 
     def __invert__(self) -> SimpleShape:
-        return self.__class__(~self.__jordancurve)
+        return self.__class__(~self.jordan)
+
+    @property
+    def boundary(self) -> bool:
+        """The flag that informs if the boundary is inside the Shape"""
+        return self.__boundary
+
+    @boundary.setter
+    def boundary(self, value: bool):
+        self.__boundary = bool(value)
+
+    @property
+    def jordan(self) -> JordanCurve:
+        """Gives the jordan curve that defines the boundary"""
+        return self.__jordancurve
+
+    @property
+    def jordans(self) -> Tuple[JordanCurve]:
+        """Gives the jordan curve that defines the boundary"""
+        return (self.__jordancurve,)
 
     @property
     def area(self) -> Real:
         """The internal area that is enclosed by the shape"""
         return self.__jordancurve.area
-
-    @property
-    def jordans(self) -> Tuple[JordanCurve]:
-        """
-        The jordans curve that define the SimpleShape
-
-        It has only one jordan curve inside it
-        """
-        return (self.__jordancurve,)
 
     def invert(self) -> SimpleShape:
         """
@@ -272,63 +127,44 @@ class SimpleShape(DefinedShape):
         self.__jordancurve.invert()
         return self
 
-    def _contains_point(
-        self, point: Point2D, boundary: Optional[bool] = True
-    ) -> bool:
-        jordan = self.jordans[0]
-        wind = IntegrateJordan.winding_number(jordan, center=point)
-        return (
-            (wind > 0 if boundary else wind == 1)
-            if jordan.area > 0
-            else wind > -1 if boundary else wind == 0
-        )
+    def __contains__(self, other: SubSetR2) -> bool:
+        if Is.instance(other, SubSetR2):
+            if Is.instance(other, SimpleShape):
+                return self.__contains_simple(other)
+            if Is.instance(other, ConnectedShape):
+                return ~self in ~other
+            if Is.instance(other, DisjointShape):
+                return all(o in self for o in other.subshapes)
+            return Is.instance(other, EmptyShape)
+        if Is.instance(other, JordanCurve):
+            return self.__contains_jordan(other)
+        return self.__contains_point(other)
 
-    def _contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
-    ) -> bool:
+    def __contains_point(self, point: Point2D) -> bool:
+        wind = self.winding(point)
+
+        return wind > 0 if self.boundary else wind == 1
+
+    def __contains_jordan(self, jordan: JordanCurve) -> bool:
         piecewise = jordan.parametrize()
-        vertices = map(piecewise, piecewise.knots)
-        if not all(map(self.contains_point, vertices)):
+        vertices = map(piecewise, piecewise.knots[:-1])
+        if not all(map(self.__contains_point, vertices)):
             return False
-        inters = piecewise & self.jordans[0]
-        inters.evaluate()
-        if inters.all_subsets[id(piecewise)] is not rbool.Empty():
+        inters = piecewise & self.jordan
+        if not inters:
             return True
         knots = sorted(inters.all_knots[id(piecewise)])
         midknots = ((k0 + k1) / 2 for k0, k1 in zip(knots, knots[1:]))
         midpoints = map(piecewise, midknots)
-        return all(map(self.contains_point, midpoints))
-
-    def _contains_shape(self, other: DefinedShape) -> bool:
-        assert Is.instance(other, DefinedShape)
-        if Is.instance(other, SimpleShape):
-            return self.__contains_simple(other)
-        if Is.instance(other, ConnectedShape):
-            # cap S_i in S_j = any_i (bar S_j in bar S_i)
-            contains = False
-            self.invert()
-            for subshape in other.subshapes:
-                subshape.invert()
-                if self in subshape:
-                    contains = True
-                subshape.invert()
-                if contains:
-                    break
-            self.invert()
-            return contains
-        # Disjoint shape
-        for subshape in other.subshapes:
-            if subshape not in self:
-                return False
-        return True
+        return all(map(self.__contains_point, midpoints))
 
     # pylint: disable=chained-comparison
     def __contains_simple(self, other: SimpleShape) -> bool:
         assert Is.instance(other, SimpleShape)
         areaa = other.area
         areab = self.area
-        jordana = other.jordans[0]
-        jordanb = self.jordans[0]
+        jordana = other.jordan
+        jordanb = self.jordan
         if areaa < 0 and areab > 0:
             return False
         if not self.box() & other.box():
@@ -355,8 +191,37 @@ class SimpleShape(DefinedShape):
         self.__jordancurve = self.__jordancurve.rotate(angle)
         return self
 
+    def box(self) -> Box:
+        """
+        Box that encloses all jordan curves
 
-class ConnectedShape(DefinedShape):
+        Parameters
+        ----------
+
+        :return: The box that encloses all
+        :rtype: Box
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive, IntegrateShape
+        >>> circle = Primitive.circle(radius = 1)
+        >>> circle.box()
+        Box with vertices (-1.0, -1.0) and (1., 1.0)
+        """
+        return self.jordan.box()
+
+    def winding(self, point: Point2D) -> Real:
+        """Gives the winding number.
+
+        0 means the point is outside the domain
+        1 means the point is inside the domain
+        between 0 and 1 means its on the boundary"""
+        point = To.point(point)
+        wind = winding_number(self.jordan, center=point)
+        return wind
+
+
+class ConnectedShape(SubSetR2):
     """
     ConnectedShape Class
 
@@ -367,7 +232,10 @@ class ConnectedShape(DefinedShape):
     def __init__(self, subshapes: Tuple[SimpleShape]):
         self.subshapes = subshapes
 
-    def __deepcopy__(self, memo):
+    def __copy__(self) -> ConnectedShape:
+        return self.__deepcopy__(None)
+
+    def __deepcopy__(self, memo) -> ConnectedShape:
         simples = tuple(map(copy, self.subshapes))
         return ConnectedShape(simples)
 
@@ -387,17 +255,16 @@ class ConnectedShape(DefinedShape):
         )
 
     def __invert__(self) -> DisjointShape:
-        simples = [~simple for simple in self.subshapes]
-        return DisjointShape(simples)
+        return DisjointShape(~simple for simple in self.subshapes)
 
     @property
-    def jordans(self) -> Tuple[JordanCurve]:
+    def jordans(self) -> Tuple[JordanCurve, ...]:
         """Jordan curves that defines the shape
 
         :getter: Returns a set of jordan curves
         :type: tuple[JordanCurve]
         """
-        return tuple(shape.jordans[0] for shape in self.subshapes)
+        return tuple(shape.jordan for shape in self.subshapes)
 
     @property
     def subshapes(self) -> Tuple[SimpleShape]:
@@ -443,27 +310,8 @@ class ConnectedShape(DefinedShape):
         simples = tuple(val[1] for val in simples)
         self.__subshapes = tuple(simples)
 
-    def _contains_point(
-        self, point: Point2D, boundary: Optional[bool] = True
-    ) -> bool:
-        for subshape in self.subshapes:
-            if not subshape.contains_point(point, boundary):
-                return False
-        return True
-
-    def _contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
-    ) -> bool:
-        for subshape in self.subshapes:
-            if not subshape.contains_jordan(jordan, boundary):
-                return False
-        return True
-
-    def _contains_shape(self, other: DefinedShape) -> bool:
-        for subshape in self.subshapes:
-            if not subshape.contains_shape(other):
-                return False
-        return True
+    def __contains__(self, other) -> bool:
+        return all(other in s for s in self.subshapes)
 
     def move(self, vector: Point2D) -> JordanCurve:
         vector = To.point(vector)
@@ -482,8 +330,42 @@ class ConnectedShape(DefinedShape):
             subshape.rotate(angle)
         return self
 
+    def box(self) -> Box:
+        """
+        Box that encloses all jordan curves
 
-class DisjointShape(DefinedShape):
+        Parameters
+        ----------
+
+        :return: The box that encloses all
+        :rtype: Box
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive, IntegrateShape
+        >>> circle = Primitive.circle(radius = 1)
+        >>> circle.box()
+        Box with vertices (-1.0, -1.0) and (1., 1.0)
+        """
+        box = None
+        for sub in self.subshapes:
+            box |= sub.jordan.box()
+        return box
+
+    def winding(self, point: Point2D) -> Real:
+        """Gives the winding number.
+
+        0 means the point is outside the domain
+        1 means the point is inside the domain
+        between 0 and 1 means its on the boundary"""
+        point = To.point(point)
+        wind = 1
+        for subset in self.subshapes:
+            wind *= subset.winding(point)
+        return wind
+
+
+class DisjointShape(SubSetR2):
     """
     DisjointShape Class
 
@@ -491,22 +373,13 @@ class DisjointShape(DefinedShape):
     ConnectedShape instances
     """
 
-    def __new__(cls, subshapes: Tuple[ConnectedShape]):
-        subshapes = list(subshapes)
-        while EmptyShape() in subshapes:
-            subshapes.remove(EmptyShape())
-        if len(subshapes) == 0:
-            return EmptyShape()
-        for subshape in subshapes:
-            assert Is.instance(subshape, (SimpleShape, ConnectedShape))
-        if len(subshapes) == 1:
-            return copy(subshapes[0])
-        instance = super(DisjointShape, cls).__new__(cls)
-        instance.subshapes = subshapes
-        return instance
+    def __init__(
+        self, subshapes: Iterable[Union[SimpleShape, ConnectedShape]]
+    ):
+        self.subshapes = subshapes
 
-    def __init__(self, _: Tuple[ConnectedShape]):
-        pass
+    def __copy__(self) -> ConnectedShape:
+        return self.__deepcopy__(None)
 
     def __deepcopy__(self, memo):
         subshapes = tuple(map(copy, self.subshapes))
@@ -516,10 +389,27 @@ class DisjointShape(DefinedShape):
         new_jordans = tuple(~jordan for jordan in self.jordans)
         return shape_from_jordans(new_jordans)
 
+    def __contains__(self, other: SubSetR2) -> bool:
+        if Is.instance(other, DisjointShape):
+            return all(o in self for o in other.subshapes)
+        return any(other in s for s in self.subshapes)
+
     @property
     def area(self) -> Real:
         """The internal area that is enclosed by the shape"""
         return sum(sub.area for sub in self.subshapes)
+
+    @property
+    def jordans(self) -> Tuple[JordanCurve, ...]:
+        """Jordan curves that defines the shape
+
+        :getter: Returns a set of jordan curves
+        :type: tuple[JordanCurve]
+        """
+        jordans = []
+        for subshape in self.subshapes:
+            jordans += list(subshape.jordans)
+        return tuple(jordans)
 
     def __eq__(self, other: SubSetR2):
         assert Is.instance(other, SubSetR2)
@@ -545,50 +435,8 @@ class DisjointShape(DefinedShape):
         msg += f"{len(self.subshapes)} subshapes"
         return msg
 
-    def _contains_point(
-        self, point: Point2D, boundary: Optional[bool] = True
-    ) -> bool:
-        for subshape in self.subshapes:
-            if subshape.contains_point(point, boundary):
-                return True
-        return False
-
-    def _contains_jordan(
-        self, jordan: JordanCurve, boundary: Optional[bool] = True
-    ) -> bool:
-        for subshape in self.subshapes:
-            if subshape.contains_jordan(jordan, boundary):
-                return True
-        return False
-
-    def _contains_shape(self, other: DefinedShape) -> bool:
-        assert Is.instance(other, DefinedShape)
-        if Is.instance(other, (SimpleShape, ConnectedShape)):
-            for subshape in self.subshapes:
-                if other in subshape:
-                    return True
-            return False
-        if Is.instance(other, DisjointShape):
-            for subshape in other.subshapes:
-                if subshape not in self:
-                    return False
-            return True
-        raise NotImplementedError
-
     @property
-    def jordans(self) -> Tuple[JordanCurve]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
-        """
-        lista = []
-        for subshape in self.subshapes:
-            lista += list(subshape.jordans)
-        return tuple(lista)
-
-    @property
-    def subshapes(self) -> Tuple[Union[SimpleShape, ConnectedShape]]:
+    def subshapes(self) -> Tuple[Union[SimpleShape, ConnectedShape], ...]:
         """
         Subshapes that defines the disjoint shape
 
@@ -619,7 +467,8 @@ class DisjointShape(DefinedShape):
         return self.__subshapes
 
     @subshapes.setter
-    def subshapes(self, values: Tuple[SubSetR2]):
+    def subshapes(self, values: Iterable[SubSetR2]):
+        values = tuple(values)
         if not all(
             Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
         ):
@@ -651,6 +500,41 @@ class DisjointShape(DefinedShape):
             subshape.rotate(angle)
         return self
 
+    def box(self) -> Box:
+        """
+        Box that encloses all jordan curves
+
+        Parameters
+        ----------
+
+        :return: The box that encloses all
+        :rtype: Box
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive, IntegrateShape
+        >>> circle = Primitive.circle(radius = 1)
+        >>> circle.box()
+        Box with vertices (-1.0, -1.0) and (1., 1.0)
+        """
+        box = None
+        for sub in self.subshapes:
+            box |= sub.box()
+        return box
+
+    def winding(self, point: Point2D) -> Real:
+        """Gives the winding number.
+
+        0 means the point is outside the domain
+        1 means the point is inside the domain
+        between 0 and 1 means its on the boundary"""
+        point = To.point(point)
+        for subset in self.subshapes:
+            wind = subset.winding(point)
+            if wind > 0:
+                return wind
+        return 0
+
 
 def divide_connecteds(
     simples: Tuple[SimpleShape],
@@ -676,9 +560,9 @@ def divide_connecteds(
         internal = []
         while len(simples) != 0:  # Divide in two groups
             simple = simples.pop(0)
-            jordan = simple.jordans[0]
+            jordan = simple.jordan
             for subsimple in connected:
-                subjordan = subsimple.jordans[0]
+                subjordan = subsimple.jordan
                 if jordan not in subsimple or subjordan not in simple:
                     externals.append(simple)
                     break

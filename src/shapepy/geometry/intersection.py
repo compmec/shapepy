@@ -190,6 +190,9 @@ class GeometricIntersectionCurves:
                 newparis.append((i, n + j))
         return GeometricIntersectionCurves(newcurves, newparis)
 
+    def __bool__(self):
+        return all(v == Empty() for v in self.all_subsets.values())
+
 
 def curve_and_curve(
     curvea: IGeometricCurve, curveb: IGeometricCurve

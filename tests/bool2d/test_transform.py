@@ -1,10 +1,5 @@
 """File to test the functions `move`, `scale` and `rotate`"""
 
-"""
-Tests related to 'EmptyShape' and 'WholeShape' which describes a empty set
-and the whole domain
-"""
-
 import pytest
 
 from shapepy.bool2d.primitive import Primitive

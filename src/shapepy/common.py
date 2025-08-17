@@ -81,3 +81,10 @@ def clean(obj: Any) -> Any:
     Cleans the object, removing the unecessary data
     """
     return deepcopy(obj).clean()
+
+
+def derivate(obj: Any) -> Any:
+    """
+    Derivates the analytic function or the curve
+    """
+    return deepcopy(obj).derivate()

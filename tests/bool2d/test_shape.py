@@ -43,7 +43,7 @@ class TestIntegrate:
         for expx in range(nx):
             for expy in range(ny):
                 test = IntegrateJordan.polynomial(
-                    rectangular.jordans[0], expx, expy
+                    rectangular.jordan, expx, expy
                 )
                 if expx % 2 or expy % 2:
                     good = 0
@@ -72,7 +72,7 @@ class TestIntegrate:
         for expx in range(nx):
             for expy in range(ny):
                 test = IntegrateJordan.polynomial(
-                    rectangular.jordans[0], expx, expy
+                    rectangular.jordan, expx, expy
                 )
                 good = (center[0] + width / 2) ** (expx + 1) - (
                     center[0] - width / 2
@@ -99,7 +99,7 @@ class TestIntegrate:
         nx, ny = 5, 5
         for expx in range(nx):
             for expy in range(ny):
-                test = IntegrateJordan.polynomial(rombo.jordans[0], expx, expy)
+                test = IntegrateJordan.polynomial(rombo.jordan, expx, expy)
                 if expx % 2 or expy % 2:
                     good = 0
                 else:
