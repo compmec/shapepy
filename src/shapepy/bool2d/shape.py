@@ -10,7 +10,7 @@ or even unconnected shapes.
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Set, Tuple, Union
 
 import numpy as np
 
@@ -45,7 +45,7 @@ class SimpleShape(SubSetR2):
     def __deepcopy__(self, memo) -> SimpleShape:
         return SimpleShape(copy(self.__jordancurve))
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover  # For debug
         area = float(self.area)
         vertices = tuple(map(tuple, self.jordan.vertices))
         vertices = np.array(vertices, dtype="float64")
@@ -95,6 +95,9 @@ class SimpleShape(SubSetR2):
     def area(self) -> Real:
         """The internal area that is enclosed by the shape"""
         return self.__jordancurve.area
+
+    def __hash__(self):
+        return hash(self.area)
 
     def invert(self) -> SimpleShape:
         """
@@ -229,7 +232,7 @@ class ConnectedShape(SubSetR2):
 
     """
 
-    def __init__(self, subshapes: Tuple[SimpleShape]):
+    def __init__(self, subshapes: Iterable[SimpleShape]):
         self.subshapes = subshapes
 
     def __copy__(self) -> ConnectedShape:
@@ -244,18 +247,23 @@ class ConnectedShape(SubSetR2):
         """The internal area that is enclosed by the shape"""
         return sum(simple.area for simple in self.subshapes)
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover  # For debug
         return f"Connected shape total area {self.area}"
 
     def __eq__(self, other: SubSetR2) -> bool:
         assert Is.instance(other, SubSetR2)
         return (
             Is.instance(other, ConnectedShape)
-            and abs(self.area - other.area) < 1e-6
+            and hash(self) == hash(other)
+            and self.area == other.area
+            and self.subshapes == other.subshapes
         )
 
     def __invert__(self) -> DisjointShape:
         return DisjointShape(~simple for simple in self.subshapes)
+
+    def __hash__(self):
+        return hash(self.area)
 
     @property
     def jordans(self) -> Tuple[JordanCurve, ...]:
@@ -267,7 +275,7 @@ class ConnectedShape(SubSetR2):
         return tuple(shape.jordan for shape in self.subshapes)
 
     @property
-    def subshapes(self) -> Tuple[SimpleShape]:
+    def subshapes(self) -> Set[SimpleShape]:
         """
         Subshapes that defines the connected shape
 
@@ -298,17 +306,11 @@ class ConnectedShape(SubSetR2):
         return self.__subshapes
 
     @subshapes.setter
-    def subshapes(self, simples: Tuple[SimpleShape]):
+    def subshapes(self, simples: Iterable[SimpleShape]):
+        simples = frozenset(simples)
         if not all(Is.instance(simple, SimpleShape) for simple in simples):
             raise TypeError
-        areas = (simple.area for simple in simples)
-
-        def algori(pair):
-            return pair[0]
-
-        simples = sorted(zip(areas, simples), key=algori, reverse=True)
-        simples = tuple(val[1] for val in simples)
-        self.__subshapes = tuple(simples)
+        self.__subshapes = simples
 
     def __contains__(self, other) -> bool:
         return all(other in s for s in self.subshapes)
@@ -413,30 +415,23 @@ class DisjointShape(SubSetR2):
 
     def __eq__(self, other: SubSetR2):
         assert Is.instance(other, SubSetR2)
-        if not Is.instance(other, DisjointShape):
-            return False
-        if self.area != other.area:
-            return False
-        self_subshapes = list(self.subshapes)
-        othe_subshapes = list(other.subshapes)
-        # Compare if a curve is inside another
-        while len(self_subshapes) != 0 and len(othe_subshapes) != 0:
-            for j, osbshape in enumerate(othe_subshapes):
-                if osbshape == self_subshapes[0]:
-                    self_subshapes.pop(0)
-                    othe_subshapes.pop(j)
-                    break
-            else:
-                return False
-        return not (len(self_subshapes) or len(othe_subshapes))
+        return (
+            Is.instance(other, DisjointShape)
+            and hash(self) == hash(other)
+            and self.area == other.area
+            and self.subshapes == other.subshapes
+        )
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover  # For debug
         msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self.subshapes)} subshapes"
         return msg
 
+    def __hash__(self):
+        return hash(self.area)
+
     @property
-    def subshapes(self) -> Tuple[Union[SimpleShape, ConnectedShape], ...]:
+    def subshapes(self) -> Set[Union[SimpleShape, ConnectedShape]]:
         """
         Subshapes that defines the disjoint shape
 
@@ -468,20 +463,12 @@ class DisjointShape(SubSetR2):
 
     @subshapes.setter
     def subshapes(self, values: Iterable[SubSetR2]):
-        values = tuple(values)
+        values = frozenset(values)
         if not all(
             Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
         ):
             raise ValueError
-        areas = tuple(sub.area for sub in values)
-        lenghts = tuple(sub.jordans[0].length for sub in values)
-
-        def algori(triple):
-            return triple[:2]
-
-        values = sorted(zip(areas, lenghts, values), key=algori, reverse=True)
-        values = tuple(val[2] for val in values)
-        self.__subshapes = tuple(values)
+        self.__subshapes = values
 
     def move(self, vector: Point2D) -> JordanCurve:
         vector = To.point(vector)
