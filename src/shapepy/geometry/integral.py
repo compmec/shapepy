@@ -10,6 +10,7 @@ from typing import Optional, Union
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
 from ..common import derivate
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math
@@ -64,6 +65,7 @@ class IntegrateJordan:
 
 
 # pylint: disable=too-many-locals
+@debug("shapepy.geometry.integral")
 def winding_number(
     jordan: JordanCurve, center: Optional[Point2D] = (0.0, 0.0)
 ) -> Union[int, float]:

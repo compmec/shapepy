@@ -13,6 +13,7 @@ from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
+from ..loggers import debug
 from ..tools import CyclicContainer, Is
 from .base import EmptyShape, SubSetR2, WholeShape
 from .shape import (
@@ -23,6 +24,7 @@ from .shape import (
 )
 
 
+@debug("shapepy.bool2d.boolean")
 def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     Computes the union of given subsets
@@ -55,6 +57,7 @@ def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
     return shape_from_jordans(new_jordans)
 
 
+@debug("shapepy.bool2d.boolean")
 def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     Computes the intersection of given subsets

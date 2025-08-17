@@ -7,17 +7,21 @@ For the moment, it only uses polygon shapes:
 
 import importlib
 
-from shapepy.bool2d.base import EmptyShape, WholeShape
-from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SimpleShape
-from shapepy.common import move, rotate, scale
-from shapepy.geometry.integral import IntegrateJordan
-from shapepy.geometry.jordancurve import JordanCurve
-from shapepy.geometry.point import Point2D
-from shapepy.geometry.segment import Segment
-from shapepy.plot.plot import ShapePloter
+from .bool2d.base import EmptyShape, WholeShape
+from .bool2d.primitive import Primitive
+from .bool2d.shape import ConnectedShape, DisjointShape, SimpleShape
+from .common import move, rotate, scale
+from .geometry.integral import IntegrateJordan
+from .geometry.jordancurve import JordanCurve
+from .geometry.point import Point2D
+from .geometry.segment import Segment
+from .loggers import set_level
+from .plot.plot import ShapePloter
 
 __version__ = importlib.metadata.version("shapepy")
+
+set_level("shapepy", level="INFO")
+
 
 if __name__ == "__main__":
     pass

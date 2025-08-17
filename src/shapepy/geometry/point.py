@@ -8,6 +8,7 @@ from __future__ import annotations
 
 from typing import Tuple, Union
 
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Math, Real
 from ..tools import Is, To
@@ -15,6 +16,7 @@ from ..tools import Is, To
 TOLERANCE = 1e-9
 
 
+@debug("shapepy.geometry.point", maxdepth=0)
 def cartesian(xcoord: Real, ycoord: Real) -> Point2D:
     """
     Creates a Point with cartesian coordinates
@@ -24,6 +26,7 @@ def cartesian(xcoord: Real, ycoord: Real) -> Point2D:
     return Point2D(xcoord, ycoord, None, None)
 
 
+@debug("shapepy.geometry.point", maxdepth=0)
 def polar(radius: Real, angle: Angle) -> Point2D:
     """
     Creates a Point with polar coordinates

@@ -18,6 +18,7 @@ from typing import Iterable, Optional, Tuple, Union
 from ..analytic.base import IAnalytic
 from ..analytic.bezier import Bezier
 from ..analytic.tools import find_minimum
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
@@ -56,6 +57,7 @@ class Segment(IParametrizedCurve):
                 return False
         return True
 
+    @debug("shapepy.geometry.segment")
     def __contains__(self, point: Point2D) -> bool:
         point = To.point(point)
         if point not in self.box():
@@ -191,6 +193,7 @@ class Segment(IParametrizedCurve):
         return self
 
 
+@debug("shapepy.geometry.segment")
 def compute_length(segment: Segment) -> Real:
     """
     Computes the length of the jordan curve
@@ -211,6 +214,7 @@ def compute_length(segment: Segment) -> Real:
     return adaptative.integrate(function, domain)
 
 
+@debug("shapepy.geometry.segment")
 def clean_segment(segment: Segment) -> Segment:
     """Reduces at maximum the degree of the bezier curve"""
     newplanar = To.bezier(segment.ctrlpoints)

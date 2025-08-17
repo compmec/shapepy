@@ -7,6 +7,7 @@ from typing import Callable, Iterable, Tuple
 
 import numpy as np
 
+from ..loggers import debug
 from ..tools import Is, To
 from .nodes_sample import NodeSampleFactory
 from .reals import Math, Real
@@ -388,6 +389,7 @@ class AdaptativeIntegrator:
             raise ValueError(f"Invalid maxdepth: {value}")
         self.__maxdepth = value
 
+    @debug("shapepy.scalar.quadrature")
     def integrate(
         self, function: Callable[[Real], Real], interval: Tuple[Real, Real]
     ) -> Real:

@@ -15,6 +15,7 @@ from rbool import (
     unite,
 )
 
+from ..loggers import debug
 from ..scalar.reals import Math, Real
 from ..tools import Is, NotExpectedError, To
 from .base import IAnalytic, derivate_analytic
@@ -101,6 +102,7 @@ def find_minimum_polynomial(
     )
 
 
+@debug("shapepy.analytic.tools")
 def find_roots(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
     """
     Finds the values of roots of the Analytic function
@@ -114,6 +116,7 @@ def find_roots(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
     raise NotExpectedError
 
 
+@debug("shapepy.analytic.tools")
 def where_minimum(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
     """
     Finds the parameters (t*) such the analytic function is minimum
@@ -127,6 +130,7 @@ def where_minimum(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
     raise NotExpectedError
 
 
+@debug("shapepy.analytic.tools")
 def find_minimum(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
     """
     Finds the minimal value for the given analytic in the given domain

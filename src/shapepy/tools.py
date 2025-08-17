@@ -72,6 +72,8 @@ def vectorize(position: int = 0, dimension: int = 0):
 
     def decorator(func):
         conversion = {
+            tuple: tuple,
+            list: list,
             types.GeneratorType: tuple,  # No conversion
             range: tuple,  # No conversion
         }

@@ -4,6 +4,7 @@ Defines the Factory to create Jordan Curves
 
 from typing import Tuple
 
+from ..loggers import debug
 from ..tools import To
 from .jordancurve import JordanCurve
 from .point import Point2D
@@ -17,6 +18,7 @@ class FactoryJordan:
     """
 
     @staticmethod
+    @debug("shapepy.geometry.factory")
     def polygon(vertices: Tuple[Point2D, ...]) -> JordanCurve:
         """Initialize a polygonal JordanCurve from a list of vertices,
 
@@ -46,6 +48,7 @@ class FactoryJordan:
         return JordanCurve(beziers)
 
     @staticmethod
+    @debug("shapepy.geometry.factory")
     def spline_curve(spline_curve) -> JordanCurve:
         """Initialize a JordanCurve from a spline curve,
 

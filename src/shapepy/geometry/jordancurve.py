@@ -10,6 +10,7 @@ from copy import copy
 from typing import Iterable, Tuple, Union
 
 from ..common import clean
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import CyclicContainer, Is, pairs, reverse
@@ -37,14 +38,17 @@ class JordanCurve(IGeometricCurve):
         """Returns a deep copy of the jordan curve"""
         return self.__class__(map(copy, self.usegments))
 
+    @debug("shapepy.geometry.jordancurve")
     def move(self, vector: Point2D) -> JordanCurve:
         self.__piecewise = self.piecewise.move(vector)
         return self
 
+    @debug("shapepy.geometry.jordancurve")
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
         self.__piecewise = self.piecewise.scale(amount)
         return self
 
+    @debug("shapepy.geometry.jordancurve")
     def rotate(self, angle: Angle) -> JordanCurve:
         self.__piecewise = self.piecewise.rotate(angle)
         return self
@@ -183,6 +187,7 @@ class JordanCurve(IGeometricCurve):
             return False
         return clean(self).usegments == clean(other).usegments
 
+    @debug("shapepy.geometry.jordancurve")
     def invert(self) -> JordanCurve:
         """Invert the current curve's orientation, doesn't create a copy
 
@@ -207,6 +212,7 @@ class JordanCurve(IGeometricCurve):
         self.usegments = reverse(useg.invert() for useg in self.usegments)
         return self
 
+    @debug("shapepy.geometry.jordancurve")
     def clean(self) -> JordanCurve:
         """Cleans the jordan curve"""
         usegments = list(map(clean_usegment, self.usegments))
@@ -235,6 +241,7 @@ class JordanCurve(IGeometricCurve):
         return point in self.piecewise
 
 
+@debug("shapepy.geometry.jordancurve")
 def compute_area(jordan: JordanCurve) -> Real:
     """
     Computes the area inside of the jordan curve
@@ -251,16 +258,6 @@ def compute_area(jordan: JordanCurve) -> Real:
         ipoly = poly.integrate()
         total += ipoly(1) - ipoly(0)
     return total / 2
-
-
-def get_ctrlpoints(jordan: JordanCurve) -> Iterable[Point2D]:
-    """Gets the control points of the jordan curve"""
-    vertices = {}
-    for usegment in jordan.usegments:
-        segment = usegment.parametrize()
-        for ctrlpt in segment.ctrlpoints:
-            vertices[id(ctrlpt)] = ctrlpt
-    return vertices.values()
 
 
 def clean_jordan(jordan: JordanCurve) -> JordanCurve:

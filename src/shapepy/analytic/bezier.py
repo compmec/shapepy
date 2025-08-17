@@ -9,6 +9,7 @@ from typing import Iterable, Tuple, Union
 
 from rbool import SubSetR1, Whole
 
+from ..loggers import debug
 from ..scalar.quadrature import inner
 from ..scalar.reals import Math, Rational, Real
 from ..tools import Is, NotExpectedError, To
@@ -123,12 +124,14 @@ class Bezier(BaseAnalytic):
     def __str__(self):
         return str(self.__polynomial)
 
+    @debug("shapepy.analytic.bezier")
     def clean(self) -> Bezier:
         """
         Decreases the degree of the bezier curve if possible
         """
         return polynomial2bezier(bezier2polynomial(self).clean())
 
+    @debug("shapepy.analytic.bezier")
     def scale(self, amount: Real) -> Bezier:
         """
         Transforms the polynomial p(t) into p(A*t) by
@@ -149,6 +152,7 @@ class Bezier(BaseAnalytic):
         """
         return polynomial2bezier(bezier2polynomial(self).scale(amount))
 
+    @debug("shapepy.analytic.bezier")
     def shift(self, amount: Real) -> Bezier:
         """
         Transforms the bezier p(t) into p(t-d) by
@@ -156,6 +160,7 @@ class Bezier(BaseAnalytic):
         """
         return polynomial2bezier(bezier2polynomial(self).shift(amount))
 
+    @debug("shapepy.analytic.bezier")
     def integrate(self, times: int = 1) -> Bezier:
         """
         Integrates the bezier analytic
@@ -171,6 +176,7 @@ class Bezier(BaseAnalytic):
         """
         return polynomial2bezier(bezier2polynomial(self).integrate(times))
 
+    @debug("shapepy.analytic.bezier")
     def derivate(self, times: int = 1) -> Bezier:
         """
         Derivate the bezier curve, giving a new one
