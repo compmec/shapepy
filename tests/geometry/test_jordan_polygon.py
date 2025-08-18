@@ -8,7 +8,7 @@ import numpy as np
 import pytest
 
 from shapepy.geometry.factory import FactoryJordan
-from shapepy.geometry.integral import winding_number
+from shapepy.geometry.integral import lebesgue_density_jordan
 from shapepy.geometry.jordancurve import clean_jordan
 from shapepy.scalar.angle import Angle
 
@@ -335,22 +335,22 @@ class TestIntegrateJordan:
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
     @pytest.mark.dependency(depends=["TestIntegrateJordan::test_begin"])
-    def test_winding_regular_polygon(self):
+    def test_density_regular_polygon(self):
         # Counter clockwise
         for nsides in range(3, 10):
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             jordancurve = FactoryJordan.polygon(ctrlpoints)
-            wind = winding_number(jordancurve)
-            assert abs(wind - 1) < 1e-9
+            density = lebesgue_density_jordan(jordancurve)
+            assert abs(density - 1) < 1e-9
 
         # Clockwise
         for nsides in range(3, 10):
             angles = np.linspace(math.tau, 0, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             jordancurve = FactoryJordan.polygon(ctrlpoints)
-            wind = winding_number(jordancurve)
-            assert abs(wind - 0) < 1e-9
+            density = lebesgue_density_jordan(jordancurve)
+            assert abs(density - 0) < 1e-9
 
     @pytest.mark.order(15)
     @pytest.mark.timeout(10)
@@ -423,7 +423,7 @@ class TestIntegrateJordan:
     @pytest.mark.dependency(
         depends=[
             "TestIntegrateJordan::test_begin",
-            "TestIntegrateJordan::test_winding_regular_polygon",
+            "TestIntegrateJordan::test_density_regular_polygon",
             "TestIntegrateJordan::test_lenght_triangle",
             "TestIntegrateJordan::test_lenght_square",
             "TestIntegrateJordan::test_lenght_regular_polygon",

@@ -223,8 +223,8 @@ class FollowPath:
         for i, jordan in enumerate(shapea.jordans):
             for j, segment in enumerate(jordan.piecewise):
                 mid_point = segment(Fraction(1, 2))
-                wind = shapeb.winding(mid_point)
-                mid_point_in = (wind > 0 and closed) or wind == 1
+                density = shapeb.density(mid_point)
+                mid_point_in = (density > 0 and closed) or density == 1
                 if not inside ^ mid_point_in:
                     yield (i, j)
 

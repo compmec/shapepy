@@ -18,6 +18,7 @@ from shapepy.geometry.factory import FactoryJordan
     depends=[
         "tests/geometry/test_integral.py::test_all",
         "tests/bool2d/test_primitive.py::test_end",
+        "tests/bool2d/test_density.py::test_end",
     ],
     scope="session",
 )
@@ -176,166 +177,6 @@ class TestObjectsInEmptyWhole:
         pass
 
 
-class TestWinding:
-    """
-    Tests the respective position
-    """
-
-    @pytest.mark.order(23)
-    @pytest.mark.dependency(
-        depends=["test_begin", "TestObjectsInEmptyWhole::test_end"]
-    )
-    def test_begin(self):
-        pass
-
-    @pytest.mark.order(23)
-    @pytest.mark.dependency(
-        depends=[
-            "TestWinding::test_begin",
-        ]
-    )
-    def test_simple_shape(self):
-        shape = Primitive.triangle(3)
-        # Corners
-        points_winding = {
-            (0, 0): 0.25,
-            (3, 0): 0.125,
-            (0, 3): 0.125,
-        }
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-        # Mid edges
-        points_winding = {
-            (1, 0): 0.5,
-            (2, 0): 0.5,
-            (2, 1): 0.5,
-            (1, 2): 0.5,
-            (0, 2): 0.5,
-            (0, 1): 0.5,
-        }
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-        # Interior exterior
-        points_winding = {
-            (1, 1): 1,
-            (2, 2): 0,
-            (3, 3): 0,
-            (-1, -1): 0,
-        }
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-
-    @pytest.mark.order(23)
-    @pytest.mark.dependency(
-        depends=[
-            "TestWinding::test_begin",
-            "TestWinding::test_simple_shape",
-        ]
-    )
-    def test_connected_shape(self):
-        big = Primitive.square(side=6)
-        small = Primitive.square(side=2)
-        shape = ConnectedShape([big, ~small])
-        # Corners
-        points_winding = {
-            (1, 1): 0.75,
-            (-1, 1): 0.75,
-            (-1, -1): 0.75,
-            (1, -1): 0.75,
-            (3, 3): 0.25,
-            (-3, 3): 0.25,
-            (-3, -3): 0.25,
-            (3, -3): 0.25,
-        }
-        for point, wind in points_winding.items():
-            test = shape.winding(point)
-            print(f"wind of {point} = {test}")
-            assert test == wind
-        # Mid edges
-        points_winding = {
-            (1, 0): 0.5,
-            (0, 1): 0.5,
-            (-1, 0): 0.5,
-            (0, -1): 0.5,
-            (3, 0): 0.5,
-            (0, 3): 0.5,
-            (-3, 0): 0.5,
-            (0, -3): 0.5,
-        }
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-        # Interior exterior
-        points_winding = {
-            (0, 0): 0,
-            (2, 2): 1,
-            (0, 2): 1,
-            (-2, 2): 1,
-            (-2, 0): 1,
-            (-2, -2): 1,
-            (0, -2): 1,
-            (2, -2): 1,
-            (2, 0): 1,
-        }
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-
-    @pytest.mark.order(23)
-    @pytest.mark.dependency(
-        depends=[
-            "TestWinding::test_begin",
-            "TestWinding::test_simple_shape",
-            "TestWinding::test_connected_shape",
-        ]
-    )
-    def test_disjoint_shape(self):
-        squarel = Primitive.square(side=2, center=(-3, 0))
-        squarer = Primitive.square(side=2, center=(3, 0))
-        shape = DisjointShape([squarel, squarer])
-        # Corner
-        points_winding = {
-            (-4, -1): 0.25,
-            (-2, -1): 0.25,
-            (-2, 1): 0.25,
-            (-4, 1): 0.25,
-            (4, -1): 0.25,
-            (2, -1): 0.25,
-            (2, 1): 0.25,
-            (4, 1): 0.25,
-        }
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-        # Mid edge
-        points_winding = {
-            (-3, -1): 0.5,
-            (-2, 0): 0.5,
-            (-3, 1): 0.5,
-            (-4, 0): 0.5,
-            (3, -1): 0.5,
-            (2, 0): 0.5,
-            (3, 1): 0.5,
-            (4, 0): 0.5,
-        }
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-        # Interior exterior
-        points_winding = {(0, 0): 0, (-3, 0): 1, (3, 0): 1}
-        for point, wind in points_winding.items():
-            assert shape.winding(point) == wind
-
-    @pytest.mark.order(23)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestWinding::test_begin",
-            "TestWinding::test_simple_shape",
-            "TestWinding::test_connected_shape",
-            "TestWinding::test_disjoint_shape",
-        ]
-    )
-    def test_end(self):
-        pass
-
-
 class TestObjectsInJordan:
     """
     Tests the respective position
@@ -346,7 +187,6 @@ class TestObjectsInJordan:
         depends=[
             "test_begin",
             "TestObjectsInEmptyWhole::test_end",
-            "TestWinding::test_end",
         ]
     )
     def test_begin(self):
@@ -439,7 +279,6 @@ class TestObjectsInSimple:
         depends=[
             "test_begin",
             "TestObjectsInEmptyWhole::test_end",
-            "TestWinding::test_end",
             "TestObjectsInJordan::test_end",
         ]
     )

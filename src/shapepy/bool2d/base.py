@@ -148,6 +148,33 @@ class SubSetR2:
         """
         raise NotImplementedError
 
+    @abstractmethod
+    def density(self, center: Point2D) -> Real:
+        """
+        Computes the density of the subset around given point
+
+        Parameters
+        ----------
+
+        center : Point2D
+            The position to measure the density
+
+        :return: The density in the interval [0, 1]
+        :rtype: Real
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive
+        >>> circle = Primitive.circle(radius=1)
+        >>> circle.density((0, 0))
+        1
+        >>> circle.density((5, 0))
+        0
+        >>> circle.density((1, 0))
+        0.5
+        """
+        raise NotImplementedError
+
 
 class EmptyShape(SubSetR2):
     """EmptyShape is a singleton class to represent an empty shape
@@ -209,6 +236,9 @@ class EmptyShape(SubSetR2):
 
     def rotate(self, _):
         return self
+
+    def density(self, center: Point2D) -> Real:
+        return 0
 
 
 class WholeShape(SubSetR2):
@@ -272,7 +302,11 @@ class WholeShape(SubSetR2):
     def rotate(self, _):
         return self
 
+    def density(self, center: Point2D) -> Real:
+        return 1
 
+
+# pylint: disable=duplicate-code
 class Future:
     """
     Class that stores methods that are further defined.

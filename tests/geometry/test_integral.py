@@ -3,7 +3,7 @@ import math
 import pytest
 
 from shapepy.geometry.factory import FactoryJordan
-from shapepy.geometry.integral import winding_number
+from shapepy.geometry.integral import lebesgue_density_jordan
 from shapepy.geometry.segment import Segment
 
 
@@ -65,7 +65,7 @@ def test_area():
     assert jordan.area == -6
 
 
-class TestWinding:
+class TestDensity:
     """
     Tests the respective position
     """
@@ -78,7 +78,7 @@ class TestWinding:
     @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
-            "TestWinding::test_begin",
+            "TestDensity::test_begin",
         ]
     )
     def test_standard_square(self):
@@ -107,19 +107,19 @@ class TestWinding:
             (-1, 1): 0.25,
         }
         for point in interiors:
-            assert winding_number(jordan, point) == 1
+            assert lebesgue_density_jordan(jordan, point) == 1
         for point in exteriors:
-            assert winding_number(jordan, point) == 0
+            assert lebesgue_density_jordan(jordan, point) == 0
         for point in mid_edges:
-            assert winding_number(jordan, point) == 0.5
-        for point, wind in corners.items():
-            assert winding_number(jordan, point) == wind
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
 
     @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
-            "TestWinding::test_begin",
-            "TestWinding::test_standard_square",
+            "TestDensity::test_begin",
+            "TestDensity::test_standard_square",
         ]
     )
     def test_inverted_square(self):
@@ -148,20 +148,20 @@ class TestWinding:
             (-1, 1): 0.75,
         }
         for point in interiors:
-            assert winding_number(jordan, point) == 1
+            assert lebesgue_density_jordan(jordan, point) == 1
         for point in exteriors:
-            assert winding_number(jordan, point) == 0
+            assert lebesgue_density_jordan(jordan, point) == 0
         for point in mid_edges:
-            assert winding_number(jordan, point) == 0.5
-        for point, wind in corners.items():
-            assert winding_number(jordan, point) == wind
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
 
     @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
-            "TestWinding::test_begin",
-            "TestWinding::test_standard_square",
-            "TestWinding::test_inverted_square",
+            "TestDensity::test_begin",
+            "TestDensity::test_standard_square",
+            "TestDensity::test_inverted_square",
         ]
     )
     def test_standard_triangle(self):
@@ -189,20 +189,20 @@ class TestWinding:
             (0, 3): 0.125,
         }
         for point in interiors:
-            assert winding_number(jordan, point) == 1
+            assert lebesgue_density_jordan(jordan, point) == 1
         for point in exteriors:
-            assert winding_number(jordan, point) == 0
+            assert lebesgue_density_jordan(jordan, point) == 0
         for point in mid_edges:
-            assert winding_number(jordan, point) == 0.5
-        for point, wind in corners.items():
-            assert winding_number(jordan, point) == wind
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
 
     @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
-            "TestWinding::test_begin",
-            "TestWinding::test_inverted_square",
-            "TestWinding::test_standard_triangle",
+            "TestDensity::test_begin",
+            "TestDensity::test_inverted_square",
+            "TestDensity::test_standard_triangle",
         ]
     )
     def test_inverted_triangle(self):
@@ -230,22 +230,22 @@ class TestWinding:
             (0, 3): 0.875,
         }
         for point in interiors:
-            assert winding_number(jordan, point) == 1
+            assert lebesgue_density_jordan(jordan, point) == 1
         for point in exteriors:
-            assert winding_number(jordan, point) == 0
+            assert lebesgue_density_jordan(jordan, point) == 0
         for point in mid_edges:
-            assert winding_number(jordan, point) == 0.5
-        for point, wind in corners.items():
-            assert winding_number(jordan, point) == wind
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
 
     @pytest.mark.order(15)
     @pytest.mark.dependency(
         depends=[
-            "TestWinding::test_begin",
-            "TestWinding::test_standard_square",
-            "TestWinding::test_inverted_square",
-            "TestWinding::test_standard_triangle",
-            "TestWinding::test_inverted_triangle",
+            "TestDensity::test_begin",
+            "TestDensity::test_standard_square",
+            "TestDensity::test_inverted_square",
+            "TestDensity::test_standard_triangle",
+            "TestDensity::test_inverted_triangle",
         ]
     )
     def test_all(self):
@@ -260,7 +260,7 @@ class TestWinding:
         "test_segment_length",
         "test_jordan_length",
         "test_area",
-        "TestWinding::test_all",
+        "TestDensity::test_all",
     ]
 )
 def test_all():

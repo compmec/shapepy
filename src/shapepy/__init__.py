@@ -10,7 +10,7 @@ import importlib
 from .bool2d.base import EmptyShape, WholeShape
 from .bool2d.primitive import Primitive
 from .bool2d.shape import ConnectedShape, DisjointShape, SimpleShape
-from .common import move, rotate, scale
+from .common import lebesgue_density, move, rotate, scale
 from .geometry.integral import IntegrateJordan
 from .geometry.jordancurve import JordanCurve
 from .geometry.point import Point2D

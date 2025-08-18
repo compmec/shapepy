@@ -36,7 +36,7 @@ and how they interact with each other.
     * :ref:`theory_bool_xor`
 * :ref:`theory_generalities`
     * :ref:`onedimen_integration`
-    * :ref:`winding_function`
+    * :ref:`lebesgue_density`
 
 -----------------------------------------------------------------------------
 
@@ -480,7 +480,7 @@ If this projected point is equal to the point itself, then the point is on the c
 Point in Shape
 --------------
 
-The :ref:`winding_function` is used to determine if the shape contains the point.
+The :ref:`lebesgue_density` is used to determine if the shape contains the point.
 
 Basically this function tells if a point is inside the shape, or outside, or at the boundary:
 
@@ -1124,12 +1124,12 @@ There are available schemas are bellow, with some nodes/weights depending on :ma
           - 1/2
           - 1
 
-.. _winding_function:
+.. _lebesgue_density:
 
-Winding function
-----------------
+Lebesgue Density function
+-------------------------
 
-The **Winding function** is a function on the plane, based on the a shape :math:`S`, that
+The **Density function** is a function on the plane, based on the a shape :math:`S`, that
 
 * Is equal to :math:`1` for interior points
 * Is equal to :math:`0` for exterior points

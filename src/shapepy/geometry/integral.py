@@ -66,22 +66,25 @@ class IntegrateJordan:
 
 # pylint: disable=too-many-locals
 @debug("shapepy.geometry.integral")
-def winding_number(
-    jordan: JordanCurve, center: Optional[Point2D] = (0.0, 0.0)
+def lebesgue_density_jordan(
+    jordan: JordanCurve, point: Optional[Point2D] = (0.0, 0.0)
 ) -> Union[int, float]:
-    """Computes the winding number from jordan curve
+    """Computes the lebesgue density number from jordan curve
 
-    Returns [-1, -0.5, 0, 0.5 or 1]
+    Returns a value in the interval [0, 1]:
+    * 0 -> means the point is outside the interior region
+    * 1 -> means the point is completly inside the interior
+    * between 0 and 1, it's on the boundary
     """
-    center = To.point(center)
+    point = To.point(point)
     box = jordan.box()
-    if center not in box:
-        wind = 0 if jordan.area > 0 else 1
-        return wind
+    if point not in box:
+        density = 0 if jordan.area > 0 else 1
+        return density
 
     segments = tuple(jordan.parametrize())
     for i, segmenti in enumerate(segments):
-        if center == segmenti(0):
+        if point == segmenti(0):
             segmentj = segments[(i - 1) % len(segments)]
             deltapi = segmenti(0, 1)
             deltapj = segmentj(1, 1)
@@ -94,8 +97,8 @@ def winding_number(
     integrator = AdaptativeIntegrator(direct, 1e-6)
     radangle = 0
     for segment in segments:
-        deltax: IAnalytic = segment.xfunc - center.xcoord
-        deltay: IAnalytic = segment.yfunc - center.ycoord
+        deltax: IAnalytic = segment.xfunc - point.xcoord
+        deltay: IAnalytic = segment.yfunc - point.ycoord
         radius_square = deltax * deltax + deltay * deltay
         if find_minimum(radius_square, [0, 1]) < 1e-6:
             return 0.5
@@ -104,5 +107,5 @@ def winding_number(
             lambda t, cf, rs: cf(t) / rs(t), cf=crossf, rs=radius_square
         )
         radangle += integrator.integrate(function, [0, 1])
-    wind = round(radangle / Math.tau)
-    return wind if jordan.area > 0 else 1 + wind
+    density = round(radangle / Math.tau)
+    return density if jordan.area > 0 else 1 + density
