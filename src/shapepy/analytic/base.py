@@ -40,7 +40,7 @@ def pow_keys(exp: int) -> Set[int]:
     return pow_keys(exp // 2) | pow_keys(exp - exp // 2) | {exp}
 
 
-# pylint: disable=too-few-public-methods
+# pylint: disable=duplicate-code
 class IAnalytic(ABC):
     """
     Interface Class for Analytic classes

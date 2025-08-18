@@ -108,6 +108,21 @@ def vectorize(position: int = 0, dimension: int = 0):
     return decorator
 
 
+def prod(values: Iterable[Any]) -> Any:
+    """Computes the product of given objects
+
+    Example
+    -------
+    >>> prod([3, 2, 5])
+    30
+    """
+    values = iter(values)
+    result = next(values)
+    for value in values:
+        result *= value
+    return result
+
+
 def reverse(objs: Iterable[Any]) -> Iterable[Any]:
     """Reverts the list/tuple"""
     return tuple(objs)[::-1]

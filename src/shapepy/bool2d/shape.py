@@ -13,12 +13,12 @@ from copy import copy
 from typing import Iterable, Set, Tuple, Union
 
 from ..geometry.box import Box
-from ..geometry.integral import winding_number
+from ..geometry.integral import lebesgue_density_jordan
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
-from ..tools import Is, To
+from ..tools import Is, To, prod
 from .base import EmptyShape, SubSetR2
 
 
@@ -141,9 +141,9 @@ class SimpleShape(SubSetR2):
         return self.__contains_point(other)
 
     def __contains_point(self, point: Point2D) -> bool:
-        wind = self.winding(point)
+        density = self.density(point)
 
-        return wind > 0 if self.boundary else wind == 1
+        return density > 0 if self.boundary else density == 1
 
     def __contains_jordan(self, jordan: JordanCurve) -> bool:
         piecewise = jordan.parametrize()
@@ -210,15 +210,8 @@ class SimpleShape(SubSetR2):
         """
         return self.jordan.box()
 
-    def winding(self, point: Point2D) -> Real:
-        """Gives the winding number.
-
-        0 means the point is outside the domain
-        1 means the point is inside the domain
-        between 0 and 1 means its on the boundary"""
-        point = To.point(point)
-        wind = winding_number(self.jordan, center=point)
-        return wind
+    def density(self, center: Point2D) -> Real:
+        return lebesgue_density_jordan(self.jordan, center)
 
 
 class ConnectedShape(SubSetR2):
@@ -351,17 +344,9 @@ class ConnectedShape(SubSetR2):
             box |= sub.jordan.box()
         return box
 
-    def winding(self, point: Point2D) -> Real:
-        """Gives the winding number.
-
-        0 means the point is outside the domain
-        1 means the point is inside the domain
-        between 0 and 1 means its on the boundary"""
-        point = To.point(point)
-        wind = 1
-        for subset in self.subshapes:
-            wind *= subset.winding(point)
-        return wind
+    def density(self, center: Point2D) -> Real:
+        center = To.point(center)
+        return prod(sub.density(center) for sub in self.subshapes)
 
 
 class DisjointShape(SubSetR2):
@@ -506,18 +491,10 @@ class DisjointShape(SubSetR2):
             box |= sub.box()
         return box
 
-    def winding(self, point: Point2D) -> Real:
-        """Gives the winding number.
-
-        0 means the point is outside the domain
-        1 means the point is inside the domain
-        between 0 and 1 means its on the boundary"""
-        point = To.point(point)
-        for subset in self.subshapes:
-            wind = subset.winding(point)
-            if wind > 0:
-                return wind
-        return 0
+    def density(self, center: Point2D) -> Real:
+        center = To.point(center)
+        result = sum(sub.density(center) for sub in self.subshapes)
+        return min(result, 1)
 
 
 def divide_connecteds(

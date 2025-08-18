@@ -7,16 +7,18 @@ from copy import copy, deepcopy
 
 import pytest
 
-from shapepy import move, rotate, scale
+from shapepy import lebesgue_density, move, rotate, scale
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
+from shapepy.geometry.point import polar
 from shapepy.scalar.angle import Angle
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(
     depends=[
-        "tests/bool2d/test_primitive.py::test_end",
+        "tests/geometry/test_integral.py::test_all",
+        "tests/geometry/test_jordan_curve.py::test_all",
     ],
     scope="session",
 )
@@ -24,14 +26,14 @@ def test_begin():
     pass
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_singleton():
     assert EmptyShape() is EmptyShape()
     assert WholeShape() is WholeShape()
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_invert():
     empty = EmptyShape()
@@ -42,7 +44,7 @@ def test_invert():
     assert ~(~whole) is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton", "test_invert"])
 def test_neg():
     empty = EmptyShape()
@@ -53,7 +55,7 @@ def test_neg():
     assert -(-whole) is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_or():
     empty = EmptyShape()
@@ -69,7 +71,7 @@ def test_or():
     assert whole + whole is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_and():
     empty = EmptyShape()
@@ -85,7 +87,7 @@ def test_and():
     assert whole * whole is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(
     depends=["test_singleton", "test_or", "test_and", "test_invert"]
 )
@@ -98,7 +100,7 @@ def test_xor():
     assert whole ^ whole is empty
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(
     depends=["test_singleton", "test_or", "test_and", "test_invert"]
 )
@@ -111,7 +113,7 @@ def test_sub():
     assert whole - whole is empty
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_bool():
     empty = EmptyShape()
@@ -120,7 +122,7 @@ def test_bool():
     assert bool(whole) is True
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_copy():
     empty = EmptyShape()
@@ -131,7 +133,7 @@ def test_copy():
     assert deepcopy(whole) is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_move():
     empty = EmptyShape()
@@ -143,7 +145,7 @@ def test_move():
     assert move(whole, (1, 0)) is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_scale():
     empty = EmptyShape()
@@ -155,7 +157,7 @@ def test_scale():
     assert scale(whole, (3, 2)) is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_rotate():
     empty = EmptyShape()
@@ -168,7 +170,7 @@ def test_rotate():
     assert rotate(whole, angle) is whole
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_print():
     empty = EmptyShape()
@@ -180,14 +182,14 @@ def test_print():
     assert isinstance(repr(whole), str)
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_hash():
     assert hash(EmptyShape()) == 0
     assert hash(WholeShape()) == 1
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(depends=["test_singleton"])
 def test_contains():
     empty = EmptyShape()
@@ -199,8 +201,28 @@ def test_contains():
     assert whole in whole
 
 
+@pytest.mark.order(21)
+@pytest.mark.dependency(depends=["test_singleton"])
+def test_density():
+    empty = EmptyShape()
+    whole = WholeShape()
+    for point in [(0, 0), (1, 0), (0, 1)]:
+        assert empty.density(point) == 0
+        assert whole.density(point) == 1
+        assert lebesgue_density(empty, point) == 0
+        assert lebesgue_density(whole, point) == 1
+
+    for deg in range(0, 360, 30):
+        angle = Angle.degrees(deg)
+        point = polar(float("inf"), angle)
+        assert empty.density(point) == 0
+        assert whole.density(point) == 1
+        assert lebesgue_density(empty, point) == 0
+        assert lebesgue_density(whole, point) == 1
+
+
 class TestBoolShape:
-    @pytest.mark.order(24)
+    @pytest.mark.order(21)
     @pytest.mark.dependency(
         depends=[
             "test_begin",
@@ -219,12 +241,13 @@ class TestBoolShape:
             "test_print",
             "test_hash",
             "test_contains",
+            "test_density",
         ]
     )
     def test_begin(self):
         pass
 
-    @pytest.mark.order(24)
+    @pytest.mark.order(21)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_simple(self):
@@ -258,7 +281,7 @@ class TestBoolShape:
         assert empty - shape is empty
         assert whole - shape == ~shape
 
-    @pytest.mark.order(24)
+    @pytest.mark.order(21)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_connected(self):
@@ -294,13 +317,13 @@ class TestBoolShape:
         assert empty - shape is empty
         assert whole - shape == ~shape
 
-    @pytest.mark.order(24)
+    @pytest.mark.order(21)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestBoolShape::test_begin"])
     def test_disjoint(self):
         pass
 
-    @pytest.mark.order(24)
+    @pytest.mark.order(21)
     @pytest.mark.dependency(
         depends=[
             "TestBoolShape::test_begin",
@@ -313,7 +336,7 @@ class TestBoolShape:
         pass
 
 
-@pytest.mark.order(24)
+@pytest.mark.order(21)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
@@ -332,6 +355,7 @@ class TestBoolShape:
         "test_print",
         "test_hash",
         "test_contains",
+        "test_density",
         "TestBoolShape::test_end",
     ]
 )
