@@ -13,10 +13,11 @@ from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
-from ..loggers import debug
+from ..loggers import debug, get_logger
 from ..tools import CyclicContainer, Is, NotExpectedError
 from . import boolalg
 from .base import EmptyShape, SubSetR2, WholeShape
+from .graph import Edge, Graph, graph_manager, intersect_graphs, jordan2graph
 from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
 from .shape import (
     ConnectedShape,
@@ -441,3 +442,51 @@ class FollowPath:
         all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
         new_jordans = FollowPath.follow_path(all_jordans, indexs)
         return new_jordans
+
+
+def shape2graph(
+    shape: Union[SimpleShape, ConnectedShape, DisjointShape],
+) -> Graph:
+    """Converts a shape to a Graph"""
+    if not Is.instance(shape, (SimpleShape, ConnectedShape, DisjointShape)):
+        raise TypeError
+    if Is.instance(shape, SimpleShape):
+        return jordan2graph(shape.jordan)
+    graph = Graph()
+    for subshape in shape.subshapes:
+        graph |= shape2graph(subshape)
+    return graph
+
+
+def extract_unique_paths(graph: Graph) -> Iterable[CyclicContainer[Edge]]:
+    """Reads the graphs and extracts the unique paths"""
+    logger = get_logger("shapepy.bool2d.boolean")
+    logger.debug("Extracting unique paths from the graph")
+    logger.debug(str(graph))
+    edges = tuple(graph.edges)
+    index = 0
+    while len(edges) > 0:
+        extracted_edges = []
+        start_nodes = tuple(e.nodea for e in edges)
+        start_node = start_nodes[index]
+        node = start_node
+        while True:
+            valid_edges = tuple(e for e in edges if e.nodea == node)
+            if len(valid_edges) != 1:
+                logger.error(f"Invalid is graph starting at node:\n{node}")
+                logger.error(f"Graph:\n{graph}")
+                raise ValueError
+            extracted_edges.append(valid_edges[0])
+            node = valid_edges[0].nodeb
+            if node == start_node:  # Closed cycle
+                break
+        for edge in extracted_edges:
+            graph.remove_edge(edge)
+        logger.debug(
+            "Container:"
+            + "\n".join(
+                f"{i}: {edge}" for i, edge in enumerate(extracted_edges)
+            )
+        )
+        yield CyclicContainer(extracted_edges)
+        edges = tuple(graph.edges)

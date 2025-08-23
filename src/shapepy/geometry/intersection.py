@@ -190,7 +190,7 @@ class GeometricIntersectionCurves:
         return GeometricIntersectionCurves(newcurves, newparis)
 
     def __bool__(self):
-        return all(v == EmptyR1() for v in self.all_subsets.values())
+        return any(v != Empty() for v in self.all_subsets.values())
 
 
 def curve_and_curve(

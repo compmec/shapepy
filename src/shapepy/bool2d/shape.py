@@ -153,8 +153,8 @@ class SimpleShape(SubSetR2):
         vertices = map(piecewise, piecewise.knots[:-1])
         if not all(map(self.__contains_point, vertices)):
             return False
-        inters = piecewise & self.jordan
-        if not inters:
+        inters = piecewise & self.__jordancurve.piecewise
+        if not inters:  # There's no intersection between curves
             return True
         knots = sorted(inters.all_knots[id(piecewise)])
         midknots = ((k0 + k1) / 2 for k0, k1 in zip(knots, knots[1:]))

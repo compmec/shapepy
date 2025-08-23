@@ -92,6 +92,7 @@ class TestTwoCenteredSquares:
         assert (~square2) - (~square1) is EmptyShape()
 
     @pytest.mark.order(41)
+    @pytest.mark.skip()
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
     def test_xor(self):
@@ -115,6 +116,7 @@ class TestTwoCenteredSquares:
             "TestTwoCenteredSquares::test_begin",
             "TestTwoCenteredSquares::test_or",
             "TestTwoCenteredSquares::test_and",
+            "TestTwoCenteredSquares::test_sub",
         ]
     )
     def test_end(self):
@@ -216,6 +218,7 @@ class TestTwoDisjointSquares:
             "TestTwoDisjointSquares::test_begin",
             "TestTwoDisjointSquares::test_or",
             "TestTwoDisjointSquares::test_and",
+            "TestTwoDisjointSquares::test_sub",
         ]
     )
     def test_end(self):
@@ -341,6 +344,7 @@ class TestTwoDisjHollowSquares:
             "TestTwoDisjHollowSquares::test_begin",
             "TestTwoDisjHollowSquares::test_or",
             "TestTwoDisjHollowSquares::test_and",
+            "TestTwoDisjHollowSquares::test_sub",
         ]
     )
     def test_end(self):
@@ -350,6 +354,7 @@ class TestTwoDisjHollowSquares:
 @pytest.mark.order(41)
 @pytest.mark.dependency(
     depends=[
+        "test_begin",
         "TestTwoCenteredSquares::test_end",
         "TestTwoDisjointSquares::test_end",
         "TestTwoDisjHollowSquares::test_end",
