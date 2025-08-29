@@ -45,7 +45,7 @@ class SimpleShape(SubSetR2):
 
     def __str__(self) -> str:  # pragma: no cover  # For debug
         area = float(self.area)
-        vertices = tuple(map(tuple, self.jordan.vertices))
+        vertices = tuple(map(tuple, self.jordan.vertices()))
         return f"SimpleShape[{area:.2f}]:[{vertices}]"
 
     def __eq__(self, other: SubSetR2) -> bool:

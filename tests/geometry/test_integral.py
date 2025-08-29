@@ -2,9 +2,8 @@ import math
 
 import pytest
 
-from shapepy.geometry.factory import FactoryJordan
+from shapepy.geometry.factory import FactoryJordan, FactorySegment
 from shapepy.geometry.integral import lebesgue_density_jordan
-from shapepy.geometry.segment import Segment
 
 
 @pytest.mark.order(15)
@@ -27,15 +26,15 @@ def test_begin():
 @pytest.mark.dependency(depends=["test_begin"])
 def test_segment_length():
     points = [(0, 0), (1, 0)]
-    curve = Segment(points)
+    curve = FactorySegment.bezier(points)
     assert abs(curve.length - 1) < 1e-9
 
     points = [(1, 0), (0, 0)]
-    curve = Segment(points)
+    curve = FactorySegment.bezier(points)
     assert abs(curve.length - 1) < 1e-9
 
     points = [(0, 1), (1, 0)]
-    curve = Segment(points)
+    curve = FactorySegment.bezier(points)
     assert abs(curve.length - math.sqrt(2)) < 1e-9
 
 

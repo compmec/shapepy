@@ -4,63 +4,67 @@ Contains methods to concatenate curves
 
 from typing import Iterable, Union
 
-import pynurbs
-
-from ..tools import Is, NotExpectedError, To
-from .base import IParametrizedCurve
+from ..analytic import Bezier
+from ..tools import Is, NotExpectedError
+from .base import IGeometricCurve
 from .piecewise import PiecewiseCurve
-from .point import cross, inner
+from .point import cross
 from .segment import Segment
+from .unparam import UPiecewiseCurve, USegment
 
 
-def concatenate(curves: Iterable[IParametrizedCurve]) -> IParametrizedCurve:
+def concatenate(curves: Iterable[IGeometricCurve]) -> IGeometricCurve:
     """
     Concatenates the given curves.
 
     Ignores all the curves parametrization
     """
     curves = tuple(curves)
-    if not all(Is.instance(curve, IParametrizedCurve) for curve in curves):
+    if not all(Is.instance(curve, IGeometricCurve) for curve in curves):
         raise ValueError
-    # Check if the curves are connected
-    for i, curvei in enumerate(curves[:-1]):
-        curvej = curves[i + 1]
-        if curvei(curvei.knots[-1]) != curvej(curvej.knots[0]):
-            raise ValueError("The curves to concatenate are not connected")
-    segments = []
-    for curve in curves:
-        if Is.instance(curve, Segment):
-            segments.append(curve)
-        elif Is.instance(curve, PiecewiseCurve):
-            segments += list(curve)
-        else:
-            raise NotExpectedError(f"Unknown type: {type(curve)}")
-    return concatenate_segments(segments)
+    if all(Is.instance(curve, Segment) for curve in curves):
+        return concatenate_segments(curves)
+    if all(Is.instance(curve, USegment) for curve in curves):
+        return concatenate_usegments(curves)
+    raise NotExpectedError(str(tuple(str(type(c)) for c in curves)))
 
 
-def concatenate_segments(segments: Iterable[Segment]) -> IParametrizedCurve:
+def concatenate_usegments(
+    usegments: Iterable[USegment],
+) -> Union[USegment, UPiecewiseCurve]:
+    """
+    Concatenates all the unparametrized segments
+    """
+    usegments = tuple(usegments)
+    assert all(Is.instance(useg, USegment) for useg in usegments)
+    union = concatenate_segments(useg.parametrize() for useg in usegments)
+    return (
+        USegment(union)
+        if Is.instance(union, Segment)
+        else UPiecewiseCurve(map(USegment, union))
+    )
+
+
+def concatenate_segments(
+    segments: Iterable[Segment],
+) -> Union[Segment, PiecewiseCurve]:
     """
     Concatenates all the segments
     """
-    segments = list(segments)
-    assert all(map(Is.segment, segments))
+    segments = tuple(segments)
+    if len(segments) == 0:
+        raise ValueError(f"Number sizes: {len(segments)}")
     filtsegments = []
-    segment0 = segments.pop(0)
-    while len(segments) > 0:
-        segment1 = segments.pop(0)
+    segments = iter(segments)
+    segmenti = next(segments)
+    for segmentj in segments:
         try:
-            segment0 = bezier_and_bezier(segment0, segment1)
+            segmenti = bezier_and_bezier(segmenti, segmentj)
         except ValueError:
-            filtsegments.append(segment0)
-            segment0 = segment1
-    filtsegments.append(segment0)
-    try:
-        union = bezier_and_bezier(filtsegments[-1], filtsegments[0])
-        filtsegments.pop(0)
-        filtsegments.pop()
-        filtsegments.append(union)
-    except ValueError:
-        pass
+            filtsegments.append(segmenti)
+            segmenti = segmentj
+    filtsegments.append(segmenti)
+    print("filtsegments = ", filtsegments)
     return (
         PiecewiseCurve(filtsegments)
         if len(filtsegments) > 1
@@ -68,39 +72,25 @@ def concatenate_segments(segments: Iterable[Segment]) -> IParametrizedCurve:
     )
 
 
-def bezier_and_bezier(
-    curvea: Segment, curveb: Segment
-) -> Union[Segment, PiecewiseCurve]:
+def bezier_and_bezier(curvea: Segment, curveb: Segment) -> Segment:
     """Computes the union of two bezier curves"""
-    assert Is.instance(curvea, Segment)
-    assert Is.instance(curveb, Segment)
-    assert curvea.degree == curveb.degree
-    if curvea.ctrlpoints[-1] != curveb.ctrlpoints[0]:
+    if not Is.instance(curvea, Segment):
+        raise TypeError(f"Invalid type: {type(curvea)}")
+    if not Is.instance(curveb, Segment):
+        raise TypeError(f"Invalid type: {type(curveb)}")
+    if abs(cross(curvea(1, 1), curveb(0, 1))) > 1e-6:
         raise ValueError
-    # Last point of first derivative
-    dapt = curvea.ctrlpoints[-1] - curvea.ctrlpoints[-2]
-    # First point of first derivative
-    dbpt = curveb.ctrlpoints[1] - curveb.ctrlpoints[0]
-    if abs(cross(dapt, dbpt)) > 1e-6:
-        node = To.rational(1, 2)
-    else:
-        dsumpt = dapt + dbpt
-        denomin = inner(dsumpt, dsumpt)
-        node = inner(dapt, dsumpt) / denomin
-    knotvectora = pynurbs.GeneratorKnotVector.bezier(
-        curvea.degree, To.rational
-    )
-    knotvectora.scale(node)
-    knotvectorb = pynurbs.GeneratorKnotVector.bezier(
-        curveb.degree, To.rational
-    )
-    knotvectorb.scale(1 - node).shift(node)
-    newknotvector = tuple(knotvectora) + tuple(
-        knotvectorb[curvea.degree + 1 :]
-    )
-    finalcurve = pynurbs.Curve(newknotvector)
-    finalcurve.ctrlpoints = tuple(curvea.ctrlpoints) + tuple(curveb.ctrlpoints)
-    finalcurve.knot_clean((node,))
-    if finalcurve.degree + 1 != finalcurve.npts:
-        raise ValueError("Union is not a bezier curve!")
-    return Segment(finalcurve.ctrlpoints)
+    if curvea.xfunc.degree != curveb.xfunc.degree:
+        raise ValueError
+    if curvea.yfunc.degree != curveb.yfunc.degree:
+        raise ValueError
+    if curvea.xfunc.degree > 1 or curvea.yfunc.degree > 1:
+        raise ValueError
+
+    if curvea(1) != curveb(0):
+        raise ValueError
+    startpoint = curvea(0)
+    endpoint = curveb(1)
+    nxfunc = Bezier((startpoint[0], endpoint[0]))
+    nyfunc = Bezier((startpoint[1], endpoint[1]))
+    return Segment(nxfunc, nyfunc)

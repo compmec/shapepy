@@ -145,7 +145,7 @@ class FollowPath:
             if (index_jordan, index_segment) in matrix:
                 break
             matrix.append((index_jordan, index_segment))
-            last_point = segment.ctrlpoints[-1]
+            last_point = segment(1)
             possibles = []
             for i, jordan in enumerate(jordans):
                 if i == index_jordan:
@@ -157,7 +157,7 @@ class FollowPath:
                 continue
             index_jordan = possibles[0]
             for j, segj in enumerate(all_segments[index_jordan]):
-                if segj.ctrlpoints[0] == last_point:
+                if segj(0) == last_point:
                     index_segment = j
                     break
         return CyclicContainer(matrix)
@@ -221,7 +221,7 @@ class FollowPath:
 
         """
         for i, jordan in enumerate(shapea.jordans):
-            for j, segment in enumerate(jordan.piecewise):
+            for j, segment in enumerate(jordan.parametrize()):
                 mid_point = segment(Fraction(1, 2))
                 density = shapeb.density(mid_point)
                 mid_point_in = (density > 0 and closed) or density == 1

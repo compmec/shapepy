@@ -67,7 +67,6 @@ class IGeometricCurve(ABC):
     def __or__(self, other: IGeometricCurve) -> IGeometricCurve:
         return Future.concatenate((self, other))
 
-    @abstractmethod
     def move(self, vector: Point2D) -> IGeometricCurve:
         """
         Moves/translate entire shape by an amount

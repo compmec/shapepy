@@ -313,14 +313,14 @@ class TestObjectsInSimple:
         square = Primitive.square(side=4)
         good_types = []
         jordan = square.jordan
-        for vertex in jordan.vertices:
+        for vertex in jordan.vertices():
             good_types.append((type(vertex[0]), type(vertex[0])))
         one = Fraction(1)
         for point in [(0, 0), (1, 2), (one / 2, -one / 2), (1.2, 3.5)]:
             point in square
             test_types = []
             jordan = square.jordan
-            for vertex in jordan.vertices:
+            for vertex in jordan.vertices():
                 test_types.append((type(vertex[0]), type(vertex[0])))
             assert len(test_types) == len(good_types)
             assert test_types == good_types

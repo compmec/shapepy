@@ -6,17 +6,15 @@ This file contains functions to create primitive shapes such as:
 
 """
 
+from __future__ import annotations
+
 import math
-from copy import copy
 from typing import Tuple
 
 import numpy as np
 
 from ..geometry.factory import FactoryJordan
-from ..geometry.jordancurve import JordanCurve
-from ..geometry.point import Point2D, cartesian
-from ..geometry.segment import Segment
-from ..geometry.unparam import USegment
+from ..geometry.point import Point2D
 from ..loggers import debug
 from ..tools import Is, To
 from .base import EmptyShape, WholeShape
@@ -225,25 +223,5 @@ class Primitive:
             raise ValueError
         if not Is.integer(ndivangle) or ndivangle < 4:
             raise ValueError
-        center = To.point(center)
-
-        angle = math.tau / ndivangle
-        height = np.tan(angle / 2)
-
-        start_point = radius * cartesian(1, 0)
-        middle_point = radius * cartesian(1, height)
-        beziers = []
-        for _ in range(ndivangle - 1):
-            end_point = copy(start_point).rotate(angle)
-            new_bezier = Segment([start_point, middle_point, end_point])
-            beziers.append(new_bezier)
-            start_point = end_point
-            middle_point = copy(middle_point).rotate(angle)
-        end_point = beziers[0].ctrlpoints[0]
-        new_bezier = Segment([start_point, middle_point, end_point])
-        beziers.append(new_bezier)
-
-        jordan_curve = JordanCurve(map(USegment, beziers))
-        jordan_curve.move(center)
-        circle = SimpleShape(jordan_curve)
-        return circle
+        jordan_curve = FactoryJordan.circle(ndivangle)
+        return SimpleShape(jordan_curve).scale(radius).move(center)
