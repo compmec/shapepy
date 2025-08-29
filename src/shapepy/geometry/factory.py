@@ -2,14 +2,43 @@
 Defines the Factory to create Jordan Curves
 """
 
-from typing import Tuple
+from __future__ import annotations
 
+import math
+from copy import copy
+from typing import Iterable, Tuple
+
+import numpy as np
+
+from ..analytic import Bezier
 from ..loggers import debug
 from ..tools import To
 from .jordancurve import JordanCurve
-from .point import Point2D
-from .segment import Segment, clean_segment
+from .point import Point2D, cartesian
+from .segment import Segment
 from .unparam import USegment
+
+
+# pylint: disable=too-few-public-methods
+class FactorySegment:
+    """
+    Define functions to create Segments
+    """
+
+    @staticmethod
+    @debug("shapepy.geometry.factory")
+    def bezier(ctrlpoints: Iterable[Point2D]) -> Segment:
+        """Initialize a bezier segment from a list of control points
+
+        :param ctrlpoints: The list of control points
+        :type ctrlpoints: Iterable[Point2D]
+        :return: The created segment
+        :rtype: Segment
+        """
+        ctrlpoints = tuple(map(To.point, ctrlpoints))
+        xfunc = Bezier((pt[0] for pt in ctrlpoints))
+        yfunc = Bezier((pt[1] for pt in ctrlpoints))
+        return Segment(xfunc, yfunc)
 
 
 class FactoryJordan:
@@ -43,7 +72,7 @@ class FactoryJordan:
         beziers = [None] * nverts
         for i in range(nverts):
             ctrlpoints = vertices[i : i + 2]
-            new_bezier = Segment(ctrlpoints)
+            new_bezier = FactorySegment.bezier(ctrlpoints)
             beziers[i] = USegment(new_bezier)
         return JordanCurve(beziers)
 
@@ -76,6 +105,28 @@ class FactoryJordan:
         """
         beziers = spline_curve.split(spline_curve.knots)
         segments = (
-            clean_segment(Segment(bezier.ctrlpoints)) for bezier in beziers
+            FactorySegment.bezier(bezier.ctrlpoints).clean()
+            for bezier in beziers
         )
         return JordanCurve(map(USegment, segments))
+
+    @staticmethod
+    @debug("shapepy.geometry.factory")
+    def circle(ndivangle: int):
+        """Creates a jordan curve that represents a unit circle"""
+        angle = math.tau / ndivangle
+        height = np.tan(angle / 2)
+
+        start_point = cartesian(1, 0)
+        middle_point = cartesian(1, height)
+        all_ctrlpoints = []
+        for _ in range(ndivangle - 1):
+            end_point = copy(start_point).rotate(angle)
+            all_ctrlpoints.append([start_point, middle_point, end_point])
+            start_point = end_point
+            middle_point = copy(middle_point).rotate(angle)
+        end_point = all_ctrlpoints[0][0]
+        all_ctrlpoints.append([start_point, middle_point, end_point])
+        return JordanCurve(
+            map(USegment, map(FactorySegment.bezier, all_ctrlpoints))
+        )

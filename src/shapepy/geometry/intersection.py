@@ -214,6 +214,11 @@ def param_and_param(
     raise NotExpectedError
 
 
+def segment_is_linear(segment: Segment) -> bool:
+    """Tells if the segment is a polynomial linear"""
+    return segment.xfunc.degree <= 1 and segment.yfunc.degree <= 1
+
+
 def segment_and_segment(
     curvea: Segment, curveb: Segment
 ) -> Tuple[SubSetR1, SubSetR1]:
@@ -224,11 +229,12 @@ def segment_and_segment(
         return Empty(), Empty()
     if curvea == curveb:
         return Interval(0, 1), Interval(0, 1)
-    if curvea.degree == 1 and curveb.degree == 1:
-        subseta, subsetb = IntersectionSegments.lines(curvea, curveb)
-        return subseta, subsetb
-    usample = list(NodeSampleFactory.closed_linspace(curvea.npts + 3))
-    vsample = list(NodeSampleFactory.closed_linspace(curveb.npts + 3))
+    if segment_is_linear(curvea) and segment_is_linear(curveb):
+        return IntersectionSegments.lines(curvea, curveb)
+    nptsa = max(curvea.xfunc.degree, curvea.yfunc.degree) + 4
+    nptsb = max(curveb.xfunc.degree, curveb.yfunc.degree) + 4
+    usample = list(NodeSampleFactory.closed_linspace(nptsa))
+    vsample = list(NodeSampleFactory.closed_linspace(nptsb))
     pairs = []
     for ui in usample:
         pairs += [(ui, vj) for vj in vsample]
@@ -264,11 +270,9 @@ class IntersectionSegments:
     @staticmethod
     def lines(curvea: Segment, curveb: Segment) -> Tuple[SubSetR1, SubSetR1]:
         """Finds the intersection of two line segments"""
-        assert curvea.degree == 1
-        assert curveb.degree == 1
         empty = Empty()
-        A0, A1 = curvea.ctrlpoints
-        B0, B1 = curveb.ctrlpoints
+        A0, A1 = curvea(0), curvea(1)
+        B0, B1 = curveb(0), curveb(1)
         dA = A1 - A0
         dB = B1 - B0
         B0mA0 = B0 - A0

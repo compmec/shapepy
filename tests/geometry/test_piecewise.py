@@ -4,8 +4,8 @@ Tests the PiecewiseCurve class
 
 import pytest
 
+from shapepy.geometry.factory import FactorySegment
 from shapepy.geometry.piecewise import PiecewiseCurve
-from shapepy.geometry.segment import Segment
 
 
 @pytest.mark.order(14)
@@ -31,7 +31,7 @@ def test_build():
         ((0, 1), (0, 0)),
     ]
     knots = range(len(points) + 1)
-    segments = tuple(map(Segment, points))
+    segments = tuple(map(FactorySegment.bezier, points))
     PiecewiseCurve(segments, knots)
 
 
@@ -45,7 +45,7 @@ def test_box():
         ((0, 1), (0, 0)),
     ]
     knots = range(len(points) + 1)
-    segments = tuple(map(Segment, points))
+    segments = tuple(map(FactorySegment.bezier, points))
     piecewise = PiecewiseCurve(segments, knots)
     box = piecewise.box()
     assert box.lowpt == (0, 0)
@@ -62,7 +62,7 @@ def test_evaluate():
         ((0, 1), (0, 0)),
     ]
     knots = range(len(points) + 1)
-    segments = tuple(map(Segment, points))
+    segments = tuple(map(FactorySegment.bezier, points))
     piecewise = PiecewiseCurve(segments, knots)
     assert piecewise(0) == (0, 0)
     assert piecewise(1) == (1, 0)
@@ -86,7 +86,7 @@ def test_print():
         ((0, 1), (0, 0)),
     ]
     knots = range(len(points) + 1)
-    segments = tuple(map(Segment, points))
+    segments = tuple(map(FactorySegment.bezier, points))
     piecewise = PiecewiseCurve(segments, knots)
     str(piecewise)
     repr(piecewise)

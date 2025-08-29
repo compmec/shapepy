@@ -15,6 +15,7 @@ from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SubSetR2
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.segment import Segment
 
+from ..analytic import Bezier
 from ..tools import Is
 
 Path = matplotlib.path.Path
@@ -28,11 +29,15 @@ def patch_segment(segment: Segment):
     assert Is.instance(segment, Segment)
     vertices = []
     commands = []
-    if segment.degree == 1:
-        vertices.append(segment.ctrlpoints[1])
+    xfunc, yfunc = segment.xfunc, segment.yfunc
+    if xfunc.degree <= 1 and yfunc.degree <= 1:
+        vertices.append(segment(1))
         commands.append(Path.LINETO)
-    elif segment.degree == 2:
-        vertices += list(segment.ctrlpoints[1:])
+    elif xfunc.degree == 2 and yfunc.degree == 2:
+        xfunc: Bezier = segment.xfunc
+        yfunc: Bezier = segment.yfunc
+        ctrlpoints = tuple(zip(xfunc, yfunc))
+        vertices += list(ctrlpoints[1:])
         commands += [Path.CURVE3] * 2
     return vertices, commands
 
@@ -45,7 +50,7 @@ def path_shape(connected: ConnectedShape) -> Path:
     commands = []
     for jordan in connected.jordans:
         segments = tuple(useg.parametrize() for useg in jordan.usegments)
-        vertices.append(segments[0].ctrlpoints[0])
+        vertices.append(segments[0](0))
         commands.append(Path.MOVETO)
         for segment in segments:
             verts, comms = patch_segment(segment)
@@ -62,7 +67,7 @@ def path_jordan(jordan: JordanCurve) -> Path:
     Creates the commands for matplotlib to plot the jordan curve
     """
     segments = tuple(useg.parametrize() for useg in jordan.usegments)
-    vertices = [segments[0].ctrlpoints[0]]
+    vertices = [segments[0](0)]
     commands = [Path.MOVETO]
     for segment in segments:
         verts, comms = patch_segment(segment)
@@ -176,5 +181,5 @@ class ShapePloter:
                     path, edgecolor=color, facecolor="none", lw=2
                 )
                 self.gca().add_patch(patch)
-                xvals, yvals = zip(*jordan.vertices)
+                xvals, yvals = zip(*jordan.vertices())
                 self.gca().scatter(xvals, yvals, color=color, marker=marker)

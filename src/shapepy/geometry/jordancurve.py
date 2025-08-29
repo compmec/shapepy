@@ -7,7 +7,7 @@ from __future__ import annotations
 
 from collections import deque
 from copy import copy
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Iterator, Tuple, Union
 
 from ..common import clean
 from ..loggers import debug
@@ -18,7 +18,7 @@ from .base import IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve
 from .point import Point2D
-from .unparam import USegment, clean_usegment, self_intersect
+from .unparam import UPiecewiseCurve, USegment, clean_usegment, self_intersect
 
 
 class JordanCurve(IGeometricCurve):
@@ -40,17 +40,17 @@ class JordanCurve(IGeometricCurve):
 
     @debug("shapepy.geometry.jordancurve")
     def move(self, vector: Point2D) -> JordanCurve:
-        self.__piecewise = self.piecewise.move(vector)
+        self.__usegments = tuple(useg.move(vector) for useg in self.usegments)
         return self
 
     @debug("shapepy.geometry.jordancurve")
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
-        self.__piecewise = self.piecewise.scale(amount)
+        self.__usegments = tuple(useg.scale(amount) for useg in self.usegments)
         return self
 
     @debug("shapepy.geometry.jordancurve")
     def rotate(self, angle: Angle) -> JordanCurve:
-        self.__piecewise = self.piecewise.rotate(angle)
+        self.__usegments = tuple(useg.rotate(angle) for useg in self.usegments)
         return self
 
     def box(self) -> Box:
@@ -77,7 +77,7 @@ class JordanCurve(IGeometricCurve):
     @property
     def length(self) -> Real:
         """The length of the curve"""
-        return self.piecewise.length
+        return sum(useg.length for useg in self.usegments)
 
     @property
     def area(self) -> Real:
@@ -90,12 +90,12 @@ class JordanCurve(IGeometricCurve):
         """
         Gives the piecewise curve
         """
-        return self.piecewise
+        return self.__piecewise
 
     @property
     def piecewise(self) -> PiecewiseCurve:
         """
-        Gives the piecewise curve
+        Gives the internal piecewise curve
         """
         return self.__piecewise
 
@@ -122,10 +122,9 @@ class JordanCurve(IGeometricCurve):
         Planar curve of degree 1 and control points ((0, 0), (4, 0))
 
         """
-        return CyclicContainer(map(USegment, self.parametrize()))
+        return self.__usegments
 
-    @property
-    def vertices(self) -> Tuple[Point2D]:
+    def vertices(self) -> Iterator[Point2D]:
         """Vertices
 
         Returns in order, all the non-repeted control points from
@@ -144,12 +143,7 @@ class JordanCurve(IGeometricCurve):
         ((0, 0), (4, 0), (0, 3))
 
         """
-        vertices = []
-        for usegment in self.usegments:
-            segment = usegment.parametrize()
-            vertex = segment(segment.knots[0])
-            vertices.append(vertex)
-        return tuple(vertices)
+        yield from (useg.start_point for useg in self.usegments)
 
     @usegments.setter
     def usegments(self, other: Iterable[USegment]):
@@ -158,11 +152,12 @@ class JordanCurve(IGeometricCurve):
             raise ValueError(f"Invalid usegments: {tuple(map(type, other))}")
         if any(map(self_intersect, usegments)):
             raise ValueError("Segment must not self intersect")
-        segments = [useg.parametrize() for useg in usegments]
-        for segi, segj in pairs(segments):
-            if segi(1) != segj(0):
+        for usegi, usegj in pairs(usegments, cyclic=True):
+            if usegi.end_point != usegj.start_point:
                 raise ValueError("The segments are not continuous")
-        self.__piecewise = PiecewiseCurve(segments)
+        self.__usegments = CyclicContainer(usegments)
+        upiece = UPiecewiseCurve(self.usegments)
+        self.__piecewise = upiece.parametrize()
         self.__area = None
 
     def __str__(self) -> str:
@@ -182,7 +177,7 @@ class JordanCurve(IGeometricCurve):
         if (
             self.box() != other.box()
             or self.length != other.length
-            or not all(point in self for point in other.vertices)
+            or not all(point in self for point in other.vertices())
         ):
             return False
         return clean(self).usegments == clean(other).usegments
@@ -238,7 +233,7 @@ class JordanCurve(IGeometricCurve):
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
-        return point in self.piecewise
+        return any(point in useg for useg in self.usegments)
 
 
 @debug("shapepy.geometry.jordancurve")

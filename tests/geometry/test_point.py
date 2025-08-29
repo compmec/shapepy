@@ -267,6 +267,35 @@ def test_addsub():
         "test_begin",
         "test_creation_finite_cartesian",
         "test_indexable",
+        "test_addsub",
+    ]
+)
+def test_transformations():
+    pointa = cartesian(0, 0)
+    pointb = pointa.move((1, 3))
+    assert id(pointb) == id(pointa)
+    assert pointa == (1, 3)
+
+    pointb = pointa.scale(2)
+    assert id(pointb) == id(pointa)
+    assert pointa == (2, 6)
+    pointb = pointa.scale((5, 3))
+    assert id(pointb) == id(pointa)
+    assert pointa == (10, 18)
+
+    angle = Angle.degrees(90)
+    pointb = pointa.rotate(angle)
+    assert id(pointb) == id(pointa)
+    assert pointa == (-18, 10)
+
+
+@pytest.mark.order(11)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(
+    depends=[
+        "test_begin",
+        "test_creation_finite_cartesian",
+        "test_indexable",
     ]
 )
 def test_norm():
@@ -393,6 +422,7 @@ def test_print():
         "test_error_creation",
         "test_indexable",
         "test_addsub",
+        "test_transformations",
         "test_inner",
         "test_norm",
         "test_cross",

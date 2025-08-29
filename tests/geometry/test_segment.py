@@ -6,7 +6,7 @@ from fractions import Fraction
 
 import pytest
 
-from shapepy.geometry.segment import Segment, clean_segment
+from shapepy.geometry.factory import FactorySegment
 
 
 @pytest.mark.order(13)
@@ -31,7 +31,7 @@ def test_begin():
 @pytest.mark.timeout(10)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_build():
-    Segment([(0, 0), (1, 0), (0, 1)])
+    FactorySegment.bezier([(0, 0), (1, 0), (0, 1)])
 
 
 class TestDerivate:
@@ -50,7 +50,7 @@ class TestDerivate:
     @pytest.mark.dependency(depends=["TestDerivate::test_begin"])
     def test_planar_bezier(self):
         points = [(0, 0), (1, 0), (0, 1)]
-        curve = Segment(points)
+        curve = FactorySegment.bezier(points)
         dcurve = curve.derivate()
         assert id(dcurve) != id(curve)
 
@@ -60,68 +60,6 @@ class TestDerivate:
         depends=[
             "TestDerivate::test_begin",
             "TestDerivate::test_planar_bezier",
-        ]
-    )
-    def test_end(self):
-        pass
-
-
-class TestOperations:
-    @pytest.mark.order(13)
-    @pytest.mark.dependency(depends=["test_begin"])
-    def test_begin(self):
-        pass
-
-    @pytest.mark.order(13)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(depends=["TestOperations::test_begin"])
-    def test_clean_segment(self):
-        points = [(0, 0), (1, 0)]
-        curve = clean_segment(Segment(points))
-        assert curve.degree == 1
-
-        points = [(2, 3), (-1, 4)]
-        curve = clean_segment(Segment(points))
-        assert curve.degree == 1
-
-        points = [(2, 3), (-1, 4)]
-        curve = clean_segment(Segment(points))
-        assert curve.degree == 1
-
-    @pytest.mark.order(13)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestOperations::test_begin",
-            "TestOperations::test_clean_segment",
-        ]
-    )
-    def test_clean_quadratic(self):
-        points = [(0, 0), (1, 0), (2, 0)]
-        curve = Segment(points)
-        assert curve.degree == 2
-        curve = clean_segment(curve)
-        assert curve.degree == 1
-
-        points = [(0, 2), (1, 4), (2, 6)]
-        curve = Segment(points)
-        assert curve.degree == 2
-        curve = clean_segment(curve)
-        assert curve.degree == 1
-
-        points = [(2, 3), (-1, 4), (-4, 5)]
-        curve = Segment(points)
-        assert curve.degree == 2
-        curve = clean_segment(curve)
-        assert curve.degree == 1
-
-    @pytest.mark.order(13)
-    @pytest.mark.timeout(10)
-    @pytest.mark.dependency(
-        depends=[
-            "TestOperations::test_begin",
-            "TestOperations::test_clean_segment",
-            "TestOperations::test_clean_quadratic",
         ]
     )
     def test_end(self):
@@ -139,7 +77,7 @@ class TestContains:
     @pytest.mark.dependency(depends=["TestContains::test_begin"])
     def test_line(self):
         points = [(0, 0), (1, 0)]
-        curve = Segment(points)
+        curve = FactorySegment.bezier(points)
         assert (0, 0) in curve
         assert (1, 0) in curve
         assert (0.5, 0) in curve
@@ -147,7 +85,7 @@ class TestContains:
         assert (0, -1) not in curve
 
         points = [(0, 1), (0, 0)]
-        curve = Segment(points)
+        curve = FactorySegment.bezier(points)
         assert (0, 0) in curve
         assert (0, 1) in curve
         assert (0, 0.5) in curve
@@ -155,7 +93,7 @@ class TestContains:
         assert (-1, 0) not in curve
 
         points = [(0, 0), (1, 1)]
-        curve = Segment(points)
+        curve = FactorySegment.bezier(points)
         assert (0, 0) in curve
         assert (1, 1) in curve
         assert (0.5, 0.5) in curve
@@ -188,10 +126,12 @@ class TestSplitUnite:
     def test_middle(self):
         half = Fraction(1, 2)
         points = [(0, 0), (1, 0)]
-        curve = Segment(points)
-        curvea, curveb = curve.split([half])
-        assert curvea == Segment([(0, 0), (half, 0)])
-        assert curveb == Segment([(half, 0), (1, 0)])
+        curve = FactorySegment.bezier(points)
+        curvea = FactorySegment.bezier([(0, 0), (half, 0)])
+        curveb = FactorySegment.bezier([(half, 0), (1, 0)])
+        assert curve.extract([0, half]) == curvea
+        assert curve.extract([half, 1]) == curveb
+        assert curve.split([half]) == (curvea, curveb)
 
         test = curvea | curveb
         assert test == curve
@@ -216,7 +156,7 @@ class TestSplitUnite:
     ]
 )
 def test_print():
-    segment = Segment([(0, 0), (1, 0), (0, 1)])
+    segment = FactorySegment.bezier([(0, 0), (1, 0), (0, 1)])
     str(segment)
     repr(segment)
 
@@ -227,7 +167,6 @@ def test_print():
         "test_begin",
         "test_build",
         "TestDerivate::test_end",
-        "TestOperations::test_end",
         "TestContains::test_end",
         "TestSplitUnite::test_end",
         "test_print",

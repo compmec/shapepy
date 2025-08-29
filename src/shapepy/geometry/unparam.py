@@ -5,7 +5,7 @@ Defines the class USegment and UPiecewise, which is equivalent to
 from __future__ import annotations
 
 from copy import copy
-from typing import Tuple, Union
+from typing import Iterable, Tuple, Union
 
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
@@ -13,7 +13,7 @@ from ..tools import Is
 from .base import IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve
-from .point import Point2D, cross
+from .point import Point2D
 from .segment import Segment
 
 
@@ -41,6 +41,16 @@ class USegment(IGeometricCurve):
         """
         return self.__segment.length
 
+    @property
+    def start_point(self) -> Point2D:
+        """Gives the start point of the USegment"""
+        return self.__segment(0)
+
+    @property
+    def end_point(self) -> Point2D:
+        """Gives the end point of the USegment"""
+        return self.__segment(1)
+
     def box(self) -> Box:
         """
         Gives the box that encloses the curve
@@ -57,21 +67,6 @@ class USegment(IGeometricCurve):
         segi = self.parametrize()
         segj = other.parametrize()
         return segi(0) == segj(0) and segi(1) == segj(1)
-
-    def __or__(self, other: USegment) -> Union[USegment, PiecewiseCurve]:
-        if not Is.instance(other, USegment):
-            raise TypeError
-        segi = self.parametrize()
-        segj = other.parametrize()
-        if segi(1) != segj(0):
-            raise ValueError("Union is not continous")
-        if segi.npts == 2 and segj.npts == 2:
-            # They are linear
-            if abs(cross(segi(1, 1), segj(0, 1))) < 1e-9:
-                return USegment(
-                    Segment([segi.ctrlpoints[0], segj.ctrlpoints[1]])
-                )
-        return PiecewiseCurve([segi, segj])
 
     def invert(self) -> USegment:
         """Invert the current curve's orientation, doesn't create a copy
@@ -95,6 +90,24 @@ class USegment(IGeometricCurve):
         return self
 
 
+class UPiecewiseCurve(IGeometricCurve):
+    """Equivalent to PiecewiseCurve, but ignores the parametrization"""
+
+    def __init__(self, usegments: Iterable[USegment]):
+        self.__usegments = tuple(usegments)
+
+    @property
+    def length(self) -> Real:
+        raise NotImplementedError
+
+    def box(self) -> Box:
+        raise NotImplementedError
+
+    def parametrize(self) -> PiecewiseCurve:
+        """Gives a parametrized curve"""
+        return PiecewiseCurve(useg.parametrize() for useg in self.__usegments)
+
+
 def clean_usegment(usegment: USegment) -> USegment:
     """Cleans the segment, simplifying the expression"""
     return usegment
@@ -102,4 +115,5 @@ def clean_usegment(usegment: USegment) -> USegment:
 
 def self_intersect(usegment: USegment) -> USegment:
     """Checks if the USegment intersects itself"""
-    return len(usegment.parametrize().ctrlpoints) > 3
+    seg = usegment.parametrize()
+    return seg.xfunc.degree > 2 and seg.yfunc.degree > 2

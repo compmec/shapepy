@@ -15,14 +15,15 @@ from __future__ import annotations
 from copy import copy
 from typing import Iterable, Optional, Tuple, Union
 
+from rbool import Interval, from_any
+
 from ..analytic.base import IAnalytic
-from ..analytic.bezier import Bezier
 from ..analytic.tools import find_minimum
 from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
-from ..tools import Is, To, vectorize
+from ..tools import Is, To, pairs, vectorize
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D, cartesian
@@ -34,74 +35,58 @@ class Segment(IParametrizedCurve):
     that contains a bezier curve inside it
     """
 
-    def __init__(self, ctrlpoints: Iterable[Point2D]):
-        if not Is.iterable(ctrlpoints):
-            raise ValueError("Control points must be iterable")
+    def __init__(self, xfunc: IAnalytic, yfunc: IAnalytic):
+        if not Is.instance(xfunc, IAnalytic):
+            raise TypeError
+        if not Is.instance(yfunc, IAnalytic):
+            raise TypeError
         self.__length = None
-        self.ctrlpoints = list(map(To.point, ctrlpoints))
         self.__knots = (To.rational(0, 1), To.rational(1, 1))
+        self.__xfunc = xfunc.clean()
+        self.__yfunc = yfunc.clean()
 
     def __str__(self) -> str:
-        return f"BS[{len(self.ctrlpoints)-1}:{self(0)}->{self(1)}]"
+        return f"BS{list(self.knots)}:({self.xfunc}, {self.yfunc})"
 
     def __repr__(self) -> str:
         return str(self)
 
     def __eq__(self, other: Segment) -> bool:
-        if not Is.segment(other):
-            raise ValueError
-        if self.npts != other.npts:
-            return False
-        for pta, ptb in zip(self.ctrlpoints, other.ctrlpoints):
-            if pta != ptb:
-                return False
-        return True
+        return (
+            Is.instance(other, Segment)
+            and self.xfunc == other.xfunc
+            and self.yfunc == other.yfunc
+        )
 
     @debug("shapepy.geometry.segment")
     def __contains__(self, point: Point2D) -> bool:
         point = To.point(point)
         if point not in self.box():
             return False
-        dist_square = (self.xfunc - point[0]) ** 2 + (
-            self.yfunc - point[1]
-        ) ** 2
+        deltax = self.xfunc - point.xcoord
+        deltay = self.yfunc - point.ycoord
+        dist_square = deltax * deltax + deltay * deltay
         return find_minimum(dist_square, [0, 1]) < 1e-12
 
     @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Point2D:
-        planar = To.bezier(self.ctrlpoints)
-        return planar(node, derivate)
+        xcoord = self.xfunc(node, derivate)
+        ycoord = self.yfunc(node, derivate)
+        return cartesian(xcoord, ycoord)
 
     @property
     def xfunc(self) -> IAnalytic:
         """
         Gives the analytic function x(t) from p(t) = (x(t), y(t))
         """
-        return To.bezier(pt[0] for pt in self.ctrlpoints)
+        return self.__xfunc
 
     @property
     def yfunc(self) -> IAnalytic:
         """
         Gives the analytic function y(t) from p(t) = (x(t), y(t))
         """
-        return To.bezier(pt[1] for pt in self.ctrlpoints)
-
-    @property
-    def degree(self) -> int:
-        """
-        The degree of the bezier curve
-
-        Degree = 1 -> Linear curve
-        Degree = 2 -> Quadratic
-        """
-        return self.npts - 1
-
-    @property
-    def npts(self) -> int:
-        """
-        The number of control points used by the curve
-        """
-        return len(self.ctrlpoints)
+        return self.__yfunc
 
     @property
     def length(self) -> Real:
@@ -113,21 +98,8 @@ class Segment(IParametrizedCurve):
         return self.__length
 
     @property
-    def knots(self) -> Tuple[Real, ...]:
+    def knots(self) -> Tuple[Real, Real]:
         return self.__knots
-
-    @property
-    def ctrlpoints(self) -> Tuple[Point2D, ...]:
-        """
-        The control points that defines the planar curve
-        """
-        return self.__ctrlpoints
-
-    @ctrlpoints.setter
-    def ctrlpoints(self, points: Iterable[Point2D]):
-        self.__length = None
-        self.__ctrlpoints = list(map(To.point, points))
-        self.__planar = To.bezier(self.ctrlpoints)
 
     def derivate(self, times: Optional[int] = 1) -> Segment:
         """
@@ -135,35 +107,41 @@ class Segment(IParametrizedCurve):
         """
         if not Is.integer(times) or times <= 0:
             raise ValueError(f"Times must be integer >= 1, not {times}")
-        planar: IAnalytic = To.bezier(self.ctrlpoints)
-        newplanar: IAnalytic = planar.derivate(times)
-        return self.__class__(newplanar)
+        dxfunc = copy(self.xfunc).derivate(times)
+        dyfunc = copy(self.yfunc).derivate(times)
+        return Segment(dxfunc, dyfunc)
 
     def box(self) -> Box:
         """Returns two points which defines the minimal exterior rectangle
 
         Returns the pair (A, B) with A[0] <= B[0] and A[1] <= B[1]
         """
-        xmin = min(point[0] for point in self.ctrlpoints)
-        xmax = max(point[0] for point in self.ctrlpoints)
-        ymin = min(point[1] for point in self.ctrlpoints)
-        ymax = max(point[1] for point in self.ctrlpoints)
+        xmin = find_minimum(self.xfunc, [0, 1])
+        xmax = -find_minimum(-self.xfunc, [0, 1])
+        ymin = find_minimum(self.yfunc, [0, 1])
+        ymax = -find_minimum(-self.yfunc, [0, 1])
         return Box(cartesian(xmin, ymin), cartesian(xmax, ymax))
+
+    def clean(self) -> Segment:
+        """Cleans the segment"""
+        self.__xfunc = self.__xfunc.clean()
+        self.__yfunc = self.__yfunc.clean()
+        return self
 
     def __copy__(self) -> Segment:
         return self.__deepcopy__(None)
 
     def __deepcopy__(self, memo) -> Segment:
-        ctrlpoints = tuple(copy(point) for point in self.ctrlpoints)
-        return self.__class__(ctrlpoints)
+        return Segment(copy(self.xfunc), copy(self.yfunc))
 
     def invert(self) -> Segment:
         """
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
-        points = tuple(self.ctrlpoints)
-        self.ctrlpoints = (points[i] for i in range(self.degree, -1, -1))
+        half = To.rational(1, 2)
+        self.__xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
+        self.__yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
         return self
 
     def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
@@ -172,24 +150,36 @@ class Segment(IParametrizedCurve):
         """
         nodes = (n for n in nodes if self.knots[0] <= n <= self.knots[-1])
         nodes = sorted(set(nodes) | set(self.knots))
-        segments = []
-        for ka, kb in zip(nodes, nodes[1:]):
-            bezier = Bezier(self.__planar).shift(-ka).scale(1 / (kb - ka))
-            segments.append(Segment(bezier))
-        return tuple(segments)
+        return tuple(self.extract([ka, kb]) for ka, kb in pairs(nodes))
+
+    def extract(self, interval: Interval) -> Segment:
+        """Extracts a subsegment from the given segment"""
+        interval = from_any(interval)
+        if not Is.instance(interval, Interval):
+            raise TypeError
+        knota, knotb = interval[0], interval[1]
+        denom = 1 / (knotb - knota)
+        nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
+        nyfunc = copy(self.yfunc).shift(-knota).scale(denom)
+        return Segment(nxfunc, nyfunc)
 
     def move(self, vector: Point2D) -> Segment:
         vector = To.point(vector)
-        self.ctrlpoints = (copy(pt).move(vector) for pt in self.ctrlpoints)
+        self.__xfunc += vector.xcoord
+        self.__yfunc += vector.ycoord
         return self
 
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
-        self.ctrlpoints = (copy(pt).scale(amount) for pt in self.ctrlpoints)
+        self.__xfunc *= amount if Is.real(amount) else amount[0]
+        self.__yfunc *= amount if Is.real(amount) else amount[1]
         return self
 
     def rotate(self, angle: Angle) -> Segment:
         angle = To.angle(angle)
-        self.ctrlpoints = (copy(pt).rotate(angle) for pt in self.ctrlpoints)
+        cos, sin = angle.cos(), angle.sin()
+        xfunc, yfunc = self.xfunc, self.yfunc
+        self.__xfunc = xfunc * cos - yfunc * sin
+        self.__yfunc = xfunc * sin + yfunc * cos
         return self
 
 
@@ -212,15 +202,6 @@ def compute_length(segment: Segment) -> Real:
         return Math.sqrt(dpsquare(node))
 
     return adaptative.integrate(function, domain)
-
-
-@debug("shapepy.geometry.segment")
-def clean_segment(segment: Segment) -> Segment:
-    """Reduces at maximum the degree of the bezier curve"""
-    newplanar = To.bezier(segment.ctrlpoints)
-    if newplanar.degree == segment.degree:
-        return segment
-    return Segment(tuple(newplanar))
 
 
 def is_segment(obj: object) -> bool:
