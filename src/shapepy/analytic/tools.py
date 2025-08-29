@@ -5,17 +5,17 @@ Some tools used in
 from typing import Union
 
 import numpy as np
-from rbool import (
-    Empty,
-    SingleValue,
+
+from ..loggers import debug
+from ..rbool import (
+    EmptyR1,
+    SingleR1,
     SubSetR1,
-    Whole,
+    WholeR1,
     extract_knots,
     from_any,
     unite,
 )
-
-from ..loggers import debug
 from ..scalar.reals import Math, Real
 from ..tools import Is, NotExpectedError, To
 from .base import IAnalytic, derivate_analytic
@@ -24,7 +24,7 @@ from .polynomial import Polynomial
 
 
 def find_polynomial_roots(
-    polynomial: Polynomial, domain: SubSetR1 = Whole()
+    polynomial: Polynomial, domain: SubSetR1 = WholeR1()
 ) -> SubSetR1:
     """
     Finds all the values of t* such p(t*) = 0 inside given domain
@@ -33,15 +33,15 @@ def find_polynomial_roots(
     polynomial = polynomial.clean()
     domain &= polynomial.domain
     if polynomial.degree == 0:
-        return domain if polynomial[0] == 0 else Empty()
+        return domain if polynomial[0] == 0 else EmptyR1()
     if polynomial.degree == 1:
         numerator = -To.rational(1, 1) * polynomial[0]
-        return SingleValue(numerator / polynomial[1])
+        return SingleR1(numerator / polynomial[1])
     if polynomial.degree == 2:
         c, b, a = polynomial
         delta = b * b - 4 * a * c
         if delta < 0:
-            return Empty()
+            return EmptyR1()
         sqrtdelta = Math.sqrt(delta)
         half = To.rational(1, 2)
         x0 = half * (-b - sqrtdelta) / a
@@ -53,7 +53,7 @@ def find_polynomial_roots(
 
 
 def where_minimum_polynomial(
-    polynomial: Polynomial, domain: SubSetR1 = Whole()
+    polynomial: Polynomial, domain: SubSetR1 = WholeR1()
 ) -> SubSetR1:
     """
     Finds the value of t* such poly(t*) is minimal
@@ -62,8 +62,8 @@ def where_minimum_polynomial(
     domain &= polynomial.domain
     if polynomial.degree == 0:
         return domain
-    if domain == Whole() and polynomial.degree % 2:
-        return Empty()
+    if domain == WholeR1() and polynomial.degree % 2:
+        return EmptyR1()
     relation = {knot: polynomial(knot) for knot in extract_knots(domain)}
     critical = find_roots(derivate_analytic(polynomial), domain)
     for knot in extract_knots(critical):
@@ -78,7 +78,7 @@ def where_minimum_polynomial(
 
 
 def find_minimum_polynomial(
-    polynomial: Polynomial, domain: SubSetR1 = Whole()
+    polynomial: Polynomial, domain: SubSetR1 = WholeR1()
 ) -> Union[Real, None]:
     """
     Finds the minimal value of p(t) in the given domain
@@ -90,7 +90,7 @@ def find_minimum_polynomial(
     assert Is.instance(polynomial, Polynomial)
     if polynomial.degree == 0:
         return polynomial[0]
-    if domain == Whole() and polynomial.degree % 2:
+    if domain == WholeR1() and polynomial.degree % 2:
         return Math.NEGINF
     relation = {}
     relation = {knot: polynomial(knot) for knot in extract_knots(domain)}
@@ -103,7 +103,7 @@ def find_minimum_polynomial(
 
 
 @debug("shapepy.analytic.tools")
-def find_roots(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
+def find_roots(analytic: IAnalytic, domain: SubSetR1 = WholeR1()) -> SubSetR1:
     """
     Finds the values of roots of the Analytic function
     """
@@ -117,7 +117,9 @@ def find_roots(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
 
 
 @debug("shapepy.analytic.tools")
-def where_minimum(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
+def where_minimum(
+    analytic: IAnalytic, domain: SubSetR1 = WholeR1()
+) -> SubSetR1:
     """
     Finds the parameters (t*) such the analytic function is minimum
     """
@@ -131,7 +133,9 @@ def where_minimum(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
 
 
 @debug("shapepy.analytic.tools")
-def find_minimum(analytic: IAnalytic, domain: SubSetR1 = Whole()) -> SubSetR1:
+def find_minimum(
+    analytic: IAnalytic, domain: SubSetR1 = WholeR1()
+) -> SubSetR1:
     """
     Finds the minimal value for the given analytic in the given domain
     """

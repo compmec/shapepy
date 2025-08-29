@@ -9,8 +9,7 @@ from abc import ABC, abstractmethod
 from functools import lru_cache
 from typing import Iterable, Set, Union
 
-from rbool import SubSetR1, Whole, from_any
-
+from ..rbool import SubSetR1, WholeR1, from_any
 from ..scalar.reals import Real
 from ..tools import Is
 
@@ -127,7 +126,7 @@ class BaseAnalytic(IAnalytic):
     Base class parent of Analytic classes
     """
 
-    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = Whole()):
+    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = WholeR1()):
         if not Is.iterable(coefs):
             raise TypeError("Expected an iterable of coefficients")
         coefs = tuple(coefs)
@@ -185,7 +184,7 @@ class BaseAnalytic(IAnalytic):
         return self.__mul__(other)
 
     def __repr__(self) -> str:
-        if self.domain is Whole():
+        if self.domain is WholeR1():
             return str(self)
         return f"{self.domain}: {self}"
 

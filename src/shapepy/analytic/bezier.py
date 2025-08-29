@@ -7,9 +7,8 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
-from rbool import SubSetR1, Whole
-
 from ..loggers import debug
+from ..rbool import SubSetR1, WholeR1
 from ..scalar.quadrature import inner
 from ..scalar.reals import Math, Rational, Real
 from ..tools import Is, NotExpectedError, To
@@ -80,7 +79,7 @@ class Bezier(BaseAnalytic):
     such as adding, subtracting, multiplying, etc
     """
 
-    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = Whole()):
+    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = WholeR1()):
         super().__init__(coefs, domain)
         self.__polynomial = bezier2polynomial(self)
 

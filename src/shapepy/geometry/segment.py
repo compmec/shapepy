@@ -15,11 +15,10 @@ from __future__ import annotations
 from copy import copy
 from typing import Iterable, Optional, Tuple, Union
 
-from rbool import Interval, from_any
-
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
 from ..loggers import debug
+from ..rbool import IntervalR1, from_any
 from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
@@ -152,10 +151,10 @@ class Segment(IParametrizedCurve):
         nodes = sorted(set(nodes) | set(self.knots))
         return tuple(self.extract([ka, kb]) for ka, kb in pairs(nodes))
 
-    def extract(self, interval: Interval) -> Segment:
+    def extract(self, interval: IntervalR1) -> Segment:
         """Extracts a subsegment from the given segment"""
         interval = from_any(interval)
-        if not Is.instance(interval, Interval):
+        if not Is.instance(interval, IntervalR1):
             raise TypeError
         knota, knotb = interval[0], interval[1]
         denom = 1 / (knotb - knota)

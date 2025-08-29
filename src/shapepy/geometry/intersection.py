@@ -14,15 +14,14 @@ import math
 from fractions import Fraction
 from typing import Dict, Iterable, Set, Tuple, Union
 
-from rbool import (
-    Empty,
-    Interval,
-    SingleValue,
+from ..rbool import (
+    EmptyR1,
+    IntervalR1,
+    SingleR1,
     SubSetR1,
     extract_knots,
     from_any,
 )
-
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Real
 from ..tools import Is, NotExpectedError
@@ -150,7 +149,7 @@ class GeometricIntersectionCurves:
         for curve in self.curves:
             knots = curve.parametrize().knots
             self.__all_knots[id(curve)] = set(knots)
-            self.__all_subsets[id(curve)] = Empty()
+            self.__all_subsets[id(curve)] = EmptyR1()
         for i, j in self.pairs:
             self.__evaluate_two(self.curves[i], self.curves[j])
 
@@ -159,7 +158,7 @@ class GeometricIntersectionCurves:
         Private function two compute the intersection between two curves
         """
         subseta, subsetb = self.__compute_two(curvea, curveb)
-        if Is.instance(subseta, Empty):
+        if Is.instance(subseta, EmptyR1):
             return
         self.all_subsets[id(curvea)] |= subseta
         self.all_knots[id(curvea)] |= set(extract_knots(subseta))
@@ -170,10 +169,10 @@ class GeometricIntersectionCurves:
         self, curvea: IGeometricCurve, curveb: IGeometricCurve
     ) -> Tuple[SubSetR1, SubSetR1]:
         if curvea.box() & curveb.box() is None:
-            return Empty(), Empty()
+            return EmptyR1(), EmptyR1()
         if id(curvea) == id(curveb):  # Check if curves are equal
             curvea = curvea.parametrize()
-            subset = Interval(curvea.knots[0], curvea.knots[-1])
+            subset = IntervalR1(curvea.knots[0], curvea.knots[-1])
             return subset, subset
         return curve_and_curve(curvea, curveb)
 
@@ -191,7 +190,7 @@ class GeometricIntersectionCurves:
         return GeometricIntersectionCurves(newcurves, newparis)
 
     def __bool__(self):
-        return all(v == Empty() for v in self.all_subsets.values())
+        return all(v == EmptyR1() for v in self.all_subsets.values())
 
 
 def curve_and_curve(
@@ -226,9 +225,9 @@ def segment_and_segment(
     assert Is.instance(curvea, Segment)
     assert Is.instance(curveb, Segment)
     if curvea.box() & curveb.box() is None:
-        return Empty(), Empty()
+        return EmptyR1(), EmptyR1()
     if curvea == curveb:
-        return Interval(0, 1), Interval(0, 1)
+        return IntervalR1(0, 1), IntervalR1(0, 1)
     if segment_is_linear(curvea) and segment_is_linear(curveb):
         return IntersectionSegments.lines(curvea, curveb)
     nptsa = max(curvea.xfunc.degree, curvea.yfunc.degree) + 4
@@ -270,7 +269,7 @@ class IntersectionSegments:
     @staticmethod
     def lines(curvea: Segment, curveb: Segment) -> Tuple[SubSetR1, SubSetR1]:
         """Finds the intersection of two line segments"""
-        empty = Empty()
+        empty = EmptyR1()
         A0, A1 = curvea(0), curvea(1)
         B0, B1 = curveb(0), curveb(1)
         dA = A1 - A0
@@ -284,7 +283,7 @@ class IntersectionSegments:
             u0 = cross(B0mA0, dA) / dAxdB
             if u0 < 0 or 1 < u0:
                 return empty, empty
-            return SingleValue(t0), SingleValue(u0)
+            return SingleR1(t0), SingleR1(u0)
         # Lines are parallel
         if cross(dA, B0mA0) != 0:
             return empty, empty  # Parallel, but not colinear
@@ -307,8 +306,8 @@ class IntersectionSegments:
         u0 = min(max(0, u0), 1)
         u1 = min(max(0, u1), 1)
         if t0 == t1 or u0 == u1:
-            return SingleValue(t0), SingleValue(u1)
-        return Interval(t0, t1), Interval(u0, u1)
+            return SingleR1(t0), SingleR1(u1)
+        return IntervalR1(t0, t1), IntervalR1(u0, u1)
 
     # pylint: disable=too-many-locals
     @staticmethod
@@ -469,7 +468,7 @@ def intersect_piecewises(
     assert Is.piecewise(curvea)
     assert Is.piecewise(curveb)
 
-    subseta, subsetb = Empty(), Empty()
+    subseta, subsetb = EmptyR1(), EmptyR1()
     for ai, sbezier in enumerate(curvea):
         for bj, obezier in enumerate(curveb):
             suba, subb = segment_and_segment(sbezier, obezier)

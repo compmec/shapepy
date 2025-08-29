@@ -3,11 +3,11 @@ import random
 from fractions import Fraction
 
 import pytest
-from rbool import Empty, Whole
 
 from shapepy.analytic.bezier import Bezier
 from shapepy.analytic.polynomial import Polynomial
 from shapepy.analytic.tools import find_minimum, find_roots, where_minimum
+from shapepy.rbool import EmptyR1, WholeR1
 from shapepy.scalar.reals import Math
 
 
@@ -26,11 +26,11 @@ def test_begin():
 @pytest.mark.dependency(depends=["test_begin"])
 def test_polynomial_roots():
     poly = Polynomial([0])
-    assert find_roots(poly) == Whole()
+    assert find_roots(poly) == WholeR1()
     for const in range(-10, 11):
         if const != 0:
             poly = Polynomial([const])
-            assert find_roots(poly) == Empty()
+            assert find_roots(poly) == EmptyR1()
 
     ntests = 100
     x = Polynomial([0, 1])
@@ -47,7 +47,7 @@ def test_polynomial_roots():
         assert find_roots((x - x0) * (x - x1)) == {x0, x1}
 
     poly = Polynomial([1, 0, 1])  # p(x) = 1 + x^2
-    assert find_roots(poly) == Empty()
+    assert find_roots(poly) == EmptyR1()
 
     # Finds the roots of p(x) = a * x^2 + b * x + c
     for _ in range(ntests):
@@ -57,7 +57,7 @@ def test_polynomial_roots():
         poly = a * x * x + b * x + c
         delta = b * b - 4 * a * c
         if delta < 0:
-            assert find_roots(poly) == Empty()
+            assert find_roots(poly) == EmptyR1()
         elif delta == 0:
             assert find_roots(poly) == {-b / 2 * a}
         else:
@@ -70,7 +70,7 @@ def test_polynomial_roots():
 @pytest.mark.dependency(depends=["test_begin"])
 def test_bezier_roots():
     bezier = Bezier([0])
-    assert find_roots(bezier) == Whole()
+    assert find_roots(bezier) == WholeR1()
     assert find_roots(bezier, [0, 1]) == [0, 1]
 
     bezier = Bezier([1, -1])
@@ -83,7 +83,7 @@ def test_bezier_roots():
 def test_where_minimal_polynomial():
     for const in range(-10, 11):
         poly = Polynomial([const])
-        assert where_minimum(poly) == Whole()
+        assert where_minimum(poly) == WholeR1()
 
     x = Polynomial([0, 1])
     ntests = 100
@@ -91,8 +91,8 @@ def test_where_minimal_polynomial():
     for _ in range(ntests):
         a = random.randint(1, 10)
         b = random.randint(-10, 10)
-        assert where_minimum(a * x + b) == Empty()
-        assert where_minimum(-a * x + b) == Empty()
+        assert where_minimum(a * x + b) == EmptyR1()
+        assert where_minimum(-a * x + b) == EmptyR1()
 
     # Finds the minimum of p(x) = a * x + b, in a closed interval
     for _ in range(ntests):
@@ -110,8 +110,8 @@ def test_where_minimal_polynomial():
 
     # Finds minimum of f(x) = (x + 1) * x * (x - 1)
     poly = x * (x - 1) * (x + 1)
-    assert where_minimum(poly) == Empty()
-    assert where_minimum(-poly) == Empty()
+    assert where_minimum(poly) == EmptyR1()
+    assert where_minimum(-poly) == EmptyR1()
 
     # Finds minimum of f(x) = (x + 2) * (x + 1) * (x - 1) * (x - 2)
     poly = (x + 2) * (x + 1) * (x - 1) * (x - 2)
