@@ -2,7 +2,7 @@
 Contains methods to concatenate curves
 """
 
-from typing import Iterable, Iterator, Union
+from typing import Iterable, Union
 
 from ..analytic import Bezier
 from ..tools import Is, NotExpectedError
