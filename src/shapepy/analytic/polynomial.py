@@ -7,9 +7,8 @@ from __future__ import annotations
 from numbers import Real
 from typing import Iterable, List, Union
 
-from rbool import move, scale
-
 from ..loggers import debug
+from ..rbool import scale, shift
 from ..scalar.reals import Math
 from ..tools import Is, To, vectorize
 from .base import BaseAnalytic, IAnalytic
@@ -177,7 +176,7 @@ class Polynomial(BaseAnalytic):
                 if (i + j) % 2:
                     value *= -1
                 newcoefs[j] += coef * value
-        return Polynomial(newcoefs, move(self.domain, amount))
+        return Polynomial(newcoefs, shift(self.domain, amount))
 
     @debug("shapepy.analytic.polynomial")
     def integrate(self, times: int = 1) -> Polynomial:

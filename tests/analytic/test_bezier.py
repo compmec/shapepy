@@ -1,8 +1,5 @@
-from fractions import Fraction as frac
-
 import numpy as np
 import pytest
-from rbool import Interval
 
 from shapepy.analytic.bezier import (
     Bezier,
@@ -73,7 +70,7 @@ def test_matrices():
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_degree", "test_matrices"])
 def test_compare():
-    domain = Interval(0, 1)
+    domain = [0, 1]
     bezier = Bezier([1], domain)
     assert bezier == Polynomial([1], domain)
     assert bezier == 1
