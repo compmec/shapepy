@@ -11,7 +11,7 @@ from typing import Dict, Iterable, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
 
-from ..geometry.intersection import GeometricIntersectionCurves
+from ..geometry.segment import Segment
 from ..geometry.unparam import USegment
 from ..loggers import debug, get_logger
 from ..tools import CyclicContainer, Is, NotExpectedError
@@ -247,32 +247,15 @@ class Boolalg:
 
 class FollowPath:
     """
-    Class responsible to compute the final jordan curve
-    result from boolean operation between two simple shapes
-
+    Creates a graph from a jordan curve
     """
+    piece = jordan.piecewise
+    edges = []
+    for knota, knotb in zip(piece.knots, piece.knots[1:]):
+        path = SinglePath(piece, knota, knotb)
+        edges.append(Edge({path}))
+    return Graph(edges)
 
-    @staticmethod
-    def split_on_intersection(
-        all_group_jordans: Iterable[Iterable[JordanCurve]],
-    ):
-        """
-        Find the intersections between two jordan curves and call split on the
-        nodes which intersects
-        """
-        intersection = GeometricIntersectionCurves([])
-        all_group_jordans = tuple(map(tuple, all_group_jordans))
-        for i, jordansi in enumerate(all_group_jordans):
-            for j in range(i + 1, len(all_group_jordans)):
-                jordansj = all_group_jordans[j]
-                for jordana in jordansi:
-                    for jordanb in jordansj:
-                        intersection |= jordana.piecewise & jordanb.piecewise
-        intersection.evaluate()
-        for jordans in all_group_jordans:
-            for jordan in jordans:
-                split_knots = intersection.all_knots[id(jordan.piecewise)]
-                jordan.piecewise.split(split_knots)
 
     @staticmethod
     def pursue_path(
@@ -458,35 +441,62 @@ def shape2graph(
     return graph
 
 
+def remove_densities(graph: Graph, subsets: Iterable[SubSetR2], density: Real):
+    """Removes the edges from the graph which density"""
+    for subset in subsets:
+        for edge in tuple(graph.edges):
+            mid_point = edge.pointm
+            if subset.density(mid_point) == density:
+                graph.remove_edge(edge)
+
+
 def extract_unique_paths(graph: Graph) -> Iterable[CyclicContainer[Edge]]:
     """Reads the graphs and extracts the unique paths"""
     logger = get_logger("shapepy.bool2d.boolean")
     logger.debug("Extracting unique paths from the graph")
-    logger.debug(str(graph))
+    # logger.debug(str(graph))
     edges = tuple(graph.edges)
     index = 0
-    while len(edges) > 0:
+    while index < len(edges):
         extracted_edges = []
-        start_nodes = tuple(e.nodea for e in edges)
-        start_node = start_nodes[index]
+        start_node = edges[index].nodea
         node = start_node
         while True:
             valid_edges = tuple(e for e in edges if e.nodea == node)
             if len(valid_edges) != 1:
-                logger.error(f"Invalid is graph starting at node:\n{node}")
-                logger.error(f"Graph:\n{graph}")
-                raise ValueError
+                break
             extracted_edges.append(valid_edges[0])
             node = valid_edges[0].nodeb
-            if node == start_node:  # Closed cycle
+            if id(node) == id(start_node):  # Closed cycle
                 break
+        if id(node) != id(start_node):  # Not unique path
+            index += 1
+            continue
         for edge in extracted_edges:
             graph.remove_edge(edge)
-        logger.debug(
-            "Container:"
-            + "\n".join(
-                f"{i}: {edge}" for i, edge in enumerate(extracted_edges)
-            )
-        )
         yield CyclicContainer(extracted_edges)
         edges = tuple(graph.edges)
+
+
+@debug("shapepy.bool2d.boolean")
+def edges_to_jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
+    """Converts the given connected edges into a Jordan Curve"""
+    logger = get_logger("shapepy.bool2d.boolean")
+    logger.info("Passed here")
+    if len(edges) == 1:
+        path = tuple(tuple(edges)[0].singles)[0]
+        return JordanCurve(path.curve)
+    usegments = []
+    for edge in tuple(edges):
+        path = tuple(edge.singles)[0]
+        interval = [path.knota, path.knotb]
+        logger.info(f"interval = {interval}")
+        subcurve = path.curve.section(interval)
+        if Is.instance(subcurve, Segment):
+            usegments.append(USegment(subcurve))
+        else:
+            usegments += list(map(USegment, subcurve))
+    logger.info(f"Returned: {len(usegments)}")
+    for i, useg in enumerate(usegments):
+        logger.info(f"    {i}: {useg.parametrize()}")
+    return JordanCurve(usegments)

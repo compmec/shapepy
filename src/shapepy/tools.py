@@ -135,6 +135,10 @@ class NotExpectedError(Exception):
     """Raised when arrives in a section that were not expected"""
 
 
+class NotContinousError(Exception):
+    """Raised when a curve is not continuous"""
+
+
 T = TypeVar("T")
 
 

@@ -4,13 +4,13 @@ Defines the piecewise curve class
 
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Iterable, Tuple, Union
+from typing import Iterable, List, Tuple, Union
 
-from ..loggers import debug
+from ..loggers import debug, get_logger
+from ..rbool import IntervalR1, infimum, supremum
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
-from ..tools import Is, To, vectorize
+from ..tools import Is, NotContinousError, To, vectorize
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D
@@ -36,9 +36,9 @@ class PiecewiseCurve(IParametrizedCurve):
             knots = tuple(sorted(map(To.finite, knots)))
         for segi, segj in zip(segments, segments[1:]):
             if segi(1) != segj(0):
-                raise ValueError("Not Continuous curve")
-        self.__segments = segments
-        self.__knots = knots
+                raise NotContinousError(f"{segi(1)} != {segj(0)}")
+        self.__segments: Tuple[Segment, ...] = segments
+        self.__knots: Tuple[Segment, ...] = knots
 
     def __str__(self):
         msgs = []
@@ -113,38 +113,6 @@ class PiecewiseCurve(IParametrizedCurve):
             box |= bezier.box()
         return box
 
-    def split(self, nodes: Iterable[Real]) -> None:
-        """
-        Creates an opening in the piecewise curve
-
-        Example
-        >>> piecewise.knots
-        (0, 1, 2, 3)
-        >>> piecewise.snap([0.5, 1.2])
-        >>> piecewise.knots
-        (0, 0.5, 1, 1.2, 2, 3)
-        """
-        nodes = set(map(To.finite, nodes)) - set(self.knots)
-        spansnodes = defaultdict(set)
-        for node in nodes:
-            span = self.span(node)
-            if span is not None:
-                spansnodes[span].add(node)
-        if len(spansnodes) == 0:
-            return
-        newsegments = []
-        for i, segmenti in enumerate(self):
-            if i not in spansnodes:
-                newsegments.append(segmenti)
-                continue
-            knota, knotb = self.knots[i], self.knots[i + 1]
-            unit_nodes = (
-                (knot - knota) / (knotb - knota) for knot in spansnodes[i]
-            )
-            newsegments += list(segmenti.split(unit_nodes))
-        self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
-        self.__segments = tuple(newsegments)
-
     @vectorize(1, 0)
     def __call__(self, node: float, derivate: int = 0) -> Point2D:
         index = self.span(node)
@@ -172,6 +140,37 @@ class PiecewiseCurve(IParametrizedCurve):
         angle = To.angle(angle)
         self.__segments = tuple(seg.rotate(angle) for seg in self)
         return self
+
+    @debug("shapepy.geometry.piecewise")
+    def section(self, subset: IntervalR1) -> PiecewiseCurve:
+        logger = get_logger("shapepy.geometry.piecewise")
+        segments = tuple(self.__segments)
+        knots = tuple(self.knots)
+        if subset == [self.knots[0], self.knots[-1]]:
+            return self
+        knota, knotb = infimum(subset), supremum(subset)
+        spana, spanb = self.span(knota), self.span(knotb)
+        logger.info(f"current knots = {knots}")
+        logger.info(f"knota, knotb = {[knota, knotb]}")
+        logger.info(f"spana, spanb = {[spana, spanb]}")
+        if spana == spanb:
+            return segments[spana].section([knota, knotb])
+        newsegs: List[Segment] = []
+        if knota != knots[spana]:
+            interval = [knota, knots[spana]]
+            segment = segments[spana].section(interval)
+            newsegs.append(segment)
+        else:
+            newsegs.append(segments[spana])
+        newsegs += list(segments[spana + 1 : spanb])
+        if knotb != knots[spanb]:
+            interval = [knots[spanb], knotb]
+            segment = segments[spanb].section(interval)
+            newsegs.append(segment)
+        newknots = sorted({knota, knotb} | set(knots[spana:spanb]))
+        logger.info(f"new knots = {newknots}")
+        logger.info(f"len(news) = {len(newsegs)}")
+        return PiecewiseCurve(newsegs, newknots)
 
 
 def is_piecewise(obj: object) -> bool:

@@ -11,7 +11,6 @@ from typing import Dict, Iterable, Iterator, Set, Tuple
 
 from ..geometry.base import IParametrizedCurve
 from ..geometry.intersection import GeometricIntersectionCurves
-from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
 from ..loggers import get_logger
 from ..scalar.reals import Real
@@ -21,6 +20,12 @@ GAP = "    "
 
 
 def get_single_node(curve: IParametrizedCurve, parameter: Real) -> SingleNode:
+    """Instantiate a new SingleNode, made by the pair: (curve, parameter)
+
+    If given pair (curve, parameter) was already created, returns the
+    created instance.
+    """
+
     if not Is.instance(curve, IParametrizedCurve):
         raise TypeError(f"Invalid curve: {type(curve)}")
     if not Is.real(parameter):
@@ -31,18 +36,6 @@ def get_single_node(curve: IParametrizedCurve, parameter: Real) -> SingleNode:
     instance = SingleNode(curve, parameter)
     SingleNode.instances[hashval] = instance
     return instance
-
-
-class Containers:
-
-    curves: Dict[int, IParametrizedCurve] = OrderedDict()
-
-    @staticmethod
-    def index_curve(curve: IParametrizedCurve) -> int:
-        for i, key in enumerate(Containers.curves):
-            if id(curve) == key:
-                return i
-        raise ValueError("Could not find requested curve")
 
 
 class SingleNode:
@@ -162,6 +155,9 @@ class GroupNodes(Iterable[Node]):
 
     def __iter__(self) -> Iterator[Node]:
         yield from self.__nodes
+
+    def __len__(self) -> int:
+        return len(self.__nodes)
 
     def __str__(self):
         dictnodes = {n.label: n for n in self}
@@ -287,6 +283,18 @@ class SinglePath:
         return self.curve & other.curve
 
 
+class Containers:
+
+    curves: Dict[int, IParametrizedCurve] = OrderedDict()
+
+    @staticmethod
+    def index_curve(curve: IParametrizedCurve) -> int:
+        for i, key in enumerate(Containers.curves):
+            if id(curve) == key:
+                return i
+        raise ValueError("Could not find requested curve")
+
+
 class Edge:
     """
     The edge that defines
@@ -297,6 +305,8 @@ class Edge:
         if len(paths) == 0:
             raise ValueError
         self.__singles: Set[SinglePath] = set(paths)
+        if len(self.__singles) != 1:
+            raise ValueError
         self.__nodea = get_node(
             {get_single_node(p.curve, p.knota) for p in paths}
         )
@@ -354,10 +364,14 @@ class Edge:
         graph = Graph()
         if not inters:
             graph.edges |= {self, other}
-        else:
-            logger = get_logger("shapepy.bool2d.console")
-            logger.info(str(inters))
-            raise NotImplementedError("Shouldn't pass here yet")
+            return graph
+        logger = get_logger("shapepy.bool2d.console")
+        logger.info(str(inters))
+        for curve in inters.curves:
+            knots = inters.all_knots[id(curve)]
+            for knota, knotb in zip(knots, knots[1:]):
+                path = single_path(curve, knota, knotb)
+                graph.add_path(path)
         return graph
 
     def __ior__(self, other: Edge) -> Edge:
@@ -390,6 +404,9 @@ class GroupEdges(Iterable[Edge]):
 
     def __iter__(self) -> Iterator[Edge]:
         yield from self.__edges
+
+    def __len__(self) -> int:
+        return len(self.__edges)
 
     def __str__(self):
         return "\n".join(f"E{i}: {edge}" for i, edge in enumerate(self))
@@ -455,7 +472,7 @@ class Graph:
     @edges.setter
     def edges(self, edges: GroupEdges):
         if not Is.instance(edges, GroupEdges):
-            raise TypeError
+            edges = GroupEdges(edges)
         self.__edges = edges
 
     def __and__(self, other: Graph) -> Graph:
@@ -508,18 +525,6 @@ class Graph:
         return self.edges.add_path(path)
 
 
-def jordan2graph(jordan: JordanCurve) -> Graph:
-    """
-    Creates a graph from a jordan curve
-    """
-    piece = jordan.piecewise
-    graph = Graph()
-    for knota, knotb in zip(piece.knots, piece.knots[1:]):
-        path = SinglePath(piece, knota, knotb)
-        graph.add_path(path)
-    return graph
-
-
 def intersect_graphs(graphs: Iterable[Graph]) -> Graph:
     """
     Computes the intersection of many graphs
@@ -546,3 +551,4 @@ def graph_manager():
         SingleNode.instances.clear()
         Node.instances.clear()
         SinglePath.instances.clear()
+        Containers.curves.clear()

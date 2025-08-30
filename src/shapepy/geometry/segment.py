@@ -18,7 +18,7 @@ from typing import Iterable, Optional, Tuple, Union
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
 from ..loggers import debug
-from ..rbool import IntervalR1, from_any
+from ..rbool import IntervalR1, from_any, infimum, supremum, EmptyR1
 from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
@@ -149,18 +149,7 @@ class Segment(IParametrizedCurve):
         """
         nodes = (n for n in nodes if self.knots[0] <= n <= self.knots[-1])
         nodes = sorted(set(nodes) | set(self.knots))
-        return tuple(self.extract([ka, kb]) for ka, kb in pairs(nodes))
-
-    def extract(self, interval: IntervalR1) -> Segment:
-        """Extracts a subsegment from the given segment"""
-        interval = from_any(interval)
-        if not Is.instance(interval, IntervalR1):
-            raise TypeError
-        knota, knotb = interval[0], interval[1]
-        denom = 1 / (knotb - knota)
-        nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
-        nyfunc = copy(self.yfunc).shift(-knota).scale(denom)
-        return Segment(nxfunc, nyfunc)
+        return tuple(self.section([ka, kb]) for ka, kb in pairs(nodes))
 
     def move(self, vector: Point2D) -> Segment:
         vector = To.point(vector)
@@ -180,6 +169,19 @@ class Segment(IParametrizedCurve):
         self.__xfunc = xfunc * cos - yfunc * sin
         self.__yfunc = xfunc * sin + yfunc * cos
         return self
+
+    def section(self, subset: IntervalR1) -> Segment:
+        subset = from_any(subset) & [0, 1]
+        if subset is EmptyR1():
+            raise TypeError(f"Cannot extract with interval {subset}")
+        if subset == [0, 1]:
+            return self
+        knota = infimum(subset)
+        knotb = supremum(subset)
+        denom = 1 / (knotb - knota)
+        nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
+        nyfunc = copy(self.yfunc).shift(-knota).scale(denom)
+        return Segment(nxfunc, nyfunc)
 
 
 @debug("shapepy.geometry.segment")

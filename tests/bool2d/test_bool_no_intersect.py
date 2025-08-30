@@ -8,6 +8,7 @@ import pytest
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape
+from shapepy.loggers import enable_logger
 
 
 @pytest.mark.order(41)
@@ -48,7 +49,8 @@ class TestTwoCenteredSquares:
 
         assert square1 | square2 == square2
         assert square2 | square1 == square2
-        assert square1 | (~square2) == DisjointShape([square1, ~square2])
+        with enable_logger("shapepy.bool2d", level="DEBUG"):
+            assert square1 | (~square2) == DisjointShape([square1, ~square2])
         assert square2 | (~square1) is WholeShape()
         assert (~square1) | square2 is WholeShape()
         assert (~square2) | square1 == DisjointShape([square1, ~square2])
@@ -75,7 +77,13 @@ class TestTwoCenteredSquares:
 
     @pytest.mark.order(41)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestTwoCenteredSquares::test_begin",
+            "TestTwoCenteredSquares::test_or"
+            "TestTwoCenteredSquares::test_and",
+        ]
+    )
     def test_sub(self):
         square1 = Primitive.square(side=1)
         square2 = Primitive.square(side=2)
@@ -178,7 +186,13 @@ class TestTwoDisjointSquares:
 
     @pytest.mark.order(41)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestTwoDisjointSquares::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestTwoDisjointSquares::test_begin",
+            "TestTwoDisjointSquares::test_or",
+            "TestTwoDisjointSquares::test_and",
+        ]
+    )
     def test_sub(self):
         left = Primitive.square(side=2, center=(-2, 0))
         right = Primitive.square(side=2, center=(2, 0))
@@ -292,7 +306,13 @@ class TestTwoDisjHollowSquares:
 
     @pytest.mark.order(41)
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestTwoDisjHollowSquares::test_begin",
+            "TestTwoDisjHollowSquares::test_or",
+            "TestTwoDisjHollowSquares::test_and",
+        ]
+    )
     def test_sub(self):
         left_big = Primitive.square(side=2, center=(-2, 0))
         left_sma = Primitive.square(side=1, center=(-2, 0))
