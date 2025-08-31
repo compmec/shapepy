@@ -18,7 +18,7 @@ from typing import Iterable, Optional, Tuple, Union
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
 from ..loggers import debug
-from ..rbool import IntervalR1, from_any, infimum, supremum, EmptyR1
+from ..rbool import EmptyR1, IntervalR1, from_any, infimum, supremum
 from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
@@ -133,6 +133,7 @@ class Segment(IParametrizedCurve):
     def __deepcopy__(self, memo) -> Segment:
         return Segment(copy(self.xfunc), copy(self.yfunc))
 
+    @debug("shapepy.geometry.segment")
     def invert(self) -> Segment:
         """
         Inverts the direction of the curve.
@@ -143,6 +144,7 @@ class Segment(IParametrizedCurve):
         self.__yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
         return self
 
+    @debug("shapepy.geometry.segment")
     def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
         """
         Splits the curve into more segments
@@ -151,17 +153,20 @@ class Segment(IParametrizedCurve):
         nodes = sorted(set(nodes) | set(self.knots))
         return tuple(self.section([ka, kb]) for ka, kb in pairs(nodes))
 
+    @debug("shapepy.geometry.segment")
     def move(self, vector: Point2D) -> Segment:
         vector = To.point(vector)
         self.__xfunc += vector.xcoord
         self.__yfunc += vector.ycoord
         return self
 
+    @debug("shapepy.geometry.segment")
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
         self.__xfunc *= amount if Is.real(amount) else amount[0]
         self.__yfunc *= amount if Is.real(amount) else amount[1]
         return self
 
+    @debug("shapepy.geometry.segment")
     def rotate(self, angle: Angle) -> Segment:
         angle = To.angle(angle)
         cos, sin = angle.cos(), angle.sin()
@@ -170,8 +175,11 @@ class Segment(IParametrizedCurve):
         self.__yfunc = xfunc * sin + yfunc * cos
         return self
 
+    @debug("shapepy.geometry.segment")
     def section(self, subset: IntervalR1) -> Segment:
-        subset = from_any(subset) & [0, 1]
+        subset = from_any(subset)
+        if not (0 <= subset[0] < subset[1] <= 1):
+            raise ValueError(f"Invalid {subset}")
         if subset is EmptyR1():
             raise TypeError(f"Cannot extract with interval {subset}")
         if subset == [0, 1]:

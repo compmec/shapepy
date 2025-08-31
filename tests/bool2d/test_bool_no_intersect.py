@@ -80,7 +80,7 @@ class TestTwoCenteredSquares:
     @pytest.mark.dependency(
         depends=[
             "TestTwoCenteredSquares::test_begin",
-            "TestTwoCenteredSquares::test_or"
+            "TestTwoCenteredSquares::test_or",
             "TestTwoCenteredSquares::test_and",
         ]
     )
@@ -102,7 +102,14 @@ class TestTwoCenteredSquares:
     @pytest.mark.order(41)
     @pytest.mark.skip()
     @pytest.mark.timeout(40)
-    @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
+    @pytest.mark.dependency(
+        depends=[
+            "TestTwoCenteredSquares::test_begin",
+            "TestTwoCenteredSquares::test_or",
+            "TestTwoCenteredSquares::test_and",
+            "TestTwoCenteredSquares::test_sub",
+        ]
+    )
     def test_xor(self):
         square1 = Primitive.square(side=1)
         square2 = Primitive.square(side=2)

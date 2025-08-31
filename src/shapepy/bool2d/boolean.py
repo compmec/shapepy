@@ -454,13 +454,18 @@ def extract_unique_paths(graph: Graph) -> Iterable[CyclicContainer[Edge]]:
     """Reads the graphs and extracts the unique paths"""
     logger = get_logger("shapepy.bool2d.boolean")
     logger.debug("Extracting unique paths from the graph")
-    # logger.debug(str(graph))
+    logger.debug(str(graph))
     edges = tuple(graph.edges)
     index = 0
+    security = 0
     while index < len(edges):
         extracted_edges = []
         start_node = edges[index].nodea
         node = start_node
+        security += 1
+        if security > 10:
+            raise ValueError
+        logger.debug(f"1) {start_node}")
         while True:
             valid_edges = tuple(e for e in edges if e.nodea == node)
             if len(valid_edges) != 1:
@@ -469,7 +474,11 @@ def extract_unique_paths(graph: Graph) -> Iterable[CyclicContainer[Edge]]:
             node = valid_edges[0].nodeb
             if id(node) == id(start_node):  # Closed cycle
                 break
-        if id(node) != id(start_node):  # Not unique path
+            logger.debug("2)")
+        logger.debug(f"extracted edges = {len(extracted_edges)}")
+        if len(extracted_edges) == 0 or id(node) != id(
+            start_node
+        ):  # Not unique path
             index += 1
             continue
         for edge in extracted_edges:
@@ -481,8 +490,8 @@ def extract_unique_paths(graph: Graph) -> Iterable[CyclicContainer[Edge]]:
 @debug("shapepy.bool2d.boolean")
 def edges_to_jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
     """Converts the given connected edges into a Jordan Curve"""
-    logger = get_logger("shapepy.bool2d.boolean")
-    logger.info("Passed here")
+    # logger = get_logger("shapepy.bool2d.boolean")
+    # logger.info("Passed here")
     if len(edges) == 1:
         path = tuple(tuple(edges)[0].singles)[0]
         return JordanCurve(path.curve)
@@ -490,13 +499,13 @@ def edges_to_jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
     for edge in tuple(edges):
         path = tuple(edge.singles)[0]
         interval = [path.knota, path.knotb]
-        logger.info(f"interval = {interval}")
+        # logger.info(f"interval = {interval}")
         subcurve = path.curve.section(interval)
         if Is.instance(subcurve, Segment):
             usegments.append(USegment(subcurve))
         else:
             usegments += list(map(USegment, subcurve))
-    logger.info(f"Returned: {len(usegments)}")
-    for i, useg in enumerate(usegments):
-        logger.info(f"    {i}: {useg.parametrize()}")
+    # logger.info(f"Returned: {len(usegments)}")
+    # for i, useg in enumerate(usegments):
+    #     logger.info(f"    {i}: {useg.parametrize()}")
     return JordanCurve(usegments)

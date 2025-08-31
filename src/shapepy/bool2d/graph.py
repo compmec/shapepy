@@ -365,10 +365,10 @@ class Edge:
         if not inters:
             graph.edges |= {self, other}
             return graph
-        logger = get_logger("shapepy.bool2d.console")
-        logger.info(str(inters))
+        # logger = get_logger("shapepy.bool2d.console")
+        # logger.info(str(inters))
         for curve in inters.curves:
-            knots = inters.all_knots[id(curve)]
+            knots = sorted(inters.all_knots[id(curve)])
             for knota, knotb in zip(knots, knots[1:]):
                 path = single_path(curve, knota, knotb)
                 graph.add_path(path)

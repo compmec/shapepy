@@ -7,7 +7,7 @@ from __future__ import annotations
 from typing import Iterable, List, Tuple, Union
 
 from ..loggers import debug, get_logger
-from ..rbool import IntervalR1, infimum, supremum
+from ..rbool import IntervalR1, from_any, infimum, supremum
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, NotContinousError, To, vectorize
@@ -34,6 +34,8 @@ class PiecewiseCurve(IParametrizedCurve):
             knots = tuple(map(To.rational, range(len(segments) + 1)))
         else:
             knots = tuple(sorted(map(To.finite, knots)))
+            if len(knots) != len(segments) + 1:
+                raise ValueError("Invalid size of knots")
         for segi, segj in zip(segments, segments[1:]):
             if segi(1) != segj(0):
                 raise NotContinousError(f"{segi(1)} != {segj(0)}")
@@ -47,6 +49,17 @@ class PiecewiseCurve(IParametrizedCurve):
             msg = f"{interval}: {segmenti}"
             msgs.append(msg)
         return r"{" + ", ".join(msgs) + r"}"
+
+    def __repr__(self):
+        return str(self)
+
+    def __eq__(self, other: PiecewiseCurve):
+        return (
+            Is.instance(other, PiecewiseCurve)
+            and self.length == other.length
+            and self.knots == other.knots
+            and tuple(self) == tuple(other)
+        )
 
     @property
     def knots(self) -> Tuple[Real]:
@@ -127,15 +140,18 @@ class PiecewiseCurve(IParametrizedCurve):
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
 
+    @debug("shapepy.geometry.piecewise")
     def move(self, vector: Point2D) -> PiecewiseCurve:
         vector = To.point(vector)
         self.__segments = tuple(seg.move(vector) for seg in self)
         return self
 
+    @debug("shapepy.geometry.piecewise")
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
         self.__segments = tuple(seg.scale(amount) for seg in self)
         return self
 
+    @debug("shapepy.geometry.piecewise")
     def rotate(self, angle: Angle) -> Segment:
         angle = To.angle(angle)
         self.__segments = tuple(seg.rotate(angle) for seg in self)
@@ -143,33 +159,47 @@ class PiecewiseCurve(IParametrizedCurve):
 
     @debug("shapepy.geometry.piecewise")
     def section(self, subset: IntervalR1) -> PiecewiseCurve:
+        subset = from_any(subset)
+        knots = tuple(self.knots)
+        if not (knots[0] <= subset[0] < subset[1] <= knots[-1]):
+            raise ValueError(f"Invalid {subset} not in {self.knots}")
         logger = get_logger("shapepy.geometry.piecewise")
         segments = tuple(self.__segments)
-        knots = tuple(self.knots)
         if subset == [self.knots[0], self.knots[-1]]:
             return self
         knota, knotb = infimum(subset), supremum(subset)
+        if knota == knotb:
+            raise ValueError(f"Invalid {subset}")
         spana, spanb = self.span(knota), self.span(knotb)
-        logger.info(f"current knots = {knots}")
-        logger.info(f"knota, knotb = {[knota, knotb]}")
-        logger.info(f"spana, spanb = {[spana, spanb]}")
+        if knota == knots[spana] and knotb == knots[spanb]:
+            segs = segments[spana:spanb]
+            return segs[0] if len(segs) == 1 else PiecewiseCurve(segs)
         if spana == spanb:
-            return segments[spana].section([knota, knotb])
+            denom = 1 / (knots[spana + 1] - knots[spana])
+            uknota = denom * (knota - knots[spana])
+            uknotb = denom * (knotb - knots[spana])
+            interval = [uknota, uknotb]
+            segment = segments[spana]
+            return segment.section(interval)
+        if spanb == spana + 1 and knotb == knots[spanb]:
+            denom = 1 / (knots[spana + 1] - knots[spana])
+            uknota = denom * (knota - knots[spana])
+            return segments[spana].section([uknota, 1])
         newsegs: List[Segment] = []
-        if knota != knots[spana]:
-            interval = [knota, knots[spana]]
+        if knots[spana] < knota:
+            denom = 1 / (knots[spana + 1] - knots[spana])
+            interval = [denom * (knota - knots[spana]), 1]
             segment = segments[spana].section(interval)
             newsegs.append(segment)
         else:
             newsegs.append(segments[spana])
         newsegs += list(segments[spana + 1 : spanb])
         if knotb != knots[spanb]:
-            interval = [knots[spanb], knotb]
+            denom = 1 / (knots[spanb + 1] - knots[spanb])
+            interval = [0, denom * (knotb - knots[spanb])]
             segment = segments[spanb].section(interval)
             newsegs.append(segment)
-        newknots = sorted({knota, knotb} | set(knots[spana:spanb]))
-        logger.info(f"new knots = {newknots}")
-        logger.info(f"len(news) = {len(newsegs)}")
+        newknots = sorted({knota, knotb} | set(knots[spana + 1 : spanb]))
         return PiecewiseCurve(newsegs, newknots)
 
 
