@@ -5,7 +5,7 @@ import pytest
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape
 from shapepy.geometry.box import Box
-from shapepy.scalar.angle import Angle
+from shapepy.scalar.angle import degrees
 
 
 @pytest.mark.order(24)
@@ -46,7 +46,7 @@ def test_rotate_simple():
     square = Primitive.square(2)
     assert square.box() == Box((-1, -1), (1, 1))
 
-    angle = Angle.degrees(90)
+    angle = degrees(90)
     square.rotate(angle)
     assert square.box() == Box((-1, -1), (1, 1))
 
@@ -83,7 +83,7 @@ def test_rotate_connected():
     connected = ConnectedShape([big_square, ~small_square])
     assert connected.box() == Box((-2, -2), (2, 2))
 
-    angle = Angle.degrees(90)
+    angle = degrees(90)
     connected.rotate(angle)
     assert connected.box() == Box((-2, -2), (2, 2))
 
@@ -120,7 +120,7 @@ def test_rotate_disjoint():
     disjoint = DisjointShape([left_square, right_square])
     assert disjoint.box() == Box((-3, -1), (3, 1))
 
-    angle = Angle.degrees(90)
+    angle = degrees(90)
     disjoint.rotate(angle)
     assert disjoint.box() == Box((-1, -3), (1, 3))
 

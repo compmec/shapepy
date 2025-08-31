@@ -1,6 +1,5 @@
 import random
 
-import numpy as np
 import pytest
 
 from shapepy.analytic.polynomial import Polynomial

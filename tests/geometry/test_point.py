@@ -7,7 +7,7 @@ from fractions import Fraction as frac
 import pytest
 
 from shapepy.geometry.point import cartesian, cross, inner, polar
-from shapepy.scalar.angle import Angle
+from shapepy.scalar.angle import degrees
 
 
 @pytest.mark.order(11)
@@ -56,8 +56,7 @@ def test_creation_finite_cartesian():
 @pytest.mark.dependency(depends=["test_begin"])
 def test_creation_finite_polar():
     radius = 0
-    for degrees in range(0, 360, 45):
-        angle = Angle.degrees(degrees)
+    for angle in map(degrees, range(0, 360, 45)):
         point = polar(radius, angle)
         assert point.xcoord == 0
         assert point.ycoord == 0
@@ -65,8 +64,7 @@ def test_creation_finite_polar():
         assert point.angle == 0
 
     radius = 10
-    for degrees in range(0, 360, 45):
-        angle = Angle.degrees(degrees)
+    for angle in map(degrees, range(0, 360, 45)):
         point = polar(radius, angle)
         assert point.xcoord == radius * angle.cos()
         assert point.ycoord == radius * angle.sin()
@@ -85,49 +83,49 @@ def test_creation_infinite_cartesian():
     assert point.xcoord == posinf
     assert point.ycoord == 0
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(0)
+    assert point.angle == degrees(0)
 
     point = cartesian(posinf, posinf)
     assert point.xcoord == posinf
     assert point.ycoord == posinf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(45)
+    assert point.angle == degrees(45)
 
     point = cartesian(0, posinf)
     assert point.xcoord == 0
     assert point.ycoord == posinf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(90)
+    assert point.angle == degrees(90)
 
     point = cartesian(neginf, posinf)
     assert point.xcoord == neginf
     assert point.ycoord == posinf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(135)
+    assert point.angle == degrees(135)
 
     point = cartesian(neginf, 0)
     assert point.xcoord == neginf
     assert point.ycoord == 0
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(180)
+    assert point.angle == degrees(180)
 
     point = cartesian(neginf, neginf)
     assert point.xcoord == neginf
     assert point.ycoord == neginf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(-135)
+    assert point.angle == degrees(-135)
 
     point = cartesian(0, neginf)
     assert point.xcoord == 0
     assert point.ycoord == neginf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(-90)
+    assert point.angle == degrees(-90)
 
     point = cartesian(posinf, neginf)
     assert point.xcoord == posinf
     assert point.ycoord == neginf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(-45)
+    assert point.angle == degrees(-45)
 
 
 @pytest.mark.order(11)
@@ -138,56 +136,52 @@ def test_creation_infinite_polar():
     posinf = float("+inf")
     radius = posinf
 
-    point = polar(radius, Angle.degrees(0))
+    point = polar(radius, degrees(0))
     assert point.xcoord == posinf
     assert point.ycoord == 0
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(0)
+    assert point.angle == degrees(0)
 
-    point = polar(radius, Angle.degrees(90))
+    point = polar(radius, degrees(90))
     assert point.xcoord == 0
     assert point.ycoord == posinf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(90)
+    assert point.angle == degrees(90)
 
-    point = polar(radius, Angle.degrees(180))
+    point = polar(radius, degrees(180))
     assert point.xcoord == neginf
     assert point.ycoord == 0
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(180)
+    assert point.angle == degrees(180)
 
-    point = polar(radius, Angle.degrees(270))
+    point = polar(radius, degrees(270))
     assert point.xcoord == 0
     assert point.ycoord == neginf
     assert point.radius == posinf
-    assert point.angle == Angle.degrees(270)
+    assert point.angle == degrees(270)
 
-    for degrees in range(1, 90):
-        angle = Angle.degrees(degrees)
+    for angle in map(degrees, range(1, 90)):
         point = polar(radius, angle)
         assert point.xcoord == posinf
         assert point.ycoord == posinf
         assert point.radius == posinf
         assert point.angle == angle
 
-    for degrees in range(91, 180):
-        angle = Angle.degrees(degrees)
+    for angle in map(degrees, range(91, 180)):
         point = polar(radius, angle)
         assert point.xcoord == neginf
         assert point.ycoord == posinf
         assert point.radius == posinf
         assert point.angle == angle
 
-    for degrees in range(181, 270):
-        angle = Angle.degrees(degrees)
+    for angle in map(degrees, range(181, 270)):
         point = polar(radius, angle)
         assert point.xcoord == neginf
         assert point.ycoord == neginf
         assert point.radius == posinf
         assert point.angle == angle
 
-    for degrees in range(271, 360):
-        angle = Angle.degrees(degrees)
+    for angle in map(degrees, range(271, 360)):
         point = polar(radius, angle)
         assert point.xcoord == posinf
         assert point.ycoord == neginf
@@ -283,7 +277,7 @@ def test_transformations():
     assert id(pointb) == id(pointa)
     assert pointa == (10, 18)
 
-    angle = Angle.degrees(90)
+    angle = degrees(90)
     pointb = pointa.rotate(angle)
     assert id(pointb) == id(pointa)
     assert pointa == (-18, 10)
@@ -403,7 +397,7 @@ def test_print():
     assert str(pointa) == "(0, 0)"
     assert str(pointb) == "(1.0, 1.0)"
 
-    pointc = polar(float("inf"), Angle.degrees(15))
+    pointc = polar(float("inf"), degrees(15))
     assert str(pointc) == "(inf:15 deg)"
 
     repr(pointa)

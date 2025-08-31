@@ -10,7 +10,7 @@ from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape
 from shapepy.geometry.point import polar
-from shapepy.scalar.angle import Angle
+from shapepy.scalar.angle import degrees
 
 
 @pytest.mark.order(22)
@@ -37,7 +37,7 @@ def test_empty_whole():
         assert whole.density(point) == 1
 
     for deg in range(0, 360, 30):
-        angle = Angle.degrees(deg)
+        angle = degrees(deg)
         point = polar(float("inf"), angle)
         assert lebesgue_density(empty, point) == 0
         assert lebesgue_density(whole, point) == 1

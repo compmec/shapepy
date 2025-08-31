@@ -10,7 +10,7 @@ import pytest
 from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.integral import lebesgue_density_jordan
 from shapepy.geometry.jordancurve import clean_jordan
-from shapepy.scalar.angle import Angle
+from shapepy.scalar.angle import degrees, radians
 
 
 @pytest.mark.order(15)
@@ -273,9 +273,9 @@ class TestTransformationPolygon:
         test_square = FactoryJordan.polygon(test_square_pts)
 
         assert test_square == good_square
-        test_square.rotate(Angle.radians(np.pi / 6))  # 30 degrees
+        test_square.rotate(radians(np.pi / 6))  # 30 degrees
         assert test_square != good_square
-        test_square.rotate(Angle.degrees(60))
+        test_square.rotate(degrees(60))
         assert test_square == good_square
 
     @pytest.mark.order(15)

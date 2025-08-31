@@ -10,8 +10,149 @@ from __future__ import annotations
 import re
 from numbers import Real
 
+from ..loggers import debug
 from ..scalar.reals import Math
 from ..tools import Is, To
+
+
+@debug("shapepy.scalar.angle")
+def radians(value: Real) -> Angle:
+    """
+    Gives an Angle instance for given value measured in radians
+
+    Parameters
+    ----------
+    value : Real
+        The angle measured in radians
+
+    Return
+    ------
+    Angle
+        The Angle instance
+
+    Example
+    -------
+    >>> radians(0)
+    0 deg
+    >>> radians(math.pi/2)
+    90 deg
+    >>> radians(math.pi)
+    180 deg
+    >>> radians(3*math.pi/2)
+    270 deg
+    >>> radians(2*math.pi)
+    0 deg
+    """
+    value = To.finite(Math.fmod(value, Math.tau))
+    return degrees(Math.degrees(value))
+
+
+@debug("shapepy.scalar.angle")
+def degrees(value: Real) -> Angle:
+    """
+    Gives an Angle instance for given value measured in degrees
+
+    Parameters
+    ----------
+    value : Real
+        The angle measured in degrees
+
+    Return
+    ------
+    Angle
+        The Angle instance
+
+    Example
+    -------
+    >>> degrees(0)
+    0 deg
+    >>> degrees(90)
+    90 deg
+    >>> degrees(180)
+    180 deg
+    >>> degrees(270)
+    270 deg
+    >>> degrees(360)
+    0 deg
+    >>> degrees(720)
+    0 deg
+    """
+    value = To.finite(value)
+    direction = To.integer(round(value / 90))
+    part = value - 90 * direction
+    part = To.rational(part, 360) if Is.rational(part) else part / 360
+    return Angle(direction, part)
+
+
+@debug("shapepy.scalar.angle")
+def turns(value: Real) -> Angle:
+    """
+    Gives an Angle instance for given value measured in turns
+
+    Parameters
+    ----------
+    value : Real
+        The angle measured in turns
+
+    Return
+    ------
+    Angle
+        The Angle instance
+
+    Example
+    -------
+    >>> turns(0)
+    0 deg
+    >>> turns(0.25)
+    90 deg
+    >>> turns(0.50)
+    180 deg
+    >>> turns(0.75)
+    270 deg
+    >>> turns(1)
+    0 deg
+    >>> turns(2)
+    0 deg
+    """
+    value = 4 * To.finite(value)
+    direction = To.integer(round(value))
+    part = value - direction
+    return Angle(int(direction), part / 4)
+
+
+@debug("shapepy.scalar.angle")
+def arg(xcoord: Real, ycoord: Real) -> Angle:
+    """
+    Compute the complex argument of the point (x, y)
+
+    Parameters
+    ----------
+    xcoord : Real
+        The x-coordinate of the point
+    ycoord : Real
+        The y-coordinate of the point
+
+    Returns
+    -------
+    Angle
+        The Angle instance such tangent gives y/x
+
+    Examples
+    --------
+    >>> arg(1, 0)  # 0 degrees
+    0 deg
+    >>> arg(1, 1)  # 45 degrees
+    45 deg
+    >>> arg(0, 1)  # 90 degrees
+    90 deg
+    >>> arg(-1, 1)  # 135 degrees
+    135 deg
+    """
+    if ycoord == 0:
+        return Angle(0, 0) if xcoord >= 0 else Angle(2, 0)
+    if xcoord == 0:
+        return Angle(1, 0) if ycoord > 0 else Angle(3, 0)
+    return radians(Math.atan2(ycoord, xcoord))
 
 
 class Angle:
@@ -21,211 +162,153 @@ class Angle:
     Handles the operations such as __add__, __sub__, etc
     """
 
-    @classmethod
-    def radians(cls, value: Real) -> Angle:
-        """
-        Gives an Angle instance for given value measured in radians
-
-        Parameters
-        ----------
-        value : Real
-            The angle measured in radians
-
-        Return
-        ------
-        Angle
-            The Angle instance
-
-        Example
-        -------
-        >>> Angle.radians(0)
-        0 deg
-        >>> Angle.radians(math.pi/2)
-        90 deg
-        >>> Angle.radians(math.pi)
-        180 deg
-        >>> Angle.radians(3*math.pi/2)
-        270 deg
-        >>> Angle.radians(2*math.pi)
-        0 deg
-        """
-        value = To.finite(Math.fmod(value, Math.tau))
-        return cls.degrees(Math.degrees(value))
-
-    @classmethod
-    def degrees(cls, value: Real) -> Angle:
-        """
-        Gives an Angle instance for given value measured in degrees
-
-        Parameters
-        ----------
-        value : Real
-            The angle measured in degrees
-
-        Return
-        ------
-        Angle
-            The Angle instance
-
-        Example
-        -------
-        >>> Angle.degrees(0)
-        0 deg
-        >>> Angle.degrees(90)
-        90 deg
-        >>> Angle.degrees(180)
-        180 deg
-        >>> Angle.degrees(270)
-        270 deg
-        >>> Angle.degrees(360)
-        0 deg
-        >>> Angle.degrees(720)
-        0 deg
-        """
-        value = To.finite(value)
-        value %= 360
-        value = (
-            To.rational(value, 360) if Is.rational(value) else (value / 360)
-        )
-        return cls.turns(value)
-
-    @classmethod
-    def turns(cls, value: Real) -> Angle:
-        """
-        Gives an Angle instance for given value measured in turns
-
-        Parameters
-        ----------
-        value : Real
-            The angle measured in turns
-
-        Return
-        ------
-        Angle
-            The Angle instance
-
-        Example
-        -------
-        >>> Angle.turns(0)
-        0 deg
-        >>> Angle.turns(0.25)
-        90 deg
-        >>> Angle.turns(0.50)
-        180 deg
-        >>> Angle.turns(0.75)
-        270 deg
-        >>> Angle.turns(1)
-        0 deg
-        >>> Angle.turns(2)
-        0 deg
-        """
-        value = To.finite(value)
-        quad, part = divmod(4 * value, 1)
-        return cls(int(quad), part)
-
-    @classmethod
-    def atan2(cls, ycoord: Real, xcoord: Real):
-        """
-        Compute the complex argument of the point (x, y)
-
-        Parameters
-        ----------
-        ycoord : Real
-            The y-coordinate of the point
-        xcoord : Real
-            The x-coordinate of the point
-
-        Returns
-        -------
-        Angle
-            The Angle instance such tangent gives y/x
-
-        Examples
-        --------
-        >>> Angle.atan2(0, 1)  # 0 degrees
-        0 deg
-        >>> Angle.atan2(1, 1)  # 45 degrees
-        45 deg
-        >>> Angle.atan2(1, -1)  # 135 degrees
-        135 deg
-        >>> Angle.atan2(-1, 1)  # -45 degrees
-        315 deg
-        """
-        if ycoord == 0:
-            return cls(0, 0) if xcoord >= 0 else cls(2, 0)
-        if xcoord == 0:
-            return cls(1, 0) if ycoord > 0 else cls(3, 0)
-        return cls.radians(Math.atan2(ycoord, xcoord))
-
-    @classmethod
-    def arg(cls, xcoord: Real, ycoord: Real):
-        """
-        Compute the complex argument of the point (x, y)
-
-        Parameters
-        ----------
-        xcoord : Real
-            The x-coordinate of the point
-        ycoord : Real
-            The y-coordinate of the point
-
-        Returns
-        -------
-        Angle
-            The Angle instance such tangent gives y/x
-
-        Examples
-        --------
-        >>> Angle.arg(1, 0)  # 0 degrees
-        0 deg
-        >>> Angle.arg(1, 1)  # 45 degrees
-        45 deg
-        >>> Angle.arg(0, 1)  # 90 degrees
-        90 deg
-        >>> Angle.arg(-1, 1)  # 135 degrees
-        135 deg
-        """
-        return cls.atan2(ycoord, xcoord)
-
-    def __init__(self, quad: int = 0, part: Real = 0):
-        if not Is.integer(quad):
-            raise TypeError(f"Expected integer value, got {type(quad)}")
+    def __init__(self, direction: int, part: Real):
+        if not Is.integer(direction):
+            raise TypeError(f"Expected integer value, got {type(direction)}")
         if not Is.finite(part):
             raise TypeError(f"Expected numeric value, got {type(part)}")
-        self.quad: int = quad % 4
-        self.part: Real = part
+        if abs(part) > 0.125:
+            raise ValueError(f"Expected {part} be in [-1/8, 1/8]")
+        self.__direction: int = To.integer(direction % 4)
+        self.__part: Real = To.finite(part)
 
+    @debug("shapepy.scalar.angle")
     def __eq__(self, other: object) -> bool:
-        if Is.instance(other, Angle):
-            return self.quad == other.quad and (self.part - other.part == 0)
-        return self == Angle.radians(other)
+        other: Angle = To.angle(other)
+        return (
+            self.direction == other.direction
+            and abs(self.part - other.part) < 1e-6
+        )
 
     def __float__(self):
-        return float(Math.tau * (self.quad + self.part) / 4)
+        return float(self.radians)
 
     def __add__(self, other: Angle) -> Angle:
-        other = To.angle(other)
-        return self.__class__.turns(
-            ((self.quad + other.quad) + (self.part + other.part)) / 4
-        )
+        other: Angle = To.angle(other)
+        return turns(self.turns + other.turns)
 
     def __sub__(self, other: Angle) -> Angle:
-        other = To.angle(other)
-        return self.__class__.turns(
-            ((self.quad - other.quad) + (self.part - other.part)) / 4
-        )
+        other: Angle = To.angle(other)
+        return turns(self.turns - other.turns)
 
     def __mul__(self, other: Real) -> Angle:
-        return self.turns(other * (self.quad + self.part) / 4)
+        return turns(other * self.turns)
 
     def __rmul__(self, other: Real) -> Angle:
         return self.__mul__(other)
 
     def __str__(self):
-        return f"{90 * (self.quad + self.part)} deg"
+        return f"{self.degrees} deg"
 
     def __repr__(self):
-        return f"Angle({str(self)})"
+        return f"Angle({self.direction}, {self.part})"
+
+    @property
+    def direction(self) -> int:
+        """Gives the nearest axis to the angle
+
+        Example
+        -------
+        >>> degrees(0).direction  # +x axis
+        0
+        >>> degrees(30).direction  # +x axis
+        0
+        >>> degrees(60).direction  # +y axis
+        1
+        >>> degrees(90).direction  # +y axis
+        1
+        >>> degrees(120).direction  # +y axis
+        1
+        >>> degrees(180).direction  # -x axis
+        2
+        >>> degrees(270).direction  # -y axis
+        3
+        """
+        return self.__direction
+
+    @property
+    def part(self) -> int:
+        """Gives the distance between the angle and the nearest axis
+
+        Example
+        -------
+        >>> degrees(0).part
+        0
+        >>> degrees(30).part
+        0.08333333333333333
+        >>> degrees(45).part
+        0.125
+        >>> degrees(60)
+        -0.08333333333333333
+        >>> degrees(90).part
+        0
+        >>> degrees(120).part
+        0.08333333333333333
+        """
+        return self.__part
+
+    @property
+    def radians(self) -> Real:
+        """Gives the angle measure in radians
+
+        Example
+        -------
+        >>> degrees(0).radians
+        0
+        >>> degrees(45).radians
+        0.7853981633974483
+        >>> degrees(90).radians
+        1.5707963267948966
+        >>> degrees(180).radians
+        3.141592653589793
+        >>> degrees(270).radians
+        4.71238898038469
+        >>> degrees(360).radians
+        0
+        """
+        return Math.tau * self.turns
+
+    @property
+    def degrees(self) -> Real:
+        """Gives the angle measure in degrees
+
+        Example
+        -------
+        >>> degrees(0).degrees
+        0
+        >>> degrees(45).degrees
+        45
+        >>> degrees(90).degrees
+        90
+        >>> degrees(180).degrees
+        180
+        >>> degrees(270).degrees
+        270
+        >>> degrees(360).degrees
+        0
+        """
+        return 360 * self.turns
+
+    @property
+    def turns(self) -> Real:
+        """Gives the angle measure in turns
+
+        Example
+        -------
+        >>> degrees(0).turns
+        0
+        >>> degrees(45).turns
+        0.125
+        >>> degrees(90).turns
+        0.25
+        >>> degrees(180).turns
+        0.5
+        >>> degrees(270).turns
+        0.75
+        >>> degrees(360).turns
+        0
+        """
+        return self.part + To.rational(self.direction, 4)
 
     def sin(self) -> Real:
         """
@@ -238,23 +321,24 @@ class Angle:
 
         Example
         -------
-        >>> Angle.degrees(0).sin()
+        >>> degrees(0).sin()
         0
-        >>> Angle.degrees(45).sin()
+        >>> degrees(45).sin()
         0.7071067811865476
-        >>> Angle.degrees(90).sin()
+        >>> degrees(90).sin()
         1
         """
         if self.part == 0:
-            if self.quad % 2:
-                return To.finite(1 if self.quad == 1 else -1)
-            return To.finite(0)
+            result = (
+                1 if self.direction == 1 else -1 if self.direction == 3 else 0
+            )
+            return To.finite(result)
 
-        if self.quad % 2:
-            result = Math.turcos(self.part / 4)
+        if self.direction % 2:
+            result = Math.turcos(self.part)
         else:
-            result = Math.tursin(self.part / 4)
-        if self.quad > 1:
+            result = Math.tursin(self.part)
+        if self.direction > 1:
             result *= -1
         return result
 
@@ -269,23 +353,24 @@ class Angle:
 
         Example
         -------
-        >>> Angle.degrees(0).cos()
+        >>> degrees(0).cos()
         1
-        >>> Angle.degrees(45).cos()
+        >>> degrees(45).cos()
         0.7071067811865476
-        >>> Angle.degrees(90).cos()
+        >>> degrees(90).cos()
         0
         """
         if self.part == 0:
-            if self.quad % 2:
-                return To.finite(0)
-            return To.finite(1 if self.quad == 0 else -1)
+            result = (
+                1 if self.direction == 0 else -1 if self.direction == 2 else 0
+            )
+            return To.finite(result)
 
-        if self.quad % 2:
-            result = Math.tursin(self.part / 4)
+        if self.direction % 2:
+            result = Math.tursin(self.part)
         else:
-            result = Math.turcos(self.part / 4)
-        if 0 < self.quad < 3:
+            result = Math.turcos(self.part)
+        if 0 < self.direction < 3:
             result *= -1
         return result
 
@@ -296,9 +381,9 @@ def to_angle(obj: object) -> Angle:
 
     * If it's already an angle, gives the same instance
     * If it's a string, decides depending on the content:
-        * "10deg" -> Angle.degrees(10)
-        * "0.25tur" -> Angle.turns(0.25)
-        * "2.1rad" -> Angle.radians(2.1)
+        * "10deg" -> degrees(10)
+        * "0.25tur" -> turns(0.25)
+        * "2.1rad" -> radians(2.1)
     * If it's any another type, converts to a number, and gives it in radians
 
     Example
@@ -314,11 +399,8 @@ def to_angle(obj: object) -> Angle:
         tipo = re.findall(r"([a-zA-Z]+)$", obj)[0]
         value = To.finite(obj.replace(tipo, ""))
         if "deg" in tipo:
-            return Angle.degrees(value)
+            return degrees(value)
         if "tur" in tipo:
-            return Angle.turns(value)
-        return Angle.radians(value)
-    return Angle.radians(obj)
-
-
-To.angle = to_angle
+            return turns(value)
+        return radians(value)
+    return radians(obj)
