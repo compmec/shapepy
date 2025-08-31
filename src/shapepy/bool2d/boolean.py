@@ -450,41 +450,56 @@ def remove_densities(graph: Graph, subsets: Iterable[SubSetR2], density: Real):
                 graph.remove_edge(edge)
 
 
-def extract_unique_paths(graph: Graph) -> Iterable[CyclicContainer[Edge]]:
+def extract_disjoint_graphs(graph: Graph) -> Iterable[Graph]:
+    """Separates the given graph into a group of graphs that are disjoint"""
+    edges = list(graph.edges)
+    while len(edges) > 0:
+        edge = edges.pop(0)
+        current_edges = {edge}
+        search_edges = {edge}
+        while len(search_edges) > 0:
+            end_nodes = {edge.nodeb for edge in search_edges}
+            search_edges = {edge for edge in edges if edge.nodea in end_nodes}
+            for edge in search_edges:
+                edges.remove(edge)
+            current_edges |= search_edges
+        yield Graph(current_edges)
+
+
+def possible_paths(
+    edges: Iterable[Edge], start_node: Node = None
+) -> Iterable[Tuple[Edge, ...]]:
+    edges = tuple(edges)
+    if start_node is None:
+        nodes = {e.nodea for e in edges}
+        for node in nodes:
+            yield from possible_paths(edges, node)
+        return
+    indices = set(i for i, e in enumerate(edges) if e.nodea == start_node)
+    other_edges = tuple(e for i, e in enumerate(edges) if i not in indices)
+    for edge in (edges[i] for i in indices):
+        for subpath in possible_paths(other_edges, edge.nodeb):
+            yield (edge, ) + subpath 
+
+
+def walk_closed_path(graph: Graph) -> CyclicContainer[Edge]:
     """Reads the graphs and extracts the unique paths"""
+    if not Is.instance(graph, Graph):
+        raise TypeError
     logger = get_logger("shapepy.bool2d.boolean")
     logger.debug("Extracting unique paths from the graph")
     logger.debug(str(graph))
+
     edges = tuple(graph.edges)
-    index = 0
-    security = 0
-    while index < len(edges):
-        extracted_edges = []
-        start_node = edges[index].nodea
-        node = start_node
-        security += 1
-        if security > 10:
-            raise ValueError
-        logger.debug(f"1) {start_node}")
-        while True:
-            valid_edges = tuple(e for e in edges if e.nodea == node)
-            if len(valid_edges) != 1:
-                break
-            extracted_edges.append(valid_edges[0])
-            node = valid_edges[0].nodeb
-            if id(node) == id(start_node):  # Closed cycle
-                break
-            logger.debug("2)")
-        logger.debug(f"extracted edges = {len(extracted_edges)}")
-        if len(extracted_edges) == 0 or id(node) != id(
-            start_node
-        ):  # Not unique path
-            index += 1
-            continue
-        for edge in extracted_edges:
-            graph.remove_edge(edge)
-        yield CyclicContainer(extracted_edges)
-        edges = tuple(graph.edges)
+    start_node = None
+    for edge in edges:
+        if sum(1 if e.nodea == edge.nodea else 0 for e in edges) == 1:
+            start_node = edge.nodea
+            break
+    for path in possible_paths(graph.edges, start_node):
+        if path[0].nodea == path[-1].nodeb:
+            return CyclicContainer(path)
+    raise ValueError("Given graph does not contain a closed path")
 
 
 @debug("shapepy.bool2d.boolean")
@@ -492,6 +507,7 @@ def edges_to_jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
     """Converts the given connected edges into a Jordan Curve"""
     # logger = get_logger("shapepy.bool2d.boolean")
     # logger.info("Passed here")
+    edges = tuple(edges)
     if len(edges) == 1:
         path = tuple(tuple(edges)[0].singles)[0]
         return JordanCurve(path.curve)
