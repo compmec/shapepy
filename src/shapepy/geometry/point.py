@@ -117,7 +117,7 @@ class Point2D:
             -self.xcoord,
             -self.ycoord,
             self.radius,
-            self.angle + degrees(180),
+            ~self.angle,
         )
 
     def __pos__(self) -> Point2D:

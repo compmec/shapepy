@@ -13,13 +13,18 @@ from copy import copy
 from typing import Iterable, Set, Tuple, Union
 
 from ..geometry.box import Box
-from ..geometry.integral import lebesgue_density_jordan
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
-from ..tools import Is, To, prod
+from ..tools import Is, To
 from .base import EmptyShape, SubSetR2
+from .density import (
+    Density,
+    intersect_densities,
+    lebesgue_density_jordan,
+    unite_densities,
+)
 
 
 class SimpleShape(SubSetR2):
@@ -141,8 +146,7 @@ class SimpleShape(SubSetR2):
         return self.__contains_point(other)
 
     def __contains_point(self, point: Point2D) -> bool:
-        density = self.density(point)
-
+        density = float(self.density(point))
         return density > 0 if self.boundary else density == 1
 
     def __contains_jordan(self, jordan: JordanCurve) -> bool:
@@ -210,7 +214,7 @@ class SimpleShape(SubSetR2):
         """
         return self.jordan.box()
 
-    def density(self, center: Point2D) -> Real:
+    def density(self, center: Point2D) -> Density:
         return lebesgue_density_jordan(self.jordan, center)
 
 
@@ -344,9 +348,10 @@ class ConnectedShape(SubSetR2):
             box |= sub.jordan.box()
         return box
 
-    def density(self, center: Point2D) -> Real:
+    def density(self, center: Point2D) -> Density:
         center = To.point(center)
-        return prod(sub.density(center) for sub in self.subshapes)
+        densities = (sub.density(center) for sub in self.subshapes)
+        return intersect_densities(densities)
 
 
 class DisjointShape(SubSetR2):
@@ -493,8 +498,8 @@ class DisjointShape(SubSetR2):
 
     def density(self, center: Point2D) -> Real:
         center = To.point(center)
-        result = sum(sub.density(center) for sub in self.subshapes)
-        return min(result, 1)
+        densities = (sub.density(center) for sub in self.subshapes)
+        return unite_densities(densities)
 
 
 def divide_connecteds(

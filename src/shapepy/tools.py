@@ -8,7 +8,7 @@ from __future__ import annotations
 import types
 from collections import deque
 from functools import wraps
-from typing import Any, Generic, Iterable, Tuple, TypeVar
+from typing import Any, Generic, Iterable, Iterator, Tuple, TypeVar
 
 import numpy as np
 
@@ -108,21 +108,6 @@ def vectorize(position: int = 0, dimension: int = 0):
     return decorator
 
 
-def prod(values: Iterable[Any]) -> Any:
-    """Computes the product of given objects
-
-    Example
-    -------
-    >>> prod([3, 2, 5])
-    30
-    """
-    values = iter(values)
-    result = next(values)
-    for value in values:
-        result *= value
-    return result
-
-
 def reverse(objs: Iterable[Any]) -> Iterable[Any]:
     """Reverts the list/tuple"""
     return tuple(objs)[::-1]
@@ -167,7 +152,7 @@ class CyclicContainer(Generic[T]):
     def __init__(self, values: Iterable[T]):
         self.__values = tuple(values)
 
-    def __iter__(self) -> Iterable[T]:
+    def __iter__(self) -> Iterator[T]:
         yield from self.__values
 
     def __getitem__(self, index):

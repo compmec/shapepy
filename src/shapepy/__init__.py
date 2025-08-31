@@ -21,6 +21,8 @@ from .plot.plot import ShapePloter
 __version__ = importlib.metadata.version("shapepy")
 
 set_level("shapepy", level="INFO")
+# set_level("shapepy.bool2d", level="DEBUG")
+# set_level("shapepy.rbool", level="DEBUG")
 
 
 if __name__ == "__main__":

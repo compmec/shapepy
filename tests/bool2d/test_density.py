@@ -3,21 +3,27 @@ This file contains the code to test the relative position
 of an object with respect to another
 """
 
+from fractions import Fraction as frac
+
 import pytest
 
 from shapepy import lebesgue_density
 from shapepy.bool2d.base import EmptyShape, WholeShape
+from shapepy.bool2d.density import lebesgue_density_jordan
 from shapepy.bool2d.primitive import Primitive
 from shapepy.bool2d.shape import ConnectedShape, DisjointShape
+from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.point import polar
-from shapepy.scalar.angle import degrees
+from shapepy.scalar.angle import degrees, turns
 
 
-@pytest.mark.order(22)
+@pytest.mark.order(23)
 @pytest.mark.dependency(
     depends=[
         "tests/geometry/test_integral.py::test_all",
+        "tests/geometry/test_jordan_polygon.py::test_all",
         "tests/bool2d/test_empty_whole.py::test_end",
+        "tests/bool2d/test_primitive.py::test_end",
     ],
     scope="session",
 )
@@ -25,8 +31,230 @@ def test_begin():
     pass
 
 
-@pytest.mark.order(22)
-@pytest.mark.dependency(depends=["test_begin"])
+class TestJordan:
+    """
+    Tests the respective position
+    """
+
+    @pytest.mark.order(23)
+    @pytest.mark.dependency(depends=["test_begin"])
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(23)
+    @pytest.mark.dependency(
+        depends=[
+            "TestJordan::test_begin",
+        ]
+    )
+    def test_standard_square(self):
+        vertices = [(-1, -1), (1, -1), (1, 1), (-1, 1)]
+        jordan = FactoryJordan.polygon(vertices)
+        assert jordan.length == 8
+        assert jordan.area == 4
+
+        interiors = {
+            (0, 0),
+            (0.5, 0.5),
+            (-0.5, 0.5),
+            (-0.5, -0.5),
+            (0.5, -0.5),
+        }
+        exteriors = {
+            (2, 1),
+            (2, 2),
+            (3, 3),
+            (-1, -2),
+        }
+        mid_edges = {
+            (1, 0),
+            (0, 1),
+            (-1, 0),
+            (0, -1),
+        }
+        corners = {
+            (-1, -1): 0.25,
+            (1, -1): 0.25,
+            (1, 1): 0.25,
+            (-1, 1): 0.25,
+        }
+        for point in interiors:
+            assert lebesgue_density_jordan(jordan, point) == 1
+        for point in exteriors:
+            assert lebesgue_density_jordan(jordan, point) == 0
+        for point in mid_edges:
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
+
+    @pytest.mark.order(23)
+    @pytest.mark.dependency(
+        depends=[
+            "TestJordan::test_begin",
+            "TestJordan::test_standard_square",
+        ]
+    )
+    def test_inverted_square(self):
+        vertices = [(-1, -1), (-1, 1), (1, 1), (1, -1)]
+        jordan = FactoryJordan.polygon(vertices)
+        assert jordan.length == 8
+        assert jordan.area == -4
+
+        interiors = {
+            (2, 1),
+            (2, 2),
+            (3, 3),
+            (-1, -2),
+        }
+        exteriors = {(0, 0)}
+        mid_edges = {
+            (1, 0),
+            (0, 1),
+            (-1, 0),
+            (0, -1),
+        }
+        corners = {
+            (-1, -1): 0.75,
+            (1, -1): 0.75,
+            (1, 1): 0.75,
+            (-1, 1): 0.75,
+        }
+        for point in interiors:
+            assert lebesgue_density_jordan(jordan, point) == 1
+        for point in exteriors:
+            assert lebesgue_density_jordan(jordan, point) == 0
+        for point in mid_edges:
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
+
+    @pytest.mark.order(23)
+    @pytest.mark.dependency(
+        depends=[
+            "TestJordan::test_begin",
+            "TestJordan::test_standard_square",
+            "TestJordan::test_inverted_square",
+        ]
+    )
+    def test_standard_triangle(self):
+        vertices = [(0, 0), (3, 0), (0, 3)]
+        jordan = FactoryJordan.polygon(vertices)
+        assert jordan.area == 9 / 2
+
+        interiors = {(1, 1)}
+        exteriors = {
+            (2, 2),
+            (3, 3),
+            (-1, -1),
+        }
+        mid_edges = {
+            (1, 0),
+            (2, 0),
+            (2, 1),
+            (1, 2),
+            (0, 2),
+            (0, 1),
+        }
+        corners = {
+            (0, 0): 0.25,
+            (3, 0): 0.125,
+            (0, 3): 0.125,
+        }
+        for point in interiors:
+            assert lebesgue_density_jordan(jordan, point) == 1
+        for point in exteriors:
+            assert lebesgue_density_jordan(jordan, point) == 0
+        for point in mid_edges:
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
+
+    @pytest.mark.order(23)
+    @pytest.mark.dependency(
+        depends=[
+            "TestJordan::test_begin",
+            "TestJordan::test_inverted_square",
+            "TestJordan::test_standard_triangle",
+        ]
+    )
+    def test_inverted_triangle(self):
+        vertices = [(0, 0), (0, 3), (3, 0)]
+        jordan = FactoryJordan.polygon(vertices)
+        assert jordan.area == -9 / 2
+
+        interiors = {
+            (2, 2),
+            (3, 3),
+            (-1, -1),
+        }
+        exteriors = {(1, 1)}
+        mid_edges = {
+            (1, 0),
+            (2, 0),
+            (2, 1),
+            (1, 2),
+            (0, 2),
+            (0, 1),
+        }
+        corners = {
+            (0, 0): 0.75,
+            (3, 0): 0.875,
+            (0, 3): 0.875,
+        }
+        for point in interiors:
+            assert lebesgue_density_jordan(jordan, point) == 1
+        for point in exteriors:
+            assert lebesgue_density_jordan(jordan, point) == 0
+        for point in mid_edges:
+            assert lebesgue_density_jordan(jordan, point) == 0.5
+        for point, density in corners.items():
+            assert lebesgue_density_jordan(jordan, point) == density
+
+    @pytest.mark.order(23)
+    @pytest.mark.timeout(10)
+    @pytest.mark.dependency(
+        depends=[
+            "TestJordan::test_begin",
+            "TestJordan::test_standard_square",
+            "TestJordan::test_inverted_square",
+            "TestJordan::test_standard_triangle",
+            "TestJordan::test_inverted_triangle",
+        ]
+    )
+    def test_regular_polygon(self):
+        for nsides in range(3, 10):
+            angles = (turns(frac(i, nsides)) for i in range(nsides))
+            ctrlpoints = tuple((a.cos(), a.sin()) for a in angles)
+
+            # Counter clockwise
+            vertices = tuple(ctrlpoints)
+            jordancurve = FactoryJordan.polygon(vertices)
+            density = lebesgue_density_jordan(jordancurve)
+            assert density == 1
+
+            # Clockwise
+            vertices = tuple(ctrlpoints[::-1])
+            jordancurve = FactoryJordan.polygon(vertices)
+            density = lebesgue_density_jordan(jordancurve)
+            assert density == 0
+
+    @pytest.mark.order(23)
+    @pytest.mark.dependency(
+        depends=[
+            "TestJordan::test_begin",
+            "TestJordan::test_standard_square",
+            "TestJordan::test_inverted_square",
+            "TestJordan::test_standard_triangle",
+            "TestJordan::test_inverted_triangle",
+            "TestJordan::test_regular_polygon",
+        ]
+    )
+    def test_all(self):
+        pass
+
+
+@pytest.mark.order(23)
+@pytest.mark.dependency(depends=["test_begin", "TestJordan::test_all"])
 def test_empty_whole():
     empty = EmptyShape()
     whole = WholeShape()
@@ -45,8 +273,10 @@ def test_empty_whole():
         assert whole.density(point) == 1
 
 
-@pytest.mark.order(22)
-@pytest.mark.dependency(depends=["test_begin", "test_empty_whole"])
+@pytest.mark.order(23)
+@pytest.mark.dependency(
+    depends=["test_begin", "test_empty_whole", "TestJordan::test_all"]
+)
 def test_simple_shape():
     shape = Primitive.triangle(3)
     # Corners
@@ -82,12 +312,13 @@ def test_simple_shape():
         assert shape.density(point) == value
 
 
-@pytest.mark.order(22)
+@pytest.mark.order(23)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
         "test_empty_whole",
         "test_simple_shape",
+        "TestJordan::test_all",
     ]
 )
 def test_connected_shape():
@@ -139,12 +370,13 @@ def test_connected_shape():
         assert shape.density(point) == value
 
 
-@pytest.mark.order(22)
+@pytest.mark.order(23)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
         "test_simple_shape",
         "test_connected_shape",
+        "TestJordan::test_all",
     ]
 )
 def test_disjoint_shape():
@@ -186,10 +418,11 @@ def test_disjoint_shape():
         assert shape.density(point) == value
 
 
-@pytest.mark.order(22)
+@pytest.mark.order(23)
 @pytest.mark.dependency(
     depends=[
         "test_begin",
+        "TestJordan::test_all",
         "test_empty_whole",
         "test_simple_shape",
         "test_connected_shape",

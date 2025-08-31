@@ -64,7 +64,6 @@ def concatenate_segments(
             filtsegments.append(segmenti)
             segmenti = segmentj
     filtsegments.append(segmenti)
-    print("filtsegments = ", filtsegments)
     return (
         PiecewiseCurve(filtsegments)
         if len(filtsegments) > 1

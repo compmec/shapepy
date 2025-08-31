@@ -183,6 +183,9 @@ class Angle:
     def __float__(self):
         return float(self.radians)
 
+    def __invert__(self):
+        return Angle(self.direction + 2, self.part)
+
     def __add__(self, other: Angle) -> Angle:
         other: Angle = To.angle(other)
         return turns(self.turns + other.turns)
@@ -308,6 +311,8 @@ class Angle:
         >>> degrees(360).turns
         0
         """
+        if self.direction == 0 and self.part < 0:
+            return To.rational(1) + self.part
         return self.part + To.rational(self.direction, 4)
 
     def sin(self) -> Real:
