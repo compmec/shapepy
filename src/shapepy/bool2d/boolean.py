@@ -15,17 +15,31 @@ from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
 from ..loggers import debug
 from ..tools import CyclicContainer, Is
-from .base import EmptyShape, SubSetR2, WholeShape
-from .shape import (
-    ConnectedShape,
-    DisjointShape,
-    SimpleShape,
-    shape_from_jordans,
-)
+from .base import SubSetR2
+from .lazy import RecipeLazy
+from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 
 @debug("shapepy.bool2d.boolean")
-def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
+def invert_bool2d(subset: SubSetR2) -> SubSetR2:
+    """
+    Computes the complementar set of given SubSetR2 instance
+
+    Parameters
+    ----------
+    subsets: SubSetR2
+        The subset to be inverted
+
+    Return
+    ------
+    SubSetR2
+        The complementar subset
+    """
+    return RecipeLazy.invert(subset)
+
+
+@debug("shapepy.bool2d.boolean")
+def unite_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     Computes the union of given subsets
 
@@ -39,26 +53,11 @@ def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The united subset
     """
-    subsets = tuple(subsets)
-    assert len(subsets) == 2
-    assert Is.instance(subsets[0], SubSetR2)
-    assert Is.instance(subsets[1], SubSetR2)
-    if Is.instance(subsets[1], WholeShape):
-        return WholeShape()
-    if Is.instance(subsets[1], EmptyShape):
-        return copy(subsets[0])
-    if subsets[1] in subsets[0]:
-        return copy(subsets[0])
-    if subsets[0] in subsets[1]:
-        return copy(subsets[1])
-    new_jordans = FollowPath.or_shapes(subsets[0], subsets[1])
-    if len(new_jordans) == 0:
-        return WholeShape()
-    return shape_from_jordans(new_jordans)
+    return RecipeLazy.unite(subsets)
 
 
 @debug("shapepy.bool2d.boolean")
-def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
+def intersect_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     Computes the intersection of given subsets
 
@@ -72,22 +71,27 @@ def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    subsets = tuple(subsets)
-    assert len(subsets) == 2
-    assert Is.instance(subsets[0], SubSetR2)
-    assert Is.instance(subsets[1], SubSetR2)
-    if Is.instance(subsets[1], WholeShape):
-        return copy(subsets[0])
-    if Is.instance(subsets[1], EmptyShape):
-        return EmptyShape()
-    if subsets[1] in subsets[0]:
-        return copy(subsets[1])
-    if subsets[0] in subsets[1]:
-        return copy(subsets[0])
-    new_jordans = FollowPath.and_shapes(subsets[0], subsets[1])
-    if len(new_jordans) == 0:
-        return EmptyShape()
-    return shape_from_jordans(new_jordans)
+    return RecipeLazy.intersect(subsets)
+
+
+@debug("shapepy.bool2d.boolean")
+def clean_bool2d(subset: SubSetR2) -> SubSetR2:
+    """
+    Computes the intersection of given subsets
+
+    Parameters
+    ----------
+    subsets: SubSetR2
+        The subsets to be intersected
+
+    Return
+    ------
+    SubSetR2
+        The intersection subset
+    """
+    if not Is.lazy(subset):
+        return subset
+    raise NotImplementedError
 
 
 class FollowPath:

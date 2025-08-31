@@ -115,6 +115,9 @@ class Density:
         value = subset_length(self.subset)
         return float(value)
 
+    def __invert__(self) -> Density:
+        return Density(create_interval(0, 1) - self.subset)
+
     def __or__(self, value: Density):
         if not Is.instance(value, Density):
             raise TypeError
