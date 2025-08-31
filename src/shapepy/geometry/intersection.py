@@ -16,9 +16,9 @@ from typing import Dict, Iterable, Set, Tuple, Union
 
 from ..rbool import (
     EmptyR1,
-    IntervalR1,
-    SingleR1,
     SubSetR1,
+    create_interval,
+    create_single,
     extract_knots,
     from_any,
 )
@@ -172,7 +172,7 @@ class GeometricIntersectionCurves:
             return EmptyR1(), EmptyR1()
         if id(curvea) == id(curveb):  # Check if curves are equal
             curvea = curvea.parametrize()
-            subset = IntervalR1(curvea.knots[0], curvea.knots[-1])
+            subset = create_interval(curvea.knots[0], curvea.knots[-1])
             return subset, subset
         return curve_and_curve(curvea, curveb)
 
@@ -227,7 +227,7 @@ def segment_and_segment(
     if curvea.box() & curveb.box() is None:
         return EmptyR1(), EmptyR1()
     if curvea == curveb:
-        return IntervalR1(0, 1), IntervalR1(0, 1)
+        return create_interval(0, 1), create_interval(0, 1)
     if segment_is_linear(curvea) and segment_is_linear(curveb):
         return IntersectionSegments.lines(curvea, curveb)
     nptsa = max(curvea.xfunc.degree, curvea.yfunc.degree) + 4
@@ -283,7 +283,7 @@ class IntersectionSegments:
             u0 = cross(B0mA0, dA) / dAxdB
             if u0 < 0 or 1 < u0:
                 return empty, empty
-            return SingleR1(t0), SingleR1(u0)
+            return create_single(t0), create_single(u0)
         # Lines are parallel
         if cross(dA, B0mA0) != 0:
             return empty, empty  # Parallel, but not colinear
@@ -306,8 +306,8 @@ class IntersectionSegments:
         u0 = min(max(0, u0), 1)
         u1 = min(max(0, u1), 1)
         if t0 == t1 or u0 == u1:
-            return SingleR1(t0), SingleR1(u1)
-        return IntervalR1(t0, t1), IntervalR1(u0, u1)
+            return create_single(t0), create_single(u1)
+        return create_interval(t0, t1), create_interval(u0, u1)
 
     # pylint: disable=too-many-locals
     @staticmethod

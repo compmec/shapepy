@@ -125,10 +125,10 @@ class Density:
             raise TypeError
         return Density(self.subset & value.subset)
 
-    def __str__(self):
+    def __str__(self):  # pragma: no cover
         return str(float(self))
 
-    def __repr__(self):
+    def __repr__(self):  # pragma: no cover
         return "D" + str(self)
 
     @debug("shapepy.bool2d.density")
