@@ -11,7 +11,7 @@ from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
 from ..common import derivate
 from ..loggers import debug
-from ..scalar.angle import Angle
+from ..scalar.angle import arg
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math
 from ..tools import Is, To
@@ -90,8 +90,8 @@ def lebesgue_density_jordan(
             deltapj = segmentj(1, 1)
             innerval = inner(deltapi, deltapj)
             crossval = cross(deltapi, deltapj)
-            angle = Angle.arg(-innerval, -crossval)
-            return float(angle) / Math.tau
+            angle = arg(-innerval, -crossval)
+            return angle.turns % 1
 
     direct = IntegratorFactory.closed_newton_cotes(3)
     integrator = AdaptativeIntegrator(direct, 1e-6)

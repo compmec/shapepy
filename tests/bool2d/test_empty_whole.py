@@ -11,7 +11,7 @@ from shapepy import lebesgue_density, move, rotate, scale
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.primitive import Primitive
 from shapepy.geometry.point import polar
-from shapepy.scalar.angle import Angle
+from shapepy.scalar.angle import degrees
 
 
 @pytest.mark.order(21)
@@ -162,7 +162,7 @@ def test_scale():
 def test_rotate():
     empty = EmptyShape()
     whole = WholeShape()
-    angle = Angle.degrees(30)
+    angle = degrees(30)
     assert empty.rotate(angle) is empty
     assert whole.rotate(angle) is whole
 
@@ -213,7 +213,7 @@ def test_density():
         assert lebesgue_density(whole, point) == 1
 
     for deg in range(0, 360, 30):
-        angle = Angle.degrees(deg)
+        angle = degrees(deg)
         point = polar(float("inf"), angle)
         assert empty.density(point) == 0
         assert whole.density(point) == 1

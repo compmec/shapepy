@@ -143,7 +143,7 @@ class SubSetR2:
         -----------
         >>> from shapepy import Primitive
         >>> circle = Primitive.circle()
-        >>> circle.rotate(Angle.degrees(90))
+        >>> circle.rotate(degrees(90))
 
         """
         raise NotImplementedError

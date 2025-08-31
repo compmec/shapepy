@@ -6,7 +6,7 @@ from functools import lru_cache
 from typing import Tuple
 
 from ..tools import Is, To
-from .angle import Angle
+from .angle import turns
 from .reals import Rational, Real
 
 
@@ -121,7 +121,7 @@ class NodeSampleFactory:
         (0.02447, 0.20611, 0.5, 0.79389, 0.97553)
         """
         angles = (
-            Angle.turns(num / 2)
+            turns(num / 2)
             for num in NodeSampleFactory.custom_open_formula(npts)[::-1]
         )
         return tuple(To.rational(1, 2) + angle.cos() / 2 for angle in angles)

@@ -7,7 +7,7 @@ import pytest
 from shapepy.geometry.box import Box
 from shapepy.geometry.factory import FactorySegment
 from shapepy.geometry.unparam import USegment
-from shapepy.scalar.angle import Angle
+from shapepy.scalar.angle import degrees
 
 
 @pytest.mark.order(14)
@@ -78,8 +78,7 @@ def test_scale():
 def test_rotate():
     segment = FactorySegment.bezier([(0, 0), (3, 4)])
     usegment = USegment(segment)
-    angle = Angle.degrees(90)
-    usegment.rotate(angle)
+    usegment.rotate(degrees(90))
 
     good = FactorySegment.bezier([(0, 0), (-4, 3)])
     assert usegment.parametrize() == good

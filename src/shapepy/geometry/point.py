@@ -9,7 +9,7 @@ from __future__ import annotations
 from typing import Tuple, Union
 
 from ..loggers import debug
-from ..scalar.angle import Angle
+from ..scalar.angle import Angle, arg, degrees
 from ..scalar.reals import Math, Real
 from ..tools import Is, To
 
@@ -32,7 +32,7 @@ def polar(radius: Real, angle: Angle) -> Point2D:
     Creates a Point with polar coordinates
     """
     radius = To.real(radius)
-    angle = Angle.degrees(0) if radius == 0 else To.angle(angle)
+    angle = degrees(0) if radius == 0 else To.angle(angle)
     return Point2D(None, None, radius, angle)
 
 
@@ -83,7 +83,7 @@ class Point2D:
     def angle(self) -> Angle:
         """The angle the point (x, y) forms with respect to the horizontal"""
         if self.__angle is None:
-            self.__angle = Angle.arg(self.__xcoord, self.__ycoord)
+            self.__angle = arg(self.__xcoord, self.__ycoord)
         return self.__angle
 
     def __copy__(self) -> Point2D:
@@ -117,7 +117,7 @@ class Point2D:
             -self.xcoord,
             -self.ycoord,
             self.radius,
-            self.angle + Angle.degrees(180),
+            self.angle + degrees(180),
         )
 
     def __pos__(self) -> Point2D:
