@@ -4,19 +4,16 @@ Contains functions to integrate over a segment
 
 from __future__ import annotations
 
+from copy import copy
 from functools import partial
-from typing import Optional, Union
 
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
-from ..common import derivate
-from ..loggers import debug
-from ..scalar.angle import arg
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math
 from ..tools import Is, To
 from .jordancurve import JordanCurve
-from .point import Point2D, cross, inner
+from .point import Point2D
 from .segment import Segment
 
 
@@ -25,6 +22,9 @@ class IntegrateSegment:
     """
     Defines methods to integrates over a segment
     """
+
+    direct = IntegratorFactory.closed_newton_cotes(3)
+    adaptative = AdaptativeIntegrator(direct, 1e-6)
 
     @staticmethod
     def polynomial(curve: Segment, expx: int, expy: int):
@@ -42,6 +42,33 @@ class IntegrateSegment:
         assert Is.analytic(function)
         ipoly = function.integrate()
         return (ipoly(1) - ipoly(0)) / (expx + expy + 2)
+
+    @staticmethod
+    def turns(curve: Segment, point: Point2D) -> float:
+        """
+        Computes the integral
+
+        I = int_0^1 (u * v' - v * u') / (u * u + v * v) dt
+
+        Where
+
+        u = curve.x - point.x
+        v = curve.y - point.y
+        """
+        point = To.point(point)
+        deltax: IAnalytic = curve.xfunc - point.xcoord
+        deltay: IAnalytic = curve.yfunc - point.ycoord
+        radius_square = deltax * deltax + deltay * deltay
+        if find_minimum(radius_square, [0, 1]) < 1e-6:
+            return To.rational(1, 2)
+        crossf = (
+            deltax * copy(deltay).derivate() - deltay * copy(deltax).derivate()
+        )
+        function = partial(
+            lambda t, cf, rs: cf(t) / rs(t), cf=crossf, rs=radius_square
+        )
+        radians = IntegrateSegment.adaptative.integrate(function, [0, 1])
+        return radians / Math.tau
 
 
 class IntegrateJordan:
@@ -63,49 +90,27 @@ class IntegrateJordan:
             for usegment in jordan.usegments
         )
 
+    @staticmethod
+    def turns(jordan: JordanCurve, point: Point2D) -> float:
+        """
+        Computes the integral
 
-# pylint: disable=too-many-locals
-@debug("shapepy.geometry.integral")
-def lebesgue_density_jordan(
-    jordan: JordanCurve, point: Optional[Point2D] = (0.0, 0.0)
-) -> Union[int, float]:
-    """Computes the lebesgue density number from jordan curve
+        I = int_0^1 (u * v' - v * u') / (u * u + v * v) dt
 
-    Returns a value in the interval [0, 1]:
-    * 0 -> means the point is outside the interior region
-    * 1 -> means the point is completly inside the interior
-    * between 0 and 1, it's on the boundary
-    """
-    point = To.point(point)
-    box = jordan.box()
-    if point not in box:
-        density = 0 if jordan.area > 0 else 1
-        return density
+        Where
 
-    segments = tuple(jordan.parametrize())
-    for i, segmenti in enumerate(segments):
-        if point == segmenti(0):
-            segmentj = segments[(i - 1) % len(segments)]
-            deltapi = segmenti(0, 1)
-            deltapj = segmentj(1, 1)
-            innerval = inner(deltapi, deltapj)
-            crossval = cross(deltapi, deltapj)
-            angle = arg(-innerval, -crossval)
-            return angle.turns % 1
+        u = jordan.x - point.x
+        v = jordan.y - point.y
 
-    direct = IntegratorFactory.closed_newton_cotes(3)
-    integrator = AdaptativeIntegrator(direct, 1e-6)
-    radangle = 0
-    for segment in segments:
-        deltax: IAnalytic = segment.xfunc - point.xcoord
-        deltay: IAnalytic = segment.yfunc - point.ycoord
-        radius_square = deltax * deltax + deltay * deltay
-        if find_minimum(radius_square, [0, 1]) < 1e-6:
-            return 0.5
-        crossf = deltax * derivate(deltay) - deltay * derivate(deltax)
-        function = partial(
-            lambda t, cf, rs: cf(t) / rs(t), cf=crossf, rs=radius_square
-        )
-        radangle += integrator.integrate(function, [0, 1])
-    density = round(radangle / Math.tau)
-    return density if jordan.area > 0 else 1 + density
+        This function should return values other than
+        [-1, -0.5, 0, 0.5, 1]
+        It happens when the functions is discontinuous
+        """
+        result = 0
+        for usegment in jordan.usegments:
+            seg = usegment.parametrize()
+            delta_result = IntegrateSegment.turns(seg, point)
+            if delta_result == 0.5:
+                return 0.5 if jordan.area > 0 else -0.5
+            result += delta_result
+        return result

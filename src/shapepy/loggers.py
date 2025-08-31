@@ -121,6 +121,27 @@ def indent():
         IndentingLoggerAdapter.indent_level -= 1
 
 
+@contextmanager
+def enable_logger(base: str, /, *, level: logging._Level):
+    """Enables temporarily the given logger"""
+    current_enable = LogConfiguration.log_enabled
+    current_levels = {}
+    for name, logger in IndentingLoggerAdapter.instances.items():
+        if base in name:
+            current_levels[name] = logger.getEffectiveLevel()
+    try:
+        LogConfiguration.log_enabled = True
+        for name, logger in IndentingLoggerAdapter.instances.items():
+            if name in current_levels:
+                logger.setLevel(level)
+        yield
+    finally:
+        LogConfiguration.log_enabled = current_enable
+        for name, logger in IndentingLoggerAdapter.instances.items():
+            if name in current_levels:
+                logger.setLevel(current_levels[name])
+
+
 # Create decorator to use in functions
 def debug(name: Optional[str] = None, /, *, maxdepth: Optional[int] = None):
     """

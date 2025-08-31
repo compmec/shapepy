@@ -224,7 +224,7 @@ class FollowPath:
             for j, segment in enumerate(jordan.parametrize()):
                 mid_point = segment(Fraction(1, 2))
                 density = shapeb.density(mid_point)
-                mid_point_in = (density > 0 and closed) or density == 1
+                mid_point_in = (float(density) > 0 and closed) or density == 1
                 if not inside ^ mid_point_in:
                     yield (i, j)
 

@@ -16,6 +16,7 @@ from ..geometry.point import Point2D
 from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
+from .density import Density
 
 
 class SubSetR2:
@@ -149,7 +150,7 @@ class SubSetR2:
         raise NotImplementedError
 
     @abstractmethod
-    def density(self, center: Point2D) -> Real:
+    def density(self, center: Point2D) -> Density:
         """
         Computes the density of the subset around given point
 
@@ -237,8 +238,8 @@ class EmptyShape(SubSetR2):
     def rotate(self, _):
         return self
 
-    def density(self, center: Point2D) -> Real:
-        return 0
+    def density(self, center: Point2D) -> Density:
+        return Density.zero
 
 
 class WholeShape(SubSetR2):
@@ -302,8 +303,8 @@ class WholeShape(SubSetR2):
     def rotate(self, _):
         return self
 
-    def density(self, center: Point2D) -> Real:
-        return 1
+    def density(self, center: Point2D) -> Density:
+        return Density.one
 
 
 # pylint: disable=duplicate-code

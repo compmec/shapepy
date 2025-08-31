@@ -9,7 +9,6 @@ from collections import deque
 from copy import copy
 from typing import Iterable, Iterator, Tuple, Union
 
-from ..common import clean
 from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
@@ -180,7 +179,7 @@ class JordanCurve(IGeometricCurve):
             or not all(point in self for point in other.vertices())
         ):
             return False
-        return clean(self).usegments == clean(other).usegments
+        return copy(self).clean().usegments == copy(other).clean().usegments
 
     @debug("shapepy.geometry.jordancurve")
     def invert(self) -> JordanCurve:

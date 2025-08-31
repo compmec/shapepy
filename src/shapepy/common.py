@@ -4,6 +4,7 @@ from copy import deepcopy
 from typing import Any, Tuple
 
 from .bool2d.base import SubSetR2
+from .bool2d.density import Density
 from .scalar.angle import Angle
 from .scalar.reals import Real
 
@@ -91,7 +92,7 @@ def derivate(obj: Any) -> Any:
     return deepcopy(obj).derivate()
 
 
-def lebesgue_density(subset: SubSetR2, center: Tuple[Real, Real]) -> Real:
+def lebesgue_density(subset: SubSetR2, center: Tuple[Real, Real]) -> Density:
     """
     Calcules the density of given subset around given point
     """

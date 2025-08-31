@@ -1,5 +1,6 @@
 import math
 import random
+from fractions import Fraction
 
 import pytest
 
@@ -107,6 +108,12 @@ def test_directions():
     for degval in range(226, 315):
         assert degrees(degval).direction % 4 == 3
 
+    assert degrees(0).part == 0
+    assert degrees(90).part == 0
+    assert degrees(180).part == 0
+    assert degrees(270).part == 0
+    assert degrees(45).part == 0.125
+
 
 @pytest.mark.order(2)
 @pytest.mark.timeout(1)
@@ -137,6 +144,19 @@ def test_compare():
 @pytest.mark.order(2)
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_directions", "test_compare"])
+def test_compare_all():
+    for degval in range(0, 360):
+        angle = degrees(degval)
+        assert angle.degrees == degval
+        assert angle.turns == Fraction(degval, 360)
+        assert angle.radians == math.tau * Fraction(degval, 360)
+
+
+@pytest.mark.order(2)
+@pytest.mark.timeout(1)
+@pytest.mark.dependency(
+    depends=["test_directions", "test_compare", "test_compare_all"]
+)
 def test_evaluate_arg():
     assert arg(0, 0) == degrees(0)
     assert arg(1, 0) == degrees(0)
@@ -209,6 +229,12 @@ def test_evaluate_operations():
 
         assert 2 * anglea == anglea + anglea
 
+    for _ in range(1000):
+        a = random.randint(0, 720)
+        anglea = degrees(a)
+        angleb = degrees(a + 180)
+        assert ~angleb == anglea
+
 
 @pytest.mark.order(2)
 @pytest.mark.timeout(1)
@@ -249,6 +275,7 @@ def test_print():
         "test_build_arg",
         "test_directions",
         "test_compare",
+        "test_compare_all",
         "test_evaluate_arg",
         "test_evaluate_sincos",
         "test_evaluate_operations",
