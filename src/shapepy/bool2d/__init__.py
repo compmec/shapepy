@@ -3,8 +3,20 @@ Defines the internal module that computes the boolean
 operations between subsets
 """
 
+from ..tools import Is
 from .base import Future
-from .boolean import intersect, unite
+from .boolean import (
+    clean_bool2d,
+    intersect_bool2d,
+    invert_bool2d,
+    unite_bool2d,
+)
+from .convert import from_any
+from .lazy import is_lazy
 
-Future.unite = unite
-Future.intersect = intersect
+Future.unite = unite_bool2d
+Future.intersect = intersect_bool2d
+Future.clean = clean_bool2d
+Future.convert = from_any
+
+Is.lazy = is_lazy
