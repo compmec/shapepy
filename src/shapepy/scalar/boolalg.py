@@ -3,9 +3,10 @@
 from __future__ import annotations
 
 import re
-from typing import Iterable, Iterator, List, Set, Tuple
+from collections import Counter
+from typing import Iterable, Iterator, List, Set, Tuple, Union
 
-from ..loggers import debug, get_logger
+from ..loggers import debug
 from ..tools import Is, NotExpectedError
 
 AND = "*"
@@ -15,18 +16,21 @@ XOR = "^"
 TRUE = "1"
 FALSE = "0"
 NOTCARE = "-"
-OPERATORS = {AND, OR, NOT, XOR}
+OPERATORS = (OR, XOR, AND, NOT)
 
 
 def funcand(values: Iterable[bool], /) -> bool:
-    return all(values)
+    """Function that computes the AND of many booleans"""
+    return all(map(bool, values))
 
 
 def funcor(values: Iterable[bool], /) -> bool:
-    return any(values)
+    """Function that computes the OR of many booleans"""
+    return any(map(bool, values))
 
 
 def funcxor(values: Iterable[bool], /) -> bool:
+    """Function that computes the XOR of many booleans"""
     values = iter(values)
     result = next(values)
     for value in values:
@@ -46,6 +50,7 @@ def simplify(expression: str) -> str:
     """Simplifies given boolean expression"""
     if not Is.instance(expression, str):
         raise TypeError
+    expression = simplify_no_variable(expression)
     variables = find_variables(expression)
     if 0 < len(variables) < 5:
         table = evaluate_table(expression)
@@ -58,23 +63,99 @@ def simplify(expression: str) -> str:
             Implicants.implicant2expression(imp, variables)
             for imp in implicants
         )
-        if len(implicants) == 1:
-            return next(and_exprs)
-        return OR + OR.join("(" + expr + ")" for expr in and_exprs)
+        return unite_strs(and_exprs)
     return expression
+
+
+# pylint: disable=too-many-return-statements,too-many-branches
+@debug("shapepy.scalar.boolalg")
+def simplify_no_variable(expression: str) -> str:
+    """Simplifies the given boolean expression ignoring the values
+    that the variables can assume"""
+    if not Is.instance(expression, str):
+        raise TypeError
+    if len(expression) == 0:
+        raise ValueError
+    operator = find_operator(expression)
+    while operator is None and expression[0] == "(" and expression[-1] == ")":
+        expression = expression[1:-1]
+        operator = find_operator(expression)
+    if operator is None:
+        try:
+            return TRUE if evaluate_tree(expression) else FALSE
+        except ValueError:
+            return expression
+
+    if operator == NOT:
+        if expression[0] != NOT:
+            raise NotExpectedError(f"Expression: {expression}")
+        try:
+            return (
+                TRUE if not evaluate_tree(extract(expression, NOT)) else FALSE
+            )
+        except ValueError:
+            return invert_str(simplify_no_variable(extract(expression, NOT)))
+    subexprs = extract(expression, operator)
+    if operator == XOR:
+        subexprs = (s for s, i in dict(Counter(subexprs)).items() if i % 2)
+    subexprs = set(map(simplify_no_variable, set(subexprs)))
+    if operator == XOR:
+        subexprs = set(s for s in subexprs if s != FALSE)
+    elif operator == AND:
+        subexprs = set(s for s in subexprs if s != TRUE)
+    elif operator == OR:
+        subexprs = set(s for s in subexprs if s != FALSE)
+    if len(subexprs) == 0:
+        return TRUE if operator == AND else FALSE
+    if len(subexprs) == 1:
+        return tuple(subexprs)[0]
+    subexprs = sorted(subexprs, key=compare_expression)
+    subexprs = (s if len(s) < 2 else ("(" + s + ")") for s in subexprs)
+    return operator.join(subexprs)
+
+
+@debug("shapepy.scalar.boolalg")
+def find_operator(expression: str) -> Union[None, str]:
+    """From the given expression, finds the operator to divide the expression
+
+    Example
+    -------
+    >>> find_operator("a+b*c")
+    +
+    >>> find_operator("!a^b")
+    ^
+    """
+    if not Is.instance(expression, str):
+        raise ValueError(f"Invalid argument {expression}")
+    if len(expression) == 0:
+        raise ValueError(f"Invalid expression '{expression}'")
+    for operator in (op for op in OPERATORS if op in expression):
+        parentesis = 0
+        for char in expression:
+            if char == "(":
+                parentesis += 1
+            elif char == ")":
+                parentesis -= 1
+            elif parentesis != 0:
+                continue
+            elif char == operator:
+                return char
+    return None
 
 
 @debug("shapepy.scalar.boolalg")
 def find_variables(expression: str) -> str:
     """Searches the expression to finding the variables"""
-    assert Is.instance(expression, str)
+    if not Is.instance(expression, str):
+        raise TypeError(f"Invalid typo: {type(expression)}")
     return "".join(sorted(set(re.findall(r"([a-z])", expression))))
 
 
 @debug("shapepy.scalar.boolalg")
 def evaluate_table(expression: str) -> Iterable[bool]:
     """Evaluates all the combination of boolean variables"""
-    assert Is.instance(expression, str)
+    if not Is.instance(expression, str):
+        raise TypeError(f"Invalid typo: {type(expression)}")
 
     indexvar = 0
     variables = find_variables(expression)
@@ -97,31 +178,107 @@ def evaluate_table(expression: str) -> Iterable[bool]:
 @debug("shapepy.scalar.boolalg")
 def evaluate_tree(expression: str) -> bool:
     """Evaluates a single boolean expression"""
-    # logger = get_logger("shapepy.scalar.boolalg")
-    if expression[0] == NOT:
-        return not evaluate_tree(expression[1:])
+    if len(find_variables(expression)) != 0:
+        raise ValueError(f"Cannot evaluate expression {expression}")
+    operator = find_operator(expression)
+    while operator is None and expression[0] == "(" and expression[-1] == ")":
+        expression = expression[1:-1]
+        operator = find_operator(expression)
     if len(expression) == 1:
         if expression not in {FALSE, TRUE}:
             raise NotExpectedError(f"Invalid {expression}")
         return expression == TRUE
-    if expression[0] not in OPERATORS:
-        if expression[0] != "(":
-            raise NotExpectedError(f"Invalid {expression}")
-        return evaluate_tree(expression[1:-1])
-    operator = expression[0]
+    if operator not in OPERATORS:
+        raise NotExpectedError(str(expression))
+    if operator == NOT:
+        if expression[0] != NOT:
+            raise NotExpectedError(str(expression))
+        return not evaluate_tree(expression[1:])
     if operator not in {AND, OR, XOR}:
         raise ValueError
-    subexprs = divide_by(expression[1:], operator)
+    subexprs = extract(expression, operator)
     results = map(evaluate_tree, subexprs)
     return METHODS[operator](results)
+
+
+def compare_expression(expression: str) -> Tuple[int, str]:
+    """Function used to sort expressions"""
+    return (len(expression), expression)
+
+
+def invert_str(expression: str) -> str:
+    """Inverts an expression
+
+    Example
+    -------
+    >>> invert_str('a')
+    !a
+    >>> invert_str('a*b')
+    !(a*b)
+    """
+    if len(expression) > 1:
+        expression = "(" + expression + ")"
+    return NOT + expression
+
+
+def unite_strs(expressions: Iterable[str]) -> str:
+    """Gives the union of given expressions.
+
+    Example
+    -------
+    >>> unite_strs({'a'})
+    a
+    >>> unite_strs({'a','b'})
+    a+b
+    >>> unite_strs({'a*b','c'})
+    c+(a*b)
+    >>> unite_strs({'c+(a*b)'})
+    c+(a*b)
+    """
+    expressions = tuple(expressions)
+    if len(expressions) == 1:
+        return expressions[0]
+    exprs = (e if len(e) < 2 else ("(" + e + ")") for e in expressions)
+    return OR.join(sorted(exprs, key=compare_expression))
+
+
+def intersect_strs(expressions: Iterable[str]) -> str:
+    """Gives the intersection of given expressions.
+
+    Example
+    -------
+    >>> intersect_strs({'a'})
+    a
+    >>> intersect_strs({'a','b'})
+    a*b
+    >>> intersect_strs({'a*b','c'})
+    c*(a*b)
+    >>> intersect_strs({'c+(a*b)'})
+    c+(a*b)
+    """
+    expressions = tuple(expressions)
+    if len(expressions) == 1:
+        return expressions[0]
+    exprs = (e if len(e) < 2 else ("(" + e + ")") for e in expressions)
+    return AND.join(sorted(exprs, key=compare_expression))
+
+
+def extract(expression: str, operator: str) -> Union[str, Iterator[str]]:
+    """Extracts from the expression the required"""
+    if operator == NOT:
+        return expression[1:]
+    return divide_by(expression, operator)
 
 
 @debug("shapepy.scalar.boolalg")
 def divide_by(expression: str, divisor: str) -> Iterator[str]:
     """Divides the standard expression by divisor"""
-    parentesis = 1 if expression[0] == "(" else 0
+    if not Is.instance(expression, str) or len(expression) == 0:
+        raise NotExpectedError(str(expression))
+    subsets: List[str] = []
     indexi = 0
     while indexi < len(expression):
+        parentesis = 1 if expression[indexi] == "(" else 0
         indexj = indexi + 1
         while indexj < len(expression):
             if expression[indexj] == "(":
@@ -132,13 +289,15 @@ def divide_by(expression: str, divisor: str) -> Iterator[str]:
                 break
             indexj += 1
         subset = expression[indexi:indexj]
-        yield subset
+        subsets.append(subset)
         indexi = indexj + 1
+    return tuple(subsets)
 
 
 class Implicants:
     """Class to store static methods used to simplify implicants"""
 
+    @staticmethod
     @debug("shapepy.scalar.boolalg")
     def binary2number(binary: str) -> int:
         """Converts a binary representation to a number"""
@@ -148,6 +307,7 @@ class Implicants:
             number += 1 if (char == TRUE) else 0
         return number
 
+    @staticmethod
     @debug("shapepy.scalar.boolalg")
     def number2binary(number: int, nbits: int) -> str:
         """Converts a number into a binary representation"""
@@ -158,7 +318,7 @@ class Implicants:
             number //= 2
         return FALSE * (nbits - len(chars)) + "".join(chars)
 
-    @debug("shapepy.scalar.boolalg")
+    @staticmethod
     def find_prime_implicants(results: Iterable[bool]) -> Tuple[str]:
         """Finds the prime implicants
 
@@ -180,6 +340,7 @@ class Implicants:
                 implicants.append(implicant)
         return tuple(implicants)
 
+    @staticmethod
     @debug("shapepy.scalar.boolalg")
     def merge_prime_implicants(minterms: Iterable[str]) -> Set[str]:
         """Merge the prime implicants
@@ -207,29 +368,30 @@ class Implicants:
 
         return minterms
 
-    @debug("shapepy.scalar.boolalg")
+    @staticmethod
     def can_merge(mini: str, minj: str) -> bool:
         """Tells if it's possible to merge two implicants"""
         assert Is.instance(mini, str)
         assert Is.instance(minj, str)
         assert len(mini) == len(minj)
         for chari, charj in zip(mini, minj):
-            if (chari == "-") ^ (charj == "-"):
+            if (chari == NOTCARE) ^ (charj == NOTCARE):
                 return False
         numi = Implicants.binary2number(mini)
         numj = Implicants.binary2number(minj)
         res = numi ^ numj
         return res != 0 and (res & res - 1) == 0
 
-    @debug("shapepy.scalar.boolalg")
+    @staticmethod
     def merge_two(mini: str, minj: str) -> bool:
         """Merge two implicants"""
         result = []
         for chari, charj in zip(mini, minj):
-            new_char = "-" if chari != charj else chari
+            new_char = NOTCARE if chari != charj else chari
             result.append(new_char)
         return "".join(result)
 
+    @staticmethod
     @debug("shapepy.scalar.boolalg")
     def implicant2expression(implicant: str, variables: str) -> str:
         """Tranforms an implicant to an AND expression
@@ -241,10 +403,11 @@ class Implicants:
         assert Is.instance(implicant, str)
         assert Is.instance(variables, str)
         assert len(implicant) == len(variables)
+        assert len(implicant) > 0
         parts = []
         for i, v in zip(implicant, variables):
             if i == FALSE:
-                parts.append(NOT + v)
+                parts.append(invert_str(v))
             elif i == TRUE:
                 parts.append(v)
-        return AND + AND.join(parts)
+        return intersect_strs(parts) if len(parts) > 0 else TRUE
