@@ -2,13 +2,14 @@
 
 from __future__ import annotations
 
-from copy import copy
+from collections import Counter
+from copy import copy, deepcopy
 from typing import Iterable, Iterator
 
 from ..loggers import debug
 from ..tools import Is
 from .base import EmptyShape, SubSetR2, WholeShape
-from .density import intersect_densities
+from .density import intersect_densities, unite_densities
 
 
 class RecipeLazy:
@@ -18,9 +19,9 @@ class RecipeLazy:
     @debug("shapepy.bool2d.lazy")
     def invert(subset: SubSetR2) -> SubSetR2:
         """Gives the complementar of the given subset"""
-        if Is.instance(subset, (EmptyShape, WholeShape)):
+        if Is.instance(subset, (EmptyShape, WholeShape, LazyNot)):
             return -subset
-        return RecipeLazy.nand({subset})
+        return LazyNot(subset)
 
     @staticmethod
     @debug("shapepy.bool2d.lazy")
@@ -35,7 +36,7 @@ class RecipeLazy:
             return EmptyShape()
         if len(subsets) == 1:
             return tuple(subsets)[0]
-        return RecipeLazy.invert(RecipeLazy.nand(subsets))
+        return LazyAnd(subsets)
 
     @staticmethod
     @debug("shapepy.bool2d.contain")
@@ -50,62 +51,104 @@ class RecipeLazy:
             return WholeShape()
         if len(subsets) == 1:
             return tuple(subsets)[0]
-        return RecipeLazy.nand((RecipeLazy.nand({sub}) for sub in subsets))
-
-    @staticmethod
-    @debug("shapepy.bool2d.contain")
-    def nand(subsets: Iterable[SubSetR2]) -> SubSetR2:
-        """Gives the exclusive and of the given subsets
-        NAND[A, B, C] = NOT[AND[A, B, C]]
-        """
-        subsets = frozenset(subsets)
-        return LazyNand(subsets)
+        return LazyOr(subsets)
 
     @staticmethod
     @debug("shapepy.bool2d.contain")
     def xor(subsets: Iterable[SubSetR2]) -> SubSetR2:
-        """Gives the exclusive or of the given subsets
-        NAND[A, B, C] = NOT[AND[A, B, C]]
-        """
-        subsets = frozenset(subsets)
-        if len(subsets) > 2:
-            raise NotImplementedError
-        aset, bset = tuple(subsets)
-        cset = RecipeLazy.nand({aset, bset})
-        dset = RecipeLazy.nand({aset, cset})
-        eset = RecipeLazy.nand({bset, cset})
-        return RecipeLazy.nand({dset, eset})
+        """Gives the exclusive or of the given subsets"""
+        subsets = tuple(subsets)
+        dictids = dict(Counter(map(id, subsets)))
+        subsets = tuple(s for s in subsets if dictids[id(s)] % 2)
+        length = len(subsets)
+        if length == 0:
+            return EmptyShape()
+        if length == 1:
+            return subsets[0]
+        mid = length // 2
+        aset = RecipeLazy.xor(subsets[:mid])
+        bset = RecipeLazy.xor(subsets[mid:])
+        left = RecipeLazy.intersect((aset, RecipeLazy.invert(bset)))
+        righ = RecipeLazy.intersect((RecipeLazy.invert(aset), bset))
+        return RecipeLazy.unite((left, righ))
 
 
-class LazyNand(SubSetR2):
+class LazyNot(SubSetR2):
     """A Lazy evaluator that stores the complementar of given subset"""
 
+    def __init__(self, subset: SubSetR2):
+        if not Is.instance(subset, SubSetR2):
+            raise TypeError(f"Invalid typo: {type(subset)}: {subset}")
+        if Is.instance(subset, LazyNot):
+            raise TypeError("Subset cannot be LazyNot")
+        self.__internal = subset
+
+    def __hash__(self):
+        return -hash(self.__internal)
+
+    def __str__(self):
+        return f"NOT[{str(self.__internal)}]"
+
+    def __repr__(self):
+        return f"NOT[{repr(self.__internal)}]"
+
+    def __invert__(self):
+        return self.__internal
+
+    def __neg__(self):
+        return self.__internal
+
+    def __copy__(self):
+        return LazyNot(copy(self.__internal))
+
+    def __deepcopy__(self, memo):
+        return LazyNot(deepcopy(self.__internal))
+
+    def move(self, vector):
+        self.__internal.move(vector)
+        return self
+
+    def scale(self, amount):
+        self.__internal.scale(amount)
+        return self
+
+    def rotate(self, angle):
+        self.__internal.rotate(angle)
+        return self
+
+    def density(self, center):
+        return ~self.__internal.density(center)
+
+
+class LazyOr(SubSetR2):
+    """A Lazy evaluator that stores the union of given subsets"""
+
     def __init__(self, subsets: Iterable[SubSetR2]):
+        subsets = (s for s in subsets if not Is.instance(s, EmptyShape))
         subsets = frozenset(subsets)
-        if any(Is.instance(sub, (EmptyShape, WholeShape)) for sub in subsets):
-            raise TypeError("Invalid typos")
+        if any(Is.instance(s, LazyOr) for s in subsets):
+            raise TypeError
+        if any(Is.instance(s, WholeShape) for s in subsets):
+            subsets = frozenset()
         self.__subsets = subsets
-
-    def __copy__(self) -> LazyNand:
-        return self.__deepcopy__(None)
-
-    def __deepcopy__(self, memo) -> LazyNand:
-        return LazyNand(map(copy, self))
 
     def __iter__(self) -> Iterator[SubSetR2]:
         yield from self.__subsets
 
-    def __len__(self) -> int:
-        return len(self.__subsets)
-
     def __str__(self):
-        return f"NAND[{str(set(self.__subsets))}]"
+        return f"OR[{", ".join(map(str, self))}]"
 
     def __repr__(self):
-        return f"NOT[{repr(set(self.__subsets))}]"
+        return f"OR[{", ".join(map(repr, self))}]"
 
     def __hash__(self):
         return hash(tuple(self.__subsets))
+
+    def __copy__(self):
+        return LazyOr(map(copy, self))
+
+    def __deepcopy__(self, memo):
+        return LazyOr(map(deepcopy, self))
 
     def move(self, vector):
         for subset in self:
@@ -124,28 +167,59 @@ class LazyNand(SubSetR2):
 
     def density(self, center):
         densities = (sub.density(center) for sub in self)
-        return ~intersect_densities(densities)
+        return unite_densities(tuple(densities))
+
+
+class LazyAnd(SubSetR2):
+    """A Lazy evaluator that stores the union of given subsets"""
+
+    def __init__(self, subsets: Iterable[SubSetR2]):
+        subsets = (s for s in subsets if not Is.instance(s, EmptyShape))
+        subsets = frozenset(subsets)
+        if any(Is.instance(s, LazyAnd) for s in subsets):
+            raise TypeError
+        if any(Is.instance(s, WholeShape) for s in subsets):
+            subsets = frozenset()
+        self.__subsets = subsets
+
+    def __iter__(self) -> Iterator[SubSetR2]:
+        yield from self.__subsets
+
+    def __str__(self):
+        return f"AND[{", ".join(map(str, self))}]"
+
+    def __repr__(self):
+        return f"AND[{", ".join(map(repr, self))}]"
+
+    def __hash__(self):
+        return -hash(tuple(-hash(sub) for sub in self))
+
+    def __copy__(self):
+        return LazyAnd(map(copy, self))
+
+    def __deepcopy__(self, memo):
+        return LazyAnd(map(deepcopy, self))
+
+    def move(self, vector):
+        for subset in self:
+            subset.move(vector)
+        return self
+
+    def scale(self, amount):
+        for subset in self:
+            subset.scale(amount)
+        return self
+
+    def rotate(self, angle):
+        for subset in self:
+            subset.rotate(angle)
+        return self
+
+    def density(self, center):
+        densities = (sub.density(center) for sub in self)
+        return intersect_densities(tuple(densities))
 
 
 def is_lazy(subset: SubSetR2) -> bool:
     """Tells if the given subset is a Lazy evaluated instance"""
-    return Is.instance(subset, LazyNand)
-
-
-@debug("shapepy.bool2d.contain")
-def expand_morgans(subset: SubSetR2) -> SubSetR2:
-    """Expands the given subset by using De Morgan's laws
-
-    This function is used to simplifies the `Lazy` class.
-    For example, for any subset:
-
-    Example
-    -------
-    >>> other = LazyOr((subset, LazyNot(subset)))
-    >>> expand_morgans(other)
-    WholeShape
-    >>> other = LazyAnd((subset, LazyNot(subset)))
-    >>> expand_morgans(other)
-    EmptyShape
-    """
-    return subset
+    return Is.instance(subset, (LazyAnd, LazyNot, LazyOr))
