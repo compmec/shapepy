@@ -67,9 +67,8 @@ def test_evaluate_basic():
         "1^0": True,
         "1^1": False,
     }
-    with enable_logger("shapepy"):
-        for expr, result in values.items():
-            assert evaluate_tree(expr) is result
+    for expr, result in values.items():
+        assert evaluate_tree(expr) is result
 
 
 @pytest.mark.order(1)
@@ -107,9 +106,8 @@ def test_table_single_var():
     }
     assert tuple(evaluate_table("a")) == (False, True)
     assert tuple(evaluate_table("!a")) == (True, False)
-    with enable_logger("shapepy"):
-        for expr, result in values.items():
-            assert tuple(evaluate_table(expr)) == result
+    for expr, result in values.items():
+        assert tuple(evaluate_table(expr)) == result
 
 
 @pytest.mark.order(1)
@@ -297,21 +295,20 @@ def test_simplify_single_var():
     assert simplify("!!!a") == "!a"
     assert simplify("!!!!a") == "a"
 
-    with enable_logger("shapepy"):
-        # OR
-        assert simplify("a") == "a"
-        assert simplify("a+a") == "a"
-        assert simplify("a+!a") == "1"
-        assert simplify("!a+a") == "1"
-        assert simplify("!a+!a") == "!a"
-        assert simplify("a+a+a") == "a"
-        assert simplify("a+a+!a") == "1"
-        assert simplify("a+!a+a") == "1"
-        assert simplify("a+!a+!a") == "1"
-        assert simplify("!a+a+a") == "1"
-        assert simplify("!a+a+!a") == "1"
-        assert simplify("!a+!a+a") == "1"
-        assert simplify("!a+!a+!a") == "!a"
+    # OR
+    assert simplify("a") == "a"
+    assert simplify("a+a") == "a"
+    assert simplify("a+!a") == "1"
+    assert simplify("!a+a") == "1"
+    assert simplify("!a+!a") == "!a"
+    assert simplify("a+a+a") == "a"
+    assert simplify("a+a+!a") == "1"
+    assert simplify("a+!a+a") == "1"
+    assert simplify("a+!a+!a") == "1"
+    assert simplify("!a+a+a") == "1"
+    assert simplify("!a+a+!a") == "1"
+    assert simplify("!a+!a+a") == "1"
+    assert simplify("!a+!a+!a") == "!a"
 
     # AND
     assert simplify("a") == "a"

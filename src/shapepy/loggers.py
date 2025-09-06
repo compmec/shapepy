@@ -122,7 +122,7 @@ def indent():
 
 
 @contextmanager
-def enable_logger(base: str, /, *, level: logging._Level):
+def enable_logger(base: str, /, *, level: logging._Level = "DEBUG"):
     """Enables temporarily the given logger"""
     current_enable = LogConfiguration.log_enabled
     current_levels = {}
