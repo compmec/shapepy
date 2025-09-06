@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import copy, deepcopy
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, Type
 
 from ..loggers import debug
 from ..tools import Is
@@ -14,6 +14,15 @@ from .density import intersect_densities, unite_densities
 
 class RecipeLazy:
     """Contains static methods that gives lazy recipes"""
+
+    @staticmethod
+    def flatten(subsets: Iterable[SubSetR2], typo: Type) -> Iterator[SubSetR2]:
+        """Flattens the subsets"""
+        for subset in subsets:
+            if Is.instance(subset, typo):
+                yield from subset
+            else:
+                yield subset
 
     @staticmethod
     @debug("shapepy.bool2d.lazy")
@@ -27,6 +36,7 @@ class RecipeLazy:
     @debug("shapepy.bool2d.lazy")
     def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """Gives the recipe for the intersection of given subsets"""
+        subsets = RecipeLazy.flatten(subsets, LazyAnd)
         subsets = frozenset(
             s for s in subsets if not Is.instance(s, WholeShape)
         )
@@ -42,6 +52,7 @@ class RecipeLazy:
     @debug("shapepy.bool2d.contain")
     def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """Gives the recipe for the union of given subsets"""
+        subsets = RecipeLazy.flatten(subsets, LazyOr)
         subsets = frozenset(
             s for s in subsets if not Is.instance(s, EmptyShape)
         )
@@ -83,6 +94,7 @@ class LazyNot(SubSetR2):
             raise TypeError("Subset cannot be LazyNot")
         self.__internal = subset
 
+    @debug("shapepy.bool2d.lazy")
     def __hash__(self):
         return -hash(self.__internal)
 
@@ -103,6 +115,13 @@ class LazyNot(SubSetR2):
 
     def __deepcopy__(self, memo):
         return LazyNot(deepcopy(self.__internal))
+
+    def __eq__(self, other):
+        return (
+            Is.instance(other, LazyNot)
+            and hash(self) == hash(other)
+            and (~self == ~other)
+        )
 
     def move(self, vector):
         self.__internal.move(vector)
@@ -141,14 +160,22 @@ class LazyOr(SubSetR2):
     def __repr__(self):
         return f"OR[{", ".join(map(repr, self))}]"
 
+    @debug("shapepy.bool2d.lazy")
     def __hash__(self):
-        return hash(tuple(self.__subsets))
+        return hash(tuple(map(hash, self.__subsets)))
 
     def __copy__(self):
         return LazyOr(map(copy, self))
 
     def __deepcopy__(self, memo):
         return LazyOr(map(deepcopy, self))
+
+    def __eq__(self, other):
+        return (
+            Is.instance(other, LazyOr)
+            and hash(self) == hash(other)
+            and frozenset(self) == frozenset(other)
+        )
 
     def move(self, vector):
         for subset in self:
@@ -191,6 +218,7 @@ class LazyAnd(SubSetR2):
     def __repr__(self):
         return f"AND[{", ".join(map(repr, self))}]"
 
+    @debug("shapepy.bool2d.lazy")
     def __hash__(self):
         return -hash(tuple(-hash(sub) for sub in self))
 
@@ -199,6 +227,13 @@ class LazyAnd(SubSetR2):
 
     def __deepcopy__(self, memo):
         return LazyAnd(map(deepcopy, self))
+
+    def __eq__(self, other):
+        return (
+            Is.instance(other, LazyAnd)
+            and hash(self) == hash(other)
+            and frozenset(self) == frozenset(other)
+        )
 
     def move(self, vector):
         for subset in self:

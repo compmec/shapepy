@@ -15,6 +15,7 @@ from typing import Iterable, Set, Tuple, Union
 from ..geometry.box import Box
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, To
@@ -98,6 +99,7 @@ class SimpleShape(SubSetR2):
         """The internal area that is enclosed by the shape"""
         return self.__jordancurve.area
 
+    @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
 
@@ -256,6 +258,7 @@ class ConnectedShape(SubSetR2):
     def __invert__(self) -> DisjointShape:
         return DisjointShape(~simple for simple in self.subshapes)
 
+    @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
 
@@ -414,6 +417,7 @@ class DisjointShape(SubSetR2):
         msg += f"{len(self.subshapes)} subshapes"
         return msg
 
+    @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
 

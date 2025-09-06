@@ -53,7 +53,7 @@ def invert_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The complementar subset
     """
-    return RecipeLazy.invert(subset)
+    return clean_with_boolalg(RecipeLazy.invert(subset))
 
 
 @debug("shapepy.bool2d.boolean")
@@ -71,7 +71,8 @@ def unite_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The united subset
     """
-    return RecipeLazy.unite(subsets)
+    union = RecipeLazy.unite(subsets)
+    return clean_with_boolalg(union)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -89,7 +90,8 @@ def intersect_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    return RecipeLazy.intersect(subsets)
+    intersection = RecipeLazy.intersect(subsets)
+    return clean_with_boolalg(intersection)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -107,7 +109,8 @@ def xor_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    return RecipeLazy.xor(subsets)
+    subset = RecipeLazy.xor(subsets)
+    return clean_with_boolalg(subset)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -125,8 +128,6 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    if not Is.lazy(subset):
-        return subset
     subset = clean_with_boolalg(subset)
     if not Is.lazy(subset):
         return subset
@@ -164,7 +165,7 @@ def clean_with_boolalg(subset: SubSetR2) -> SubSetR2:
     """Simplifies the subset"""
 
     if not Is.lazy(subset):
-        raise TypeError("Expected Lazy operator")
+        return subset
 
     def create_variable(index: int) -> str:
         """"""
@@ -178,10 +179,8 @@ def clean_with_boolalg(subset: SubSetR2) -> SubSetR2:
     ) -> str:
         """Converts a SubSetR2 into a boolean expression"""
         if not is_lazy(subset):
-            if Is.instance(subset, EmptyShape):
-                return FALSE
-            if Is.instance(subset, WholeShape):
-                return TRUE
+            if Is.instance(subset, (EmptyShape, WholeShape)):
+                raise NotExpectedError("Lazy does not contain these")
             if subset not in dictvars:
                 dictvars[subset] = create_variable(len(dictvars))
             return dictvars[subset]
