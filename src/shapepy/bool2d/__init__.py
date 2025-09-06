@@ -10,13 +10,16 @@ from .boolean import (
     intersect_bool2d,
     invert_bool2d,
     unite_bool2d,
+    xor_bool2d,
 )
 from .convert import from_any
 from .lazy import is_lazy
 
+Future.invert = invert_bool2d
 Future.unite = unite_bool2d
 Future.intersect = intersect_bool2d
 Future.clean = clean_bool2d
 Future.convert = from_any
+Future.xor = xor_bool2d
 
 Is.lazy = is_lazy

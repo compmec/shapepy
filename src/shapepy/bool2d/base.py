@@ -91,6 +91,23 @@ class SubSetR2:
     def __hash__(self):
         raise NotImplementedError
 
+    def clean(self) -> SubSetR2:
+        """
+        Cleans the subset, changing its representation into a simpler form
+
+        Parameters
+        ----------
+        :return: The same instance
+        :rtype: SubSetR2
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.clean()
+        """
+        return Future.clean(self)
+
     @abstractmethod
     def move(self, vector: Point2D) -> SubSetR2:
         """
@@ -398,6 +415,16 @@ class Future:
     def invert(subset: SubSetR2) -> SubSetR2:
         """
         Computes the complementar set of given SubSetR2 instance
+
+        This function is overrided by a function defined
+        in the `shapepy.bool2d.boolean.py` file
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def xor(subset: SubSetR2) -> SubSetR2:
+        """
+        Computes the exclusive union of given subsets
 
         This function is overrided by a function defined
         in the `shapepy.bool2d.boolean.py` file

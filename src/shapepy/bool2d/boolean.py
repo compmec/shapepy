@@ -7,17 +7,35 @@ from __future__ import annotations
 
 from copy import copy
 from fractions import Fraction
-from typing import Iterable, Tuple, Union
+from typing import Dict, Iterable, List, Tuple
 
 from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
 from ..loggers import debug
-from ..tools import CyclicContainer, Is
-from .base import SubSetR2
-from .lazy import RecipeLazy
-from .shape import ConnectedShape, DisjointShape, SimpleShape
+from ..scalar.boolalg import (
+    AND,
+    FALSE,
+    NOT,
+    OR,
+    TRUE,
+    extract,
+    find_operator,
+    intersect_strs,
+    invert_str,
+    simplify,
+    unite_strs,
+)
+from ..tools import CyclicContainer, Is, NotExpectedError
+from .base import EmptyShape, SubSetR2, WholeShape
+from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
+from .shape import (
+    ConnectedShape,
+    DisjointShape,
+    SimpleShape,
+    shape_from_jordans,
+)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -75,14 +93,32 @@ def intersect_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
 
 
 @debug("shapepy.bool2d.boolean")
+def xor_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
+    """
+    Computes the xor of given subsets
+
+    Parameters
+    ----------
+    subsets: SubSetR2
+        The subsets to compute the xor
+
+    Return
+    ------
+    SubSetR2
+        The intersection subset
+    """
+    return RecipeLazy.xor(subsets)
+
+
+@debug("shapepy.bool2d.boolean")
 def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     """
     Computes the intersection of given subsets
 
     Parameters
     ----------
-    subsets: SubSetR2
-        The subsets to be intersected
+    subset: SubSetR2
+        The subset to be cleaned
 
     Return
     ------
@@ -91,7 +127,102 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     """
     if not Is.lazy(subset):
         return subset
-    raise NotImplementedError
+    subset = clean_with_boolalg(subset)
+    if not Is.lazy(subset):
+        return subset
+    if Is.instance(subset, LazyNot):
+        return clean_bool2d_not(subset)
+    jordans = FollowPath.simplify(subset)
+    if len(jordans) == 0:
+        return EmptyShape() if Is.instance(subset, LazyAnd) else WholeShape()
+    return shape_from_jordans(jordans)
+
+
+@debug("shapepy.bool2d.boolean")
+def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
+    """
+    Cleans complementar of given subset
+
+    Parameters
+    ----------
+    subset: SubSetR2
+        The subset to be cleaned
+
+    Return
+    ------
+    SubSetR2
+        The cleaned subset
+    """
+    assert Is.instance(subset, LazyNot)
+    inverted = ~subset
+    if Is.instance(inverted, SimpleShape):
+        return SimpleShape(~inverted.jordan, not inverted.boundary)
+    raise NotImplementedError(f"Missing typo: {type(subset)}")
+
+
+def clean_with_boolalg(subset: SubSetR2) -> SubSetR2:
+    """Simplifies the subset"""
+
+    if not Is.lazy(subset):
+        raise TypeError("Expected Lazy operator")
+
+    def create_variable(index: int) -> str:
+        """"""
+        if not Is.integer(index) or index > 16:
+            raise ValueError(f"Invalid index {index}")
+        alphabet = "abcdefghijklmnop"
+        return alphabet[index]
+
+    def subset2expression(
+        subset: SubSetR2, dictvars: Dict[SubSetR2, str]
+    ) -> str:
+        """Converts a SubSetR2 into a boolean expression"""
+        if not is_lazy(subset):
+            if Is.instance(subset, EmptyShape):
+                return FALSE
+            if Is.instance(subset, WholeShape):
+                return TRUE
+            if subset not in dictvars:
+                dictvars[subset] = create_variable(len(dictvars))
+            return dictvars[subset]
+        if Is.instance(subset, LazyNot):
+            return invert_str(subset2expression(~subset, dictvars))
+        internals = (subset2expression(s, dictvars) for s in subset)
+        if Is.instance(subset, LazyAnd):
+            return intersect_strs(internals)
+        if Is.instance(subset, LazyOr):
+            return unite_strs(internals)
+        raise NotExpectedError
+
+    def expression2subset(
+        expression: str, dictvars: Dict[SubSetR2, str]
+    ) -> SubSetR2:
+        """Converts a boolean expression into a SubSetR2"""
+        if expression == TRUE:
+            return WholeShape()
+        if expression == FALSE:
+            return EmptyShape()
+        for subset, var in dictvars.items():
+            if expression == var:
+                return subset
+        operator = find_operator(expression)
+        if operator == NOT:
+            inverted = expression2subset(extract(expression, NOT), dictvars)
+            return RecipeLazy.invert(inverted)
+        subexprs = extract(expression, operator)
+        subsets = (expression2subset(sub, subset2var) for sub in subexprs)
+        if operator == OR:
+            return RecipeLazy.unite(subsets)
+        if operator == AND:
+            return RecipeLazy.intersect(subsets)
+        raise NotExpectedError(f"Invalid expression: {expression}")
+
+    subset2var: Dict[SubSetR2, str] = {}
+    original = subset2expression(subset, subset2var)
+    simplified = simplify(original)
+    if simplified != original:
+        subset = expression2subset(simplified, subset2var)
+    return subset
 
 
 class FollowPath:
@@ -103,29 +234,26 @@ class FollowPath:
 
     @staticmethod
     def split_on_intersection(
-        all_group_jordans: Iterable[Iterable[JordanCurve]],
+        all_jordans: Iterable[JordanCurve],
     ):
         """
         Find the intersections between two jordan curves and call split on the
         nodes which intersects
         """
+        all_jordans = tuple(all_jordans)
         intersection = GeometricIntersectionCurves([])
-        all_group_jordans = tuple(map(tuple, all_group_jordans))
-        for i, jordansi in enumerate(all_group_jordans):
-            for j in range(i + 1, len(all_group_jordans)):
-                jordansj = all_group_jordans[j]
-                for jordana in jordansi:
-                    for jordanb in jordansj:
-                        intersection |= jordana.piecewise & jordanb.piecewise
+        for i, jordani in enumerate(all_jordans):
+            for j in range(i + 1, len(all_jordans)):
+                jordanj = all_jordans[j]
+                intersection |= jordani.piecewise & jordanj.piecewise
         intersection.evaluate()
-        for jordans in all_group_jordans:
-            for jordan in jordans:
-                split_knots = intersection.all_knots[id(jordan.piecewise)]
-                jordan.piecewise.split(split_knots)
+        for jordan in all_jordans:
+            split_knots = intersection.all_knots[id(jordan.piecewise)]
+            jordan.piecewise.split(split_knots)
 
     @staticmethod
     def pursue_path(
-        index_jordan: int, index_segment: int, jordans: Tuple[JordanCurve]
+        index_jordan: int, index_segment: int, jordans: Tuple[JordanCurve, ...]
     ) -> CyclicContainer[Tuple[int, int]]:
         """
         Given a list of jordans, it returns a matrix of integers like
@@ -188,18 +316,23 @@ class FollowPath:
 
     @staticmethod
     def follow_path(
-        jordans: Tuple[JordanCurve], start_indexs: Tuple[Tuple[int]]
+        jordans: Tuple[JordanCurve, ...],
+        start_indexs: Tuple[Tuple[int, int], ...],
     ) -> Tuple[JordanCurve]:
         """
         Returns a list of jordan curves which is the result
         of the intersection between 'jordansa' and 'jordansb'
         """
         assert all(map(Is.jordan, jordans))
+        start_indexs = list(start_indexs)
         bez_indexs = []
-        for ind_jord, ind_seg in start_indexs:
+        while len(start_indexs) > 0:
+            ind_jord, ind_seg = start_indexs[0]
             indices_matrix = FollowPath.pursue_path(ind_jord, ind_seg, jordans)
-            if indices_matrix not in bez_indexs:
-                bez_indexs.append(indices_matrix)
+            bez_indexs.append(indices_matrix)
+            for pair in indices_matrix:
+                if pair in start_indexs:
+                    start_indexs.remove(pair)
         new_jordans = []
         for indices_matrix in bez_indexs:
             jordan = FollowPath.indexs_to_jordan(jordans, indices_matrix)
@@ -208,11 +341,8 @@ class FollowPath:
 
     @staticmethod
     def midpoints_one_shape(
-        shapea: Union[SimpleShape, ConnectedShape, DisjointShape],
-        shapeb: Union[SimpleShape, ConnectedShape, DisjointShape],
-        closed: bool,
-        inside: bool,
-    ) -> Iterable[Tuple[int, int]]:
+        subset: SubSetR2, jordan: JordanCurve, remove_wind: int
+    ) -> Iterable[int]:
         """
         Returns a matrix [(a0, b0), (a1, b1), ...]
         such the middle point of
@@ -224,62 +354,61 @@ class FollowPath:
         If ``closed=False``, a boundary point is outside
 
         """
-        for i, jordan in enumerate(shapea.jordans):
-            for j, segment in enumerate(jordan.parametrize()):
-                mid_point = segment(Fraction(1, 2))
-                density = shapeb.density(mid_point)
-                mid_point_in = (float(density) > 0 and closed) or density == 1
-                if not inside ^ mid_point_in:
-                    yield (i, j)
+        for j, segment in enumerate(jordan.parametrize()):
+            mid_point = segment(Fraction(1, 2))
+            density = subset.density(mid_point)
+            if float(density) != remove_wind:
+                yield j
 
     @staticmethod
+    @debug("shapepy.bool2d.boolean")
     def midpoints_shapes(
-        shapea: SubSetR2, shapeb: SubSetR2, closed: bool, inside: bool
-    ) -> Tuple[Tuple[int, int]]:
+        subset: SubSetR2, jordans: Tuple[JordanCurve, ...], remove_wind: int
+    ) -> Tuple[Tuple[int, int], ...]:
         """
         This function computes the indexes of the midpoints from
         both shapes, shifting the indexs of shapeb.jordans
         """
-        indexsa = FollowPath.midpoints_one_shape(
-            shapea, shapeb, closed, inside
-        )
-        indexsb = FollowPath.midpoints_one_shape(  # pylint: disable=W1114
-            shapeb, shapea, closed, inside
-        )
-        indexsa = list(indexsa)
-        njordansa = len(shapea.jordans)
-        for indjorb, indsegb in indexsb:
-            indexsa.append((njordansa + indjorb, indsegb))
-        return tuple(indexsa)
+        indices: List[Tuple[int, int]] = []
+        for i, jordan in enumerate(jordans):
+            indexs = FollowPath.midpoints_one_shape(
+                subset, jordan, remove_wind
+            )
+            for j in indexs:
+                indices.append((i, j))
+        return tuple(indices)
 
     @staticmethod
-    def or_shapes(shapea: SubSetR2, shapeb: SubSetR2) -> Tuple[JordanCurve]:
-        """
-        Computes the set of jordan curves that defines the boundary of
-        the union between the two base shapes
-        """
-        assert Is.instance(shapea, SubSetR2)
-        assert Is.instance(shapeb, SubSetR2)
-        FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
-        indexs = FollowPath.midpoints_shapes(
-            shapea, shapeb, closed=True, inside=False
-        )
-        all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
-        new_jordans = FollowPath.follow_path(all_jordans, indexs)
-        return new_jordans
-
-    @staticmethod
-    def and_shapes(shapea: SubSetR2, shapeb: SubSetR2) -> Tuple[JordanCurve]:
+    def simplify(subset: SubSetR2) -> Tuple[JordanCurve, ...]:
         """
         Computes the set of jordan curves that defines the boundary of
         the intersection between the two base shapes
         """
-        assert Is.instance(shapea, SubSetR2)
-        assert Is.instance(shapeb, SubSetR2)
-        FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
-        indexs = FollowPath.midpoints_shapes(
-            shapea, shapeb, closed=False, inside=True
+        assert Is.instance(subset, (LazyAnd, LazyOr))
+        all_jordans = tuple(
+            {id(c): c for c in FollowPath.extract_jordans(subset)}.values()
         )
-        all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
+        FollowPath.split_on_intersection(all_jordans)
+        wind = 1 if Is.instance(subset, LazyOr) else 0
+        indexs = FollowPath.midpoints_shapes(
+            subset, all_jordans, remove_wind=wind
+        )
         new_jordans = FollowPath.follow_path(all_jordans, indexs)
         return new_jordans
+
+    @staticmethod
+    def extract_jordans(subset: SubSetR2) -> Iterable[JordanCurve]:
+        """Recovers all the jordan curves from given subset"""
+        if Is.instance(subset, SimpleShape):
+            yield subset.jordan
+        elif Is.instance(subset, (ConnectedShape, DisjointShape)):
+            for sub in subset.subshapes:
+                yield from FollowPath.extract_jordans(sub)
+        elif Is.instance(subset, (LazyAnd, LazyOr)):
+            for sub in subset:
+                yield from FollowPath.extract_jordans(sub)
+        elif Is.instance(subset, LazyNot):
+            for jordan in FollowPath.extract_jordans(~subset):
+                yield ~jordan
+        else:
+            raise NotExpectedError(f"Received typo: {type(subset)}")
