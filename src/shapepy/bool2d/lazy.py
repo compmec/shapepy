@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 from collections import Counter
-from copy import copy, deepcopy
+from copy import deepcopy
 from typing import Iterable, Iterator, Type
 
 from ..loggers import debug
@@ -111,7 +111,7 @@ class LazyNot(SubSetR2):
         return self.__internal
 
     def __copy__(self):
-        return LazyNot(copy(self.__internal))
+        return LazyNot(self.__internal)
 
     def __deepcopy__(self, memo):
         return LazyNot(deepcopy(self.__internal))
@@ -165,7 +165,7 @@ class LazyOr(SubSetR2):
         return hash(tuple(map(hash, self.__subsets)))
 
     def __copy__(self):
-        return LazyOr(map(copy, self))
+        return LazyOr(self.__subsets)
 
     def __deepcopy__(self, memo):
         return LazyOr(map(deepcopy, self))
@@ -223,7 +223,7 @@ class LazyAnd(SubSetR2):
         return -hash(tuple(-hash(sub) for sub in self))
 
     def __copy__(self):
-        return LazyAnd(map(copy, self))
+        return LazyAnd(self.__subsets)
 
     def __deepcopy__(self, memo):
         return LazyAnd(map(deepcopy, self))
