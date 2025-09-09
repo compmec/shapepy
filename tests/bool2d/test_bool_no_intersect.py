@@ -74,7 +74,6 @@ class TestTwoCenteredSquares:
         assert (~square2) & (~square1) == ~square2
 
     @pytest.mark.order(41)
-    @pytest.mark.skip("Needs implementation of Graph: #14")
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
     def test_sub(self):
@@ -93,7 +92,6 @@ class TestTwoCenteredSquares:
         assert (~square2) - (~square1) is EmptyShape()
 
     @pytest.mark.order(41)
-    @pytest.mark.skip("Needs implementation of Graph: #14")
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoCenteredSquares::test_begin"])
     def test_xor(self):
@@ -177,7 +175,6 @@ class TestTwoDisjointSquares:
         assert (~right) & (~left) == ConnectedShape([~left, ~right])
 
     @pytest.mark.order(41)
-    @pytest.mark.skip("Needs implementation of Graph: #14")
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjointSquares::test_begin"])
     def test_sub(self):
@@ -196,7 +193,6 @@ class TestTwoDisjointSquares:
         assert (~right) - (~left) == left
 
     @pytest.mark.order(41)
-    @pytest.mark.skip("Needs implementation of Graph: #14")
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjointSquares::test_begin"])
     def test_xor(self):
@@ -292,7 +288,6 @@ class TestTwoDisjHollowSquares:
         assert (~right) & (~left) == good
 
     @pytest.mark.order(41)
-    @pytest.mark.skip("Needs implementation of Graph: #14")
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_sub(self):
@@ -317,7 +312,6 @@ class TestTwoDisjHollowSquares:
         assert (~right) - (~left) == left
 
     @pytest.mark.order(41)
-    @pytest.mark.skip("Needs implementation of Graph: #14")
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestTwoDisjHollowSquares::test_begin"])
     def test_xor(self):

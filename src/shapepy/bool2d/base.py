@@ -31,19 +31,25 @@ class SubSetR2:
     def __invert__(self) -> SubSetR2:
         """Invert shape"""
         result = Future.invert(self)
-        return Future.clean(result) if Config.clean_inv else result
+        if Config.clean["inv"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __or__(self, other: SubSetR2) -> SubSetR2:
         """Union shapes"""
         result = Future.unite((self, other))
-        return Future.clean(result) if Config.clean_or else result
+        if Config.clean["or"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __and__(self, other: SubSetR2) -> SubSetR2:
         """Intersection shapes"""
         result = Future.intersect((self, other))
-        return Future.clean(result) if Config.clean_and else result
+        if Config.clean["and"]:
+            result = Future.clean(result)
+        return result
 
     @abstractmethod
     def __copy__(self) -> SubSetR2:
@@ -56,33 +62,41 @@ class SubSetR2:
     def __neg__(self) -> SubSetR2:
         """Invert the SubSetR2"""
         result = Future.invert(self)
-        return Future.clean(result) if Config.clean_neg else result
+        if Config.clean["neg"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __add__(self, other: SubSetR2):
         """Union of SubSetR2"""
         result = Future.unite((self, other))
-        return Future.clean(result) if Config.clean_add else result
+        if Config.clean["add"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __mul__(self, other: SubSetR2):
         """Intersection of SubSetR2"""
         result = Future.unite((self, other))
-        return Future.clean(result) if Config.clean_mul else result
+        if Config.clean["mul"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __sub__(self, other: SubSetR2):
         """Subtraction of SubSetR2"""
         result = Future.intersect((self, Future.invert(other)))
-        return Future.clean(result) if Config.clean_sub else result
+        if Config.clean["sub"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __xor__(self, other: SubSetR2):
         """XOR of SubSetR2"""
-        left = Future.intersect((self, Future.invert(other)))
-        right = Future.intersect((other, Future.invert(self)))
-        result = Future.unite((left, right))
-        return Future.clean(result) if Config.clean_xor else result
+        result = Future.xor((self, other))
+        if Config.clean["xor"]:
+            result = Future.clean(result)
+        return result
 
     def __repr__(self) -> str:  # pragma: no cover
         return str(self)

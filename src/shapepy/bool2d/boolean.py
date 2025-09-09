@@ -174,7 +174,7 @@ def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
     assert Is.instance(subset, LazyNot)
     inverted = ~subset
     if Is.instance(inverted, SimpleShape):
-        return SimpleShape(~inverted.jordan, not inverted.boundary)
+        return SimpleShape(~inverted.jordan, True)
     if Is.instance(inverted, ConnectedShape):
         return DisjointShape(~simple for simple in inverted.subshapes)
     if Is.instance(inverted, DisjointShape):
@@ -227,6 +227,10 @@ def clean_with_boolalg(subset: SubSetR2) -> SubSetR2:
             if expression == var:
                 return subset
         operator = find_operator(expression)
+        while operator is None:
+            expression = expression[1:-1]
+            operator = find_operator(expression)
+
         if operator == NOT:
             inverted = expression2subset(extract(expression, NOT), dictvars)
             return RecipeLazy.invert(inverted)

@@ -72,9 +72,6 @@ class SimpleShape(SubSetR2):
             and self.jordan == other.jordan
         )
 
-    def __invert__(self) -> SimpleShape:
-        return self.__class__(~self.jordan)
-
     @property
     def boundary(self) -> bool:
         """The flag that informs if the boundary is inside the Shape"""
@@ -255,9 +252,6 @@ class ConnectedShape(SubSetR2):
             and self.subshapes == other.subshapes
         )
 
-    def __invert__(self) -> DisjointShape:
-        return DisjointShape(~simple for simple in self.subshapes)
-
     @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
@@ -376,10 +370,6 @@ class DisjointShape(SubSetR2):
     def __deepcopy__(self, memo):
         subshapes = tuple(map(copy, self.subshapes))
         return DisjointShape(subshapes)
-
-    def __invert__(self):
-        new_jordans = tuple(~jordan for jordan in self.jordans)
-        return shape_from_jordans(new_jordans)
 
     def __contains__(self, other: SubSetR2) -> bool:
         if Is.instance(other, DisjointShape):

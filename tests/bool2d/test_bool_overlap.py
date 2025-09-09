@@ -5,11 +5,11 @@ This module tests when two shapes have common edges/segments
 import pytest
 
 from shapepy.bool2d.base import EmptyShape, WholeShape
+from shapepy.bool2d.config import disable_auto_clean
 from shapepy.bool2d.primitive import Primitive
 
 
 @pytest.mark.order(43)
-@pytest.mark.skip()
 @pytest.mark.dependency(
     depends=[
         "tests/bool2d/test_primitive.py::test_end",
@@ -150,8 +150,7 @@ class TestEqualHollowSquare:
         square = big - small
         assert square.area > 0
         assert square & square == square
-        res = square & (~square)
-        assert res is EmptyShape()
+        assert square & (~square) is EmptyShape()
         assert (~square) & square is EmptyShape()
         assert (~square) & (~square) == ~square
 
@@ -284,10 +283,121 @@ class TestTriangle:
         pass
 
 
+class TestDisabledClean:
+    """
+    Make tests of boolean operations between the same shape (a square)
+    """
+
+    @pytest.mark.order(43)
+    @pytest.mark.dependency(
+        depends=[
+            "test_begin",
+            "TestEqualSquare::test_end",
+            "TestEqualHollowSquare::test_end",
+            "TestTriangle::test_end",
+        ]
+    )
+    def test_begin(self):
+        pass
+
+    @pytest.mark.order(43)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(depends=["TestDisabledClean::test_begin"])
+    def test_or(self):
+        big = Primitive.square(side=2, center=(0, 0))
+        small = Primitive.square(side=1, center=(0, 0))
+        left = Primitive.circle(radius=3, center=(-10, 0))
+        right = Primitive.circle(radius=3, center=(10, 0))
+        with disable_auto_clean():
+            shape = big - small | left ^ right
+            assert shape | shape == shape
+            assert shape | (~shape) is WholeShape()
+            assert (~shape) | shape is WholeShape()
+            assert (~shape) | (~shape) == ~shape
+
+    @pytest.mark.order(43)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisabledClean::test_begin",
+            "TestDisabledClean::test_or",
+        ]
+    )
+    def test_and(self):
+        big = Primitive.square(side=2, center=(0, 0))
+        small = Primitive.square(side=1, center=(0, 0))
+        left = Primitive.circle(radius=3, center=(-10, 0))
+        right = Primitive.circle(radius=3, center=(10, 0))
+        with disable_auto_clean():
+            shape = big - small | left ^ right
+            assert shape & shape == shape
+            assert shape & (~shape) is EmptyShape()
+            assert (~shape) & shape is EmptyShape()
+            assert (~shape) & (~shape) == ~shape
+
+    @pytest.mark.order(43)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisabledClean::test_begin",
+            "TestDisabledClean::test_and",
+        ]
+    )
+    def test_sub(self):
+        big = Primitive.square(side=2, center=(0, 0))
+        small = Primitive.square(side=1, center=(0, 0))
+        left = Primitive.circle(radius=3, center=(-10, 0))
+        right = Primitive.circle(radius=3, center=(10, 0))
+        with disable_auto_clean():
+            shape = big - small | left ^ right
+            assert shape - shape is EmptyShape()
+            assert shape - (~shape) == shape
+            assert (~shape) - shape == ~shape
+            assert (~shape) - (~shape) is EmptyShape()
+
+    @pytest.mark.order(43)
+    @pytest.mark.timeout(40)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisabledClean::test_begin",
+            "TestDisabledClean::test_or",
+            "TestDisabledClean::test_and",
+            "TestDisabledClean::test_sub",
+        ]
+    )
+    def test_xor(self):
+        big = Primitive.square(side=2, center=(0, 0))
+        small = Primitive.square(side=1, center=(0, 0))
+        left = Primitive.circle(radius=3, center=(-10, 0))
+        right = Primitive.circle(radius=3, center=(10, 0))
+        with disable_auto_clean():
+            shape = big - small | left ^ right
+            assert shape ^ shape is EmptyShape()
+            assert shape ^ (~shape) is WholeShape()
+            assert (~shape) ^ shape is WholeShape()
+            assert (~shape) ^ (~shape) is EmptyShape()
+
+    @pytest.mark.order(43)
+    @pytest.mark.dependency(
+        depends=[
+            "TestDisabledClean::test_begin",
+            "TestDisabledClean::test_or",
+            "TestDisabledClean::test_and",
+            "TestDisabledClean::test_sub",
+            "TestDisabledClean::test_xor",
+        ]
+    )
+    def test_end(self):
+        pass
+
+
 @pytest.mark.order(43)
 @pytest.mark.dependency(
     depends=[
+        "TestEqualSquare::test_end",
+        "TestEqualHollowSquare::test_end",
         "TestTriangle::test_end",
+        "TestDisabledClean::test_end",
     ]
 )
 def test_end():
