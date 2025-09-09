@@ -2,14 +2,13 @@
 This module tests when two shapes have common edges/segments
 """
 
-from copy import deepcopy
+from copy import copy, deepcopy
 
 import pytest
 
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy
 from shapepy.bool2d.primitive import Primitive
-from shapepy.loggers import enable_logger
 from shapepy.scalar.angle import degrees
 
 
@@ -228,6 +227,9 @@ def test_transformation_rotate():
         "test_intersect",
         "test_hash",
         "test_xor",
+        "test_transformation_move",
+        "test_transformation_scale",
+        "test_transformation_rotate",
     ]
 )
 def test_printing():
@@ -254,12 +256,89 @@ def test_printing():
         "test_invert",
         "test_unite",
         "test_intersect",
+        "test_hash",
+        "test_xor",
+        "test_transformation_move",
+        "test_transformation_scale",
+        "test_transformation_rotate",
+        "test_printing",
+    ]
+)
+def test_copy():
+    square = Primitive.square()
+    circle = Primitive.circle()
+
+    lazyNot = LazyNot(square)
+    copyLazyNot = copy(lazyNot)
+    assert copyLazyNot == lazyNot
+    assert id(copyLazyNot) != id(lazyNot)
+    assert id(~copyLazyNot) == id(~lazyNot)
+    deepLazyNot = deepcopy(lazyNot)
+    assert deepLazyNot == lazyNot
+    assert id(deepLazyNot) != id(lazyNot)
+    assert ~deepLazyNot == ~lazyNot
+    assert id(~deepLazyNot) != id(~lazyNot)
+
+    lazyOr = LazyOr((square, circle))
+    copyLazyOr = copy(lazyOr)
+    assert copyLazyOr == lazyOr
+    assert id(copyLazyOr) != id(lazyOr)
+    deepLazyOr = deepcopy(lazyOr)
+    assert deepLazyOr == lazyOr
+    assert id(deepLazyOr) != id(lazyOr)
+
+    lazyAnd = LazyAnd((square, circle))
+    copyLazyAnd = copy(lazyAnd)
+    assert copyLazyAnd == lazyAnd
+    assert id(copyLazyAnd) != id(lazyAnd)
+    deepLazyAnd = deepcopy(lazyAnd)
+    assert deepLazyAnd == lazyAnd
+    assert id(deepLazyAnd) != id(lazyAnd)
+
+
+@pytest.mark.order(33)
+@pytest.mark.dependency(
+    depends=[
+        "test_begin",
+        "test_invert",
+        "test_unite",
+        "test_intersect",
+        "test_hash",
+        "test_xor",
+        "test_transformation_move",
+        "test_transformation_scale",
+        "test_transformation_rotate",
+        "test_printing",
+    ]
+)
+def test_clean():
+    square = Primitive.square(center=(-3, 0))
+    circle = Primitive.circle(center=(3, 0))
+
+    lazyNot = LazyNot(square)
+    assert lazyNot.clean() == (-square).clean()
+
+    lazyOr = LazyOr((square, circle))
+    assert lazyOr.clean() == square + circle
+
+    lazyAnd = LazyOr((square, circle))
+    assert lazyAnd.clean() == square * circle
+
+
+@pytest.mark.order(33)
+@pytest.mark.dependency(
+    depends=[
+        "test_begin",
+        "test_invert",
+        "test_unite",
+        "test_intersect",
         "test_xor",
         "test_transformation_move",
         "test_transformation_scale",
         "test_transformation_rotate",
         "test_printing",
         "test_hash",
+        "test_copy",
     ]
 )
 def test_all():
