@@ -7,7 +7,6 @@ import math
 import numpy as np
 import pytest
 
-from shapepy.bool2d.density import lebesgue_density_jordan
 from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.jordancurve import clean_jordan
 from shapepy.scalar.angle import degrees, radians
