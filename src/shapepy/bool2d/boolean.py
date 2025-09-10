@@ -14,20 +14,8 @@ from shapepy.geometry.jordancurve import JordanCurve
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
 from ..loggers import debug
-from ..scalar.boolalg import (
-    AND,
-    FALSE,
-    NOT,
-    OR,
-    TRUE,
-    extract,
-    find_operator,
-    intersect_strs,
-    invert_str,
-    simplify,
-    unite_strs,
-)
 from ..tools import CyclicContainer, Is, NotExpectedError
+from . import boolalg
 from .base import EmptyShape, SubSetR2, WholeShape
 from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
 from .shape import (
@@ -53,7 +41,7 @@ def invert_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The complementar subset
     """
-    return clean_with_boolalg(RecipeLazy.invert(subset))
+    return Boolalg.clean(RecipeLazy.invert(subset))
 
 
 @debug("shapepy.bool2d.boolean")
@@ -72,7 +60,7 @@ def unite_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
         The united subset
     """
     union = RecipeLazy.unite(subsets)
-    return clean_with_boolalg(union)
+    return Boolalg.clean(union)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -91,7 +79,7 @@ def intersect_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
         The intersection subset
     """
     intersection = RecipeLazy.intersect(subsets)
-    return clean_with_boolalg(intersection)
+    return Boolalg.clean(intersection)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -110,7 +98,7 @@ def xor_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
         The intersection subset
     """
     subset = RecipeLazy.xor(subsets)
-    return clean_with_boolalg(subset)
+    return Boolalg.clean(subset)
 
 
 # pylint: disable=too-many-return-statements
@@ -129,7 +117,7 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    subset = clean_with_boolalg(subset)
+    subset = Boolalg.clean(subset)
     if not Is.lazy(subset):
         return subset
     if Is.instance(subset, LazyNot):
@@ -183,71 +171,77 @@ def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
     raise NotImplementedError(f"Missing typo: {type(inverted)}")
 
 
-def clean_with_boolalg(subset: SubSetR2) -> SubSetR2:
-    """Simplifies the subset"""
+class Boolalg:
+    """Static methods to clean a SubSetR2 using algebraic simplifier"""
 
-    if not Is.lazy(subset):
+    alphabet = "abcdefghijklmnop"
+    sub2var: Dict[SubSetR2, str] = {}
+
+    @staticmethod
+    def clean(subset: SubSetR2) -> SubSetR2:
+        """Simplifies the subset"""
+
+        if not Is.lazy(subset):
+            return subset
+        Boolalg.sub2var.clear()
+        original = Boolalg.subset2expression(subset)
+        simplified = boolalg.simplify(original)
+        if simplified != original:
+            subset = Boolalg.expression2subset(simplified)
+        Boolalg.sub2var.clear()
         return subset
 
-    def create_variable(index: int) -> str:
-        """"""
-        if not Is.integer(index) or index > 16:
-            raise ValueError(f"Invalid index {index}")
-        alphabet = "abcdefghijklmnop"
-        return alphabet[index]
+    @staticmethod
+    def get_variable(subset: SubSetR2) -> str:
+        """Gets the variable represeting the subset"""
+        if subset not in Boolalg.sub2var:        
+            index = len(Boolalg.sub2var)
+            if index > len(Boolalg.alphabet):
+                raise ValueError(f"Too many variables")
+            Boolalg.sub2var[subset] = Boolalg.alphabet[index]
+        return Boolalg.sub2var[subset]
 
-    def subset2expression(
-        subset: SubSetR2, dictvars: Dict[SubSetR2, str]
-    ) -> str:
+    @staticmethod
+    def subset2expression(subset: SubSetR2) -> str:
         """Converts a SubSetR2 into a boolean expression"""
         if not is_lazy(subset):
             if Is.instance(subset, (EmptyShape, WholeShape)):
                 raise NotExpectedError("Lazy does not contain these")
-            if subset not in dictvars:
-                dictvars[subset] = create_variable(len(dictvars))
-            return dictvars[subset]
+            return Boolalg.get_variable(subset)
         if Is.instance(subset, LazyNot):
-            return invert_str(subset2expression(~subset, dictvars))
-        internals = (subset2expression(s, dictvars) for s in subset)
+            return boolalg.Formatter.invert_str(
+                Boolalg.subset2expression(~subset)
+            )
+        internals = map(Boolalg.subset2expression, subset)
         if Is.instance(subset, LazyAnd):
-            return intersect_strs(internals)
+            return boolalg.Formatter.mult_strs(internals, boolalg.AND)
         if Is.instance(subset, LazyOr):
-            return unite_strs(internals)
+            return boolalg.Formatter.mult_strs(internals, boolalg.OR)
         raise NotExpectedError
 
-    def expression2subset(
-        expression: str, dictvars: Dict[SubSetR2, str]
-    ) -> SubSetR2:
+    @staticmethod
+    def expression2subset(expression: str) -> SubSetR2:
         """Converts a boolean expression into a SubSetR2"""
-        if expression == TRUE:
+        if expression == boolalg.TRUE:
             return WholeShape()
-        if expression == FALSE:
+        if expression == boolalg.FALSE:
             return EmptyShape()
-        for subset, var in dictvars.items():
-            if expression == var:
+        for subset, variable in Boolalg.sub2var.items():
+            if expression == variable:
                 return subset
-        operator = find_operator(expression)
-        while operator is None:
-            expression = expression[1:-1]
-            operator = find_operator(expression)
-
-        if operator == NOT:
-            inverted = expression2subset(extract(expression, NOT), dictvars)
+        expression = boolalg.remove_parentesis(expression)
+        operator = boolalg.find_operator(expression)
+        if operator == boolalg.NOT:
+            subexpr = boolalg.extract(expression, boolalg.NOT)
+            inverted = Boolalg.expression2subset(subexpr)
             return RecipeLazy.invert(inverted)
-        subexprs = extract(expression, operator)
-        subsets = (expression2subset(sub, subset2var) for sub in subexprs)
-        if operator == OR:
+        subexprs = boolalg.extract(expression, operator)
+        subsets = map(Boolalg.expression2subset, subexprs)
+        if operator == boolalg.OR:
             return RecipeLazy.unite(subsets)
-        if operator == AND:
+        if operator == boolalg.AND:
             return RecipeLazy.intersect(subsets)
         raise NotExpectedError(f"Invalid expression: {expression}")
-
-    subset2var: Dict[SubSetR2, str] = {}
-    original = subset2expression(subset, subset2var)
-    simplified = simplify(original)
-    if simplified != original:
-        subset = expression2subset(simplified, subset2var)
-    return subset
 
 
 class FollowPath:
