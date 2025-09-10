@@ -155,10 +155,10 @@ class LazyOr(SubSetR2):
         yield from self.__subsets
 
     def __str__(self):
-        return f"OR[{", ".join(map(str, self))}]"
+        return f"OR[{', '.join(map(str, self))}]"
 
     def __repr__(self):
-        return f"OR[{", ".join(map(repr, self))}]"
+        return f"OR[{', '.join(map(repr, self))}]"
 
     @debug("shapepy.bool2d.lazy")
     def __hash__(self):
@@ -213,10 +213,10 @@ class LazyAnd(SubSetR2):
         yield from self.__subsets
 
     def __str__(self):
-        return f"AND[{", ".join(map(str, self))}]"
+        return f"AND[{', '.join(map(str, self))}]"
 
     def __repr__(self):
-        return f"AND[{", ".join(map(repr, self))}]"
+        return f"AND[{', '.join(map(repr, self))}]"
 
     @debug("shapepy.bool2d.lazy")
     def __hash__(self):
