@@ -129,8 +129,8 @@ class TestSplitUnite:
         curve = FactorySegment.bezier(points)
         curvea = FactorySegment.bezier([(0, 0), (half, 0)])
         curveb = FactorySegment.bezier([(half, 0), (1, 0)])
-        assert curve.extract([0, half]) == curvea
-        assert curve.extract([half, 1]) == curveb
+        assert curve.section([0, half]) == curvea
+        assert curve.section([half, 1]) == curveb
         assert curve.split([half]) == (curvea, curveb)
 
         test = curvea | curveb

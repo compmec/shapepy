@@ -153,8 +153,8 @@ class SimpleShape(SubSetR2):
         vertices = map(piecewise, piecewise.knots[:-1])
         if not all(map(self.__contains_point, vertices)):
             return False
-        inters = piecewise & self.jordan
-        if not inters:
+        inters = piecewise & self.__jordancurve.piecewise
+        if not inters:  # There's no intersection between curves
             return True
         knots = sorted(inters.all_knots[id(piecewise)])
         midknots = ((k0 + k1) / 2 for k0, k1 in zip(knots, knots[1:]))
@@ -298,9 +298,9 @@ class ConnectedShape(SubSetR2):
 
     @subshapes.setter
     def subshapes(self, simples: Iterable[SimpleShape]):
-        simples = frozenset(simples)
-        if not all(Is.instance(simple, SimpleShape) for simple in simples):
-            raise TypeError
+        simples = frozenset(s.clean() for s in simples)
+        if not all(Is.instance(s, SimpleShape) for s in simples):
+            raise TypeError(f"Invalid typos: {tuple(map(type, simples))}")
         self.__subshapes = simples
 
     def __contains__(self, other) -> bool:
@@ -444,7 +444,7 @@ class DisjointShape(SubSetR2):
 
     @subshapes.setter
     def subshapes(self, values: Iterable[SubSetR2]):
-        values = frozenset(values)
+        values = frozenset(v.clean() for v in values)
         if not all(
             Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
         ):
