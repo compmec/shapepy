@@ -22,8 +22,6 @@ from fractions import Fraction
 from numbers import Integral, Rational, Real
 from typing import Any, Callable
 
-import sympy as sp
-
 from ..tools import Is, To
 
 

@@ -94,6 +94,7 @@ def setup_logger(name, level=logging.INFO):
     formatter = logging.Formatter("%(asctime)s:%(name)s:%(message)s")
     # formatter = logging.Formatter("%(asctime)s - %(message)s")
     formatter = logging.Formatter("%(name)s:%(message)s")
+    formatter = logging.Formatter("%(message)s")
 
     stdout_handler = logging.StreamHandler(sys.stdout)
     stdout_handler.setLevel(level)

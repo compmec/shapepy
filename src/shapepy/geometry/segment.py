@@ -176,16 +176,16 @@ class Segment(IParametrizedCurve):
         return self
 
     @debug("shapepy.geometry.segment")
-    def section(self, subset: IntervalR1) -> Segment:
-        subset = from_any(subset)
-        if not (0 <= subset[0] < subset[1] <= 1):
-            raise ValueError(f"Invalid {subset}")
-        if subset is EmptyR1():
-            raise TypeError(f"Cannot extract with interval {subset}")
-        if subset == [0, 1]:
+    def section(self, interval: IntervalR1) -> Segment:
+        interval = from_any(interval)
+        if not 0 <= interval[0] < interval[1] <= 1:
+            raise ValueError(f"Invalid {interval}")
+        if interval is EmptyR1():
+            raise TypeError(f"Cannot extract with interval {interval}")
+        if interval == [0, 1]:
             return self
-        knota = infimum(subset)
-        knotb = supremum(subset)
+        knota = infimum(interval)
+        knotb = supremum(interval)
         denom = 1 / (knotb - knota)
         nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
         nyfunc = copy(self.yfunc).shift(-knota).scale(denom)

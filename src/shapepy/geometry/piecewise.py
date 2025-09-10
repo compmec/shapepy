@@ -6,7 +6,7 @@ from __future__ import annotations
 
 from typing import Iterable, List, Tuple, Union
 
-from ..loggers import debug, get_logger
+from ..loggers import debug
 from ..rbool import IntervalR1, from_any, infimum, supremum
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
@@ -158,18 +158,17 @@ class PiecewiseCurve(IParametrizedCurve):
         return self
 
     @debug("shapepy.geometry.piecewise")
-    def section(self, subset: IntervalR1) -> PiecewiseCurve:
-        subset = from_any(subset)
+    def section(self, interval: IntervalR1) -> PiecewiseCurve:
+        interval = from_any(interval)
         knots = tuple(self.knots)
-        if not (knots[0] <= subset[0] < subset[1] <= knots[-1]):
-            raise ValueError(f"Invalid {subset} not in {self.knots}")
-        logger = get_logger("shapepy.geometry.piecewise")
+        if knots[0] <= interval[0] < interval[1] <= knots[-1]:
+            raise ValueError(f"Invalid {interval} not in {self.knots}")
         segments = tuple(self.__segments)
-        if subset == [self.knots[0], self.knots[-1]]:
+        if interval == [self.knots[0], self.knots[-1]]:
             return self
-        knota, knotb = infimum(subset), supremum(subset)
+        knota, knotb = infimum(interval), supremum(interval)
         if knota == knotb:
-            raise ValueError(f"Invalid {subset}")
+            raise ValueError(f"Invalid {interval}")
         spana, spanb = self.span(knota), self.span(knotb)
         if knota == knots[spana] and knotb == knots[spanb]:
             segs = segments[spana:spanb]

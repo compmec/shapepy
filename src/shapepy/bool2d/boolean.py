@@ -5,9 +5,8 @@ operations between the SubSetR2 instances
 
 from __future__ import annotations
 
-from copy import copy
-from fractions import Fraction
-from typing import Dict, Iterable, Tuple, Union, Iterator
+from collections import Counter
+from typing import Dict, Iterable, Iterator, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
 
@@ -17,7 +16,14 @@ from ..loggers import debug, get_logger
 from ..tools import CyclicContainer, Is, NotExpectedError
 from . import boolalg
 from .base import EmptyShape, SubSetR2, WholeShape
-from .graph import Edge, Graph, graph_manager, intersect_graphs, curve2graph, Node
+from .graph import (
+    Edge,
+    Graph,
+    Node,
+    curve2graph,
+    graph_manager,
+    intersect_graphs,
+)
 from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
 from .shape import (
     ConnectedShape,
@@ -121,12 +127,14 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     subset = Boolalg.clean(subset)
     if not Is.lazy(subset):
         return subset
+    logger = get_logger("shapepy.bool2d.boole")
     jordans = GraphComputer.clean(subset)
+    for i, jordan in enumerate(jordans):
+        logger.debug(f"{i}: {jordan}")
     if len(jordans) == 0:
         density = subset.density((0, 0))
         return EmptyShape() if float(density) == 0 else WholeShape()
     return shape_from_jordans(jordans)
-
 
 
 class Boolalg:
@@ -202,12 +210,14 @@ class Boolalg:
         raise NotExpectedError(f"Invalid expression: {expression}")
 
 
-
 class GraphComputer:
+    """Contains static methods to use Graph to compute boolean operations"""
 
-
-    def clean(subset: SubSetR2) -> SubSetR2:
+    @staticmethod
+    @debug("shapepy.bool2d.boole")
+    def clean(subset: SubSetR2) -> Iterator[JordanCurve]:
         """Cleans the subset using the graphs"""
+        logger = get_logger("shapepy.bool2d.boole")
         extractor = GraphComputer.extract(subset)
         simples = tuple({id(s): s for s in extractor}.values())
         piecewises = tuple(s.jordan.piecewise for s in simples)
@@ -216,11 +226,19 @@ class GraphComputer:
             graph = intersect_graphs(graphs)
             for edge in tuple(graph.edges):
                 density = subset.density(edge.pointm)
-                if not (0 < float(density) < 1):
+                if not 0 < float(density) < 1:
                     graph.remove_edge(edge)
+            logger.debug("After removing the edges" + str(graph))
+            graphs = tuple(GraphComputer.extract_disjoint_graphs(graph))
+            all_edges = map(GraphComputer.unique_closed_path, graphs)
+            all_edges = tuple(e for e in all_edges if e is not None)
+            logger.debug("all edges = ")
+            for i, edges in enumerate(all_edges):
+                logger.debug(f"    {i}: {edges}")
+            jordans = tuple(map(GraphComputer.edges2jordan, all_edges))
+        return jordans
 
-
-
+    @staticmethod
     def extract(subset: SubSetR2) -> Iterator[SimpleShape]:
         """Extracts the simple shapes from the subset"""
         if Is.instance(subset, SimpleShape):
@@ -234,9 +252,9 @@ class GraphComputer:
             for subsubset in subset:
                 yield from GraphComputer.extract(subsubset)
 
-
+    @staticmethod
     def extract_disjoint_graphs(graph: Graph) -> Iterable[Graph]:
-        """Separates the given graph into a group of graphs that are disjoint"""
+        """Separates the given graph into disjoint graphs"""
         edges = list(graph.edges)
         while len(edges) > 0:
             edge = edges.pop(0)
@@ -244,51 +262,90 @@ class GraphComputer:
             search_edges = {edge}
             while len(search_edges) > 0:
                 end_nodes = {edge.nodeb for edge in search_edges}
-                search_edges = {edge for edge in edges if edge.nodea in end_nodes}
+                search_edges = {
+                    edge for edge in edges if edge.nodea in end_nodes
+                }
                 for edge in search_edges:
                     edges.remove(edge)
                 current_edges |= search_edges
             yield Graph(current_edges)
 
-
-    def possible_paths(edges: Iterable[Edge], start_node: Node) -> Iterator[Tuple[Edge, ...]]:
+    @staticmethod
+    def possible_paths(
+        edges: Iterable[Edge], start_node: Node
+    ) -> Iterator[Tuple[Edge, ...]]:
         """Returns all the possible paths that begins at start_node"""
         edges = tuple(edges)
         indices = set(i for i, e in enumerate(edges) if e.nodea == start_node)
         other_edges = tuple(e for i, e in enumerate(edges) if i not in indices)
         for edge in (edges[i] for i in indices):
-            subpaths = GraphComputer.possible_paths(other_edges, edge.nodeb)
-            for subpath in subpaths:
-                yield (edge, ) + subpath 
+            subpaths = tuple(
+                GraphComputer.possible_paths(other_edges, edge.nodeb)
+            )
+            if len(subpaths) == 0:
+                yield (edge,)
+            else:
+                for subpath in subpaths:
+                    yield (edge,) + subpath
 
+    @staticmethod
+    def closed_paths(
+        edges: Tuple[Edge, ...], start_node: Node
+    ) -> Iterator[CyclicContainer[Edge]]:
+        """Gets all the closed paths that starts at given node"""
+        logger = get_logger("shapepy.bool2d.boolean")
+        paths = tuple(GraphComputer.possible_paths(edges, start_node))
+        logger.debug(
+            f"all paths starting with {repr(start_node)}: {len(paths)} paths"
+        )
+        # for i, path in enumerate(paths):
+        #     logger.debug(f"    {i}: {path}")
+        closeds = []
+        for path in paths:
+            if path[0].nodea == path[-1].nodeb:
+                closeds.append(CyclicContainer(path))
+        return closeds
 
-    def possible_closed_paths(graph: Graph) -> CyclicContainer[Edge]:
+    @staticmethod
+    def all_closed_paths(graph: Graph) -> Iterator[CyclicContainer[Edge]]:
         """Reads the graphs and extracts the unique paths"""
         if not Is.instance(graph, Graph):
             raise TypeError
-        logger = get_logger("shapepy.bool2d.boolean")
-        logger.debug("Extracting unique paths from the graph")
-        logger.debug(str(graph))
 
-
+        # logger.debug("Extracting unique paths from the graph")
+        # logger.debug(str(graph))
 
         edges = tuple(graph.edges)
-        start_node = None
-        for edge in edges:
-            if sum(1 if e.nodea == edge.nodea else 0 for e in edges) == 1:
-                start_node = edge.nodea
-                break
-        paths = GraphComputer.possible_paths(graph.edges, start_node)
-        for path in paths:
-            if path[0].nodea == path[-1].nodeb:
-                return CyclicContainer(path)
-        raise ValueError("Given graph does not contain a closed path")
 
+        def sorter(x):
+            return x[1]
 
-    @debug("shapepy.bool2d.boolean")
-    def edges_to_jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
+        logger = get_logger("shapepy.bool2d.boole")
+        counter = Counter(e.nodea for e in edges)
+        logger.debug(f"counter = {dict(counter)}")
+        snodes = tuple(k for k, _ in sorted(counter.items(), key=sorter))
+        logger.debug(f"snodes = {snodes}")
+        all_paths = []
+        for start_node in snodes:
+            all_paths += list(
+                GraphComputer.closed_paths(graph.edges, start_node)
+            )
+        return all_paths
+
+    @staticmethod
+    @debug("shapepy.bool2d.boole")
+    def unique_closed_path(graph: Graph) -> Union[None, CyclicContainer[Edge]]:
+        """Reads the graphs and extracts the unique paths"""
+        all_paths = list(GraphComputer.all_closed_paths(graph))
+        for path in all_paths:
+            return path
+        return None
+
+    @staticmethod
+    @debug("shapepy.bool2d.boole")
+    def edges2jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
         """Converts the given connected edges into a Jordan Curve"""
-        # logger = get_logger("shapepy.bool2d.boolean")
+        # logger = get_logger("shapepy.bool2d.boole")
         # logger.info("Passed here")
         edges = tuple(edges)
         if len(edges) == 1:

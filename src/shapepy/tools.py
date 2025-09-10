@@ -165,6 +165,9 @@ class CyclicContainer(Generic[T]):
     def __len__(self) -> int:
         return len(self.__values)
 
+    def __str__(self) -> str:
+        return "C(" + ", ".join(map(repr, self)) + ")"
+
     def __eq__(self, other):
         if not Is.instance(other, CyclicContainer):
             raise ValueError

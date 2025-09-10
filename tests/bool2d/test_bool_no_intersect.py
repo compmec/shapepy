@@ -49,8 +49,7 @@ class TestTwoCenteredSquares:
 
         assert square1 | square2 == square2
         assert square2 | square1 == square2
-        with enable_logger("shapepy.bool2d", level="DEBUG"):
-            assert square1 | (~square2) == DisjointShape([square1, ~square2])
+        assert square1 | (~square2) == DisjointShape([square1, ~square2])
         assert square2 | (~square1) is WholeShape()
         assert (~square1) | square2 is WholeShape()
         assert (~square2) | square1 == DisjointShape([square1, ~square2])

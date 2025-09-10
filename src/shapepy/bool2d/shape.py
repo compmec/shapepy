@@ -298,9 +298,9 @@ class ConnectedShape(SubSetR2):
 
     @subshapes.setter
     def subshapes(self, simples: Iterable[SimpleShape]):
-        simples = frozenset(simples)
-        if not all(Is.instance(simple, SimpleShape) for simple in simples):
-            raise TypeError
+        simples = frozenset(s.clean() for s in simples)
+        if not all(Is.instance(s, SimpleShape) for s in simples):
+            raise TypeError(f"Invalid typos: {tuple(map(type, simples))}")
         self.__subshapes = simples
 
     def __contains__(self, other) -> bool:
@@ -444,7 +444,7 @@ class DisjointShape(SubSetR2):
 
     @subshapes.setter
     def subshapes(self, values: Iterable[SubSetR2]):
-        values = frozenset(values)
+        values = frozenset(v.clean() for v in values)
         if not all(
             Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
         ):

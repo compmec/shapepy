@@ -12,7 +12,6 @@ from typing import Dict, Iterable, Iterator, Set, Tuple
 from ..geometry.base import IParametrizedCurve
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.point import Point2D
-from ..loggers import get_logger
 from ..scalar.reals import Real
 from ..tools import Is
 
@@ -55,7 +54,7 @@ class SingleNode:
         return f"C{index} at {self.parameter}"
 
     def __repr__(self):
-        return str(self.curve)
+        return str(self.__point)
 
     def __eq__(self, other):
         return (
@@ -145,6 +144,9 @@ class Node:
             msgs += [f"{GAP}{s}" for s in str(single).split("\n")]
         return "\n".join(msgs)
 
+    def __repr__(self):
+        return f"N{self.label}:{self.point}"
+
 
 class GroupNodes(Iterable[Node]):
 
@@ -163,6 +165,9 @@ class GroupNodes(Iterable[Node]):
         dictnodes = {n.label: n for n in self}
         keys = sorted(dictnodes.keys())
         return "\n".join(str(dictnodes[key]) for key in keys)
+
+    def __repr__(self):
+        return "(" + ", ".join(map(repr, self)) + ")"
 
     def __ior__(self, other: Iterable[Node]) -> GroupNodes:
         for onode in other:
@@ -275,6 +280,10 @@ class SinglePath:
             f"C{index} ({self.singlea.parameter} -> {self.singleb.parameter})"
         )
 
+    def __repr__(self):
+        index = Containers.index_curve(self.curve)
+        return f"C{index}({self.singlea.parameter}->{self.singleb.parameter})"
+
     def __and__(self, other: SinglePath) -> GeometricIntersectionCurves:
         if not Is.instance(other, SinglePath):
             raise TypeError(str(type(other)))
@@ -384,15 +393,13 @@ class Edge:
         return self
 
     def __str__(self):
-        msgs = [
-            f"N{self.nodea.label}->N{self.nodem.label}->N{self.nodeb.label}"
-        ]
+        msgs = [repr(self)]
         for path in self.singles:
             msgs.append(f"{GAP}{path}")
         return "\n".join(msgs)
 
     def __repr__(self):
-        return str(self)
+        return f"N{self.nodea.label}->N{self.nodeb.label}"
 
 
 class GroupEdges(Iterable[Edge]):
@@ -410,6 +417,9 @@ class GroupEdges(Iterable[Edge]):
 
     def __str__(self):
         return "\n".join(f"E{i}: {edge}" for i, edge in enumerate(self))
+
+    def __repr__(self):
+        return str(self)
 
     def __ior__(self, other: Iterable[Edge]):
         for oedge in other:
@@ -499,7 +509,7 @@ class Graph:
             for single in node.singles:
                 index = Containers.index_curve(single.curve)
                 used_curves[index] = single.curve
-        msgs = ["Curves:"]
+        msgs = ["\n" + "-" * 90, repr(self), "Curves:"]
         for index in sorted(used_curves.keys()):
             curve = used_curves[index]
             msgs.append(f"{GAP}C{index}: knots = {curve.knots}")
@@ -508,6 +518,7 @@ class Graph:
         msgs += [GAP + s for s in str(nodes).split("\n")]
         msgs.append("Edges:")
         msgs += [GAP + e for e in str(edges).split("\n")]
+        msgs.append("-" * 90)
         return "\n".join(msgs)
 
     def remove_edge(self, edge: Edge):
@@ -552,6 +563,7 @@ def graph_manager():
         Node.instances.clear()
         SinglePath.instances.clear()
         Containers.curves.clear()
+
 
 def curve2graph(curve: IParametrizedCurve) -> Graph:
     """Creates a graph that contains the nodes and edges of the curve"""
