@@ -552,3 +552,8 @@ def graph_manager():
         Node.instances.clear()
         SinglePath.instances.clear()
         Containers.curves.clear()
+
+def curve2graph(curve: IParametrizedCurve) -> Graph:
+    """Creates a graph that contains the nodes and edges of the curve"""
+    single_path = SinglePath(curve, curve.knots[0], curve.knots[-1])
+    return Graph({Edge({single_path})})
