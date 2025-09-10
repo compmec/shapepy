@@ -9,13 +9,13 @@ Defines the base classes used in the bool2d submodule
 from __future__ import annotations
 
 from abc import abstractmethod
-from copy import copy
 from typing import Iterable, Tuple, Union
 
 from ..geometry.point import Point2D
 from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
+from .config import Config
 from .density import Density
 
 
@@ -27,19 +27,29 @@ class SubSetR2:
     def __init__(self):
         pass
 
-    @abstractmethod
+    @debug("shapepy.bool2d.base")
     def __invert__(self) -> SubSetR2:
         """Invert shape"""
+        result = Future.invert(self)
+        if Config.clean["inv"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __or__(self, other: SubSetR2) -> SubSetR2:
         """Union shapes"""
-        return Future.unite((self, other))
+        result = Future.unite((self, other))
+        if Config.clean["or"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __and__(self, other: SubSetR2) -> SubSetR2:
         """Intersection shapes"""
-        return Future.intersect((self, other))
+        result = Future.intersect((self, other))
+        if Config.clean["and"]:
+            result = Future.clean(result)
+        return result
 
     @abstractmethod
     def __copy__(self) -> SubSetR2:
@@ -51,27 +61,42 @@ class SubSetR2:
 
     def __neg__(self) -> SubSetR2:
         """Invert the SubSetR2"""
-        return ~self
+        result = Future.invert(self)
+        if Config.clean["neg"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __add__(self, other: SubSetR2):
         """Union of SubSetR2"""
-        return self | other
+        result = Future.unite((self, other))
+        if Config.clean["add"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
-    def __mul__(self, value: SubSetR2):
+    def __mul__(self, other: SubSetR2):
         """Intersection of SubSetR2"""
-        return self & value
+        result = Future.intersect((self, other))
+        if Config.clean["mul"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
-    def __sub__(self, value: SubSetR2):
+    def __sub__(self, other: SubSetR2):
         """Subtraction of SubSetR2"""
-        return self & (~value)
+        result = Future.intersect((self, Future.invert(other)))
+        if Config.clean["sub"]:
+            result = Future.clean(result)
+        return result
 
     @debug("shapepy.bool2d.base")
     def __xor__(self, other: SubSetR2):
         """XOR of SubSetR2"""
-        return (self - other) | (other - self)
+        result = Future.xor((self, other))
+        if Config.clean["xor"]:
+            result = Future.clean(result)
+        return result
 
     def __repr__(self) -> str:  # pragma: no cover
         return str(self)
@@ -79,6 +104,23 @@ class SubSetR2:
     @abstractmethod
     def __hash__(self):
         raise NotImplementedError
+
+    def clean(self) -> SubSetR2:
+        """
+        Cleans the subset, changing its representation into a simpler form
+
+        Parameters
+        ----------
+        :return: The same instance
+        :rtype: SubSetR2
+
+        Example use
+        -----------
+        >>> from shapepy import Primitive
+        >>> circle = Primitive.circle()
+        >>> circle.clean()
+        """
+        return Future.clean(self)
 
     @abstractmethod
     def move(self, vector: Point2D) -> SubSetR2:
@@ -206,16 +248,28 @@ class EmptyShape(SubSetR2):
         return self
 
     def __or__(self, other: SubSetR2) -> SubSetR2:
-        return copy(other)
+        return Future.convert(other)
 
-    def __and__(self, other: SubSetR2) -> SubSetR2:
+    def __add__(self, other: SubSetR2) -> SubSetR2:
+        return Future.convert(other)
+
+    def __and__(self, _: SubSetR2) -> SubSetR2:
         return self
 
-    def __sub__(self, other: SubSetR2) -> SubSetR2:
+    def __mul__(self, _: SubSetR2) -> SubSetR2:
         return self
+
+    def __sub__(self, _: SubSetR2) -> SubSetR2:
+        return self
+
+    def __neg__(self) -> SubSetR2:
+        return WholeShape()
 
     def __invert__(self) -> SubSetR2:
         return WholeShape()
+
+    def __xor__(self, other: SubSetR2) -> SubSetR2:
+        return Future.convert(other)
 
     def __contains__(self, other: SubSetR2) -> bool:
         return self is other
@@ -273,11 +327,23 @@ class WholeShape(SubSetR2):
     def __or__(self, other: SubSetR2) -> WholeShape:
         return self
 
+    def __add__(self, _: SubSetR2) -> WholeShape:
+        return self
+
     def __and__(self, other: SubSetR2) -> SubSetR2:
-        return copy(other)
+        return Future.convert(other)
+
+    def __mul__(self, other: SubSetR2) -> WholeShape:
+        return Future.convert(other)
+
+    def __neg__(self) -> SubSetR2:
+        return EmptyShape()
 
     def __invert__(self) -> SubSetR2:
         return EmptyShape()
+
+    def __xor__(self, other: SubSetR2) -> SubSetR2:
+        return ~Future.convert(other)
 
     def __contains__(self, other: SubSetR2) -> bool:
         return True
@@ -286,7 +352,7 @@ class WholeShape(SubSetR2):
         return "WholeShape"
 
     def __sub__(self, other: SubSetR2) -> SubSetR2:
-        return ~other
+        return ~Future.convert(other)
 
     def __bool__(self) -> bool:
         return True
@@ -333,6 +399,13 @@ class Future:
     """
 
     @staticmethod
+    def convert(subset: SubSetR2) -> SubSetR2:
+        """
+        Converts an object into a SubSetR2
+        """
+        raise NotImplementedError
+
+    @staticmethod
     def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """
         Computes the union of some SubSetR2 instances
@@ -346,6 +419,36 @@ class Future:
     def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """
         Computes the intersection of some SubSetR2 instances
+
+        This function is overrided by a function defined
+        in the `shapepy.bool2d.boolean.py` file
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def invert(subset: SubSetR2) -> SubSetR2:
+        """
+        Computes the complementar set of given SubSetR2 instance
+
+        This function is overrided by a function defined
+        in the `shapepy.bool2d.boolean.py` file
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def xor(subset: SubSetR2) -> SubSetR2:
+        """
+        Computes the exclusive union of given subsets
+
+        This function is overrided by a function defined
+        in the `shapepy.bool2d.boolean.py` file
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def clean(subset: SubSetR2) -> SubSetR2:
+        """
+        Cleans and simplifies given subset
 
         This function is overrided by a function defined
         in the `shapepy.bool2d.boolean.py` file

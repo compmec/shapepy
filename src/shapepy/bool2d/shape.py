@@ -15,6 +15,7 @@ from typing import Iterable, Set, Tuple, Union
 from ..geometry.box import Box
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
+from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, To
@@ -71,9 +72,6 @@ class SimpleShape(SubSetR2):
             and self.jordan == other.jordan
         )
 
-    def __invert__(self) -> SimpleShape:
-        return self.__class__(~self.jordan)
-
     @property
     def boundary(self) -> bool:
         """The flag that informs if the boundary is inside the Shape"""
@@ -98,6 +96,7 @@ class SimpleShape(SubSetR2):
         """The internal area that is enclosed by the shape"""
         return self.__jordancurve.area
 
+    @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
 
@@ -253,9 +252,7 @@ class ConnectedShape(SubSetR2):
             and self.subshapes == other.subshapes
         )
 
-    def __invert__(self) -> DisjointShape:
-        return DisjointShape(~simple for simple in self.subshapes)
-
+    @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
 
@@ -374,10 +371,6 @@ class DisjointShape(SubSetR2):
         subshapes = tuple(map(copy, self.subshapes))
         return DisjointShape(subshapes)
 
-    def __invert__(self):
-        new_jordans = tuple(~jordan for jordan in self.jordans)
-        return shape_from_jordans(new_jordans)
-
     def __contains__(self, other: SubSetR2) -> bool:
         if Is.instance(other, DisjointShape):
             return all(o in self for o in other.subshapes)
@@ -414,6 +407,7 @@ class DisjointShape(SubSetR2):
         msg += f"{len(self.subshapes)} subshapes"
         return msg
 
+    @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
 

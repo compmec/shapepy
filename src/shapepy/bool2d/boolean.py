@@ -7,15 +7,17 @@ from __future__ import annotations
 
 from copy import copy
 from fractions import Fraction
-from typing import Iterable, Tuple, Union
+from typing import Dict, Iterable, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
 from ..loggers import debug
-from ..tools import CyclicContainer, Is
+from ..tools import CyclicContainer, Is, NotExpectedError
+from . import boolalg
 from .base import EmptyShape, SubSetR2, WholeShape
+from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
 from .shape import (
     ConnectedShape,
     DisjointShape,
@@ -25,7 +27,25 @@ from .shape import (
 
 
 @debug("shapepy.bool2d.boolean")
-def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
+def invert_bool2d(subset: SubSetR2) -> SubSetR2:
+    """
+    Computes the complementar set of given SubSetR2 instance
+
+    Parameters
+    ----------
+    subsets: SubSetR2
+        The subset to be inverted
+
+    Return
+    ------
+    SubSetR2
+        The complementar subset
+    """
+    return Boolalg.clean(RecipeLazy.invert(subset))
+
+
+@debug("shapepy.bool2d.boolean")
+def unite_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     Computes the union of given subsets
 
@@ -39,26 +59,12 @@ def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The united subset
     """
-    subsets = tuple(subsets)
-    assert len(subsets) == 2
-    assert Is.instance(subsets[0], SubSetR2)
-    assert Is.instance(subsets[1], SubSetR2)
-    if Is.instance(subsets[1], WholeShape):
-        return WholeShape()
-    if Is.instance(subsets[1], EmptyShape):
-        return copy(subsets[0])
-    if subsets[1] in subsets[0]:
-        return copy(subsets[0])
-    if subsets[0] in subsets[1]:
-        return copy(subsets[1])
-    new_jordans = FollowPath.or_shapes(subsets[0], subsets[1])
-    if len(new_jordans) == 0:
-        return WholeShape()
-    return shape_from_jordans(new_jordans)
+    union = RecipeLazy.unite(subsets)
+    return Boolalg.clean(union)
 
 
 @debug("shapepy.bool2d.boolean")
-def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
+def intersect_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     """
     Computes the intersection of given subsets
 
@@ -72,22 +78,170 @@ def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    subsets = tuple(subsets)
+    intersection = RecipeLazy.intersect(subsets)
+    return Boolalg.clean(intersection)
+
+
+@debug("shapepy.bool2d.boolean")
+def xor_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
+    """
+    Computes the xor of given subsets
+
+    Parameters
+    ----------
+    subsets: SubSetR2
+        The subsets to compute the xor
+
+    Return
+    ------
+    SubSetR2
+        The intersection subset
+    """
+    subset = RecipeLazy.xor(subsets)
+    return Boolalg.clean(subset)
+
+
+# pylint: disable=too-many-return-statements
+@debug("shapepy.bool2d.boolean")
+def clean_bool2d(subset: SubSetR2) -> SubSetR2:
+    """
+    Computes the intersection of given subsets
+
+    Parameters
+    ----------
+    subset: SubSetR2
+        The subset to be cleaned
+
+    Return
+    ------
+    SubSetR2
+        The intersection subset
+    """
+    subset = Boolalg.clean(subset)
+    if not Is.lazy(subset):
+        return subset
+    if Is.instance(subset, LazyNot):
+        return clean_bool2d_not(subset)
+    subsets = tuple(subset)
     assert len(subsets) == 2
-    assert Is.instance(subsets[0], SubSetR2)
-    assert Is.instance(subsets[1], SubSetR2)
-    if Is.instance(subsets[1], WholeShape):
-        return copy(subsets[0])
-    if Is.instance(subsets[1], EmptyShape):
-        return EmptyShape()
-    if subsets[1] in subsets[0]:
-        return copy(subsets[1])
-    if subsets[0] in subsets[1]:
-        return copy(subsets[0])
-    new_jordans = FollowPath.and_shapes(subsets[0], subsets[1])
-    if len(new_jordans) == 0:
-        return EmptyShape()
-    return shape_from_jordans(new_jordans)
+    shapea, shapeb = subsets
+    shapea = clean_bool2d(shapea)
+    shapeb = clean_bool2d(shapeb)
+    if Is.instance(subset, LazyAnd):
+        if shapeb in shapea:
+            return copy(shapeb)
+        if shapea in shapeb:
+            return copy(shapea)
+        jordans = FollowPath.and_shapes(shapea, shapeb)
+    elif Is.instance(subset, LazyOr):
+        if shapeb in shapea:
+            return copy(shapea)
+        if shapea in shapeb:
+            return copy(shapeb)
+        jordans = FollowPath.or_shapes(shapea, shapeb)
+    if len(jordans) == 0:
+        return EmptyShape() if Is.instance(subset, LazyAnd) else WholeShape()
+    return shape_from_jordans(jordans)
+
+
+@debug("shapepy.bool2d.boolean")
+def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
+    """
+    Cleans complementar of given subset
+
+    Parameters
+    ----------
+    subset: SubSetR2
+        The subset to be cleaned
+
+    Return
+    ------
+    SubSetR2
+        The cleaned subset
+    """
+    assert Is.instance(subset, LazyNot)
+    inverted = ~subset
+    if Is.instance(inverted, SimpleShape):
+        return SimpleShape(~inverted.jordan, True)
+    if Is.instance(inverted, ConnectedShape):
+        return DisjointShape(~simple for simple in inverted.subshapes)
+    if Is.instance(inverted, DisjointShape):
+        new_jordans = tuple(~jordan for jordan in inverted.jordans)
+        return shape_from_jordans(new_jordans)
+    raise NotImplementedError(f"Missing typo: {type(inverted)}")
+
+
+class Boolalg:
+    """Static methods to clean a SubSetR2 using algebraic simplifier"""
+
+    alphabet = "abcdefghijklmnop"
+    sub2var: Dict[SubSetR2, str] = {}
+
+    @staticmethod
+    def clean(subset: SubSetR2) -> SubSetR2:
+        """Simplifies the subset"""
+
+        if not Is.lazy(subset):
+            return subset
+        Boolalg.sub2var.clear()
+        original = Boolalg.subset2expression(subset)
+        simplified = boolalg.simplify(original)
+        if simplified != original:
+            subset = Boolalg.expression2subset(simplified)
+        Boolalg.sub2var.clear()
+        return subset
+
+    @staticmethod
+    def get_variable(subset: SubSetR2) -> str:
+        """Gets the variable represeting the subset"""
+        if subset not in Boolalg.sub2var:
+            index = len(Boolalg.sub2var)
+            if index > len(Boolalg.alphabet):
+                raise ValueError("Too many variables")
+            Boolalg.sub2var[subset] = Boolalg.alphabet[index]
+        return Boolalg.sub2var[subset]
+
+    @staticmethod
+    def subset2expression(subset: SubSetR2) -> str:
+        """Converts a SubSetR2 into a boolean expression"""
+        if not is_lazy(subset):
+            if Is.instance(subset, (EmptyShape, WholeShape)):
+                raise NotExpectedError("Lazy does not contain these")
+            return Boolalg.get_variable(subset)
+        if Is.instance(subset, LazyNot):
+            return boolalg.Formatter.invert_str(
+                Boolalg.subset2expression(~subset)
+            )
+        internals = map(Boolalg.subset2expression, subset)
+        if Is.instance(subset, LazyAnd):
+            return boolalg.Formatter.mult_strs(internals, boolalg.AND)
+        if Is.instance(subset, LazyOr):
+            return boolalg.Formatter.mult_strs(internals, boolalg.OR)
+        raise NotExpectedError
+
+    @staticmethod
+    def expression2subset(expression: str) -> SubSetR2:
+        """Converts a boolean expression into a SubSetR2"""
+        if expression == boolalg.TRUE:
+            return WholeShape()
+        if expression == boolalg.FALSE:
+            return EmptyShape()
+        for subset, variable in Boolalg.sub2var.items():
+            if expression == variable:
+                return subset
+        expression = boolalg.remove_parentesis(expression)
+        operator = boolalg.find_operator(expression)
+        if operator == boolalg.NOT:
+            subexpr = boolalg.extract(expression, boolalg.NOT)
+            inverted = Boolalg.expression2subset(subexpr)
+            return RecipeLazy.invert(inverted)
+        subexprs = boolalg.extract(expression, operator)
+        subsets = map(Boolalg.expression2subset, subexprs)
+        if operator == boolalg.OR:
+            return RecipeLazy.unite(subsets)
+        if operator == boolalg.AND:
+            return RecipeLazy.intersect(subsets)
+        raise NotExpectedError(f"Invalid expression: {expression}")
 
 
 class FollowPath:
@@ -254,8 +408,12 @@ class FollowPath:
         Computes the set of jordan curves that defines the boundary of
         the union between the two base shapes
         """
-        assert Is.instance(shapea, SubSetR2)
-        assert Is.instance(shapeb, SubSetR2)
+        assert Is.instance(
+            shapea, (SimpleShape, ConnectedShape, DisjointShape)
+        )
+        assert Is.instance(
+            shapeb, (SimpleShape, ConnectedShape, DisjointShape)
+        )
         FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
         indexs = FollowPath.midpoints_shapes(
             shapea, shapeb, closed=True, inside=False
@@ -270,8 +428,12 @@ class FollowPath:
         Computes the set of jordan curves that defines the boundary of
         the intersection between the two base shapes
         """
-        assert Is.instance(shapea, SubSetR2)
-        assert Is.instance(shapeb, SubSetR2)
+        assert Is.instance(
+            shapea, (SimpleShape, ConnectedShape, DisjointShape)
+        )
+        assert Is.instance(
+            shapeb, (SimpleShape, ConnectedShape, DisjointShape)
+        )
         FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
         indexs = FollowPath.midpoints_shapes(
             shapea, shapeb, closed=False, inside=True

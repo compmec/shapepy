@@ -10,12 +10,13 @@ from shapepy.bool2d.shape import SimpleShape
 from shapepy.geometry.factory import FactoryJordan
 
 
-@pytest.mark.order(32)
+@pytest.mark.order(42)
 @pytest.mark.dependency(
     depends=[
         "tests/bool2d/test_primitive.py::test_end",
         "tests/bool2d/test_contains.py::test_end",
         "tests/bool2d/test_empty_whole.py::test_end",
+        "tests/bool2d/test_lazy.py::test_all",
         "tests/bool2d/test_bool_no_intersect.py::test_end",
     ],
     scope="session",
@@ -30,12 +31,12 @@ class TestIntersectionSimple:
     of intersection points
     """
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(42)
     @pytest.mark.dependency(depends=["test_begin"])
     def test_begin(self):
         pass
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(42)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestIntersectionSimple::test_begin"])
     def test_or_two_rombos(self):
@@ -52,7 +53,7 @@ class TestIntersectionSimple:
         test_shape = square0 | square1
         assert test_shape == good_shape
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(42)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(depends=["TestIntersectionSimple::test_begin"])
     def test_and_two_rombos(self):
@@ -63,7 +64,7 @@ class TestIntersectionSimple:
         good = Primitive.regular_polygon(nsides=4, radius=1, center=(0, 0))
         assert test == good
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(42)
     @pytest.mark.timeout(40)
     @pytest.mark.dependency(
         depends=[
@@ -85,7 +86,7 @@ class TestIntersectionSimple:
         assert square0 - square1 == left_shape
         assert square1 - square0 == right_shape
 
-    @pytest.mark.order(32)
+    @pytest.mark.order(42)
     @pytest.mark.dependency(
         depends=[
             "TestIntersectionSimple::test_begin",
@@ -98,7 +99,7 @@ class TestIntersectionSimple:
         pass
 
 
-@pytest.mark.order(32)
+@pytest.mark.order(42)
 @pytest.mark.dependency(
     depends=[
         "TestIntersectionSimple::test_end",
