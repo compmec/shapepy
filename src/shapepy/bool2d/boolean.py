@@ -194,10 +194,10 @@ class Boolalg:
     @staticmethod
     def get_variable(subset: SubSetR2) -> str:
         """Gets the variable represeting the subset"""
-        if subset not in Boolalg.sub2var:        
+        if subset not in Boolalg.sub2var:
             index = len(Boolalg.sub2var)
             if index > len(Boolalg.alphabet):
-                raise ValueError(f"Too many variables")
+                raise ValueError("Too many variables")
             Boolalg.sub2var[subset] = Boolalg.alphabet[index]
         return Boolalg.sub2var[subset]
 

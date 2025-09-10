@@ -319,10 +319,79 @@ def test_clean():
     assert lazyNot.clean() == (-square).clean()
 
     lazyOr = LazyOr((square, circle))
-    assert lazyOr.clean() == square + circle
+    assert lazyOr.clean() == (square + circle).clean()
 
-    lazyAnd = LazyOr((square, circle))
-    assert lazyAnd.clean() == square * circle
+    lazyAnd = LazyAnd((square, circle))
+    assert lazyAnd.clean() == (square * circle).clean()
+
+
+@pytest.mark.order(33)
+@pytest.mark.dependency(
+    depends=[
+        "test_begin",
+        "test_invert",
+        "test_unite",
+        "test_intersect",
+        "test_hash",
+        "test_xor",
+        "test_transformation_move",
+        "test_transformation_scale",
+        "test_transformation_rotate",
+        "test_printing",
+        "test_clean",
+    ]
+)
+def test_density():
+    square = Primitive.square(side=2)
+    circle = Primitive.circle()
+
+    lazyNot = LazyNot(square)
+    densities = {
+        (0, 0): 0,
+        (-1, 0): 0.5,
+        (1, 0): 0.5,
+        (0, 1): 0.5,
+        (0, -1): 0.5,
+        (-1, 1): 0.75,
+        (-1, -1): 0.75,
+        (1, 1): 0.75,
+        (1, -1): 0.75,
+    }
+    for point, value in densities.items():
+        density = lazyNot.density(point)
+        assert float(density) == value
+
+    lazyOr = LazyOr((square, circle))
+    densities = {
+        (0, 0): 1,
+        (-1, 0): 0.5,
+        (1, 0): 0.5,
+        (0, 1): 0.5,
+        (0, -1): 0.5,
+        (-1, 1): 0.25,
+        (-1, -1): 0.25,
+        (1, 1): 0.25,
+        (1, -1): 0.25,
+    }
+    for point, value in densities.items():
+        density = lazyOr.density(point)
+        assert abs(float(density) - value) < 1e-9
+
+    lazyAnd = LazyAnd((square, circle))
+    densities = {
+        (0, 0): 1,
+        (-1, 0): 0.5,
+        (1, 0): 0.5,
+        (0, 1): 0.5,
+        (0, -1): 0.5,
+        (-1, 1): 0,
+        (-1, -1): 0,
+        (1, 1): 0,
+        (1, -1): 0,
+    }
+    for point, value in densities.items():
+        density = lazyAnd.density(point)
+        assert abs(float(density) - value) < 1e-9
 
 
 @pytest.mark.order(33)
@@ -339,6 +408,7 @@ def test_clean():
         "test_printing",
         "test_hash",
         "test_copy",
+        "test_density",
     ]
 )
 def test_all():

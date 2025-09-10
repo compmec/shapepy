@@ -77,7 +77,7 @@ class SubSetR2:
     @debug("shapepy.bool2d.base")
     def __mul__(self, other: SubSetR2):
         """Intersection of SubSetR2"""
-        result = Future.unite((self, other))
+        result = Future.intersect((self, other))
         if Config.clean["mul"]:
             result = Future.clean(result)
         return result
