@@ -135,8 +135,9 @@ class LazyNot(SubSetR2):
         self.__internal.rotate(angle)
         return self
 
+    @debug("shapepy.bool2d.base")
     def density(self, center):
-        return ~self.__internal.density(center)
+        return ~(self.__internal.density(center))
 
 
 class LazyOr(SubSetR2):

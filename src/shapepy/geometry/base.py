@@ -7,6 +7,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Iterable, Tuple, Union
 
+from ..rbool import IntervalR1
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from .box import Box
@@ -158,3 +159,8 @@ class IParametrizedCurve(IGeometricCurve):
     def parametrize(self) -> IParametrizedCurve:
         """Gives a parametrized curve"""
         return self
+
+    @abstractmethod
+    def section(self, interval: IntervalR1) -> IParametrizedCurve:
+        """Gives the section of the curve"""
+        raise NotImplementedError
