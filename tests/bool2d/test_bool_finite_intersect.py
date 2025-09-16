@@ -50,8 +50,7 @@ class TestIntersectionSimple:
         good_points += [(0, -1), (1, -2), (3, 0), (1, 2)]
         good_shape = Primitive.polygon(good_points)
 
-        test_shape = square0 | square1
-        assert test_shape == good_shape
+        assert square0 + square1 == good_shape
 
     @pytest.mark.order(42)
     @pytest.mark.timeout(40)
@@ -60,9 +59,8 @@ class TestIntersectionSimple:
         square0 = Primitive.regular_polygon(nsides=4, radius=2, center=(-1, 0))
         square1 = Primitive.regular_polygon(nsides=4, radius=2, center=(1, 0))
 
-        test = square0 & square1
         good = Primitive.regular_polygon(nsides=4, radius=1, center=(0, 0))
-        assert test == good
+        assert square0 * square1 == good
 
     @pytest.mark.order(42)
     @pytest.mark.timeout(40)

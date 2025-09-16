@@ -164,7 +164,7 @@ def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
     if Is.instance(inverted, SimpleShape):
         return SimpleShape(~inverted.jordan, True)
     if Is.instance(inverted, ConnectedShape):
-        return DisjointShape(~simple for simple in inverted.subshapes)
+        return DisjointShape((~s).clean() for s in inverted.subshapes)
     if Is.instance(inverted, DisjointShape):
         new_jordans = tuple(~jordan for jordan in inverted.jordans)
         return shape_from_jordans(new_jordans)

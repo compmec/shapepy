@@ -56,7 +56,7 @@ def test_rotate_simple():
 def test_move_connected():
     small_square = Primitive.square(2)
     big_square = Primitive.square(4)
-    connected = ConnectedShape([big_square, ~small_square])
+    connected = ConnectedShape([big_square, -small_square])
     assert connected.box() == Box((-2, -2), (2, 2))
 
     connected.move((2, 2))
@@ -68,7 +68,7 @@ def test_move_connected():
 def test_scale_connected():
     small_square = Primitive.square(2)
     big_square = Primitive.square(4)
-    connected = ConnectedShape([big_square, ~small_square])
+    connected = ConnectedShape([big_square, -small_square])
     assert connected.box() == Box((-2, -2), (2, 2))
 
     connected.scale((3, 4))
@@ -80,7 +80,7 @@ def test_scale_connected():
 def test_rotate_connected():
     small_square = Primitive.square(2)
     big_square = Primitive.square(4)
-    connected = ConnectedShape([big_square, ~small_square])
+    connected = ConnectedShape([big_square, -small_square])
     assert connected.box() == Box((-2, -2), (2, 2))
 
     angle = degrees(90)
