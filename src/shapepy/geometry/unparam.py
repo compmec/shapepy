@@ -22,7 +22,7 @@ class USegment(IGeometricCurve):
 
     def __init__(self, segment: Segment):
         if not Is.instance(segment, Segment):
-            raise TypeError
+            raise TypeError(f"Expected {Segment}, not {type(segment)}")
         self.__segment = segment
 
     def __copy__(self) -> USegment:

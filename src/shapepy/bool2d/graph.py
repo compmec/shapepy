@@ -14,6 +14,7 @@ from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.point import Point2D
 from ..scalar.reals import Real
 from ..tools import Is
+from ..loggers import get_logger, debug
 
 GAP = "    "
 
@@ -535,12 +536,16 @@ class Graph:
             raise TypeError
         return self.edges.add_path(path)
 
-
+@debug("shapepy.bool2d.graph")
 def intersect_graphs(graphs: Iterable[Graph]) -> Graph:
     """
     Computes the intersection of many graphs
     """
+    logger = get_logger("shapepy.bool2d.graph")
     size = len(graphs)
+    logger.debug(f"size = {size}")
+    if size == 0:
+        raise ValueError("Cannot intersect zero graphs")
     if size == 1:
         return graphs[0]
     half = size // 2

@@ -218,12 +218,20 @@ class GraphComputer:
     def clean(subset: SubSetR2) -> Iterator[JordanCurve]:
         """Cleans the subset using the graphs"""
         logger = get_logger("shapepy.bool2d.boole")
-        extractor = GraphComputer.extract(subset)
-        simples = tuple({id(s): s for s in extractor}.values())
-        piecewises = tuple(s.jordan.piecewise for s in simples)
+        pairs = tuple(GraphComputer.extract(subset))
+        djordans = {id(j): j for b, j in pairs if b}
+        ijordans = {id(j): j for b, j in pairs if not b}
+        # for key in djordans.keys() & ijordans.keys():
+        #     djordans.pop(key)
+        #     ijordans.pop(key)
+        piecewises = [jordan.piecewise for jordan in djordans.values()]
+        piecewises += [(~jordan).piecewise for jordan in ijordans.values()]
+        logger.debug(f"Quantity of piecewises: {len(piecewises)}")
         with graph_manager():
             graphs = tuple(map(curve2graph, piecewises))
+            logger.debug("Computing intersections")
             graph = intersect_graphs(graphs)
+            logger.debug("Finished graph intersections")
             for edge in tuple(graph.edges):
                 density = subset.density(edge.pointm)
                 if not 0 < float(density) < 1:
@@ -239,15 +247,16 @@ class GraphComputer:
         return jordans
 
     @staticmethod
-    def extract(subset: SubSetR2) -> Iterator[SimpleShape]:
+    def extract(subset: SubSetR2) -> Iterator[Tuple[bool, JordanCurve]]:
         """Extracts the simple shapes from the subset"""
-        if Is.instance(subset, SimpleShape):
-            yield subset
+        if isinstance(subset, SimpleShape):
+            yield (True, subset.jordan)
         elif Is.instance(subset, (ConnectedShape, DisjointShape)):
             for subshape in subset.subshapes:
                 yield from GraphComputer.extract(subshape)
         elif Is.instance(subset, LazyNot):
-            yield from GraphComputer.extract(~subset)
+            for (var, jordan) in GraphComputer.extract(~subset):
+                yield (not var, jordan)
         elif Is.instance(subset, (LazyOr, LazyAnd)):
             for subsubset in subset:
                 yield from GraphComputer.extract(subsubset)
@@ -345,12 +354,20 @@ class GraphComputer:
     @debug("shapepy.bool2d.boole")
     def edges2jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
         """Converts the given connected edges into a Jordan Curve"""
-        # logger = get_logger("shapepy.bool2d.boole")
-        # logger.info("Passed here")
+        logger = get_logger("shapepy.bool2d.boole")
+        logger.debug(f"len(edges) = {len(edges)}")
         edges = tuple(edges)
         if len(edges) == 1:
             path = tuple(tuple(edges)[0].singles)[0]
-            return JordanCurve(path.curve)
+            logger.debug(f"path = {path}")
+            curve = path.curve.section([path.knota, path.knotb])
+            logger.debug(f"curve = {curve}")
+            if isinstance(curve, Segment):
+                usegments = [USegment(curve)]
+            else:
+                usegments = list(map(USegment, curve))
+            logger.debug(f"usegments = {usegments}")
+            return JordanCurve(usegments)
         usegments = []
         for edge in tuple(edges):
             path = tuple(edge.singles)[0]

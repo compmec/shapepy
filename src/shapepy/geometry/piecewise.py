@@ -161,7 +161,7 @@ class PiecewiseCurve(IParametrizedCurve):
     def section(self, interval: IntervalR1) -> PiecewiseCurve:
         interval = from_any(interval)
         knots = tuple(self.knots)
-        if knots[0] <= interval[0] < interval[1] <= knots[-1]:
+        if not knots[0] <= interval[0] < interval[1] <= knots[-1]:
             raise ValueError(f"Invalid {interval} not in {self.knots}")
         segments = tuple(self.__segments)
         if interval == [self.knots[0], self.knots[-1]]:
