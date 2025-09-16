@@ -9,6 +9,7 @@ from typing import Iterable, Iterator, Type
 from ..loggers import debug
 from ..tools import Is
 from .base import EmptyShape, SubSetR2, WholeShape
+from .config import Config
 from .density import intersect_densities, unite_densities
 
 
@@ -123,6 +124,13 @@ class LazyNot(SubSetR2):
             and (~self == ~other)
         )
 
+    def __contains__(self, other: SubSetR2) -> bool:
+        if isinstance(other, LazyNot):
+            return ~self in ~other
+        if not Config.auto_clean:
+            raise ValueError("Cannot check if LazyOr contains something")
+        return self.__internal in (~other).clean()
+
     def move(self, vector):
         self.__internal.move(vector)
         return self
@@ -176,6 +184,15 @@ class LazyOr(SubSetR2):
             and hash(self) == hash(other)
             and frozenset(self) == frozenset(other)
         )
+
+    def __contains__(self, other: SubSetR2) -> bool:
+        if isinstance(other, LazyOr):
+            return all(o in self for o in other)
+        if any(other in s for s in self):
+            return True
+        if not Config.auto_clean:
+            raise ValueError("Cannot check if LazyOr contains something")
+        return other.clean() in self.clean()
 
     def move(self, vector):
         for subset in self:
@@ -234,6 +251,9 @@ class LazyAnd(SubSetR2):
             and hash(self) == hash(other)
             and frozenset(self) == frozenset(other)
         )
+
+    def __contains__(self, other: SubSetR2) -> bool:
+        return all(other in s for s in self)
 
     def move(self, vector):
         for subset in self:
