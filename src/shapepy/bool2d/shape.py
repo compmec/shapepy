@@ -136,7 +136,7 @@ class SimpleShape(SubSetR2):
             if Is.instance(other, SimpleShape):
                 return self.__contains_simple(other)
             if Is.instance(other, ConnectedShape):
-                return ~self in ~other
+                return -self in -other
             if Is.instance(other, DisjointShape):
                 return all(o in self for o in other.subshapes)
             return Is.instance(other, EmptyShape)
@@ -300,7 +300,7 @@ class ConnectedShape(SubSetR2):
     def subshapes(self, simples: Iterable[SimpleShape]):
         simples = frozenset(simples)
         if not all(Is.instance(simple, SimpleShape) for simple in simples):
-            raise TypeError
+            raise TypeError(f"Invalid typos: {tuple(map(type, simples))}")
         self.__subshapes = simples
 
     def __contains__(self, other) -> bool:
@@ -448,7 +448,7 @@ class DisjointShape(SubSetR2):
         if not all(
             Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
         ):
-            raise ValueError
+            raise ValueError(f"Invalid typos: {tuple(map(type, values))}")
         self.__subshapes = values
 
     def move(self, vector: Point2D) -> JordanCurve:

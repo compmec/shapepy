@@ -324,7 +324,7 @@ def test_simple_shape():
 def test_connected_shape():
     big = Primitive.square(side=6)
     small = Primitive.square(side=2)
-    shape = ConnectedShape([big, ~small])
+    shape = ConnectedShape([big, -small])
     # Corners
     points_density = {
         (1, 1): 0.75,
