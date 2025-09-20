@@ -19,13 +19,15 @@ from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, To
-from .base import EmptyShape, SubSetR2
+from .base import EmptyShape, Future, SubSetR2
+from .curve import SingleCurve
 from .density import (
     Density,
     intersect_densities,
     lebesgue_density_jordan,
     unite_densities,
 )
+from .point import SinglePoint
 
 
 class SimpleShape(SubSetR2):
@@ -132,24 +134,27 @@ class SimpleShape(SubSetR2):
         return self
 
     def __contains__(self, other: SubSetR2) -> bool:
-        if Is.instance(other, SubSetR2):
-            if Is.instance(other, SimpleShape):
-                return self.__contains_simple(other)
-            if Is.instance(other, ConnectedShape):
-                return ~self in ~other
-            if Is.instance(other, DisjointShape):
-                return all(o in self for o in other.subshapes)
-            return Is.instance(other, EmptyShape)
-        if Is.instance(other, JordanCurve):
-            return self.__contains_jordan(other)
-        return self.__contains_point(other)
+        if not Is.instance(other, SubSetR2):
+            other = Future.convert(other)
+        if Is.instance(other, SinglePoint):
+            return self.__contains_point(other)
+        if Is.instance(other, SingleCurve):
+            return self.__contains_curve(other)
+        if Is.instance(other, SimpleShape):
+            return self.__contains_simple(other)
+        if Is.instance(other, ConnectedShape):
+            return ~self in ~other
+        if Is.instance(other, DisjointShape):
+            return all(o in self for o in other.subshapes)
+        return Is.instance(other, EmptyShape)
 
-    def __contains_point(self, point: Point2D) -> bool:
-        density = float(self.density(point))
+    def __contains_point(self, point: SinglePoint) -> bool:
+        point = Future.convert(point)
+        density = float(self.density(point.internal))
         return density > 0 if self.boundary else density == 1
 
-    def __contains_jordan(self, jordan: JordanCurve) -> bool:
-        piecewise = jordan.parametrize()
+    def __contains_curve(self, curve: SingleCurve) -> bool:
+        piecewise = curve.internal.parametrize()
         vertices = map(piecewise, piecewise.knots[:-1])
         if not all(map(self.__contains_point, vertices)):
             return False
