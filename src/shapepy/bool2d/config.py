@@ -18,6 +18,8 @@ class Config:
         "inv": True,
     }
 
+    auto_clean = True
+
 
 @contextmanager
 def disable_auto_clean():

@@ -6,6 +6,7 @@ from shapepy.scalar.reals import Is, Math, To
 
 
 @pytest.mark.order(1)
+# @pytest.mark.skip()
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_constants():
