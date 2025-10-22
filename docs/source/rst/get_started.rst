@@ -6,44 +6,103 @@ Get started
 
 This library allows you to operate between **Shapes**, for example, the two shapes bellow can be united or can be intersected:
 
-.. figure:: ../img/shape/base.svg
+.. figure:: ../img/bool2d/base.svg
    :width: 50%
    :alt: Superposition of two shapes
    :align: center
 
 |pic1|  |pic2|
 
-.. |pic1| image:: ../img/shape/union.svg
+.. |pic1| image:: ../img/bool2d/union.svg
    :width: 49 %
 
-.. |pic2| image:: ../img/shape/intersect.svg
+.. |pic2| image:: ../img/bool2d/intersect.svg
    :width: 49 %
 
 ---------------------------------------------------
 
-The initial step is creating shapes. There's the class ``Primitive`` which have functions such ``square`` and ``circle`` that will help us to generate basic shapes. First we create the left shape by uniting a **circle** and a **square**
+Baby steps
+==========
+
+The first step is creating shapes to then operate them.
+To create a **circle**, use the **Primitive**:
 
 .. code-block:: python
 
     from shapepy import Primitive
 
-    # Create the left shape
     circle = Primitive.circle(radius = 1, center = (0, 0))
-    square = Primitive.square(side = 2, center = (-1, 0))
-    left_shape = square + circle  # Unite shapes
 
-Then we create the right shape by moving and rotating the left shape
+.. figure:: ../img/logo/logo1.svg
+   :width: 50%
+   :alt: The created circle with radius 1 and center the origin
+   :align: center
+
+Then we create a **square**
+
+.. code-block:: python
+
+    square = Primitive.square(side = 2, center = (-1, 0))
+
+.. figure:: ../img/logo/logo2.svg
+   :width: 50%
+   :alt: The created square of side 2 and center at (-1, 0)
+   :align: center
+
+And hence we unite both shapes to create the *left* shape
+
+.. code-block:: python
+
+    left = square + circle  # Unite
+
+.. figure:: ../img/logo/logo3.svg
+   :width: 50%
+   :alt: The union between a square and a circle created before
+   :align: center
+
+To create the *right* shape we can copy and transform using the functions **rotate** and **move**.
 
 .. code-block:: python
 
     from copy import deepcopy
+    from math import pi
+    
+    right = deepcopy(left).rotate(pi).move((0, -1))
 
-    # Create the right shape
-    right_shape = deepcopy(left_shape)
-    right_shape.rotate(180, degrees = True)
-    right_shape.move(0, -1)
+.. figure:: ../img/logo/logo5.svg
+   :width: 50%
+   :alt: The superposition of the left shape and the created right shape
+   :align: center
 
-We plot both shapes by using ``matplotlib``
+Now, we can intersect both the *left* and *right* shape, to obtain
+
+.. code-block:: python
+
+    intersection = left * right  # Intersection
+
+.. figure:: ../img/logo/logo_intersection.svg
+   :width: 50%
+   :alt: The intersection between the left and the right shape
+   :align: center
+
+------------------------------------------------------------------------------
+
+
+
+
+-----------------------------------------------------------------------
+
+What I can do
+=============
+
+Here we give you some examples. The entire list can be found in the :ref:`features`.
+
+----------------
+How to visualize
+----------------
+
+The shapes don't show by themselves, so se can use the ``matplotlib`` to visualize them.
+We create an instance of ``PlotShape`` which is pretty similar to ``matplotlib.pyplot``:
 
 .. code-block:: python
 
@@ -53,23 +112,22 @@ We plot both shapes by using ``matplotlib``
     plt = PlotShape()
     
     # Plot the left shape
-    plt.plot(left_shape, fill_color = "cyan")
+    plt.plot(left, fill_color = "cyan")
     # Plot the right shape
-    plt.plot(right_shape, fill_color = "yellow")
+    plt.plot(right, fill_color = "yellow")
     
     # Show images on screen
     plt.show()
 
-Now we unite and intersect the ``left_shape`` and ``right_shape``:
-
+Now we unite and intersect the ``left`` and ``right``:
 
 .. code-block:: python
 
-    # Unite left and right. You can also use +
-    union_shape = left_shape | right_shape
+    # Unite left and right
+    union = left + right
     
-    # Intersect left and right. You can also use *
-    intersection_shape = left_shape & right_shape
+    # You can also use * for intersect
+    intersection = left * right
 
 We finally plot the figure
 
@@ -77,79 +135,39 @@ We finally plot the figure
 
     # Plot the union shape
     plt = PlotShape()
-    plt.plot(union_shape)
+    plt.plot(union)
 
     # Plot the intersection shape
     plt = PlotShape()
-    plt.plot(intersection_shape)
+    plt.plot(intersection)
 
     # Show images on screen
     plt.show()
-    
-It's also possible to get properties of the shape, such as **area**, **momentum of area** and **inertia of area**:
 
-.. code-block:: python
+------------------
+Computing the area
+------------------
 
-    from shapepy import IntegrateShape
-
-    area = IntegrateShape.area(union)  # 9.571110535844964
-
-    moment_x = IntegrateShape.polynomial(union, 1, 0)  # -7.502679e-16
-    moment_y = IntegrateShape.polynomial(union, 0, 1)  # -4.785555267922482
-
-    inertia_xx = IntegrateShape.polynomial(union, 2, 0)  # 11.059522875398848
-    inertia_xy = IntegrateShape.polynomial(union, 1, 1)  # -3.416464745608603
-    inertia_yy = IntegrateShape.polynomial(union, 0, 2)  # 8.511945596141624
-
-Once you got the main idea, you can create your own shape.
-We recomend now see the next topic :ref:`primitive`
+-------------------
+Computing integrals
+-------------------
 
 
-.. dropdown:: Code to generate the logo
+-------
+Meshing
+-------
 
-    .. code-block:: python
+The optional library ``gmsh`` can be used to generate meshes from shapes.
 
-        from matplotlib import pyplot
-        from shapepy import Primitive, ShapePloter
+-----------------------------------------------------------------------
 
-        S = Primitive.circle(ndivangle=4).scale(1, 1.5)
-        S -= Primitive.square(center = (0.3, 1.25)).scale(2, 0.5)
-        S -= Primitive.square(center = (-0.3, -1.25)).scale(2, 0.5)
+Next steps
+==========
 
-        H = Primitive.square().scale(2, 3)
-        H -= Primitive.square().scale(0.5, 3).move(0, 2)
-        H -= Primitive.square().scale(0.5, 3).move(0, -2)
-        H.move(3, 0)
+Now you know the basics, you can attack different points independently.
 
-        A = Primitive.regular_polygon(3).rotate(90, True).scale(1, 2)
-        A -= Primitive.regular_polygon(3).rotate(90, True).scale(0.3, 2*0.3)
-        A.move(6-0.14, -0.5)
-
-        P = Primitive.square().scale(1, 3)
-        P += Primitive.circle(ndivangle=4).scale(1.5, 0.75).move(0.5, 0.75)
-        P -= Primitive.square().scale(1, 3).move(7.8-8.5, 0)
-        P -= Primitive.circle(ndivangle=4).scale(0.5, 0.25).move(1, 0.75)
-        P -= Primitive.square().scale(0.5, 0.5).move(9.25-8.5, 0.75)
-        P.move(8.5-0.6, 0)
-
-        E = Primitive.square().scale(2, 3)
-        E -= Primitive.square(center = (0.3, 1.25)).scale(2, 0.5)
-        E -= Primitive.square(center = (0.3, -1.25)).scale(2, 0.5)
-        E.move(13-1.1, 0)
-
-        SHAPE = S + H + A + P + E
-
-        fig = pyplot.figure(figsize=(15, 5))
-        plt = ShapePloter(fig = fig)
-        plt.plot(SHAPE)
-        ax = plt.gca()
-        ax.set_aspect("equal")
-        ax.spines['top'].set_visible(False)
-        ax.spines['right'].set_visible(False)
-        ax.spines['bottom'].set_visible(False)
-        ax.spines['left'].set_visible(False)
-        ax.get_xaxis().set_ticks([])
-        ax.get_yaxis().set_ticks([])
-        fig.tight_layout()
-        plt.savefig("logo.svg")
-        # plt.show()
+* 
+* What you can do with the shapes: :ref:`features`
+* All the basic primitives: :ref:`primitive`
+* How to create complex shapes: :ref:`advanced`
+* To know the specifics: :ref:`theory`

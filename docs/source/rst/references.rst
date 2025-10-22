@@ -13,6 +13,8 @@ Tools
     :undoc-members:
     :show-inheritance:
 
+----------------------------------------------------
+
 Scalar
 ======
 
@@ -25,23 +27,6 @@ Scalar
 ----------------------------------------------------
 
 .. autoclass:: shapepy.scalar.angle.Angle
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
-
-----------------------------------------------------
-
-.. autoclass:: shapepy.scalar.polynomial.Polynomial
-    :members:
-    :inherited-members:
-    :undoc-members:
-    :show-inheritance:
-
-
-----------------------------------------------------
-
-.. autoclass:: shapepy.scalar.bezier.Bezier
     :members:
     :inherited-members:
     :undoc-members:
@@ -68,6 +53,26 @@ Scalar
 ----------------------------------------------------
 
 .. autoclass:: shapepy.scalar.quadrature.AdaptativeIntegrator
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+
+----------------------------------------------------
+
+Analytic
+========
+
+.. autoclass:: shapepy.analytic.polynomial.Polynomial
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.analytic.bezier.Bezier
     :members:
     :inherited-members:
     :undoc-members:
@@ -115,17 +120,36 @@ Boolean 2D
 
 ----------------------------------------------------
 
-.. autoclass:: shapepy.bool2d.shape.EmptyShape
+.. autoclass:: shapepy.bool2d.base.EmptyShape
     :members:
     :inherited-members:
     :undoc-members:
 
 ----------------------------------------------------
 
-.. autoclass:: shapepy.bool2d.shape.WholeShape
+.. autoclass:: shapepy.bool2d.base.WholeShape
     :members:
     :inherited-members:
     :undoc-members:
+
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.bool2d.point.SinglePoint
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.bool2d.curve.SingleCurve
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+
 
 ----------------------------------------------------
 
@@ -146,6 +170,30 @@ Boolean 2D
 ----------------------------------------------------
 
 .. autoclass:: shapepy.bool2d.shape.DisjointShape
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.bool2d.lazy.LazyNot
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.bool2d.lazy.LazyAnd
+    :members:
+    :inherited-members:
+    :undoc-members:
+    :show-inheritance:
+
+----------------------------------------------------
+
+.. autoclass:: shapepy.bool2d.lazy.LazyOr
     :members:
     :inherited-members:
     :undoc-members:

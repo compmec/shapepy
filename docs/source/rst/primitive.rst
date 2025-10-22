@@ -1,3 +1,6 @@
+
+
+
 .. _primitive:
 
 =========
@@ -8,13 +11,14 @@ Primitive
 Introduction
 ------------
 
-To help you create complex shapes, we created functions to create basic shapes and manipulate these shapes.
+Complex shapes can be created by operating basic shapes.
+You can create simple shapes and then transforming and operating them.
 
 These functions are divided in three groups:
 
 * Create primitives shapes: ``square``, ``circle``, etc
-* Transformations: ``move``, ``rotate``, ``scale`` and ``invert``
-* Boolean operations: ``add``, ``sub``, ``mult`` and ``xor``
+* Transformations: ``move``, ``rotate`` and ``scale``
+* Boolean operations: ``invert``, ``add``, ``sub``, ``mult``, etc
 
 
 ------------------------------------------------------------------------------------------
@@ -73,12 +77,12 @@ Creates a triangle, a positive ``SimpleShape`` instance from given ``side`` and 
 Polygon
 -------
 
-Creates a polygon for given ``vertices``, a positive ``SimpleShape`` instance
+Creates a polygon for given ``vertices``
 
 .. code-block:: python
    
    from shapepy import Primitive
-   vertices = [(1, 0),(0, 1), (-1, 1), (0, -1)]
+   vertices = [(1, 0), (0, 1), (-1, 1), (0, -1)]
    simple = Primitive.polygon(vertices)
 
 .. figure:: ../img/primitive/diamond.svg
@@ -143,14 +147,15 @@ Rotate counter-clockwise the entire shape
 
 .. code-block:: python
 
-   import math
+   from math import pi
    from shapepy import Primitive
    # Create square of side 2
    square = Primitive.square(side = 2)
    # Rotate the square in pi/6 radians
-   square.rotate(math.pi/6)
+   square.rotate(pi/6)
    # Or in 30 degrees
-   square.rotate(30, degrees = True)
+   from shapepy.scalar.angle import degrees
+   square.rotate(degrees(30))
 
 .. figure:: ../img/primitive/transformation_rotate.svg
    :width: 100%
@@ -171,13 +176,33 @@ Scale the entire shape in horizontal and vertical directions
    # Create square of side 2
    square = Primitive.square(side = 2)
    # Scales a square into a rectangle of width 2 and height 0.5
-   square.scale(2, 0.5)
+   square.scale((2, 0.5))
 
 .. figure:: ../img/primitive/transformation_scale.svg
    :width: 70%
    :alt: Example of scaling a square
    :align: center
 
+
+------------------------------------------------------------------------------------------
+
+------------------
+Boolean Operations
+------------------
+
+The shapes respond to boolean operations: ``~``, ``|``, ``&``, ``-``, ``^``, ``+``, ``*``:
+
+* Inversion: `~a` or `-a`
+* Union: `a | b` or `a + b`
+* Intersection: `a & b` or `a * b`
+* Subtraction: `a - b`
+* Exclusive union: `a ^ b`
+
+.. note::
+   Although two symbols can represent the same operation, they may return different objects. 
+   For example: while `-a` inverts an object directly, `~a` returns a `LazyNot`.
+   As consequence, `-(-a)` inverts an object twice, while `~(~a)` gives `a` directly.
+   
 
 ------------------------------------------------------------------------------------------
 
@@ -192,7 +217,7 @@ It's possible to invert the orientation of a shape.
    # Create any shape, positive at counter-clockwise
    circle = Primitive.circle()
    # Change orientation to clockwise, negative
-   circle.invert()
+   invcircle = ~circle
 
 
 |pic1|  |pic2|
@@ -207,17 +232,8 @@ It's possible to invert the orientation of a shape.
 
    The ``invert`` function is available only in ``SimpleShape``. Use ``~shape`` for a inversion as general
 
-------------------------------------------------------------------------------------------
-
-------------------
-Boolean Operations
-------------------
-
-It's possible to operate between two shapes by using ``|``, ``&``, ``-`` and ``^``:
-
-
-Union / logic OR
-----------------------
+Union
+-----
 
 The sum between two shapes is mathematically a union of two sets
 
@@ -228,7 +244,6 @@ The sum between two shapes is mathematically a union of two sets
    circle = Primitive.circle()
    square = Primitive.square()
    # Union
-   newshape = circle | square
    newshape = circle + square
 
 .. figure:: ../img/primitive/setAorB.svg
@@ -240,6 +255,35 @@ The sum between two shapes is mathematically a union of two sets
    :width: 80%
    :alt: Table of union between two positive circles
    :align: center
+
+
+------------------------------------------------------------------------------------------
+
+Intersection
+------------
+
+The intersection between two shapes returns the common region between them.
+
+.. code-block:: python
+
+   # Create two positive shapes
+   from shapepy import Primitive
+   circle = Primitive.circle()
+   square = Primitive.square()
+   # Intersection
+   newshape = circle * square
+
+.. figure:: ../img/primitive/setAandB.svg
+   :width: 40%
+   :alt: Example of multiplication between two positive shapes
+   :align: center
+
+
+.. figure:: ../img/primitive/and_table.svg
+   :width: 80%
+   :alt: Table of intersection between two positive circles
+   :align: center
+
 
 ------------------------------------------------------------------------------------------
 
@@ -269,33 +313,6 @@ The subtraction between two positive shapes means take out all part of :math:`A`
    :align: center
 
 
-------------------------------------------------------------------------------------------
-
-Intersection / logic AND / Multiplication
------------------------------------------
-
-The intersection between two shapes returns the common region between them.
-
-.. code-block:: python
-
-   # Create two positive shapes
-   circle = section.shape.primitive.circle()
-   square = section.shape.primitive.square()
-   # Subtract
-   newshape = circle * square
-   newshape = circle & square
-
-.. figure:: ../img/primitive/setAandB.svg
-   :width: 40%
-   :alt: Example of multiplication between two positive shapes
-   :align: center
-
-
-.. figure:: ../img/primitive/and_table.svg
-   :width: 80%
-   :alt: Table of intersection between two positive circles
-   :align: center
-
 
 ------------------------------------------------------------------------------------------
 
@@ -307,8 +324,9 @@ The xor between two positive shapes. For this operator, we use the symbol ``^``.
 .. code-block:: python
 
    # Create two positive shapes
-   circle = section.shape.primitive.circle()
-   square = section.shape.primitive.square()
+   from shapepy import Primitive
+   circle = Primitive.circle()
+   square = Primitive.square()
    # Subtract
    newshape = circle ^ square
 
@@ -326,8 +344,8 @@ The xor between two positive shapes. For this operator, we use the symbol ``^``.
 
 ------------------------------------------------------------------------------------------
 
-Rewrite operations
-------------------
+Table with all the operations
+-----------------------------
 
 All the sub-operations (``+``, ``-``, ``*``, ``^``) operations are in fact only combinations of ``|``, ``&`` and ``~``. On the background, it works only with these three and the other operations are transformed:
 

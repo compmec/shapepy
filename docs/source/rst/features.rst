@@ -1,10 +1,15 @@
+.. _features:
+
+========
+Features
+========
+
 .. _integral:
 
-========
 Integral
-========
+--------
 
-One nice outil is integrate over the shape.
+You can integrate over a line or over an area.
 
 Since we describe the shapes by its boundaries, we transform the integral into a boundary integral by using Green's theorem.
 
@@ -25,7 +30,6 @@ If you want to know more, check out the Integral Theory.
    
 For any polynomial
 
-
 .. code-block:: python
    
     from shapepy import Primitive, IntegrateShape
@@ -37,4 +41,10 @@ For any polynomial
     inertia_xx = IntegrateShape.polynomial(square, 2, 0)  # 112/3
     inertia_xy = IntegrateShape.polynomial(square, 1, 1)  # 48
     inertia_yy = IntegrateShape.polynomial(square, 0, 2)  # 196/3
+
+
+.. _mesh:
+
+Creating a mesh
+---------------
 

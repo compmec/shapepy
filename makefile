@@ -15,4 +15,4 @@ html:
 	brave htmlcov/index.html
 
 docs:
-	sphinx-autobuild docs/ docs/_build/html
+	sphinx-autobuild docs/source docs/_build/html

@@ -135,7 +135,7 @@ class Polynomial(BaseAnalytic):
 
         p(t) = a0 + a1 * t + ... + ap * t^p
         p(A * t) = a0 + a1 * (A*t) + ... + ap * (A * t)^p
-                = b0 + b1 * t + ... + bp * t^p
+        = b0 + b1 * t + ... + bp * t^p
 
         Example
         -------
@@ -158,7 +158,7 @@ class Polynomial(BaseAnalytic):
 
         p(t) = a0 + a1 * t + ... + ap * t^p
         p(t-d) = a0 + a1 * (t-d) + ... + ap * (t-d)^p
-                = b0 + b1 * t + ... + bp * t^p
+        = b0 + b1 * t + ... + bp * t^p
 
         Example
         -------

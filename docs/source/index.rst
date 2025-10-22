@@ -1,5 +1,5 @@
 
-.. image:: img/logo.png
+.. image:: img/logo/logo.png
     :width: 100 %
     :alt: shapepy
     :align: center
@@ -16,21 +16,21 @@ Documentation
    rst/installation
    rst/get_started
    rst/primitive
-   rst/jordan_curve
-   rst/shape
-   rst/integral
+   rst/geometry
+   rst/boolean
+   rst/features
+
+.. toctree::
+   :maxdepth: 1
+   :caption: Theory
+
+   rst/theory
 
 .. toctree::
    :maxdepth: 2
    :caption: References
 
    rst/references
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Theory
-
-   rst/theory
 
 
 Support

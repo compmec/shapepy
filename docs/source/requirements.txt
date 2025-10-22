@@ -1,4 +1,5 @@
 numpy
+rbool
 shapepy>=1.0.0
 matplotlib>=3.4
 sphinx

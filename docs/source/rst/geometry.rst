@@ -1,8 +1,35 @@
-.. _jordan_curve:
+.. _geometry:
 
-============
+========
+Geometry
+========
+
+This section focus only on the `shapepy.geometry` submodule.
+
+It defines:
+
+* `Point2D`: A single point on the plane
+* `Segment`: A parametrized curve that is at least class `C1`
+* `USegment`: An unparametrized curve of at least of continuity `G1`
+* `PiecewiseCurve`: A parametrized curve that is at least class `C0`  
+* `UPiecewiseCurve`: An unparametrized curve that is at least of continuity `G0` 
+* `JordanCurve`: A kind of `UPiecewiseCurve` but it's closed and it does not intersect itself.
+
+
+We define these geometries to later use in the 
+
+
+
+.. _geometry_curve:
+
 Jordan Curve
-============
+------------
+
+
+.. _geometry_jordan:
+
+Jordan Curve
+------------
 
 
 ------------

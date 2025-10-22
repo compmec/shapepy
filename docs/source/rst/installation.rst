@@ -21,6 +21,21 @@ Install the package and all of its dependencies can be done through the `python 
 
   $ pip install shapepy
 
+You can also clone the git repository and install it
+
+.. code-block:: console
+  
+  $ git clone https://github.com/compmec/shapepy
+  $ cd shapepy
+  $ pip install -e .
+
+
+This package depends on the libraries:
+
+* `numpy <https://numpy.org/>`_
+* `rbool <https://pypi.org/project/rbool/>`_
+* `matplotlib <https://matplotlib.org/>`_
+
 
 Testing the Installation
 ------------------------
@@ -29,4 +44,6 @@ To verify if your installation works correctly, install ``pytest`` and run:
 
 .. code-block:: console
 
+  $ cd shapepy
   $ pytest .
+

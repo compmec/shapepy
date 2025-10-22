@@ -145,10 +145,10 @@ Two examples of connected shapes are bellow.
 
 |pic3|  |pic4|
 
-.. |pic3| image:: ../img/shape/hollow_circle.svg
+.. |pic3| image:: ../img/bool2d/hollow_circle.svg
    :width: 49 %
 
-.. |pic4| image:: ../img/shape/two_holes.svg
+.. |pic4| image:: ../img/bool2d/two_holes.svg
    :width: 49 %
 
 The easiest way to create them is by operating between shapes. For example:
@@ -185,10 +185,10 @@ Some examples of disjoint shapes are
 
 |pic5|  |pic6|
 
-.. |pic5| image:: ../img/shape/centered_circles.svg
+.. |pic5| image:: ../img/bool2d/centered_circles.svg
    :width: 49 %
 
-.. |pic6| image:: ../img/shape/complex_disjoint.svg
+.. |pic6| image:: ../img/bool2d/complex_disjoint.svg
    :width: 49 %
 
 
@@ -204,7 +204,7 @@ The easiest way to create them is by operating shapes. For example, the code bel
    right = Primitive.circle(radius = 1, center = (1.5, 0))
    disjoint = left | right
 
-.. image:: ../img/shape/two_circles.svg
+.. image:: ../img/bool2d/two_circles.svg
    :width: 50 %
    :alt: Example of disjoint shape created by union of two circles
    :align: center
