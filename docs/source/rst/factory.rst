@@ -1,11 +1,11 @@
 
 
 
-.. _primitive:
+.. _factory:
 
-=========
-Primitive
-=========
+=======
+Factory
+=======
 
 ------------
 Introduction
@@ -21,7 +21,7 @@ These functions are divided in three groups:
 * Boolean operations: ``invert``, ``add``, ``sub``, ``mult``, etc
 
 
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 -----------------------
 Create primitive shapes
@@ -113,78 +113,14 @@ Creates a regular polygon, a positive ``SimpleShape`` instance
 .. |reg5| image:: ../img/primitive/regular5.svg
    :width: 32 %
 
---------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 ---------------
 Transformations
 ---------------
 
-Move
-----
 
-Translate the entire shape by an amount ``(x, y)``
-
-.. code-block:: python
-   
-   from shapepy import Primitive
-   # Creates a circle of radius 1 and centered at origin (0, 0)
-   circle = Primitive.circle()
-   # Now the circle has radius 1 and center at (1, 2)
-   circle.move(1, 2)
-
-.. figure:: ../img/primitive/transformation_move12.svg
-   :width: 80%
-   :alt: Example of moving a circle of origin (0, 0) to (1, 2)
-   :align: center
-
-
-------------------------------------------------------------------------------------------
-
-Rotate
-------
-
-Rotate counter-clockwise the entire shape
-
-.. code-block:: python
-
-   from math import pi
-   from shapepy import Primitive
-   # Create square of side 2
-   square = Primitive.square(side = 2)
-   # Rotate the square in pi/6 radians
-   square.rotate(pi/6)
-   # Or in 30 degrees
-   from shapepy.scalar.angle import degrees
-   square.rotate(degrees(30))
-
-.. figure:: ../img/primitive/transformation_rotate.svg
-   :width: 100%
-   :alt: Example of rotating a square
-   :align: center
-
-
-------------------------------------------------------------------------------------------
-
-Scale
------
-
-Scale the entire shape in horizontal and vertical directions
-
-.. code-block:: python
-
-   from shapepy import Primitive
-   # Create square of side 2
-   square = Primitive.square(side = 2)
-   # Scales a square into a rectangle of width 2 and height 0.5
-   square.scale((2, 0.5))
-
-.. figure:: ../img/primitive/transformation_scale.svg
-   :width: 70%
-   :alt: Example of scaling a square
-   :align: center
-
-
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 ------------------
 Boolean Operations
@@ -204,7 +140,7 @@ The shapes respond to boolean operations: ``~``, ``|``, ``&``, ``-``, ``^``, ``+
    As consequence, `-(-a)` inverts an object twice, while `~(~a)` gives `a` directly.
    
 
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 Invert
 ------
@@ -257,7 +193,7 @@ The sum between two shapes is mathematically a union of two sets
    :align: center
 
 
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 Intersection
 ------------
@@ -285,7 +221,7 @@ The intersection between two shapes returns the common region between them.
    :align: center
 
 
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 Subtraction
 -----------
@@ -314,7 +250,7 @@ The subtraction between two positive shapes means take out all part of :math:`A`
 
 
 
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 XOR Operator
 ------------
@@ -342,7 +278,7 @@ The xor between two positive shapes. For this operator, we use the symbol ``^``.
    :align: center
 
 
-------------------------------------------------------------------------------------------
+-----------------------------------------------------------------------------------------------------------
 
 Table with all the operations
 -----------------------------

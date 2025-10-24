@@ -4,57 +4,36 @@
 Geometry
 ========
 
-This section focus only on the `shapepy.geometry` submodule.
+This section focus only on the ``shapepy.geometry`` submodule.
 
 It defines:
 
-* `Point2D`: A single point on the plane
-* `Segment`: A parametrized curve that is at least class `C1`
-* `USegment`: An unparametrized curve of at least of continuity `G1`
-* `PiecewiseCurve`: A parametrized curve that is at least class `C0`  
-* `UPiecewiseCurve`: An unparametrized curve that is at least of continuity `G0` 
-* `JordanCurve`: A kind of `UPiecewiseCurve` but it's closed and it does not intersect itself.
+* **Point2D**: A single point on the plane
+* **Segment**: A parametrized curve that is at least class **C1**
+* **USegment**: An unparametrized curve of at least of continuity **G1**
+* **PiecewiseCurve**: A parametrized curve that is at least class **C0**  
+* **UPiecewiseCurve**: An unparametrized curve that is at least of continuity **G0** 
+* **JordanCurve**: A kind of **UPiecewiseCurve** but it's closed and it does not intersect itself.
 
+We define these geometries to later use in the ``shapepy.bool2d`` submodule.
 
-We define these geometries to later use in the 
+-----------------------------------------------------------------------------------------------------------
 
+.. _geometry_point:
 
+-------
+Point2D
+-------
 
-.. _geometry_curve:
+-----------------------------------------------------------------------------------------------------------
 
-Jordan Curve
-------------
+.. _geometry_segment:
 
+--------
+Segments
+--------
 
-.. _geometry_jordan:
-
-Jordan Curve
-------------
-
-
-------------
-Introduction
-------------
-
-Jordan Curve is a continuous closed curve which doesn't intersect itself.
-
-.. figure:: ../img/theory/jordan_curve.svg
-   :width: 70%
-   :alt: Example of jordan curves 
-   :align: center
-
-For our purpose, we use oriented jordan curve by setting a **positive** direction as **counter-clockwise**.
-
-Although a jordan curve can be very general, we restrict and use only jordan curves which are piecewise smooth curves. We call each piece as a ``segment``, a planar bezier curve.
-
-.. figure:: ../img/jordan_curve/jordan_splited.svg
-   :width: 60%
-   :alt: Example of jordan curves 
-   :align: center
-
-------------------
-Creating a segment
-------------------
+A segment is a curve that is class
 
 A ``segment`` is a ``PlanarBezier`` instance. You create a new instance by passing the ``ctrlpoints`` of the curve. For example, we have a linear and a quadratic segment in the figure bellow 
 
@@ -72,6 +51,39 @@ A ``segment`` is a ``PlanarBezier`` instance. You create a new instance by passi
 .. image:: ../img/jordan_curve/planar_segment.svg
    :width: 50 %
    :alt: Example of linear and quadratic planar segment
+   :align: center
+
+
+-----------------------------------------------------------------------------------------------------------
+
+.. _geometry_segment:
+
+----------------
+Piecewise curves
+----------------
+
+-----------------------------------------------------------------------------------------------------------
+
+.. _geometry_jordan:
+
+------------
+Jordan Curve
+------------
+
+Jordan Curve is a continuous closed curve which doesn't intersect itself.
+
+.. figure:: ../img/theory/jordan_curve.svg
+   :width: 70%
+   :alt: Example of jordan curves 
+   :align: center
+
+For our purpose, we use oriented jordan curve by setting a **positive** direction as **counter-clockwise**.
+
+Although a jordan curve can be very general, we restrict and use only jordan curves which are piecewise smooth curves. We call each piece as a ``segment``, a planar bezier curve.
+
+.. figure:: ../img/jordan_curve/jordan_splited.svg
+   :width: 60%
+   :alt: Example of jordan curves 
    :align: center
 
 
