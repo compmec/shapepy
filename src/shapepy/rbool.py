@@ -19,8 +19,8 @@ from_any: Callable[[Any], object] = rbool.from_any
 shift = rbool.move
 scale = rbool.scale
 unite = rbool.unite
-infimum = rbool.infimum
-supremum = rbool.supremum
+infimum: Callable[..., Real] = rbool.infimum
+supremum: Callable[..., Real] = rbool.supremum
 
 
 def create_single(knot: Real) -> SingleR1:

@@ -332,7 +332,7 @@ class GraphComputer:
             for subshape in subset.subshapes:
                 yield from GraphComputer.extract(subshape)
         elif Is.instance(subset, LazyNot):
-            for (var, jordan) in GraphComputer.extract(~subset):
+            for var, jordan in GraphComputer.extract(~subset):
                 yield (not var, jordan)
         elif Is.instance(subset, (LazyOr, LazyAnd)):
             for subsubset in subset:

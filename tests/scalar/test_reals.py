@@ -13,7 +13,6 @@ def test_constants():
 
 
 @pytest.mark.order(1)
-@pytest.mark.skip()
 @pytest.mark.timeout(1)
 @pytest.mark.dependency()
 def test_conversion():
