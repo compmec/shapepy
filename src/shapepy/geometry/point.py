@@ -114,10 +114,10 @@ class Point2D:
 
     def __neg__(self) -> Point2D:
         return self.__class__(
-            -self.xcoord,
-            -self.ycoord,
+            -1 * self.xcoord,
+            -1 * self.ycoord,
             self.radius,
-            ~self.angle,
+            self.angle.__invert__(),
         )
 
     def __pos__(self) -> Point2D:
