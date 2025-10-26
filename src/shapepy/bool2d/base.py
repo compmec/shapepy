@@ -105,6 +105,10 @@ class SubSetR2:
     def __hash__(self):
         raise NotImplementedError
 
+    @debug("shapepy.bool2d.base")
+    def __contains__(self, other: SubSetR2) -> bool:
+        return Future.contains(self, other)
+
     def clean(self) -> SubSetR2:
         """
         Cleans the subset, changing its representation into a simpler form
@@ -272,7 +276,7 @@ class EmptyShape(SubSetR2):
         return Future.convert(other)
 
     def __contains__(self, other: SubSetR2) -> bool:
-        return self is other
+        return self is Future.convert(other)
 
     def __str__(self) -> str:
         return "EmptyShape"
@@ -450,6 +454,16 @@ class Future:
     def clean(subset: SubSetR2) -> SubSetR2:
         """
         Cleans and simplifies given subset
+
+        This function is overrided by a function defined
+        in the `shapepy.bool2d.boolean.py` file
+        """
+        raise NotImplementedError
+
+    @staticmethod
+    def contains(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
+        """
+        Checks if subsetb is contained in subseta
 
         This function is overrided by a function defined
         in the `shapepy.bool2d.boolean.py` file
