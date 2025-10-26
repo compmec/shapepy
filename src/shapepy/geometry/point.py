@@ -57,7 +57,7 @@ class Point2D:
         self.__angle = angle
 
     @property
-    def xcoord(self) -> float:
+    def xcoord(self) -> Real:
         """The horizontal coordinate of the point"""
         if self.__xcoord is None:
             cos = self.__angle.cos()
@@ -65,7 +65,7 @@ class Point2D:
         return self.__xcoord
 
     @property
-    def ycoord(self) -> float:
+    def ycoord(self) -> Real:
         """The vertical coordinate of the point"""
         if self.__ycoord is None:
             sin = self.__angle.sin()
@@ -73,7 +73,7 @@ class Point2D:
         return self.__ycoord
 
     @property
-    def radius(self) -> float:
+    def radius(self) -> Real:
         """The norm L2 of the point: sqrt(x*x + y*y)"""
         if self.__radius is None:
             self.__radius = Math.sqrt(self.__xcoord**2 + self.__ycoord**2)
