@@ -1,5 +1,9 @@
 .. _theory:
 
+======
+Theory
+======
+
 This page contains all the theory used to develop this packaged.
 It can be resumed as a mix of set theory, analitic and parametric geometry on the plane :math:`\mathbb{R}^2`.
 
@@ -42,7 +46,6 @@ and how they interact with each other.
 
 .. _theory_point:
 
-=====
 Point
 =====
 
@@ -72,7 +75,6 @@ The operations between then are:
 
 .. _theory_curve:
 
-=====
 Curve
 =====
 
@@ -165,7 +167,6 @@ Examples:
 
 .. _theory_shape:
 
-=====
 Shape
 =====
 
@@ -229,7 +230,6 @@ The order used is:
 
 .. _theory_integral:
 
-========
 Integral
 ========
 
@@ -258,6 +258,7 @@ Here we show how we compute
 
 .. _theory_integral_curve:
 
+---------------
 Curve integrals
 ---------------
 
@@ -276,6 +277,7 @@ Three types of line integrals were given.
 
 .. _theory_integral_shape:
 
+---------------
 Shape integrals
 ---------------
 
@@ -337,6 +339,7 @@ This integral is easier computed by using :ref:`onedimen_integration`.
 
 .. _theory_integral_polygonal:
 
+
 Polygonal
 ---------
 
@@ -392,6 +395,7 @@ With
 
 .. _theory_integral_polynomial:
 
+----------
 Polynomial
 ----------
 
@@ -406,7 +410,6 @@ If :math:`S` is a polygonomial by parts, then for an interval :math:`\left[t_k, 
 
 .. _theory_contains:
 
-========
 Contains
 ========
 
@@ -810,7 +813,6 @@ Taking out when ``areaA > 0`` we get
 
 .. _theory_boolean:
 
-==================
 Boolean operations
 ==================
 
@@ -1004,7 +1006,6 @@ The xor between two shapes. For this operator, we use the symbol ``^``.
 
 .. _theory_generalities:
 
-============
 Generalities
 ============
 

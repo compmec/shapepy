@@ -514,7 +514,7 @@ Scale the entire shape in horizontal and vertical directions
    >>> # Create square of side 2
    >>> quare = Primitive.square(side = 2)
    >>> # Scales a square into a rectangle of width 2 and height 0.5
-   >>> square = square.scale((2, 0.5))
+   >>> rectangle = square.scale((2, 0.5))
 
 ------------------------------------------------------------------------------------------
 

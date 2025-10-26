@@ -10,20 +10,16 @@ Documentation
 *shapepy* is a python package for bidimensional geometry manipulation.
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
    :caption: Using the library:
 
    rst/installation
    rst/get_started
-   rst/primitive
-   rst/geometry
-   rst/boolean
+   rst/factory
    rst/features
-
-.. toctree::
-   :maxdepth: 1
-   :caption: Theory
-
+   rst/boolean
+   rst/geometry
+   rst/analytic
    rst/theory
 
 .. toctree::

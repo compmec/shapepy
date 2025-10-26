@@ -21,8 +21,8 @@ This library allows you to operate between **Shapes**, for example, the two shap
 
 ---------------------------------------------------
 
-Baby steps
-==========
+First steps
+===========
 
 The first step is creating shapes to then operate them.
 To create a **circle**, use the **Primitive**:
@@ -85,24 +85,11 @@ Now, we can intersect both the *left* and *right* shape, to obtain
    :alt: The intersection between the left and the right shape
    :align: center
 
-------------------------------------------------------------------------------
-
-
-
-
------------------------------------------------------------------------
-
-What I can do
-=============
-
-Here we give you some examples. The entire list can be found in the :ref:`features`.
-
-----------------
-How to visualize
-----------------
+Visualize the shapes
+====================
 
 The shapes don't show by themselves, so se can use the ``matplotlib`` to visualize them.
-We create an instance of ``PlotShape`` which is pretty similar to ``matplotlib.pyplot``:
+We create an instance of ``PlotShape`` which was designed to be similar to ``matplotlib.pyplot``:
 
 .. code-block:: python
 
@@ -126,7 +113,7 @@ Now we unite and intersect the ``left`` and ``right``:
     # Unite left and right
     union = left + right
     
-    # You can also use * for intersect
+    # Intersect left and right
     intersection = left * right
 
 We finally plot the figure
@@ -144,30 +131,37 @@ We finally plot the figure
     # Show images on screen
     plt.show()
 
-------------------
-Computing the area
-------------------
+-----------------------------------------------------------------------
 
--------------------
-Computing integrals
--------------------
+Calculating integrals
+=====================
 
+You can integrate over the a shape or a curve,
+that means you can find the area of shape,
+its center of mass or the length of a curve.
 
--------
-Meshing
--------
+TODO
+
+-----------------------------------------------------------------------
+
+Creating a mesh
+===============
 
 The optional library ``gmsh`` can be used to generate meshes from shapes.
+
+TODO
 
 -----------------------------------------------------------------------
 
 Next steps
 ==========
 
-Now you know the basics, you can attack different points independently.
+Now you know the basics, we let you explore the other points of the package.
 
-* 
-* What you can do with the shapes: :ref:`features`
-* All the basic primitives: :ref:`primitive`
-* How to create complex shapes: :ref:`advanced`
-* To know the specifics: :ref:`theory`
+* :ref:`factory`: Functions to create shapes and others
+* :ref:`features`: What you can do with the shapes
+* :ref:`boolean`: How the booleans work, operations and transformations
+* :ref:`geometry`: About the curves used under the hood
+* :ref:`analytic`: The functions base for geometry
+* :ref:`theory`: The fundations, hypothesis and algorithms used.
+
