@@ -4,9 +4,35 @@
 Boolean
 =======
 
-This section focus only on the `shapepy.bool2d` submodule.
+This section focus only on the ``shapepy.bool2d`` submodule.
 
 This submodule basically defines subsets of the plane and the boolean operations between them.
+
+* Classes
+   * :ref:`bool2d_empty`
+   * :ref:`bool2d_whole`
+   * :ref:`bool2d_point`
+   * :ref:`bool2d_curve`
+   * :ref:`bool2d_simple`
+   * :ref:`bool2d_connected`
+   * :ref:`bool2d_disjoint`
+   * :ref:`bool2d_lazynot`
+   * :ref:`bool2d_lazyand`
+   * :ref:`bool2d_lazyor`
+
+* Operations
+   * :ref:`bool2d_not`
+   * :ref:`bool2d_and`
+   * :ref:`bool2d_or`
+   * :ref:`bool2d_sub`
+   * :ref:`bool2d_xor`
+   * :ref:`bool2d_contains`
+
+* Transformations
+   * :ref:`bool2d_move`
+   * :ref:`bool2d_scale`
+   * :ref:`bool2d_rotate`
+
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -142,11 +168,11 @@ You can use the `Primitive` class that some useful functions to create `SimpleSh
    :alt: Example of a closed polygonal simple shape
    :align: center
 
-Simple shape contains its **boundary** as default.
+Simple shape contains its **boundary** by default.
 You can remove it with the parameter ``boundary``.
 
 .. code-block:: python
-   # ... same as before ...
+   
    >>> shape = SimpleShape(jordan, boundary=False)
 
 .. image:: ../img/bool2d/opensimple_example.svg
@@ -179,9 +205,6 @@ By definition, for each pair of points inside the connected shape, there is a co
    :alt: Example of a connected shape: a hollow circle
    :align: center
 
-.. warning::
-   This class normally is instantiated as result of the boolean operations. We recommend not to use it directly.
-
 -----------------------------------------------------------------------------------------------------------
 
 .. _bool2d_disjoint:
@@ -206,8 +229,61 @@ To build up a `DisjointShape`, it's required a group of connected or simple shap
    :alt: Example of a disjoint shape
    :align: center
 
-.. warning::
-   This class normally is instantiated as result of the boolean operations. We recommend not to use it directly.
+-----------------------------------------------------------------------------------------------------------
+
+.. _bool2d_lazynot:
+
+-------
+LazyNot
+-------
+
+Stores a recipe of inversion of one subset
+
+.. code-block:: python
+   
+   >>> from shapepy.bool2d import Primitive
+   >>> shape = Primitive.circle(center=(0, 0), radius=1)
+   >>> inverted = ~left
+   >>> type(inverted)
+   LazyNot
+   
+-----------------------------------------------------------------------------------------------------------
+
+.. _bool2d_lazyand:
+
+-------
+LazyAnd
+-------
+
+Stores a recipe of intersection of some elements
+
+.. code-block:: python
+   
+   >>> from shapepy import Primitive
+   >>> left = Primitive.circle(center=(-0.5, 0), radius=1)
+   >>> right = Primitive.circle(center=(0.5, 0), radius=1)
+   >>> intersection = left & right
+   >>> type(intersection)
+   LazyAnd
+
+-----------------------------------------------------------------------------------------------------------
+
+.. _bool2d_lazyor:
+
+------
+LazyOr
+------
+
+Stores a recipe of union of some elements
+
+.. code-block:: python
+   
+   >>> from shapepy import Primitive
+   >>> left = Primitive.circle(center=(-0.5, 0), radius=1)
+   >>> right = Primitive.circle(center=(0.5, 0), radius=1)
+   >>> union = left | right
+   >>> type(union)
+   LazyOr
 
 -----------------------------------------------------------------------------------------------------------
 
@@ -222,6 +298,7 @@ The operators are :
 * :ref:`bool2d_and`
 * :ref:`bool2d_sub`
 * :ref:`bool2d_xor`
+* :ref:`bool2d_contains`
 
 .. _bool2d_not:
 
@@ -385,6 +462,16 @@ You can check if a subset is inside another : ``A in B``.
 Transformations
 ===============
 
+Some transformations are used to manipulate the subsets.
+The available transformations are:
+
+* :ref:`bool2d_move`
+* :ref:`bool2d_scale`
+* :ref:`bool2d_rotate`
+
+.. note::
+   Every subset is immutable and then every transformation creates a new instance.
+   
 .. _bool2d_move:
 
 ----
@@ -427,7 +514,7 @@ Scale the entire shape in horizontal and vertical directions
    >>> # Create square of side 2
    >>> quare = Primitive.square(side = 2)
    >>> # Scales a square into a rectangle of width 2 and height 0.5
-   >>> square.scale((2, 0.5))
+   >>> square = square.scale((2, 0.5))
 
 ------------------------------------------------------------------------------------------
 
