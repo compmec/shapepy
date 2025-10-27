@@ -1,6 +1,6 @@
 import pytest
 
-from shapepy.rbool import EmptyR1, IntervalR1, SingleR1, WholeR1
+from shapepy.rbool import DisjointR1, EmptyR1, IntervalR1, SingleR1, WholeR1
 
 
 @pytest.mark.order(12)
@@ -71,7 +71,11 @@ def test_interval():
 @pytest.mark.timeout(1)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_disjoint():
-    pass
+    interval = IntervalR1(-10, 10)
+    single = SingleR1(-20)
+    disjoint = DisjointR1([single, interval])
+
+    hash(disjoint)
 
 
 @pytest.mark.order(12)
