@@ -8,7 +8,6 @@ packages = [{ include = "shapepy", from = "src" }]
 
 [tool.poetry.dependencies]
 numpy = "^1.0.0"
-rbool = "^0.0.4"
 matplotlib = "^3.4.0"
 pynurbs = "^1.0.7"
 python = "^3.9"
