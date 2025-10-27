@@ -8,7 +8,7 @@ format:
 	isort tests
 	black src
 	black tests
-	flake8 src
+	flake8 src --max-complexity 12
 	pylint src
 
 html:

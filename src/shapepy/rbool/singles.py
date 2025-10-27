@@ -8,7 +8,7 @@ from numbers import Real
 from typing import Iterable, List, Set, Tuple, Union
 
 from ..scalar.reals import Math
-from ..tools import Is, NotExpectedError, To
+from ..tools import Is, To
 from .base import EmptyR1, Future, SubSetR1
 
 
@@ -66,6 +66,29 @@ def bigger(finite: Real, closed: bool = True) -> IntervalR1:
     [10, +inf)
     """
     return IntervalR1(finite, Math.POSINF, closed, False)
+
+
+def middle_point(subset: Union[SingleR1, IntervalR1]) -> Real:
+    """Gets the middle value of the subset
+
+    Example
+    -------
+    >>> middle_point(SingleR1(1.0))
+    1.0
+    >>> middle_point(lower(1.0))
+    0.0
+    >>> middle_point(bigger(1.0))
+    2.0
+    >>> middle_point(IntervalR1(0, 1))
+    0.5
+    """
+    if isinstance(subset, SingleR1):
+        return subset.internal
+    if subset[0] == Math.NEGINF:
+        return subset[1] - 1
+    if subset[1] == Math.POSINF:
+        return subset[0] + 1
+    return (subset[0] + subset[1]) / 2
 
 
 class SingleR1(SubSetR1):
@@ -306,69 +329,26 @@ class DisjointR1(SubSetR1):
 
     # pylint: disable=too-many-branches, too-many-statements
     def __str__(self) -> str:
-        ssize = len(self.singles)
-        isize = len(self.intervals)
-        if ssize == 0:
-            return " U ".join(map(str, self.intervals))
-        if isize == 0:
-            return (
-                "{"
-                + ", ".join(str(single.internal) for single in self.singles)
-                + "}"
-            )
 
-        msgs: List[str] = []
-        first: bool = True
-        flag: bool = False
-        i, s = 0, 0
-        if self.intervals[0][0] == Math.NEGINF:
-            msgs.append(str(self.intervals[0]))
-            i += 1
-            first = False
-        while i < isize and s < ssize:
-            if self.singles[s].internal < self.intervals[i][0]:
-                if not flag:
-                    if not first:
-                        msgs.append(" U ")
-                    msgs.append("{")
-                    first = False
-                    flag = True
+        def divide_disjoint_for_print(disjoint: DisjointR1) -> Iterable[str]:
+            """Divides the DisjointR1 object into small pieces"""
+            stack: List[SingleR1] = []
+            items = list(disjoint.singles) + list(disjoint.intervals)
+            items = sorted(items, key=middle_point)
+            for item in items:
+                if not isinstance(item, IntervalR1):
+                    stack.append(item)
                 else:
-                    msgs.append(", ")
-                msgs.append(str(self.singles[s].internal))
-                s += 1
-            else:
-                if flag:
-                    msgs.append("}")
-                    flag = False
-                if not first:
-                    msgs.append(" U ")
-                first = False
-                msgs.append(str(self.intervals[i]))
-                i += 1
-        if s < ssize:
-            if not flag:
-                if not first:
-                    msgs.append(" U ")
-                msgs.append("{")
-                first = False
-                flag = True
-            else:
-                # msgs.append(", ")
-                raise NotExpectedError("Not expected get here")
-            msgs.append(str(self.singles[s].internal))
-            s += 1
-            while s < ssize:
-                msgs.append(", ")
-                msgs.append(str(self.singles[s].internal))
-                s += 1
-        if flag:
-            msgs.append("}")
-        while i < isize:
-            msgs.append(" U ")
-            msgs.append(str(self.intervals[i]))
-            i += 1
-        return "".join(msgs)
+                    if len(stack) != 0:
+                        yield "{" + ", ".join(
+                            str(s.internal) for s in stack
+                        ) + "}"
+                        stack = []
+                    yield str(item)
+            if len(stack) != 0:
+                yield "{" + ", ".join(str(s.internal) for s in stack) + "}"
+
+        return " U ".join(divide_disjoint_for_print(self))
 
     def __eq__(self, other):
         other = Future.convert(other)
