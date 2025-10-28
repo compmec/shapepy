@@ -17,7 +17,11 @@ from ..loggers import debug
 from ..tools import CyclicContainer, Is, NotExpectedError
 from . import boolalg
 from .base import EmptyShape, SubSetR2, WholeShape
+from .config import Config
+from .convert import from_any
+from .curve import SingleCurve
 from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
+from .point import SinglePoint
 from .shape import (
     ConnectedShape,
     DisjointShape,
@@ -169,6 +173,52 @@ def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
         new_jordans = tuple(~jordan for jordan in inverted.jordans)
         return shape_from_jordans(new_jordans)
     raise NotImplementedError(f"Missing typo: {type(inverted)}")
+
+
+@debug("shapepy.bool2d.boolean")
+def contains_bool2d(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
+    """
+    Checks if B is inside A
+
+    Parameters
+    ----------
+    subseta: SubSetR2
+        The subset A
+    subsetb: SubSetR2
+        The subset B
+
+    Return
+    ------
+    bool
+        The result if B is inside A
+    """
+    subseta = from_any(subseta)
+    subsetb = from_any(subsetb)
+    if Is.instance(subseta, EmptyShape) or Is.instance(subsetb, WholeShape):
+        return subseta is subsetb
+    if Is.instance(subseta, WholeShape) or Is.instance(subsetb, EmptyShape):
+        return True
+    if Is.instance(subseta, (ConnectedShape, LazyAnd)):
+        return all(subsetb in s for s in subseta)
+    if Is.instance(subsetb, (DisjointShape, LazyOr)):
+        return all(s in subseta for s in subsetb)
+    if Is.instance(subseta, LazyNot) and Is.instance(subsetb, LazyNot):
+        return contains_bool2d(~subsetb, ~subseta)
+    if Is.instance(subseta, SimpleShape):
+        if Is.instance(subsetb, (SinglePoint, SingleCurve, SimpleShape)):
+            return subsetb in subseta
+        if Is.instance(subsetb, ConnectedShape):
+            return ~subseta in ~subsetb
+        if not Config.auto_clean:
+            raise ValueError(
+                f"Needs clean to evaluate: {type(subseta)}, {type(subsetb)}"
+            )
+        return subsetb.clean() in subseta.clean()
+    if Is.instance(subseta, (LazyOr, DisjointShape)):
+        return any(subsetb in s for s in subseta)  # Needs improvement
+    raise NotImplementedError(
+        f"Invalid typos: {type(subseta)}, {type(subsetb)}"
+    )
 
 
 class Boolalg:

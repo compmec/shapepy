@@ -401,6 +401,54 @@ def test_density():
         "test_invert",
         "test_unite",
         "test_intersect",
+        "test_hash",
+        "test_xor",
+        "test_transformation_move",
+        "test_transformation_scale",
+        "test_transformation_rotate",
+        "test_printing",
+        "test_clean",
+    ]
+)
+def test_contains():
+    small = Primitive.square(side=1)
+    bigsq = Primitive.square(side=2)
+    assert small in bigsq
+    assert LazyNot(bigsq) in LazyNot(small)
+
+    inters = LazyAnd([small, bigsq])
+    assert small in inters
+    assert bigsq not in inters
+    assert inters in inters
+    assert LazyNot(bigsq) in LazyNot(inters)
+    assert (0, 0) in small
+    assert (0, 0) in bigsq
+    assert (0, 0) in inters
+    assert (1, 1) not in inters
+
+    union = LazyOr([small, bigsq])
+    assert small in union
+    assert bigsq in union
+    assert union in union
+    assert (0, 0) in small
+    assert (0, 0) in bigsq
+    assert (0, 0) in union
+    assert (1, 1) in union
+
+    left = Primitive.square(side=4, center=(-1, 0))
+    righ = Primitive.square(side=4, center=(1, 0))
+    union = LazyOr([left, righ])
+    assert left in union
+    assert righ in union
+
+
+@pytest.mark.order(33)
+@pytest.mark.dependency(
+    depends=[
+        "test_begin",
+        "test_invert",
+        "test_unite",
+        "test_intersect",
         "test_xor",
         "test_transformation_move",
         "test_transformation_scale",
@@ -409,6 +457,7 @@ def test_density():
         "test_hash",
         "test_copy",
         "test_density",
+        "test_contains",
     ]
 )
 def test_all():

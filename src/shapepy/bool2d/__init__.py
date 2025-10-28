@@ -7,6 +7,7 @@ from ..tools import Is
 from .base import Future
 from .boolean import (
     clean_bool2d,
+    contains_bool2d,
     intersect_bool2d,
     invert_bool2d,
     unite_bool2d,
@@ -21,5 +22,6 @@ Future.intersect = intersect_bool2d
 Future.clean = clean_bool2d
 Future.convert = from_any
 Future.xor = xor_bool2d
+Future.contains = contains_bool2d
 
 Is.lazy = is_lazy

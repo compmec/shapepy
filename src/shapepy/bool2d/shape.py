@@ -10,7 +10,7 @@ or even unconnected shapes.
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Set, Tuple, Union
+from typing import Iterable, Iterator, Set, Tuple, Union
 
 from ..geometry.box import Box
 from ..geometry.jordancurve import JordanCurve
@@ -19,13 +19,15 @@ from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, To
-from .base import EmptyShape, SubSetR2
+from .base import Future, SubSetR2
+from .curve import SingleCurve
 from .density import (
     Density,
     intersect_densities,
     lebesgue_density_jordan,
     unite_densities,
 )
+from .point import SinglePoint
 
 
 class SimpleShape(SubSetR2):
@@ -131,25 +133,23 @@ class SimpleShape(SubSetR2):
         self.__jordancurve.invert()
         return self
 
+    @debug("shapepy.bool2d.shape")
     def __contains__(self, other: SubSetR2) -> bool:
-        if Is.instance(other, SubSetR2):
-            if Is.instance(other, SimpleShape):
-                return self.__contains_simple(other)
-            if Is.instance(other, ConnectedShape):
-                return -self in -other
-            if Is.instance(other, DisjointShape):
-                return all(o in self for o in other.subshapes)
-            return Is.instance(other, EmptyShape)
-        if Is.instance(other, JordanCurve):
-            return self.__contains_jordan(other)
-        return self.__contains_point(other)
+        if Is.instance(other, SinglePoint):
+            return self.__contains_point(other)
+        if Is.instance(other, SingleCurve):
+            return self.__contains_curve(other)
+        if Is.instance(other, SimpleShape):
+            return self.__contains_simple(other)
+        return super().__contains__(other)
 
-    def __contains_point(self, point: Point2D) -> bool:
-        density = float(self.density(point))
+    def __contains_point(self, point: SinglePoint) -> bool:
+        point = Future.convert(point)
+        density = float(self.density(point.internal))
         return density > 0 if self.boundary else density == 1
 
-    def __contains_jordan(self, jordan: JordanCurve) -> bool:
-        piecewise = jordan.parametrize()
+    def __contains_curve(self, curve: SingleCurve) -> bool:
+        piecewise = curve.internal.parametrize()
         vertices = map(piecewise, piecewise.knots[:-1])
         if not all(map(self.__contains_point, vertices)):
             return False
@@ -256,6 +256,9 @@ class ConnectedShape(SubSetR2):
     def __hash__(self):
         return hash(self.area)
 
+    def __iter__(self) -> Iterator[SimpleShape]:
+        yield from self.subshapes
+
     @property
     def jordans(self) -> Tuple[JordanCurve, ...]:
         """Jordan curves that defines the shape
@@ -302,9 +305,6 @@ class ConnectedShape(SubSetR2):
         if not all(Is.instance(simple, SimpleShape) for simple in simples):
             raise TypeError(f"Invalid typos: {tuple(map(type, simples))}")
         self.__subshapes = simples
-
-    def __contains__(self, other) -> bool:
-        return all(other in s for s in self.subshapes)
 
     def move(self, vector: Point2D) -> JordanCurve:
         vector = To.point(vector)
@@ -371,10 +371,8 @@ class DisjointShape(SubSetR2):
         subshapes = tuple(map(copy, self.subshapes))
         return DisjointShape(subshapes)
 
-    def __contains__(self, other: SubSetR2) -> bool:
-        if Is.instance(other, DisjointShape):
-            return all(o in self for o in other.subshapes)
-        return any(other in s for s in self.subshapes)
+    def __iter__(self) -> Iterator[Union[SimpleShape, ConnectedShape]]:
+        yield from self.subshapes
 
     @property
     def area(self) -> Real:
