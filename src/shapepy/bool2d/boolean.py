@@ -208,7 +208,7 @@ def contains_bool2d(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
         if Is.instance(subsetb, (SinglePoint, SingleCurve, SimpleShape)):
             return subsetb in subseta
         if Is.instance(subsetb, ConnectedShape):
-            return ~subseta in ~subsetb
+            return (~subseta).clean() in (~subsetb).clean()
         if not Config.auto_clean:
             raise ValueError(
                 f"Needs clean to evaluate: {type(subseta)}, {type(subsetb)}"
