@@ -18,7 +18,7 @@ from shapepy.bool2d.primitive import Primitive
         "tests/bool2d/test_shape.py::test_end",
         "tests/bool2d/test_lazy.py::test_all",
         "tests/bool2d/test_bool_no_intersect.py::test_end",
-        "tests/bool2d/test_bool_finite_intersect.py::test_end",
+        "tests/bool2d/test_bool_no_overlap.py::test_end",
     ],
     scope="session",
 )

@@ -7,16 +7,36 @@ from __future__ import annotations
 
 from collections import OrderedDict
 from contextlib import contextmanager
-from typing import Dict, Iterable, Iterator, Set, Tuple
+from typing import Iterable, Iterator, Set, Tuple, Union
 
 from ..geometry.base import IParametrizedCurve
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.point import Point2D
 from ..loggers import debug, get_logger
 from ..scalar.reals import Real
-from ..tools import Is
+from ..tools import Is, NotExpectedError
 
 GAP = "    "
+
+
+def get_label(
+    item: Union[IParametrizedCurve, SingleNode, Node, SinglePath],
+) -> str:
+    """Gives the label of the item, for printing purpose"""
+    if type(item) in all_containers:
+        container = all_containers[type(item)].values()
+    else:
+        container = all_containers[IParametrizedCurve].values()
+    index = [i for i, t in enumerate(container) if t == item][0]
+    if Is.instance(item, IParametrizedCurve):
+        return "C" + str(index)
+    if Is.instance(item, SingleNode):
+        return "S" + str(index)
+    if Is.instance(item, Node):
+        return "N" + str(index)
+    if Is.instance(item, SinglePath):
+        return "P" + str(index)
+    raise NotExpectedError
 
 
 def get_single_node(curve: IParametrizedCurve, parameter: Real) -> SingleNode:
@@ -29,12 +49,61 @@ def get_single_node(curve: IParametrizedCurve, parameter: Real) -> SingleNode:
         raise TypeError(f"Invalid curve: {type(curve)}")
     if not Is.real(parameter):
         raise TypeError(f"Invalid type: {type(parameter)}")
+    if id(curve) not in all_containers[IParametrizedCurve]:
+        all_containers[IParametrizedCurve][id(curve)] = curve
     hashval = (id(curve), parameter)
-    if hashval in Containers.single_nodes:
-        return Containers.single_nodes[hashval]
+    if hashval in all_containers[SingleNode]:
+        return all_containers[SingleNode][hashval]
     instance = SingleNode(curve, parameter)
-    Containers.single_nodes[hashval] = instance
+    all_containers[SingleNode][hashval] = instance
     return instance
+
+
+def get_node(singles: Iterable[SingleNode]) -> Node:
+    """Instantiate a new Node, made by a list of SingleNode
+
+    It's required that all the points are equal.
+
+    Returns the previously created instance if it was already created"""
+    singles: Tuple[SingleNode, ...] = tuple(singles)
+    if len(singles) == 0:
+        raise ValueError
+    point = singles[0].point
+    if any(s.point != point for s in singles):
+        raise ValueError("Points are not coincident")
+    container = all_containers[Node]
+    if point in all_containers[Node]:
+        instance = container[point]
+    else:
+        instance = Node(point)
+        container[point] = instance
+    for single in singles:
+        instance.add(single)
+    return instance
+
+
+def get_single_path(
+    curve: IParametrizedCurve, knota: Real, knotb: Real
+) -> SinglePath:
+    """Instantiate a new SinglePath, with the given triplet.
+
+    It checks if the SinglePath with given triplet (curve, knota, knotb)
+    was already created. If that's the case, returns the previous instance.
+    Otherwise, creates a new instance."""
+
+    if not Is.instance(curve, IParametrizedCurve):
+        raise TypeError(f"Invalid curve: {type(curve)}")
+    if not Is.real(knota):
+        raise TypeError(f"Invalid type: {type(knota)}")
+    if not Is.real(knotb):
+        raise TypeError(f"Invalid type: {type(knotb)}")
+    if not knota < knotb:
+        raise ValueError(str((knota, knotb)))
+    hashval = (id(curve), knota, knotb)
+    container = all_containers[SinglePath]
+    if hashval not in container:
+        container[hashval] = SinglePath(curve, knota, knotb)
+    return container[hashval]
 
 
 class SingleNode:
@@ -48,19 +117,12 @@ class SingleNode:
     """
 
     def __init__(self, curve: IParametrizedCurve, parameter: Real):
-        if id(curve) not in Containers.curves:
-            Containers.curves[id(curve)] = curve
         self.__curve = curve
         self.__parameter = parameter
         self.__point = curve(parameter)
-        self.__label = len(Containers.single_nodes)
 
     def __str__(self):
-        index = Containers.index_curve(self.curve)
-        return f"C{index} at {self.parameter}"
-
-    def __repr__(self):
-        return str(self.__point)
+        return f"{get_label(self.curve)} at {self.parameter}"
 
     def __eq__(self, other):
         return (
@@ -71,11 +133,6 @@ class SingleNode:
 
     def __hash__(self):
         return hash((id(self.curve), self.parameter))
-
-    @property
-    def label(self):
-        """Gives the label the SingleNode. Only for Debug purpose"""
-        return self.__label
 
     @property
     def curve(self) -> IParametrizedCurve:
@@ -93,29 +150,6 @@ class SingleNode:
         return self.__point
 
 
-def get_node(singles: Iterable[SingleNode]) -> Node:
-    """Instantiate a new Node, made by a list of SingleNode
-
-    It's required that all the points are equal.
-
-    Returns the previously created instance if it was already created"""
-    singles: Tuple[SingleNode, ...] = tuple(singles)
-    if len(singles) == 0:
-        raise ValueError
-    point = singles[0].point
-    for si in singles[1:]:
-        if si.point != point:
-            raise ValueError
-    if point in Containers.nodes:
-        instance = Containers.nodes[point]
-    else:
-        instance = Node(point)
-        Containers.nodes[point] = instance
-    for single in singles:
-        instance.add(single)
-    return instance
-
-
 class Node:
     """
     Defines a node, which is equivalent to a geometric point (x, y)
@@ -131,12 +165,6 @@ class Node:
     def __init__(self, point: Point2D):
         self.__singles = set()
         self.__point = point
-        self.__label = len(Node.instances)
-
-    @property
-    def label(self):
-        """Gives the label the Node. Only for Debug purpose"""
-        return self.__label
 
     @property
     def singles(self) -> Set[SingleNode]:
@@ -163,83 +191,44 @@ class Node:
         return hash(self.point)
 
     def __str__(self):
-        msgs = [f"N{self.label}: {self.point}:"]
+        msgs = [f"{get_label(self)}: {self.point}:"]
         for single in self.singles:
             msgs += [f"{GAP}{s}" for s in str(single).split("\n")]
         return "\n".join(msgs)
 
     def __repr__(self):
-        return f"N{self.label}:{self.point}"
+        return f"{get_label(self)}:{self.point}"
 
 
 class GroupNodes(Iterable[Node]):
     """Class that stores a group of Node."""
 
-    def __init__(self, nodes: Iterable[Node] = None):
+    def __init__(self):
         self.__nodes: Set[Node] = set()
-        if nodes is not None:
-            self |= nodes
 
     def __iter__(self) -> Iterator[Node]:
         yield from self.__nodes
 
-    def __len__(self) -> int:
-        return len(self.__nodes)
-
     def __str__(self):
-        dictnodes = {n.label: n for n in self}
+        dictnodes = {get_label(n): n for n in self}
         keys = sorted(dictnodes.keys())
         return "\n".join(str(dictnodes[key]) for key in keys)
-
-    def __repr__(self):
-        return "(" + ", ".join(map(repr, self)) + ")"
 
     def __ior__(self, other: Iterable[Node]) -> GroupNodes:
         for onode in other:
             if not Is.instance(onode, Node):
                 raise TypeError(str(type(onode)))
-            self.add_node(onode)
+            self.add(onode)
         return self
 
-    def add_node(self, node: Node) -> Node:
+    def add(self, item: Union[SingleNode, Node]) -> Node:
         """Add a Node into the group of nodes.
 
         If it's already included, only skips the insertion"""
-        if not Is.instance(node, Node):
-            raise TypeError(str(type(node)))
-        self.__nodes.add(node)
-        return node
-
-    def add_single(self, single: SingleNode) -> Node:
-        """Add a single Node into the group of nodes.
-
-        If it's already included, only skips the insertion"""
-        if not Is.instance(single, SingleNode):
-            raise TypeError(str(type(single)))
-        return self.add_node(get_node({single}))
-
-
-def single_path(
-    curve: IParametrizedCurve, knota: Real, knotb: Real
-) -> SinglePath:
-    """Instantiate a new SinglePath, with the given triplet.
-
-    It checks if the SinglePath with given triplet (curve, knota, knotb)
-    was already created. If that's the case, returns the previous instance.
-    Otherwise, creates a new instance."""
-
-    if not Is.instance(curve, IParametrizedCurve):
-        raise TypeError(f"Invalid curve: {type(curve)}")
-    if not Is.real(knota):
-        raise TypeError(f"Invalid type: {type(knota)}")
-    if not Is.real(knotb):
-        raise TypeError(f"Invalid type: {type(knotb)}")
-    if not knota < knotb:
-        raise ValueError(str((knota, knotb)))
-    hashval = (id(curve), knota, knotb)
-    if hashval not in Containers.single_paths:
-        return SinglePath(curve, knota, knotb)
-    return Containers.single_paths[hashval]
+        if Is.instance(item, SingleNode):
+            item = get_node({item})
+        self.__nodes.add(item)
+        return item
 
 
 class SinglePath:
@@ -258,8 +247,6 @@ class SinglePath:
         self.__singlea = get_single_node(curve, knota)
         self.__singlem = get_single_node(curve, knotm)
         self.__singleb = get_single_node(curve, knotb)
-        self.__label = len(Containers.single_paths)
-        Containers.single_paths[(id(curve), knota, knotb)] = self
 
     def __eq__(self, other):
         return (
@@ -272,11 +259,6 @@ class SinglePath:
 
     def __hash__(self):
         return hash((id(self.curve), self.knota, self.knotb))
-
-    @property
-    def label(self):
-        """Gives the label the SinglePath. Only for Debug purpose"""
-        return self.__label
 
     @property
     def curve(self) -> IParametrizedCurve:
@@ -329,14 +311,9 @@ class SinglePath:
         return self.singleb.point
 
     def __str__(self):
-        index = Containers.index_curve(self.curve)
-        return (
-            f"C{index} ({self.singlea.parameter} -> {self.singleb.parameter})"
-        )
-
-    def __repr__(self):
-        index = Containers.index_curve(self.curve)
-        return f"C{index}({self.singlea.parameter}->{self.singleb.parameter})"
+        knota = self.singlea.parameter
+        knotb = self.singleb.parameter
+        return f"{get_label(self.curve)} ({knota} -> {knotb})"
 
     def __and__(self, other: SinglePath) -> GeometricIntersectionCurves:
         if not Is.instance(other, SinglePath):
@@ -344,21 +321,6 @@ class SinglePath:
         if id(self.curve) == id(other.curve):
             raise ValueError
         return self.curve & other.curve
-
-
-class Containers:
-
-    single_nodes: Dict[Tuple[int, Real], SingleNode] = OrderedDict()
-    nodes: Dict[Point2D, Node] = OrderedDict()
-    single_paths: Dict[Tuple[int, Real], SinglePath] = OrderedDict()
-    curves: Dict[int, IParametrizedCurve] = OrderedDict()
-
-    @staticmethod
-    def index_curve(curve: IParametrizedCurve) -> int:
-        for i, key in enumerate(Containers.curves):
-            if id(curve) == key:
-                return i
-        raise ValueError("Could not find requested curve")
 
 
 class Edge:
@@ -428,11 +390,6 @@ class Edge:
         """Adds a SinglePath to the Edge"""
         self.__singles.add(path)
 
-    def __contains__(self, path: SinglePath) -> bool:
-        if not Is.instance(path, SinglePath):
-            raise TypeError
-        return path in self.singles
-
     def __hash__(self):
         return hash((hash(self.nodea), hash(self.nodem), hash(self.nodeb)))
 
@@ -450,18 +407,9 @@ class Edge:
         for curve in inters.curves:
             knots = sorted(inters.all_knots[id(curve)])
             for knota, knotb in zip(knots, knots[1:]):
-                path = single_path(curve, knota, knotb)
-                graph.add_path(path)
+                path = get_single_path(curve, knota, knotb)
+                graph.add_edge(path)
         return graph
-
-    def __ior__(self, other: Edge) -> Edge:
-        assert Is.instance(other, Edge)
-        assert self.nodea.point == other.nodea.point
-        assert self.nodeb.point == other.nodeb.point
-        self.__nodea |= other.nodea
-        self.__nodeb |= other.nodeb
-        self.__singles = tuple(set(other.singles))
-        return self
 
     def __str__(self):
         msgs = [repr(self)]
@@ -470,7 +418,7 @@ class Edge:
         return "\n".join(msgs)
 
     def __repr__(self):
-        return f"N{self.nodea.label}->N{self.nodeb.label}"
+        return f"{get_label(self.nodea)}->{get_label(self.nodeb)}"
 
 
 class GroupEdges(Iterable[Edge]):
@@ -493,9 +441,6 @@ class GroupEdges(Iterable[Edge]):
     def __str__(self):
         return "\n".join(f"E{i}: {edge}" for i, edge in enumerate(self))
 
-    def __repr__(self):
-        return str(self)
-
     def __ior__(self, other: Iterable[Edge]):
         for oedge in other:
             assert Is.instance(oedge, Edge)
@@ -512,17 +457,16 @@ class GroupEdges(Iterable[Edge]):
         assert Is.instance(edge, Edge)
         self.__edges.remove(edge)
 
-    def add_edge(self, edge: Edge) -> Edge:
+    def add(self, item: Union[SinglePath, Edge]) -> Edge:
         """Inserts an edge into the group"""
-        self.__edges.add(edge)
-
-    def add_path(self, path: SinglePath) -> Edge:
-        """Inserts a single path into the group"""
-        for edge in self:
-            if edge.pointa == path.pointa and edge.pointb == path.pointb:
-                edge.add(path)
-                return edge
-        return self.add_edge(Edge({path}))
+        if Is.instance(item, SinglePath):
+            for edge in self:
+                if edge.pointa == item.pointa and edge.pointb == item.pointb:
+                    edge.add(item)
+                    return edge
+            item = Edge({item})
+        self.__edges.add(item)
+        return item
 
 
 class Graph:
@@ -576,7 +520,7 @@ class Graph:
             raise TypeError(f"Wrong type: {type(other)}")
         for edge in other.edges:
             for path in edge.singles:
-                self.add_path(path)
+                self.add_edge(path)
         return self
 
     def __str__(self):
@@ -585,12 +529,11 @@ class Graph:
         used_curves = {}
         for node in nodes:
             for single in node.singles:
-                index = Containers.index_curve(single.curve)
-                used_curves[index] = single.curve
+                used_curves[get_label(single.curve)] = single.curve
         msgs = ["\n" + "-" * 90, repr(self), "Curves:"]
-        for index in sorted(used_curves.keys()):
-            curve = used_curves[index]
-            msgs.append(f"{GAP}C{index}: knots = {curve.knots}")
+        for label in sorted(used_curves.keys()):
+            curve = used_curves[label]
+            msgs.append(f"{GAP}{label}: knots = {curve.knots}")
             msgs.append(2 * GAP + str(curve))
         msgs += ["Nodes:"]
         msgs += [GAP + s for s in str(nodes).split("\n")]
@@ -605,15 +548,15 @@ class Graph:
 
     def add_edge(self, edge: Edge) -> Edge:
         """Adds an edge into the graph"""
-        if not Is.instance(edge, Edge):
-            raise TypeError
-        return self.edges.add_edge(edge)
+        return self.edges.add(edge)
 
-    def add_path(self, path: SinglePath) -> Edge:
-        """Adds a single path into the graph, creating an edge"""
-        if not Is.instance(path, SinglePath):
-            raise TypeError
-        return self.edges.add_path(path)
+
+all_containers = {
+    SingleNode: OrderedDict(),
+    Node: OrderedDict(),
+    SinglePath: OrderedDict(),
+    IParametrizedCurve: OrderedDict(),
+}
 
 
 @debug("shapepy.bool2d.graph")
@@ -645,10 +588,8 @@ def graph_manager():
         yield
     finally:
         Graph.can_create = False
-        Containers.single_nodes.clear()
-        Containers.nodes.clear()
-        Containers.single_paths.clear()
-        Containers.curves.clear()
+        for container in all_containers.values():
+            container.clear()
 
 
 def curve2graph(curve: IParametrizedCurve) -> Graph:

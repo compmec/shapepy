@@ -340,6 +340,7 @@ def shape_from_jordans(jordans: Tuple[JordanCurve]) -> SubSetR2:
         return connecteds[0]
     return DisjointShape(connecteds)
 
+
 class GraphComputer:
     """Contains static methods to use Graph to compute boolean operations"""
 
