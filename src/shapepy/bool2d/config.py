@@ -9,24 +9,25 @@ class Config:
 
     clean = {
         "add": True,
-        "or": True,
+        "or": False,
         "xor": True,
-        "and": True,
+        "and": False,
         "sub": True,
         "mul": True,
         "neg": True,
-        "inv": True,
+        "inv": False,
     }
 
     auto_clean = True
 
 
 @contextmanager
-def disable_auto_clean():
-    """Function that disables temporarily the auto clean"""
+def set_auto_clean(value: bool):
+    """Function that enables/disables temporarily the auto clean"""
+    value = bool(value)
     old = Config.clean.copy()
     for key in Config.clean:
-        Config.clean[key] = False
+        Config.clean[key] = value
     try:
         yield
     finally:

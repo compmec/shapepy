@@ -193,8 +193,7 @@ class LazyOr(SubSetR2):
         return self
 
     def density(self, center):
-        densities = (sub.density(center) for sub in self)
-        return unite_densities(tuple(densities))
+        return unite_densities(sub.density(center) for sub in self)
 
 
 class LazyAnd(SubSetR2):
@@ -251,8 +250,7 @@ class LazyAnd(SubSetR2):
         return self
 
     def density(self, center):
-        densities = (sub.density(center) for sub in self)
-        return intersect_densities(tuple(densities))
+        return intersect_densities(sub.density(center) for sub in self)
 
 
 def is_lazy(subset: SubSetR2) -> bool:
