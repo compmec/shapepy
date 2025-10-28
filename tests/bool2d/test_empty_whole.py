@@ -271,15 +271,15 @@ class TestBoolShape:
 
         # XOR
         assert shape ^ empty == shape
-        assert shape ^ whole == ~shape
+        assert shape ^ whole == -shape
         assert empty ^ shape == shape
-        assert whole ^ shape == ~shape
+        assert whole ^ shape == -shape
 
         # SUB
         assert shape - empty == shape
         assert shape - whole is empty
         assert empty - shape is empty
-        assert whole - shape == ~shape
+        assert whole - shape == -shape
 
     @pytest.mark.order(21)
     @pytest.mark.timeout(40)
@@ -307,15 +307,15 @@ class TestBoolShape:
 
         # XOR
         assert shape ^ empty == shape
-        assert shape ^ whole == ~shape
+        assert shape ^ whole == -shape
         assert empty ^ shape == shape
-        assert whole ^ shape == ~shape
+        assert whole ^ shape == -shape
 
         # SUB
         assert shape - empty == shape
         assert shape - whole is empty
         assert empty - shape is empty
-        assert whole - shape == ~shape
+        assert whole - shape == -shape
 
     @pytest.mark.order(21)
     @pytest.mark.timeout(40)

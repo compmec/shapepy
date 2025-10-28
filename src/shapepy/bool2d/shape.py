@@ -446,7 +446,7 @@ class DisjointShape(SubSetR2):
         if not all(
             Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
         ):
-            raise ValueError
+            raise ValueError(f"Invalid typos: {tuple(map(type, values))}")
         self.__subshapes = values
 
     def move(self, vector: Point2D) -> JordanCurve:
@@ -492,64 +492,3 @@ class DisjointShape(SubSetR2):
         center = To.point(center)
         densities = (sub.density(center) for sub in self.subshapes)
         return unite_densities(densities)
-
-
-def divide_connecteds(
-    simples: Tuple[SimpleShape],
-) -> Tuple[Union[SimpleShape, ConnectedShape]]:
-    """
-    Divides the simples in groups of connected shapes
-
-    The idea is get the simple shape with maximum abs area,
-    this is the biggest shape of all we start from it.
-
-    We them separate all shapes in inside and outside
-    """
-    if len(simples) == 0:
-        return tuple()
-    externals = []
-    connected = []
-    simples = list(simples)
-    while len(simples) != 0:
-        areas = (s.area for s in simples)
-        absareas = tuple(map(abs, areas))
-        index = absareas.index(max(absareas))
-        connected.append(simples.pop(index))
-        internal = []
-        while len(simples) != 0:  # Divide in two groups
-            simple = simples.pop(0)
-            jordan = simple.jordan
-            for subsimple in connected:
-                subjordan = subsimple.jordan
-                if jordan not in subsimple or subjordan not in simple:
-                    externals.append(simple)
-                    break
-            else:
-                internal.append(simple)
-        simples = internal
-    if len(connected) == 1:
-        connected = connected[0]
-    else:
-        connected = ConnectedShape(connected)
-    return (connected,) + divide_connecteds(externals)
-
-
-def shape_from_jordans(jordans: Tuple[JordanCurve]) -> SubSetR2:
-    """Returns the correspondent shape
-
-    This function don't do entry validation
-    as verify if one shape is inside other
-
-    Example
-    ----------
-    >>> shape_from_jordans([])
-    EmptyShape
-    """
-    assert len(jordans) != 0
-    simples = tuple(map(SimpleShape, jordans))
-    if len(simples) == 1:
-        return simples[0]
-    connecteds = divide_connecteds(simples)
-    if len(connecteds) == 1:
-        return connecteds[0]
-    return DisjointShape(connecteds)

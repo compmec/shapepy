@@ -5,7 +5,7 @@ This module tests when two shapes have common edges/segments
 import pytest
 
 from shapepy.bool2d.base import EmptyShape, WholeShape
-from shapepy.bool2d.config import disable_auto_clean
+from shapepy.bool2d.config import set_auto_clean
 from shapepy.bool2d.primitive import Primitive
 
 
@@ -150,7 +150,7 @@ class TestEqualSquare:
         assert square.area > 0
         assert square - square is EmptyShape()
         assert square - (~square) == square
-        assert (~square) - square == ~square
+        assert (~square) - square == -square
         assert (~square) - (~square) is EmptyShape()
 
     @pytest.mark.order(43)
@@ -246,7 +246,7 @@ class TestEqualHollowSquare:
         assert square.area > 0
         assert square - square is EmptyShape()
         assert square - (~square) == square
-        assert (~square) - square == ~square
+        assert (~square) - square == -square
         assert (~square) - (~square) is EmptyShape()
 
     @pytest.mark.order(43)
@@ -301,11 +301,10 @@ class TestTriangle:
         vertices1 = [(0, 0), (0, 1), (-1, 0)]
         triangle0 = Primitive.polygon(vertices0)
         triangle1 = Primitive.polygon(vertices1)
-        test = triangle0 | triangle1
 
         vertices = [(1, 0), (0, 1), (-1, 0)]
         good = Primitive.polygon(vertices)
-        assert test == good
+        assert triangle0 + triangle1 == good
 
     @pytest.mark.order(43)
     @pytest.mark.timeout(40)
@@ -320,11 +319,10 @@ class TestTriangle:
         vertices1 = [(0, 0), (1, 0), (0, 1)]
         triangle0 = Primitive.polygon(vertices0)
         triangle1 = Primitive.polygon(vertices1)
-        test = triangle0 & triangle1
 
         vertices = [(0, 0), (1, 0), (0, 1)]
         good = Primitive.polygon(vertices)
-        assert test == good
+        assert triangle0 * triangle1 == good
 
     @pytest.mark.order(43)
     @pytest.mark.skip(reason="Fails due to float precision on py3.11")
@@ -385,7 +383,7 @@ class TestDisabledClean:
         small = Primitive.square(side=1, center=(0, 0))
         left = Primitive.circle(radius=3, center=(-10, 0))
         right = Primitive.circle(radius=3, center=(10, 0))
-        with disable_auto_clean():
+        with set_auto_clean(False):
             shape = big - small | left ^ right
             assert shape | shape == shape
             assert shape | (~shape) is WholeShape()
@@ -405,7 +403,7 @@ class TestDisabledClean:
         small = Primitive.square(side=1, center=(0, 0))
         left = Primitive.circle(radius=3, center=(-10, 0))
         right = Primitive.circle(radius=3, center=(10, 0))
-        with disable_auto_clean():
+        with set_auto_clean(False):
             shape = big - small | left ^ right
             assert shape & shape == shape
             assert shape & (~shape) is EmptyShape()
@@ -425,7 +423,7 @@ class TestDisabledClean:
         small = Primitive.square(side=1, center=(0, 0))
         left = Primitive.circle(radius=3, center=(-10, 0))
         right = Primitive.circle(radius=3, center=(10, 0))
-        with disable_auto_clean():
+        with set_auto_clean(False):
             shape = big - small | left ^ right
             assert shape - shape is EmptyShape()
             assert shape - (~shape) == shape
@@ -447,7 +445,7 @@ class TestDisabledClean:
         small = Primitive.square(side=1, center=(0, 0))
         left = Primitive.circle(radius=3, center=(-10, 0))
         right = Primitive.circle(radius=3, center=(10, 0))
-        with disable_auto_clean():
+        with set_auto_clean(False):
             shape = big - small | left ^ right
             assert shape ^ shape is EmptyShape()
             assert shape ^ (~shape) is WholeShape()

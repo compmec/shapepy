@@ -149,6 +149,7 @@ class ShapePloter:
         Plots a SubSetR2, which can be EmptyShape, WholeShape, Simple, etc
         """
         assert Is.instance(shape, SubSetR2)
+        shape = shape.clean()
         if Is.instance(shape, EmptyShape):
             return
         if Is.instance(shape, WholeShape):

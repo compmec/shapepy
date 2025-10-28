@@ -15,9 +15,8 @@ from ..geometry.unparam import USegment
 from ..loggers import debug, get_logger
 from ..tools import CyclicContainer, Is, NotExpectedError
 from . import boolalg
-from .base import EmptyShape, SubSetR2, WholeShape
+from .base import EmptyShape, Future, SubSetR2, WholeShape
 from .config import Config
-from .convert import from_any
 from .curve import SingleCurve
 from .graph import (
     Edge,
@@ -29,12 +28,7 @@ from .graph import (
 )
 from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
 from .point import SinglePoint
-from .shape import (
-    ConnectedShape,
-    DisjointShape,
-    SimpleShape,
-    shape_from_jordans,
-)
+from .shape import ConnectedShape, DisjointShape, SimpleShape
 
 
 @debug("shapepy.bool2d.boolean")
@@ -161,10 +155,9 @@ def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
     if Is.instance(inverted, SimpleShape):
         return SimpleShape(~inverted.jordan, True)
     if Is.instance(inverted, ConnectedShape):
-        return DisjointShape(~simple for simple in inverted.subshapes)
+        return DisjointShape((~s).clean() for s in inverted.subshapes)
     if Is.instance(inverted, DisjointShape):
-        new_jordans = tuple(~jordan for jordan in inverted.jordans)
-        return shape_from_jordans(new_jordans)
+        return shape_from_jordans(~jordan for jordan in inverted.jordans)
     raise NotImplementedError(f"Missing typo: {type(inverted)}")
 
 
@@ -185,8 +178,8 @@ def contains_bool2d(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     bool
         The result if B is inside A
     """
-    subseta = from_any(subseta)
-    subsetb = from_any(subsetb)
+    subseta = Future.convert(subseta)
+    subsetb = Future.convert(subsetb)
     if Is.instance(subseta, EmptyShape) or Is.instance(subsetb, WholeShape):
         return subseta is subsetb
     if Is.instance(subseta, WholeShape) or Is.instance(subsetb, EmptyShape):
@@ -201,7 +194,7 @@ def contains_bool2d(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
         if Is.instance(subsetb, (SinglePoint, SingleCurve, SimpleShape)):
             return subsetb in subseta
         if Is.instance(subsetb, ConnectedShape):
-            return ~subseta in ~subsetb
+            return (~subseta).clean() in (~subsetb).clean()
         if not Config.auto_clean:
             raise ValueError(
                 f"Needs clean to evaluate: {type(subseta)}, {type(subsetb)}"
@@ -286,6 +279,66 @@ class Boolalg:
             return RecipeLazy.intersect(subsets)
         raise NotExpectedError(f"Invalid expression: {expression}")
 
+
+def divide_connecteds(
+    simples: Tuple[SimpleShape],
+) -> Tuple[Union[SimpleShape, ConnectedShape]]:
+    """
+    Divides the simples in groups of connected shapes
+
+    The idea is get the simple shape with maximum abs area,
+    this is the biggest shape of all we start from it.
+
+    We them separate all shapes in inside and outside
+    """
+    if len(simples) == 0:
+        return tuple()
+    externals = []
+    connected = []
+    simples = list(simples)
+    while len(simples) != 0:
+        areas = (s.area for s in simples)
+        absareas = tuple(map(abs, areas))
+        index = absareas.index(max(absareas))
+        connected.append(simples.pop(index))
+        internal = []
+        while len(simples) != 0:  # Divide in two groups
+            simple = simples.pop(0)
+            jordan = simple.jordan
+            for subsimple in connected:
+                subjordan = subsimple.jordan
+                if jordan not in subsimple or subjordan not in simple:
+                    externals.append(simple)
+                    break
+            else:
+                internal.append(simple)
+        simples = internal
+    if len(connected) == 1:
+        connected = connected[0]
+    else:
+        connected = ConnectedShape(connected)
+    return (connected,) + divide_connecteds(externals)
+
+
+def shape_from_jordans(jordans: Tuple[JordanCurve]) -> SubSetR2:
+    """Returns the correspondent shape
+
+    This function don't do entry validation
+    as verify if one shape is inside other
+
+    Example
+    ----------
+    >>> shape_from_jordans([])
+    EmptyShape
+    """
+    assert len(jordans) != 0
+    simples = tuple(map(SimpleShape, jordans))
+    if len(simples) == 1:
+        return simples[0]
+    connecteds = divide_connecteds(simples)
+    if len(connecteds) == 1:
+        return connecteds[0]
+    return DisjointShape(connecteds)
 
 class GraphComputer:
     """Contains static methods to use Graph to compute boolean operations"""
