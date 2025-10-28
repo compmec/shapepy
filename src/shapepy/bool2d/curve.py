@@ -5,7 +5,6 @@ that contains a continous set of points on the plane
 
 from __future__ import annotations
 
-from copy import copy
 from typing import Tuple, Union
 
 from ..geometry.base import IGeometricCurve
@@ -37,9 +36,6 @@ class SingleCurve(SubSetR2):
     def __copy__(self) -> SingleCurve:
         return SingleCurve(self.internal)
 
-    def __deepcopy__(self, memo) -> SingleCurve:
-        return SingleCurve(copy(self.__curve))
-
     def __str__(self) -> str:  # pragma: no cover  # For debug
         return "{" + str(self.__curve) + "}"
 
@@ -59,21 +55,18 @@ class SingleCurve(SubSetR2):
             Is.instance(other, SingleCurve) and self.internal == other.internal
         )
 
-    @debug("shapepy.bool2d.shape")
+    @debug("shapepy.bool2d.curve")
     def __hash__(self):
         return hash(self.internal.length)
 
     def move(self, vector: Point2D) -> SingleCurve:
-        self.__curve = self.__curve.move(vector)
-        return self
+        return SingleCurve(self.__curve.move(vector))
 
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> SingleCurve:
-        self.__curve = self.__curve.scale(amount)
-        return self
+        return SingleCurve(self.__curve.scale(amount))
 
     def rotate(self, angle: Angle) -> SingleCurve:
-        self.__curve = self.__curve.rotate(angle)
-        return self
+        return SingleCurve(self.__curve.rotate(angle))
 
     def density(self, center: Point2D) -> Density:
         return Density.zero

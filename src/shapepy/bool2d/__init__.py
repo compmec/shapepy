@@ -14,7 +14,6 @@ from .boolean import (
     xor_bool2d,
 )
 from .convert import from_any
-from .lazy import is_lazy
 
 Future.invert = invert_bool2d
 Future.unite = unite_bool2d
@@ -23,5 +22,3 @@ Future.clean = clean_bool2d
 Future.convert = from_any
 Future.xor = xor_bool2d
 Future.contains = contains_bool2d
-
-Is.lazy = is_lazy

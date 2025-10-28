@@ -5,7 +5,6 @@ that contains only one point on the plane
 
 from __future__ import annotations
 
-from copy import copy
 from typing import Tuple, Union
 
 from ..geometry.point import Point2D
@@ -20,11 +19,6 @@ from .density import Density
 class SinglePoint(SubSetR2):
     """
     SinglePoint class
-
-    Is a shape which is defined by only one jordan curve.
-    It represents the interior/exterior region of the jordan curve
-    if the jordan curve is counter-clockwise/clockwise
-
     """
 
     def __init__(self, point: Point2D):
@@ -40,9 +34,6 @@ class SinglePoint(SubSetR2):
 
     def __copy__(self) -> SinglePoint:
         return SinglePoint(self.internal)
-
-    def __deepcopy__(self, memo) -> SinglePoint:
-        return SinglePoint(copy(self.__point))
 
     def __str__(self) -> str:  # pragma: no cover  # For debug
         return "{" + str(self.__point) + "}"
@@ -68,16 +59,13 @@ class SinglePoint(SubSetR2):
         return hash((self.internal.xcoord, self.internal.ycoord))
 
     def move(self, vector: Point2D) -> SinglePoint:
-        self.__point = self.__point.move(vector)
-        return self
+        return SinglePoint(self.__point.move(vector))
 
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> SinglePoint:
-        self.__point = self.__point.scale(amount)
-        return self
+        return SinglePoint(self.__point.scale(amount))
 
     def rotate(self, angle: Angle) -> SinglePoint:
-        self.__point = self.__point.rotate(angle)
-        return self
+        return SinglePoint(self.__point.rotate(angle))
 
     def density(self, center: Point2D) -> Density:
         return Density.zero

@@ -3,40 +3,29 @@
 from __future__ import annotations
 
 from collections import Counter
-from copy import deepcopy
-from typing import Iterable, Iterator, Type
+from typing import Iterable, Iterator
 
 from ..loggers import debug
 from ..tools import Is
-from .base import EmptyShape, SubSetR2, WholeShape
-from .density import intersect_densities, unite_densities
+from .base import EmptyShape, Future, SubSetR2, WholeShape
+from .density import intersect_densities
 
 
 class RecipeLazy:
     """Contains static methods that gives lazy recipes"""
 
     @staticmethod
-    def flatten(subsets: Iterable[SubSetR2], typo: Type) -> Iterator[SubSetR2]:
-        """Flattens the subsets"""
-        for subset in subsets:
-            if Is.instance(subset, typo):
-                yield from subset
-            else:
-                yield subset
-
-    @staticmethod
     @debug("shapepy.bool2d.lazy")
     def invert(subset: SubSetR2) -> SubSetR2:
         """Gives the complementar of the given subset"""
-        if Is.instance(subset, (EmptyShape, WholeShape, LazyNot)):
+        if Is.instance(subset, (EmptyShape, WholeShape)):
             return -subset
-        return LazyNot(subset)
+        return LazyNand({subset})
 
     @staticmethod
     @debug("shapepy.bool2d.lazy")
     def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """Gives the recipe for the intersection of given subsets"""
-        subsets = RecipeLazy.flatten(subsets, LazyAnd)
         subsets = frozenset(
             s for s in subsets if not Is.instance(s, WholeShape)
         )
@@ -46,13 +35,12 @@ class RecipeLazy:
             return EmptyShape()
         if len(subsets) == 1:
             return tuple(subsets)[0]
-        return LazyAnd(subsets)
+        return LazyNand({LazyNand(subsets)})
 
     @staticmethod
     @debug("shapepy.bool2d.contain")
     def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """Gives the recipe for the union of given subsets"""
-        subsets = RecipeLazy.flatten(subsets, LazyOr)
         subsets = frozenset(
             s for s in subsets if not Is.instance(s, EmptyShape)
         )
@@ -62,7 +50,7 @@ class RecipeLazy:
             return WholeShape()
         if len(subsets) == 1:
             return tuple(subsets)[0]
-        return LazyOr(subsets)
+        return LazyNand(map(LazyNand, subsets))
 
     @staticmethod
     @debug("shapepy.bool2d.contain")
@@ -84,95 +72,38 @@ class RecipeLazy:
         return RecipeLazy.unite((left, righ))
 
 
-class LazyNot(SubSetR2):
-    """A Lazy evaluator that stores the complementar of given subset"""
-
-    def __init__(self, subset: SubSetR2):
-        if not Is.instance(subset, SubSetR2):
-            raise TypeError(f"Invalid typo: {type(subset)}: {subset}")
-        if Is.instance(subset, LazyNot):
-            raise TypeError("Subset cannot be LazyNot")
-        self.__internal = subset
-
-    @debug("shapepy.bool2d.lazy")
-    def __hash__(self):
-        return -hash(self.__internal)
-
-    def __str__(self):
-        return f"NOT[{str(self.__internal)}]"
-
-    def __repr__(self):
-        return f"NOT[{repr(self.__internal)}]"
-
-    def __invert__(self):
-        return self.__internal
-
-    def __neg__(self):
-        return self.__internal
-
-    def __copy__(self):
-        return LazyNot(self.__internal)
-
-    def __deepcopy__(self, memo):
-        return LazyNot(deepcopy(self.__internal))
-
-    def __eq__(self, other):
-        return (
-            Is.instance(other, LazyNot)
-            and hash(self) == hash(other)
-            and (~self == ~other)
-        )
-
-    def move(self, vector):
-        self.__internal.move(vector)
-        return self
-
-    def scale(self, amount):
-        self.__internal.scale(amount)
-        return self
-
-    def rotate(self, angle):
-        self.__internal.rotate(angle)
-        return self
-
-    def density(self, center):
-        return ~self.__internal.density(center)
-
-
-class LazyOr(SubSetR2):
-    """A Lazy evaluator that stores the union of given subsets"""
+class LazyNand(SubSetR2):
+    """A Lazy evaluator that stores the Nand of given subsets"""
 
     def __init__(self, subsets: Iterable[SubSetR2]):
-        subsets = (s for s in subsets if not Is.instance(s, EmptyShape))
-        subsets = frozenset(subsets)
-        if any(Is.instance(s, LazyOr) for s in subsets):
-            raise TypeError
-        if any(Is.instance(s, WholeShape) for s in subsets):
+        subsets = map(Future.convert, subsets)
+        subsets = frozenset(s for s in subsets if s is not WholeShape())
+        if any(Is.instance(s, EmptyShape) for s in subsets):
             subsets = frozenset()
         self.__subsets = subsets
+
+    def __len__(self) -> int:
+        return len(self.__subsets)
 
     def __iter__(self) -> Iterator[SubSetR2]:
         yield from self.__subsets
 
     def __str__(self):
-        return f"OR[{', '.join(map(str, self))}]"
+        return f"NAND[{', '.join(map(str, self))}]"
 
     def __repr__(self):
-        return f"OR[{', '.join(map(repr, self))}]"
+        return f"NAND[{', '.join(map(repr, self))}]"
 
     @debug("shapepy.bool2d.lazy")
     def __hash__(self):
         return hash(tuple(map(hash, self.__subsets)))
 
     def __copy__(self):
-        return LazyOr(self.__subsets)
-
-    def __deepcopy__(self, memo):
-        return LazyOr(map(deepcopy, self))
+        return LazyNand(self.__subsets)
 
     def __eq__(self, other):
         return (
-            Is.instance(other, LazyOr)
+            Is.instance(other, LazyNand)
             and hash(self) == hash(other)
             and frozenset(self) == frozenset(other)
         )
@@ -193,66 +124,4 @@ class LazyOr(SubSetR2):
         return self
 
     def density(self, center):
-        return unite_densities(sub.density(center) for sub in self)
-
-
-class LazyAnd(SubSetR2):
-    """A Lazy evaluator that stores the union of given subsets"""
-
-    def __init__(self, subsets: Iterable[SubSetR2]):
-        subsets = (s for s in subsets if not Is.instance(s, EmptyShape))
-        subsets = frozenset(subsets)
-        if any(Is.instance(s, LazyAnd) for s in subsets):
-            raise TypeError
-        if any(Is.instance(s, WholeShape) for s in subsets):
-            subsets = frozenset()
-        self.__subsets = subsets
-
-    def __iter__(self) -> Iterator[SubSetR2]:
-        yield from self.__subsets
-
-    def __str__(self):
-        return f"AND[{', '.join(map(str, self))}]"
-
-    def __repr__(self):
-        return f"AND[{', '.join(map(repr, self))}]"
-
-    @debug("shapepy.bool2d.lazy")
-    def __hash__(self):
-        return -hash(tuple(-hash(sub) for sub in self))
-
-    def __copy__(self):
-        return LazyAnd(self.__subsets)
-
-    def __deepcopy__(self, memo):
-        return LazyAnd(map(deepcopy, self))
-
-    def __eq__(self, other):
-        return (
-            Is.instance(other, LazyAnd)
-            and hash(self) == hash(other)
-            and frozenset(self) == frozenset(other)
-        )
-
-    def move(self, vector):
-        for subset in self:
-            subset.move(vector)
-        return self
-
-    def scale(self, amount):
-        for subset in self:
-            subset.scale(amount)
-        return self
-
-    def rotate(self, angle):
-        for subset in self:
-            subset.rotate(angle)
-        return self
-
-    def density(self, center):
-        return intersect_densities(sub.density(center) for sub in self)
-
-
-def is_lazy(subset: SubSetR2) -> bool:
-    """Tells if the given subset is a Lazy evaluated instance"""
-    return Is.instance(subset, (LazyAnd, LazyNot, LazyOr))
+        return ~intersect_densities(sub.density(center) for sub in self)
