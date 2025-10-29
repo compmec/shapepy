@@ -267,20 +267,22 @@ def test_addsub():
 def test_transformations():
     pointa = cartesian(0, 0)
     pointb = pointa.move((1, 3))
-    assert id(pointb) == id(pointa)
-    assert pointa == (1, 3)
+    assert id(pointb) != id(pointa)
+    assert pointb == (1, 3)
 
+    pointa = cartesian(1, 3)
     pointb = pointa.scale(2)
-    assert id(pointb) == id(pointa)
-    assert pointa == (2, 6)
-    pointb = pointa.scale((5, 3))
-    assert id(pointb) == id(pointa)
-    assert pointa == (10, 18)
+    assert id(pointb) != id(pointa)
+    assert pointb == (2, 6)
+    pointc = pointb.scale((5, 3))
+    assert id(pointc) != id(pointb)
+    assert pointc == (10, 18)
 
     angle = degrees(90)
+    pointa = cartesian(10, 18)
     pointb = pointa.rotate(angle)
-    assert id(pointb) == id(pointa)
-    assert pointa == (-18, 10)
+    assert id(pointb) != id(pointa)
+    assert pointb == (-18, 10)
 
 
 @pytest.mark.order(11)

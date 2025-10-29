@@ -192,7 +192,7 @@ It's possible to invert the orientation of a shape.
    # Create any shape, positive at counter-clockwise
    circle = Primitive.circle()
    # Change orientation to clockwise, negative
-   circle.invert()
+   -circle
 
 
 |pic1|  |pic2|
@@ -202,10 +202,6 @@ It's possible to invert the orientation of a shape.
 
 .. |pic2| image:: ../img/primitive/negative_circle.svg
    :width: 49 %
-
-.. note::
-
-   The ``invert`` function is available only in ``SimpleShape``. Use ``~shape`` for a inversion as general
 
 ------------------------------------------------------------------------------------------
 

@@ -68,16 +68,13 @@ class SinglePoint(SubSetR2):
         return hash((self.internal.xcoord, self.internal.ycoord))
 
     def move(self, vector: Point2D) -> SinglePoint:
-        self.__point = self.__point.move(vector)
-        return self
+        return SinglePoint(copy(self.__point).move(vector))
 
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> SinglePoint:
-        self.__point = self.__point.scale(amount)
-        return self
+        return SinglePoint(copy(self.__point).scale(amount))
 
     def rotate(self, angle: Angle) -> SinglePoint:
-        self.__point = self.__point.rotate(angle)
-        return self
+        return SinglePoint(copy(self.__point).rotate(angle))
 
     def density(self, center: Point2D) -> Density:
         return Density.zero

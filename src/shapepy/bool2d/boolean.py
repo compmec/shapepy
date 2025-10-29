@@ -162,7 +162,7 @@ def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
     if Is.instance(inverted, SimpleShape):
         return SimpleShape(~inverted.jordan, True)
     if Is.instance(inverted, ConnectedShape):
-        return DisjointShape((~s).clean() for s in inverted.subshapes)
+        return DisjointShape((~s).clean() for s in inverted)
     if Is.instance(inverted, DisjointShape):
         return shape_from_jordans(~jordan for jordan in inverted.jordans)
     raise NotImplementedError(f"Missing typo: {type(inverted)}")

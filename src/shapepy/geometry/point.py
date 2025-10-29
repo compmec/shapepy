@@ -167,9 +167,7 @@ class Point2D:
             The moved point
         """
         vector = To.point(vector)
-        self.__xcoord += vector[0]
-        self.__ycoord += vector[1]
-        return self
+        return cartesian(self.xcoord + vector[0], self.ycoord + vector[1])
 
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Point2D:
         """
@@ -188,9 +186,7 @@ class Point2D:
             The scaled point
         """
         xscale, yscale = (amount, amount) if Is.real(amount) else amount
-        self.__xcoord *= xscale
-        self.__ycoord *= yscale
-        return self
+        return cartesian(xscale * self.xcoord, yscale * self.ycoord)
 
     def rotate(self, angle: Angle) -> Point2D:
         """
@@ -211,9 +207,7 @@ class Point2D:
         sin_angle = angle.sin()
         x_new = self[0] * cos_angle - self[1] * sin_angle
         y_new = self[0] * sin_angle + self[1] * cos_angle
-        self.__xcoord = x_new
-        self.__ycoord = y_new
-        return self
+        return cartesian(x_new, y_new)
 
 
 def inner(pointa: Point2D, pointb: Point2D) -> Real:

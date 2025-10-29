@@ -165,7 +165,7 @@ class ShapePloter:
         alpha = kwargs.pop("alpha")
         marker = kwargs.pop("marker")
         connecteds = (
-            shape.subshapes if Is.instance(shape, DisjointShape) else [shape]
+            list(shape) if Is.instance(shape, DisjointShape) else [shape]
         )
         for connected in connecteds:
             path = path_shape(connected)

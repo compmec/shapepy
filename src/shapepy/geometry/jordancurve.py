@@ -7,16 +7,16 @@ from __future__ import annotations
 
 from collections import deque
 from copy import copy
-from typing import Iterable, Iterator, Tuple, Union
+from typing import Iterable, Iterator
 
 from ..loggers import debug
-from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import CyclicContainer, Is, pairs, reverse
 from .base import IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve
 from .point import Point2D
+from .segment import Segment
 from .unparam import UPiecewiseCurve, USegment, clean_usegment, self_intersect
 
 
@@ -36,21 +36,6 @@ class JordanCurve(IGeometricCurve):
     def __deepcopy__(self, memo) -> JordanCurve:
         """Returns a deep copy of the jordan curve"""
         return self.__class__(map(copy, self.usegments))
-
-    @debug("shapepy.geometry.jordancurve")
-    def move(self, vector: Point2D) -> JordanCurve:
-        self.__usegments = tuple(useg.move(vector) for useg in self.usegments)
-        return self
-
-    @debug("shapepy.geometry.jordancurve")
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
-        self.__usegments = tuple(useg.scale(amount) for useg in self.usegments)
-        return self
-
-    @debug("shapepy.geometry.jordancurve")
-    def rotate(self, angle: Angle) -> JordanCurve:
-        self.__usegments = tuple(useg.rotate(angle) for useg in self.usegments)
-        return self
 
     def box(self) -> Box:
         """The box which encloses the jordan curve
@@ -147,8 +132,11 @@ class JordanCurve(IGeometricCurve):
     @usegments.setter
     def usegments(self, other: Iterable[USegment]):
         usegments = tuple(other)
-        if not all(Is.instance(u, USegment) for u in usegments):
+        if not all(Is.instance(u, (USegment, Segment)) for u in usegments):
             raise ValueError(f"Invalid usegments: {tuple(map(type, other))}")
+        usegments = tuple(
+            USegment(s) if Is.instance(s, Segment) else s for s in usegments
+        )
         if any(map(self_intersect, usegments)):
             raise ValueError("Segment must not self intersect")
         for usegi, usegj in pairs(usegments, cyclic=True):

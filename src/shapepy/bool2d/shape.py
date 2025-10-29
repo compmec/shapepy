@@ -10,11 +10,12 @@ or even unconnected shapes.
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Iterator, Set, Tuple, Union
+from typing import Iterable, Iterator, Tuple, Union
 
 from ..geometry.box import Box
 from ..geometry.jordancurve import JordanCurve
 from ..geometry.point import Point2D
+from ..geometry.transform import move, rotate, scale
 from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
@@ -41,9 +42,10 @@ class SimpleShape(SubSetR2):
     """
 
     def __init__(self, jordancurve: JordanCurve, boundary: bool = True):
-        assert Is.jordan(jordancurve)
+        if not Is.instance(jordancurve, JordanCurve):
+            raise TypeError
         self.__jordancurve = jordancurve
-        self.boundary = boundary
+        self.__boundary = bool(boundary)
 
     def __copy__(self) -> SimpleShape:
         return self.__deepcopy__(None)
@@ -79,10 +81,6 @@ class SimpleShape(SubSetR2):
         """The flag that informs if the boundary is inside the Shape"""
         return self.__boundary
 
-    @boundary.setter
-    def boundary(self, value: bool):
-        self.__boundary = bool(value)
-
     @property
     def jordan(self) -> JordanCurve:
         """Gives the jordan curve that defines the boundary"""
@@ -101,37 +99,6 @@ class SimpleShape(SubSetR2):
     @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
-
-    def invert(self) -> SimpleShape:
-        """
-        Inverts the region of simple shape.
-
-        Parameters
-        ----------
-
-        :return: The same instance
-        :rtype: SimpleShape
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> square = Primitive.square()
-        >>> print(square)
-        Simple Shape of area 1.00 with vertices:
-        [[ 0.5  0.5]
-        [-0.5  0.5]
-        [-0.5 -0.5]
-        [ 0.5 -0.5]]
-        >>> square.invert()
-        Simple Shape of area -1.00 with vertices:
-        [[ 0.5  0.5]
-        [ 0.5 -0.5]
-        [-0.5 -0.5]
-        [-0.5  0.5]]
-
-        """
-        self.__jordancurve.invert()
-        return self
 
     @debug("shapepy.bool2d.shape")
     def __contains__(self, other: SubSetR2) -> bool:
@@ -182,17 +149,14 @@ class SimpleShape(SubSetR2):
         # may happens error here
         return True
 
-    def move(self, vector: Point2D) -> JordanCurve:
-        self.__jordancurve = self.__jordancurve.move(vector)
-        return self
+    def move(self, vector: Point2D) -> SimpleShape:
+        return SimpleShape(move(self.jordan, vector), self.boundary)
 
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
-        self.__jordancurve = self.__jordancurve.scale(amount)
-        return self
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> SimpleShape:
+        return SimpleShape(scale(self.jordan, amount), self.boundary)
 
-    def rotate(self, angle: Angle) -> JordanCurve:
-        self.__jordancurve = self.__jordancurve.rotate(angle)
-        return self
+    def rotate(self, angle: Angle) -> SimpleShape:
+        return SimpleShape(rotate(self.jordan, angle), self.boundary)
 
     def box(self) -> Box:
         """
@@ -222,23 +186,24 @@ class ConnectedShape(SubSetR2):
     ConnectedShape Class
 
     A shape defined by intersection of two or more SimpleShapes
-
     """
 
     def __init__(self, subshapes: Iterable[SimpleShape]):
-        self.subshapes = subshapes
+        subshapes = frozenset(subshapes)
+        if not all(Is.instance(simple, SimpleShape) for simple in subshapes):
+            raise TypeError(f"Invalid typos: {tuple(map(type, subshapes))}")
+        self.__subshapes = subshapes
 
     def __copy__(self) -> ConnectedShape:
         return self.__deepcopy__(None)
 
     def __deepcopy__(self, memo) -> ConnectedShape:
-        simples = tuple(map(copy, self.subshapes))
-        return ConnectedShape(simples)
+        return ConnectedShape(map(copy, self))
 
     @property
     def area(self) -> Real:
         """The internal area that is enclosed by the shape"""
-        return sum(simple.area for simple in self.subshapes)
+        return sum(simple.area for simple in self)
 
     def __str__(self) -> str:  # pragma: no cover  # For debug
         return f"Connected shape total area {self.area}"
@@ -249,7 +214,7 @@ class ConnectedShape(SubSetR2):
             Is.instance(other, ConnectedShape)
             and hash(self) == hash(other)
             and self.area == other.area
-            and self.subshapes == other.subshapes
+            and frozenset(self) == frozenset(other)
         )
 
     @debug("shapepy.bool2d.shape")
@@ -257,7 +222,7 @@ class ConnectedShape(SubSetR2):
         return hash(self.area)
 
     def __iter__(self) -> Iterator[SimpleShape]:
-        yield from self.subshapes
+        yield from self.__subshapes
 
     @property
     def jordans(self) -> Tuple[JordanCurve, ...]:
@@ -266,62 +231,18 @@ class ConnectedShape(SubSetR2):
         :getter: Returns a set of jordan curves
         :type: tuple[JordanCurve]
         """
-        return tuple(shape.jordan for shape in self.subshapes)
+        return tuple(shape.jordan for shape in self)
 
-    @property
-    def subshapes(self) -> Set[SimpleShape]:
-        """
-        Subshapes that defines the connected shape
-
-        :getter: Subshapes that defines connected shape
-        :setter: Subshapes that defines connected shape
-        :type: tuple[SimpleShape]
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> big_square = Primitive.square(side = 2)
-        >>> small_square = Primitive.square(side = 1)
-        >>> shape = big_square - small_square
-        >>> for subshape in shape.subshapes:
-                print(subshape)
-        Simple Shape of area 4.00 with vertices:
-        [[ 1.  1.]
-        [-1.  1.]
-        [-1. -1.]
-        [ 1. -1.]]
-        Simple Shape of area -1.00 with vertices:
-        [[ 0.5  0.5]
-        [ 0.5 -0.5]
-        [-0.5 -0.5]
-        [-0.5  0.5]]
-
-        """
-        return self.__subshapes
-
-    @subshapes.setter
-    def subshapes(self, simples: Iterable[SimpleShape]):
-        simples = frozenset(simples)
-        if not all(Is.instance(simple, SimpleShape) for simple in simples):
-            raise TypeError(f"Invalid typos: {tuple(map(type, simples))}")
-        self.__subshapes = simples
-
-    def move(self, vector: Point2D) -> JordanCurve:
+    def move(self, vector: Point2D) -> ConnectedShape:
         vector = To.point(vector)
-        for subshape in self.subshapes:
-            subshape.move(vector)
-        return self
+        return ConnectedShape(sub.move(vector) for sub in self)
 
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
-        for subshape in self.subshapes:
-            subshape.scale(amount)
-        return self
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> ConnectedShape:
+        return ConnectedShape(sub.scale(amount) for sub in self)
 
-    def rotate(self, angle: Angle) -> JordanCurve:
+    def rotate(self, angle: Angle) -> ConnectedShape:
         angle = To.angle(angle)
-        for subshape in self.subshapes:
-            subshape.rotate(angle)
-        return self
+        return ConnectedShape(sub.rotate(angle) for sub in self)
 
     def box(self) -> Box:
         """
@@ -341,13 +262,13 @@ class ConnectedShape(SubSetR2):
         Box with vertices (-1.0, -1.0) and (1., 1.0)
         """
         box = None
-        for sub in self.subshapes:
+        for sub in self:
             box |= sub.jordan.box()
         return box
 
     def density(self, center: Point2D) -> Density:
         center = To.point(center)
-        densities = (sub.density(center) for sub in self.subshapes)
+        densities = (sub.density(center) for sub in self)
         return intersect_densities(densities)
 
 
@@ -362,22 +283,26 @@ class DisjointShape(SubSetR2):
     def __init__(
         self, subshapes: Iterable[Union[SimpleShape, ConnectedShape]]
     ):
-        self.subshapes = subshapes
+        subshapes = frozenset(subshapes)
+        if not all(
+            Is.instance(s, (SimpleShape, ConnectedShape)) for s in subshapes
+        ):
+            raise ValueError(f"Invalid typos: {tuple(map(type, subshapes))}")
+        self.__subshapes = subshapes
 
     def __copy__(self) -> ConnectedShape:
         return self.__deepcopy__(None)
 
     def __deepcopy__(self, memo):
-        subshapes = tuple(map(copy, self.subshapes))
-        return DisjointShape(subshapes)
+        return DisjointShape(map(copy, self))
 
     def __iter__(self) -> Iterator[Union[SimpleShape, ConnectedShape]]:
-        yield from self.subshapes
+        yield from self.__subshapes
 
     @property
     def area(self) -> Real:
         """The internal area that is enclosed by the shape"""
-        return sum(sub.area for sub in self.subshapes)
+        return sum(sub.area for sub in self)
 
     @property
     def jordans(self) -> Tuple[JordanCurve, ...]:
@@ -387,7 +312,7 @@ class DisjointShape(SubSetR2):
         :type: tuple[JordanCurve]
         """
         jordans = []
-        for subshape in self.subshapes:
+        for subshape in self:
             jordans += list(subshape.jordans)
         return tuple(jordans)
 
@@ -397,74 +322,28 @@ class DisjointShape(SubSetR2):
             Is.instance(other, DisjointShape)
             and hash(self) == hash(other)
             and self.area == other.area
-            and self.subshapes == other.subshapes
+            and frozenset(self) == frozenset(other)
         )
 
     def __str__(self) -> str:  # pragma: no cover  # For debug
         msg = f"Disjoint shape with total area {self.area} and "
-        msg += f"{len(self.subshapes)} subshapes"
+        msg += f"{len(self.__subshapes)} subshapes"
         return msg
 
     @debug("shapepy.bool2d.shape")
     def __hash__(self):
         return hash(self.area)
 
-    @property
-    def subshapes(self) -> Set[Union[SimpleShape, ConnectedShape]]:
-        """
-        Subshapes that defines the disjoint shape
-
-        :getter: Subshapes that defines disjoint shape
-        :setter: Subshapes that defines disjoint shape
-        :type: tuple[SimpleShape | ConnectedShape]
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> left = Primitive.square(center=(-2, 0))
-        >>> right = Primitive.square(center = (2, 0))
-        >>> shape = left | right
-        >>> for subshape in shape.subshapes:
-                print(subshape)
-        Simple Shape of area 1.00 with vertices:
-        [[-1.5  0.5]
-        [-2.5  0.5]
-        [-2.5 -0.5]
-        [-1.5 -0.5]]
-        Simple Shape of area 1.00 with vertices:
-        [[ 2.5  0.5]
-        [ 1.5  0.5]
-        [ 1.5 -0.5]
-        [ 2.5 -0.5]]
-
-        """
-        return self.__subshapes
-
-    @subshapes.setter
-    def subshapes(self, values: Iterable[SubSetR2]):
-        values = frozenset(values)
-        if not all(
-            Is.instance(sub, (SimpleShape, ConnectedShape)) for sub in values
-        ):
-            raise ValueError(f"Invalid typos: {tuple(map(type, values))}")
-        self.__subshapes = values
-
-    def move(self, vector: Point2D) -> JordanCurve:
+    def move(self, vector: Point2D) -> DisjointShape:
         vector = To.point(vector)
-        for subshape in self.subshapes:
-            subshape.move(vector)
-        return self
+        return DisjointShape(sub.move(vector) for sub in self)
 
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> JordanCurve:
-        for subshape in self.subshapes:
-            subshape.scale(amount)
-        return self
+    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> DisjointShape:
+        return DisjointShape(sub.scale(amount) for sub in self)
 
-    def rotate(self, angle: Angle) -> JordanCurve:
+    def rotate(self, angle: Angle) -> DisjointShape:
         angle = To.angle(angle)
-        for subshape in self.subshapes:
-            subshape.rotate(angle)
-        return self
+        return DisjointShape(sub.rotate(angle) for sub in self)
 
     def box(self) -> Box:
         """
@@ -484,11 +363,10 @@ class DisjointShape(SubSetR2):
         Box with vertices (-1.0, -1.0) and (1., 1.0)
         """
         box = None
-        for sub in self.subshapes:
+        for sub in self:
             box |= sub.box()
         return box
 
     def density(self, center: Point2D) -> Real:
         center = To.point(center)
-        densities = (sub.density(center) for sub in self.subshapes)
-        return unite_densities(densities)
+        return unite_densities((sub.density(center) for sub in self))

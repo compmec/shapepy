@@ -8,7 +8,6 @@ from collections import defaultdict
 from typing import Iterable, Tuple, Union
 
 from ..loggers import debug
-from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, To, vectorize
 from .base import IParametrizedCurve
@@ -158,20 +157,6 @@ class PiecewiseCurve(IParametrizedCurve):
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
-
-    def move(self, vector: Point2D) -> PiecewiseCurve:
-        vector = To.point(vector)
-        self.__segments = tuple(seg.move(vector) for seg in self)
-        return self
-
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
-        self.__segments = tuple(seg.scale(amount) for seg in self)
-        return self
-
-    def rotate(self, angle: Angle) -> Segment:
-        angle = To.angle(angle)
-        self.__segments = tuple(seg.rotate(angle) for seg in self)
-        return self
 
 
 def is_piecewise(obj: object) -> bool:
