@@ -8,7 +8,7 @@ from __future__ import annotations
 from copy import copy
 from typing import Tuple, Union
 
-from ..geometry.point import Point2D
+from ..geometry.point import Point2D, move, rotate, scale
 from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
@@ -68,13 +68,13 @@ class SinglePoint(SubSetR2):
         return hash((self.internal.xcoord, self.internal.ycoord))
 
     def move(self, vector: Point2D) -> SinglePoint:
-        return SinglePoint(copy(self.__point).move(vector))
+        return SinglePoint(move(self.__point, vector))
 
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> SinglePoint:
-        return SinglePoint(copy(self.__point).scale(amount))
+        return SinglePoint(scale(self.__point, amount))
 
     def rotate(self, angle: Angle) -> SinglePoint:
-        return SinglePoint(copy(self.__point).rotate(angle))
+        return SinglePoint(rotate(self.__point, angle))
 
     def density(self, center: Point2D) -> Density:
         return Density.zero

@@ -6,7 +6,15 @@ from fractions import Fraction as frac
 
 import pytest
 
-from shapepy.geometry.point import cartesian, cross, inner, polar
+from shapepy.geometry.point import (
+    cartesian,
+    cross,
+    inner,
+    move,
+    polar,
+    rotate,
+    scale,
+)
 from shapepy.scalar.angle import degrees
 
 
@@ -266,21 +274,21 @@ def test_addsub():
 )
 def test_transformations():
     pointa = cartesian(0, 0)
-    pointb = pointa.move((1, 3))
+    pointb = move(pointa, (1, 3))
     assert id(pointb) != id(pointa)
     assert pointb == (1, 3)
 
     pointa = cartesian(1, 3)
-    pointb = pointa.scale(2)
+    pointb = scale(pointa, 2)
     assert id(pointb) != id(pointa)
     assert pointb == (2, 6)
-    pointc = pointb.scale((5, 3))
+    pointc = scale(pointb, (5, 3))
     assert id(pointc) != id(pointb)
     assert pointc == (10, 18)
 
     angle = degrees(90)
     pointa = cartesian(10, 18)
-    pointb = pointa.rotate(angle)
+    pointb = rotate(pointa, angle)
     assert id(pointb) != id(pointa)
     assert pointb == (-18, 10)
 
