@@ -32,6 +32,14 @@ class USegment(IGeometricCurve):
     def __contains__(self, other) -> bool:
         return other in self.__segment
 
+    def __invert__(self) -> USegment:
+        """Invert the current curve's orientation, doesn't create a copy
+
+        :return: The same curve
+        :rtype: USegment
+        """
+        return USegment(~self.__segment)
+
     @property
     def length(self) -> Real:
         """
@@ -66,15 +74,6 @@ class USegment(IGeometricCurve):
         segi = self.parametrize()
         segj = other.parametrize()
         return segi(0) == segj(0) and segi(1) == segj(1)
-
-    def invert(self) -> USegment:
-        """Invert the current curve's orientation, doesn't create a copy
-
-        :return: The same curve
-        :rtype: USegment
-        """
-        self.__segment = self.__segment.invert()
-        return self
 
 
 class UPiecewiseCurve(IGeometricCurve):

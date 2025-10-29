@@ -132,15 +132,15 @@ class Segment(IParametrizedCurve):
     def __deepcopy__(self, memo) -> Segment:
         return Segment(copy(self.xfunc), copy(self.yfunc))
 
-    def invert(self) -> Segment:
+    def __invert__(self) -> Segment:
         """
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
         half = To.rational(1, 2)
-        self.__xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
-        self.__yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
-        return self
+        xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
+        yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
+        return Segment(xfunc, yfunc)
 
     def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
         """

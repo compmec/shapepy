@@ -299,10 +299,10 @@ class TestTransformationPolygon:
         assert inve_square != orig_square
         assert test_square == orig_square
         assert test_square != inve_square
-        test_square.invert()
+        test_square = ~test_square
         assert test_square != orig_square
         assert test_square == inve_square
-        test_square.invert()
+        test_square = ~test_square
         assert test_square == orig_square
         assert test_square != inve_square
 
