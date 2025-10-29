@@ -87,7 +87,7 @@ class IntegrateJordan:
         assert Is.jordan(jordan)
         return sum(
             IntegrateSegment.polynomial(usegment.parametrize(), expx, expy)
-            for usegment in jordan.usegments
+            for usegment in jordan
         )
 
     @staticmethod
@@ -107,7 +107,7 @@ class IntegrateJordan:
         It happens when the functions is discontinuous
         """
         result = 0
-        for usegment in jordan.usegments:
+        for usegment in jordan:
             seg = usegment.parametrize()
             delta_result = IntegrateSegment.turns(seg, point)
             if delta_result == 0.5:

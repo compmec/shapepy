@@ -35,17 +35,11 @@ class Box:
             raise TypeError
         return self.lowpt == other.lowpt and self.toppt == other.toppt
 
-    def __str__(self) -> str:
+    def __str__(self) -> str:  # pragma: no cover
         return f"Box with vertices {self.lowpt} and {self.toppt}"
 
     def __bool__(self) -> bool:
         return True
-
-    def __float__(self) -> float:
-        """Returns the area of the box"""
-        return (self.toppt[0] - self.lowpt[0]) * (
-            self.toppt[1] - self.lowpt[1]
-        )
 
     def __contains__(self, point: Point2D) -> bool:
         point = To.point(point)

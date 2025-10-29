@@ -5,7 +5,6 @@ Defines the Factory to create Jordan Curves
 from __future__ import annotations
 
 import math
-from copy import copy
 from typing import Iterable, Tuple
 
 import numpy as np
@@ -14,7 +13,7 @@ from ..analytic import Bezier
 from ..loggers import debug
 from ..tools import To
 from .jordancurve import JordanCurve
-from .point import Point2D, cartesian
+from .point import Point2D, cartesian, rotate
 from .segment import Segment
 from .unparam import USegment
 
@@ -121,10 +120,10 @@ class FactoryJordan:
         middle_point = cartesian(1, height)
         all_ctrlpoints = []
         for _ in range(ndivangle - 1):
-            end_point = copy(start_point).rotate(angle)
+            end_point = rotate(start_point, angle)
             all_ctrlpoints.append([start_point, middle_point, end_point])
             start_point = end_point
-            middle_point = copy(middle_point).rotate(angle)
+            middle_point = rotate(middle_point, angle)
         end_point = all_ctrlpoints[0][0]
         all_ctrlpoints.append([start_point, middle_point, end_point])
         return JordanCurve(

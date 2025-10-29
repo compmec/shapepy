@@ -38,8 +38,7 @@ class TestIntegrate:
     def test_centered_rectangular(self):
         width, height = 6, 10  # sides of rectangle
         nx, ny = 5, 5  # Max exponential
-        rectangular = Primitive.square()
-        rectangular.scale((width, height))
+        rectangular = Primitive.square().scale((width, height))
         for expx in range(nx):
             for expy in range(ny):
                 test = IntegrateJordan.polynomial(
@@ -66,9 +65,7 @@ class TestIntegrate:
         width, height = 6, 10  # sides of rectangle
         center = 7, -3  # Center of shape
         nx, ny = 5, 5  # Max exponential
-        rectangular = Primitive.square()
-        rectangular.scale((width, height))
-        rectangular.move(center)
+        rectangular = Primitive.square().scale((width, height)).move(center)
         for expx in range(nx):
             for expy in range(ny):
                 test = IntegrateJordan.polynomial(
@@ -94,8 +91,7 @@ class TestIntegrate:
     )
     def test_centered_rombo(self):
         width, height = 3, 5
-        rombo = Primitive.regular_polygon(4)
-        rombo.scale((width, height))
+        rombo = Primitive.regular_polygon(4).scale((width, height))
         nx, ny = 5, 5
         for expx in range(nx):
             for expy in range(ny):

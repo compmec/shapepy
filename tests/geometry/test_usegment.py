@@ -6,6 +6,7 @@ import pytest
 
 from shapepy.geometry.box import Box
 from shapepy.geometry.factory import FactorySegment
+from shapepy.geometry.transform import move, rotate, scale
 from shapepy.geometry.unparam import USegment
 from shapepy.scalar.angle import degrees
 
@@ -54,7 +55,7 @@ def test_box():
 def test_move():
     segment = FactorySegment.bezier([(0, 0), (3, 4)])
     usegment = USegment(segment)
-    usegment.move((1, 2))
+    usegment = move(usegment, (1, 2))
 
     good = FactorySegment.bezier([(1, 2), (4, 6)])
     assert usegment.parametrize() == good
@@ -66,7 +67,7 @@ def test_move():
 def test_scale():
     segment = FactorySegment.bezier([(0, 0), (3, 4)])
     usegment = USegment(segment)
-    usegment.scale(4)
+    usegment = scale(usegment, 4)
 
     good = FactorySegment.bezier([(0, 0), (12, 16)])
     assert usegment.parametrize() == good
@@ -78,7 +79,7 @@ def test_scale():
 def test_rotate():
     segment = FactorySegment.bezier([(0, 0), (3, 4)])
     usegment = USegment(segment)
-    usegment.rotate(degrees(90))
+    usegment = rotate(usegment, degrees(90))
 
     good = FactorySegment.bezier([(0, 0), (-4, 3)])
     assert usegment.parametrize() == good

@@ -13,13 +13,12 @@ File that defines the classes
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple
 
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
 from ..loggers import debug
 from ..rbool import IntervalR1, from_any
-from ..scalar.angle import Angle
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
 from ..tools import Is, To, pairs, vectorize
@@ -133,15 +132,15 @@ class Segment(IParametrizedCurve):
     def __deepcopy__(self, memo) -> Segment:
         return Segment(copy(self.xfunc), copy(self.yfunc))
 
-    def invert(self) -> Segment:
+    def __invert__(self) -> Segment:
         """
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
         half = To.rational(1, 2)
-        self.__xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
-        self.__yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
-        return self
+        xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
+        yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
+        return Segment(xfunc, yfunc)
 
     def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
         """
@@ -161,25 +160,6 @@ class Segment(IParametrizedCurve):
         nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
         nyfunc = copy(self.yfunc).shift(-knota).scale(denom)
         return Segment(nxfunc, nyfunc)
-
-    def move(self, vector: Point2D) -> Segment:
-        vector = To.point(vector)
-        self.__xfunc += vector.xcoord
-        self.__yfunc += vector.ycoord
-        return self
-
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
-        self.__xfunc *= amount if Is.real(amount) else amount[0]
-        self.__yfunc *= amount if Is.real(amount) else amount[1]
-        return self
-
-    def rotate(self, angle: Angle) -> Segment:
-        angle = To.angle(angle)
-        cos, sin = angle.cos(), angle.sin()
-        xfunc, yfunc = self.xfunc, self.yfunc
-        self.__xfunc = xfunc * cos - yfunc * sin
-        self.__yfunc = xfunc * sin + yfunc * cos
-        return self
 
 
 @debug("shapepy.geometry.segment")
