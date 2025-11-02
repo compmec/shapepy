@@ -26,7 +26,7 @@ def test_move_simple():
     square = Primitive.square(2)
     assert square.box() == Box((-1, -1), (1, 1))
 
-    square.move((1, 1))
+    square = square.move((1, 1))
     assert square.box() == Box((0, 0), (2, 2))
 
 
@@ -36,7 +36,7 @@ def test_scale_simple():
     square = Primitive.square(2)
     assert square.box() == Box((-1, -1), (1, 1))
 
-    square.scale((3, 4))
+    square = square.scale((3, 4))
     assert square.box() == Box((-3, -4), (3, 4))
 
 
@@ -47,7 +47,7 @@ def test_rotate_simple():
     assert square.box() == Box((-1, -1), (1, 1))
 
     angle = degrees(90)
-    square.rotate(angle)
+    square = square.rotate(angle)
     assert square.box() == Box((-1, -1), (1, 1))
 
 
@@ -59,7 +59,7 @@ def test_move_connected():
     connected = ConnectedShape([big_square, -small_square])
     assert connected.box() == Box((-2, -2), (2, 2))
 
-    connected.move((2, 2))
+    connected = connected.move((2, 2))
     assert connected.box() == Box((0, 0), (4, 4))
 
 
@@ -71,7 +71,7 @@ def test_scale_connected():
     connected = ConnectedShape([big_square, -small_square])
     assert connected.box() == Box((-2, -2), (2, 2))
 
-    connected.scale((3, 4))
+    connected = connected.scale((3, 4))
     assert connected.box() == Box((-6, -8), (6, 8))
 
 
@@ -84,7 +84,7 @@ def test_rotate_connected():
     assert connected.box() == Box((-2, -2), (2, 2))
 
     angle = degrees(90)
-    connected.rotate(angle)
+    connected = connected.rotate(angle)
     assert connected.box() == Box((-2, -2), (2, 2))
 
 
@@ -96,7 +96,7 @@ def test_move_disjoint():
     disjoint = DisjointShape([left_square, right_square])
     assert disjoint.box() == Box((-3, -1), (3, 1))
 
-    disjoint.move((2, 2))
+    disjoint = disjoint.move((2, 2))
     assert disjoint.box() == Box((-1, 1), (5, 3))
 
 
@@ -108,7 +108,7 @@ def test_scale_disjoint():
     disjoint = DisjointShape([left_square, right_square])
     assert disjoint.box() == Box((-3, -1), (3, 1))
 
-    disjoint.scale((3, 4))
+    disjoint = disjoint.scale((3, 4))
     assert disjoint.box() == Box((-9, -4), (9, 4))
 
 
@@ -121,7 +121,7 @@ def test_rotate_disjoint():
     assert disjoint.box() == Box((-3, -1), (3, 1))
 
     angle = degrees(90)
-    disjoint.rotate(angle)
+    disjoint = disjoint.rotate(angle)
     assert disjoint.box() == Box((-1, -3), (1, 3))
 
 

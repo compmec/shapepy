@@ -13,7 +13,7 @@ File that defines the classes
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Optional, Tuple, Union
+from typing import Iterable, Optional, Tuple
 
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
@@ -133,16 +133,15 @@ class Segment(IParametrizedCurve):
     def __deepcopy__(self, memo) -> Segment:
         return Segment(copy(self.xfunc), copy(self.yfunc))
 
-    @debug("shapepy.geometry.segment")
-    def invert(self) -> Segment:
+    def __invert__(self) -> Segment:
         """
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
         half = To.rational(1, 2)
-        self.__xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
-        self.__yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
-        return self
+        xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
+        yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
+        return Segment(xfunc, yfunc)
 
     @debug("shapepy.geometry.segment")
     def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
@@ -153,39 +152,12 @@ class Segment(IParametrizedCurve):
         nodes = sorted(set(nodes) | set(self.knots))
         return tuple(self.section([ka, kb]) for ka, kb in pairs(nodes))
 
-    @debug("shapepy.geometry.segment")
-    def move(self, vector: Point2D) -> Segment:
-        vector = To.point(vector)
-        self.__xfunc += vector.xcoord
-        self.__yfunc += vector.ycoord
-        return self
-
-    @debug("shapepy.geometry.segment")
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
-        self.__xfunc *= amount if Is.real(amount) else amount[0]
-        self.__yfunc *= amount if Is.real(amount) else amount[1]
-        return self
-
-    @debug("shapepy.geometry.segment")
-    def rotate(self, angle: Angle) -> Segment:
-        angle = To.angle(angle)
-        cos, sin = angle.cos(), angle.sin()
-        xfunc, yfunc = self.xfunc, self.yfunc
-        self.__xfunc = xfunc * cos - yfunc * sin
-        self.__yfunc = xfunc * sin + yfunc * cos
-        return self
-
-    @debug("shapepy.geometry.segment")
-    def section(self, interval: IntervalR1) -> Segment:
+    def extract(self, interval: IntervalR1) -> Segment:
+        """Extracts a subsegment from the given segment"""
         interval = from_any(interval)
-        if not 0 <= interval[0] < interval[1] <= 1:
-            raise ValueError(f"Invalid {interval}")
-        if interval is EmptyR1():
-            raise TypeError(f"Cannot extract with interval {interval}")
-        if interval == [0, 1]:
-            return self
-        knota = infimum(interval)
-        knotb = supremum(interval)
+        if not Is.instance(interval, IntervalR1):
+            raise TypeError
+        knota, knotb = interval[0], interval[1]
         denom = 1 / (knotb - knota)
         nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
         nyfunc = copy(self.yfunc).shift(-knota).scale(denom)

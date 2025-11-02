@@ -9,6 +9,7 @@ import pytest
 
 from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.jordancurve import clean_jordan
+from shapepy.geometry.transform import move, rotate, scale
 from shapepy.scalar.angle import degrees, radians
 
 
@@ -235,8 +236,8 @@ class TestTransformationPolygon:
 
         test_square_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_square = FactoryJordan.polygon(test_square_pts)
-        test_square.move((1, 2))
-        test_square.move((1, 2))
+        test_square = move(test_square, (1, 2))
+        test_square = move(test_square, (1, 2))
 
         assert test_square == good_square
 
@@ -253,7 +254,7 @@ class TestTransformationPolygon:
         good_rectangle = FactoryJordan.polygon(good_rectangle_pts)
         test_rectangle_pts = [(0, 0), (1, 0), (1, 1), (0, 1)]
         test_rectangle = FactoryJordan.polygon(test_rectangle_pts)
-        test_rectangle.scale((2, 3))
+        test_rectangle = scale(test_rectangle, (2, 3))
         assert test_rectangle == good_rectangle
 
     @pytest.mark.order(15)
@@ -272,9 +273,9 @@ class TestTransformationPolygon:
         test_square = FactoryJordan.polygon(test_square_pts)
 
         assert test_square == good_square
-        test_square.rotate(radians(np.pi / 6))  # 30 degrees
+        test_square = rotate(test_square, radians(np.pi / 6))  # 30 degrees
         assert test_square != good_square
-        test_square.rotate(degrees(60))
+        test_square = rotate(test_square, degrees(60))
         assert test_square == good_square
 
     @pytest.mark.order(15)
@@ -298,10 +299,10 @@ class TestTransformationPolygon:
         assert inve_square != orig_square
         assert test_square == orig_square
         assert test_square != inve_square
-        test_square.invert()
+        test_square = ~test_square
         assert test_square != orig_square
         assert test_square == inve_square
-        test_square.invert()
+        test_square = ~test_square
         assert test_square == orig_square
         assert test_square != inve_square
 

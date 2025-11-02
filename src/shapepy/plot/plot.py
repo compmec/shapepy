@@ -49,7 +49,7 @@ def path_shape(connected: ConnectedShape) -> Path:
     vertices = []
     commands = []
     for jordan in connected.jordans:
-        segments = tuple(useg.parametrize() for useg in jordan.usegments)
+        segments = tuple(useg.parametrize() for useg in jordan)
         vertices.append(segments[0](0))
         commands.append(Path.MOVETO)
         for segment in segments:
@@ -66,7 +66,7 @@ def path_jordan(jordan: JordanCurve) -> Path:
     """
     Creates the commands for matplotlib to plot the jordan curve
     """
-    segments = tuple(useg.parametrize() for useg in jordan.usegments)
+    segments = tuple(useg.parametrize() for useg in jordan)
     vertices = [segments[0](0)]
     commands = [Path.MOVETO]
     for segment in segments:
@@ -165,7 +165,7 @@ class ShapePloter:
         alpha = kwargs.pop("alpha")
         marker = kwargs.pop("marker")
         connecteds = (
-            shape.subshapes if Is.instance(shape, DisjointShape) else [shape]
+            list(shape) if Is.instance(shape, DisjointShape) else [shape]
         )
         for connected in connecteds:
             path = path_shape(connected)

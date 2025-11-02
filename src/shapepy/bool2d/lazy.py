@@ -124,16 +124,13 @@ class LazyNot(SubSetR2):
         )
 
     def move(self, vector):
-        self.__internal.move(vector)
-        return self
+        return LazyNot(self.__internal.move(vector))
 
     def scale(self, amount):
-        self.__internal.scale(amount)
-        return self
+        return LazyNot(self.__internal.scale(amount))
 
     def rotate(self, angle):
-        self.__internal.rotate(angle)
-        return self
+        return LazyNot(self.__internal.rotate(angle))
 
     @debug("shapepy.bool2d.base")
     def density(self, center):
@@ -179,19 +176,13 @@ class LazyOr(SubSetR2):
         )
 
     def move(self, vector):
-        for subset in self:
-            subset.move(vector)
-        return self
+        return LazyOr(sub.move(vector) for sub in self)
 
     def scale(self, amount):
-        for subset in self:
-            subset.scale(amount)
-        return self
+        return LazyOr(sub.scale(amount) for sub in self)
 
     def rotate(self, angle):
-        for subset in self:
-            subset.rotate(angle)
-        return self
+        return LazyOr(sub.rotate(angle) for sub in self)
 
     def density(self, center):
         return unite_densities(sub.density(center) for sub in self)
@@ -236,19 +227,13 @@ class LazyAnd(SubSetR2):
         )
 
     def move(self, vector):
-        for subset in self:
-            subset.move(vector)
-        return self
+        return LazyAnd(sub.move(vector) for sub in self)
 
     def scale(self, amount):
-        for subset in self:
-            subset.scale(amount)
-        return self
+        return LazyAnd(sub.scale(amount) for sub in self)
 
     def rotate(self, angle):
-        for subset in self:
-            subset.rotate(angle)
-        return self
+        return LazyAnd(sub.rotate(angle) for sub in self)
 
     def density(self, center):
         return intersect_densities(sub.density(center) for sub in self)

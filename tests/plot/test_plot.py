@@ -54,10 +54,9 @@ class TestPlot:
         plt.plot(circle, fill_color="cyan")
         plt.plot(square, fill_color="yellow")
 
-        circle.invert()
         fig, ax = pyplot.subplots()
         plt = ShapePloter(fig=fig, ax=ax)
-        plt.plot(circle)
+        plt.plot(-circle)
 
         # plt.show()
 

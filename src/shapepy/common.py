@@ -78,20 +78,6 @@ def rotate(obj: Any, angle: Angle) -> Any:
     return deepcopy(obj).rotate(angle)
 
 
-def clean(obj: Any) -> Any:
-    """
-    Cleans the object, removing the unecessary data
-    """
-    return deepcopy(obj).clean()
-
-
-def derivate(obj: Any) -> Any:
-    """
-    Derivates the analytic function or the curve
-    """
-    return deepcopy(obj).derivate()
-
-
 def lebesgue_density(subset: SubSetR2, center: Tuple[Real, Real]) -> Density:
     """
     Calcules the density of given subset around given point

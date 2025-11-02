@@ -128,9 +128,6 @@ class Point2D:
             self.xcoord, self.ycoord, self.radius, self.angle
         )
 
-    def __iadd__(self, other: Point2D) -> Point2D:
-        return self.move(other)
-
     def __add__(self, other: Point2D) -> Point2D:
         other = To.point(other)
         return cartesian(self[0] + other[0], self[1] + other[1])
@@ -140,11 +137,9 @@ class Point2D:
         return cartesian(self[0] - other[0], self[1] - other[1])
 
     def __mul__(self, other: float) -> Point2D:
-        if Is.point(other):
-            return inner(self, other)
         if not Is.finite(other):
             raise TypeError(f"Multiplication with non-real number: {other}")
-        return cartesian(self[0] * other, self[1] * other)
+        return cartesian(other * self.xcoord, other * self.ycoord)
 
     def __rmul__(self, other: float) -> Point2D:
         return self.__mul__(other)
@@ -153,70 +148,66 @@ class Point2D:
         """Returns the norm of the point, the distance to the origin"""
         return self.radius
 
-    def move(self, vector: tuple[Real, Real]) -> Point2D:
-        """
-        Moves the point by the given deltas
 
-        Parameters
-        ----------
-        dx : float
-            The delta to move the x coordinate
-        dy : float
-            The delta to move the y coordinate
+def move(point: Point2D, vector: tuple[Real, Real]) -> Point2D:
+    """
+    Moves the point by the given deltas
 
-        Returns
-        -------
-        Point2D
-            The moved point
-        """
-        vector = To.point(vector)
-        self.__xcoord += vector[0]
-        self.__ycoord += vector[1]
-        return self
+    Parameters
+    ----------
+    dx : float
+        The delta to move the x coordinate
+    dy : float
+        The delta to move the y coordinate
 
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Point2D:
-        """
-        Scales the point by the given factors
+    Returns
+    -------
+    Point2D
+        The moved point
+    """
+    vector = To.point(vector)
+    return cartesian(point.xcoord + vector[0], point.ycoord + vector[1])
 
-        Parameters
-        ----------
-        xscale : float
-            The factor to scale the x coordinate
-        yscale : float
-            The factor to scale the y coordinate
 
-        Returns
-        -------
-        Point2D
-            The scaled point
-        """
-        xscale, yscale = (amount, amount) if Is.real(amount) else amount
-        self.__xcoord *= xscale
-        self.__ycoord *= yscale
-        return self
+def scale(point: Point2D, amount: Union[Real, Tuple[Real, Real]]) -> Point2D:
+    """
+    Scales the point by the given factors
 
-    def rotate(self, angle: Angle) -> Point2D:
-        """
-        Rotates the point around the origin by the given angle
+    Parameters
+    ----------
+    xscale : float
+        The factor to scale the x coordinate
+    yscale : float
+        The factor to scale the y coordinate
 
-        Parameters
-        ----------
-        angle : float
-            The angle in radians to rotate the point
+    Returns
+    -------
+    Point2D
+        The scaled point
+    """
+    xscale, yscale = (amount, amount) if Is.real(amount) else amount
+    return cartesian(xscale * point.xcoord, yscale * point.ycoord)
 
-        Returns
-        -------
-        Point2D
-            The rotated point
-        """
-        angle = To.angle(angle)
-        cos_angle = angle.cos()
-        sin_angle = angle.sin()
-        x_new = self[0] * cos_angle - self[1] * sin_angle
-        y_new = self[0] * sin_angle + self[1] * cos_angle
-        self.__xcoord = x_new
-        self.__ycoord = y_new
-        return self
+
+def rotate(point: Point2D, angle: Angle) -> Point2D:
+    """
+    Rotates the point around the origin by the given angle
+
+    Parameters
+    ----------
+    angle : float
+        The angle in radians to rotate the point
+
+    Returns
+    -------
+    Point2D
+        The rotated point
+    """
+    angle = To.angle(angle)
+    sin, cos = angle.sin(), angle.cos()
+    newx = cos * point.xcoord - sin * point.ycoord
+    newy = sin * point.xcoord + cos * point.ycoord
+    return cartesian(newx, newy)
 
 
 def inner(pointa: Point2D, pointb: Point2D) -> Real:
@@ -250,26 +241,4 @@ def to_point(point: Point2D | tuple[Real, Real]) -> Point2D:
     return cartesian(xcoord, ycoord)
 
 
-def is_point(point: Point2D | tuple[Real, Real]) -> bool:
-    """
-    Checks if the given point is a Point2D object or a tuple of two reals
-
-    Parameters
-    ----------
-    point : Point2D or tuple of two reals
-        The point to be checked
-
-    Returns
-    -------
-    bool
-        True if the point is a Point2D or a tuple of two reals, False otherwise
-    """
-    return Is.instance(point, Point2D) or (
-        Is.instance(point, tuple)
-        and len(point) == 2
-        and all(Is.finite(coord) for coord in point)
-    )
-
-
 To.point = to_point
-Is.point = is_point

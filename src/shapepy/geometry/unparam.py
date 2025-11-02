@@ -5,9 +5,8 @@ Defines the class USegment and UPiecewise, which is equivalent to
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Tuple, Union
+from typing import Iterable
 
-from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is
 from .base import IGeometricCurve
@@ -34,6 +33,14 @@ class USegment(IGeometricCurve):
 
     def __contains__(self, other) -> bool:
         return other in self.__segment
+
+    def __invert__(self) -> USegment:
+        """Invert the current curve's orientation, doesn't create a copy
+
+        :return: The same curve
+        :rtype: USegment
+        """
+        return USegment(~self.__segment)
 
     @property
     def length(self) -> Real:
@@ -69,27 +76,6 @@ class USegment(IGeometricCurve):
         segi = self.parametrize()
         segj = other.parametrize()
         return segi(0) == segj(0) and segi(1) == segj(1)
-
-    def invert(self) -> USegment:
-        """Invert the current curve's orientation, doesn't create a copy
-
-        :return: The same curve
-        :rtype: USegment
-        """
-        self.__segment = self.__segment.invert()
-        return self
-
-    def move(self, vector: Point2D) -> Segment:
-        self.__segment.move(vector)
-        return self
-
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
-        self.__segment.scale(amount)
-        return self
-
-    def rotate(self, angle: Angle) -> Segment:
-        self.__segment.rotate(angle)
-        return self
 
 
 class UPiecewiseCurve(IGeometricCurve):

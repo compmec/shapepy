@@ -10,6 +10,7 @@ from typing import Tuple, Union
 
 from ..geometry.base import IGeometricCurve
 from ..geometry.point import Point2D
+from ..geometry.transform import move, rotate, scale
 from ..loggers import debug
 from ..scalar.angle import Angle
 from ..scalar.reals import Real
@@ -64,16 +65,13 @@ class SingleCurve(SubSetR2):
         return hash(self.internal.length)
 
     def move(self, vector: Point2D) -> SingleCurve:
-        self.__curve = self.__curve.move(vector)
-        return self
+        return SingleCurve(move(self.__curve, vector))
 
     def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> SingleCurve:
-        self.__curve = self.__curve.scale(amount)
-        return self
+        return SingleCurve(scale(self.__curve, amount))
 
     def rotate(self, angle: Angle) -> SingleCurve:
-        self.__curve = self.__curve.rotate(angle)
-        return self
+        return SingleCurve(rotate(self.__curve, angle))
 
     def density(self, center: Point2D) -> Density:
         return Density.zero

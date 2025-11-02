@@ -5,10 +5,8 @@ Defines the base class for Geometric curves
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Tuple
 
-from ..rbool import IntervalR1
-from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from .box import Box
 from .point import Point2D
@@ -67,72 +65,6 @@ class IGeometricCurve(ABC):
 
     def __or__(self, other: IGeometricCurve) -> IGeometricCurve:
         return Future.concatenate((self, other))
-
-    def move(self, vector: Point2D) -> IGeometricCurve:
-        """
-        Moves/translate entire shape by an amount
-
-        Parameters
-        ----------
-
-        point : Point2D
-            The amount to move
-
-        :return: The same instance
-        :rtype: SubSetR2
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.move(1, 2)
-
-        """
-        raise NotImplementedError
-
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> IGeometricCurve:
-        """
-        Scales entire subset by an amount
-
-        Parameters
-        ----------
-
-        amount : Real | Tuple[Real, Real]
-            The amount to scale in horizontal and vertical direction
-
-        :return: The same instance
-        :rtype: SubSetR2
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.scale(2, 3)
-
-        """
-        raise NotImplementedError
-
-    def rotate(self, angle: Angle) -> IGeometricCurve:
-        """
-        Rotates entire shape around the origin by an amount
-
-        Parameters
-        ----------
-
-        angle : Angle
-            The amount to rotate around origin
-
-        :return: The same instance
-        :rtype: SubSetR2
-
-        Example use
-        -----------
-        >>> from shapepy import Primitive
-        >>> circle = Primitive.circle()
-        >>> circle.rotate(degrees(90))
-
-        """
-        raise NotImplementedError
 
 
 class IParametrizedCurve(IGeometricCurve):
