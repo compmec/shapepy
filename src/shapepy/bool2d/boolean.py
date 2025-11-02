@@ -383,7 +383,7 @@ class GraphComputer:
         if isinstance(subset, SimpleShape):
             yield (True, subset.jordan)
         elif Is.instance(subset, (ConnectedShape, DisjointShape)):
-            for subshape in subset.subshapes:
+            for subshape in subset:
                 yield from GraphComputer.extract(subshape)
         elif Is.instance(subset, LazyNot):
             for var, jordan in GraphComputer.extract(~subset):

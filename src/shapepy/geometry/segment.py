@@ -18,8 +18,7 @@ from typing import Iterable, Optional, Tuple
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
 from ..loggers import debug
-from ..rbool import EmptyR1, IntervalR1, from_any, infimum, supremum
-from ..scalar.angle import Angle
+from ..rbool import IntervalR1, from_any
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
 from ..tools import Is, To, pairs, vectorize
@@ -152,7 +151,7 @@ class Segment(IParametrizedCurve):
         nodes = sorted(set(nodes) | set(self.knots))
         return tuple(self.section([ka, kb]) for ka, kb in pairs(nodes))
 
-    def extract(self, interval: IntervalR1) -> Segment:
+    def section(self, interval: IntervalR1) -> Segment:
         """Extracts a subsegment from the given segment"""
         interval = from_any(interval)
         if not Is.instance(interval, IntervalR1):

@@ -7,6 +7,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Iterable, Tuple
 
+from ..rbool import IntervalR1
 from ..scalar.reals import Real
 from .box import Box
 from .point import Point2D

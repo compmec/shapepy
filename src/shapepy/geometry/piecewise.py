@@ -8,7 +8,6 @@ from typing import Iterable, List, Tuple, Union
 
 from ..loggers import debug
 from ..rbool import IntervalR1, from_any, infimum, supremum
-from ..scalar.angle import Angle
 from ..scalar.reals import Real
 from ..tools import Is, NotContinousError, To, vectorize
 from .base import IParametrizedCurve
@@ -139,23 +138,6 @@ class PiecewiseCurve(IParametrizedCurve):
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
-
-    @debug("shapepy.geometry.piecewise")
-    def move(self, vector: Point2D) -> PiecewiseCurve:
-        vector = To.point(vector)
-        self.__segments = tuple(seg.move(vector) for seg in self)
-        return self
-
-    @debug("shapepy.geometry.piecewise")
-    def scale(self, amount: Union[Real, Tuple[Real, Real]]) -> Segment:
-        self.__segments = tuple(seg.scale(amount) for seg in self)
-        return self
-
-    @debug("shapepy.geometry.piecewise")
-    def rotate(self, angle: Angle) -> Segment:
-        angle = To.angle(angle)
-        self.__segments = tuple(seg.rotate(angle) for seg in self)
-        return self
 
     @debug("shapepy.geometry.piecewise")
     def section(self, interval: IntervalR1) -> PiecewiseCurve:
