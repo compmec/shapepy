@@ -17,7 +17,7 @@ from typing import Iterable, Optional, Tuple, Union
 
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
-from ..loggers import debug
+from ..loggers import debug, get_logger
 from ..rbool import IntervalR1, SubSetR1, extract_knots, from_any
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
@@ -78,6 +78,8 @@ class Segment(IParametrizedCurve):
 
     @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Point2D:
+        if node not in self.domain:
+            raise ValueError(f"Node {node} out of domain {self.domain}")
         xcoord = self.xfunc(node, derivate)
         ycoord = self.yfunc(node, derivate)
         return cartesian(xcoord, ycoord)
@@ -172,6 +174,18 @@ class Segment(IParametrizedCurve):
         if not Is.instance(interval, IntervalR1):
             raise TypeError
         return Segment(self.xfunc, self.yfunc, self.domain)
+
+    def shift(self, amount):
+        xfunc = self.xfunc.shift(amount)
+        yfunc = self.yfunc.shift(amount)
+        domain = self.domain.move(amount)
+        return Segment(xfunc, yfunc, domain)
+
+    def scale(self, amount):
+        xfunc = self.xfunc.scale(amount)
+        yfunc = self.yfunc.scale(amount)
+        domain = self.domain.scale(amount)
+        return Segment(xfunc, yfunc, domain)
 
 
 @debug("shapepy.geometry.segment")

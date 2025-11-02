@@ -153,14 +153,17 @@ class PiecewiseCurve(IParametrizedCurve):
         index = self.span(node)
         if index is None:
             raise ValueError(f"Node {node} is out of bounds")
-        knota, knotb = self.knots[index], self.knots[index + 1]
-        unitparam = (node - knota) / (knotb - knota)
-        segment = self[index]
-        return segment(unitparam, derivate)
+        return self[index](node, derivate)
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
+
+    def shift(self, amount):
+        return PiecewiseCurve(seg.shift(amount) for seg in self)
+
+    def scale(self, amount):
+        return PiecewiseCurve(seg.scale(amount) for seg in self)
 
 
 def is_piecewise(obj: object) -> bool:

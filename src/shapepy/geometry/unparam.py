@@ -9,7 +9,7 @@ from typing import Iterable
 
 from ..scalar.reals import Real
 from ..tools import Is
-from .base import IGeometricCurve
+from .base import Future, IGeometricCurve
 from .box import Box
 from .piecewise import PiecewiseCurve
 from .point import Point2D
@@ -51,12 +51,12 @@ class USegment(IGeometricCurve):
     @property
     def start_point(self) -> Point2D:
         """Gives the start point of the USegment"""
-        return self.__segment(0)
+        return self.__segment(self.__segment.knots[0])
 
     @property
     def end_point(self) -> Point2D:
         """Gives the end point of the USegment"""
-        return self.__segment(1)
+        return self.__segment(self.__segment.knots[-1])
 
     def box(self) -> Box:
         """
@@ -73,7 +73,9 @@ class USegment(IGeometricCurve):
             raise TypeError
         segi = self.parametrize()
         segj = other.parametrize()
-        return segi(0) == segj(0) and segi(1) == segj(1)
+        return segi(segi.knots[0]) == segj(segj.knots[0]) and segi(
+            segi.knots[-1]
+        ) == segj(segj.knots[-1])
 
 
 class UPiecewiseCurve(IGeometricCurve):
@@ -81,6 +83,9 @@ class UPiecewiseCurve(IGeometricCurve):
 
     def __init__(self, usegments: Iterable[USegment]):
         self.__usegments = tuple(usegments)
+
+    def __iter__(self):
+        yield from self.__usegments
 
     @property
     def length(self) -> Real:
@@ -91,7 +96,10 @@ class UPiecewiseCurve(IGeometricCurve):
 
     def parametrize(self) -> PiecewiseCurve:
         """Gives a parametrized curve"""
-        return PiecewiseCurve(useg.parametrize() for useg in self.__usegments)
+        result = Future.concatenate(self.__usegments)
+        if Is.instance(result, USegment):
+            return result.parametrize()
+        return Future.concatenate(useg.parametrize() for useg in result)
 
 
 def clean_usegment(usegment: USegment) -> USegment:

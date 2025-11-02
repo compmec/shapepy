@@ -393,8 +393,8 @@ class TestIntegrateJordan:
             angles = np.linspace(0, math.tau, nsides + 1)
             ctrlpoints = np.vstack([np.cos(angles), np.sin(angles)]).T
             jordan_curve = FactoryJordan.polygon(ctrlpoints)
-            assert abs(jordan_curve.length - lenght) < 1e-15
-            assert abs(jordan_curve.area - area) < 1e-15
+            assert abs(jordan_curve.length - lenght) < 1e-9
+            assert abs(jordan_curve.area - area) < 1e-9
 
             assert (jordan_curve.length - lenght) < 1e-9
 

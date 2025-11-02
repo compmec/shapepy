@@ -29,8 +29,8 @@ class Future:
 
     @staticmethod
     def concatenate(
-        curves: Iterable[IParametrizedCurve],
-    ) -> IParametrizedCurve:
+        curves: Iterable[IGeometricCurve],
+    ) -> IGeometricCurve:
         """Method that computes the concatenation of two curves
 
         It is overwritten to `concatenate` function in `concatenate.py`
@@ -88,6 +88,14 @@ class IParametrizedCurve(IGeometricCurve):
         """
         The domain of validity of the curve
         """
+        raise NotImplementedError
+
+    def shift(self, amount: Real) -> IParametrizedCurve:
+        """Shifts the domain of the parametrized curve"""
+        raise NotImplementedError
+
+    def scale(self, amount: Real) -> IParametrizedCurve:
+        """Scales the domain of the parametrized curve"""
         raise NotImplementedError
 
     @abstractmethod

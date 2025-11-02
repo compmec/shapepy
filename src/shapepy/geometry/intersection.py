@@ -270,8 +270,8 @@ class IntersectionSegments:
     def lines(curvea: Segment, curveb: Segment) -> Tuple[SubSetR1, SubSetR1]:
         """Finds the intersection of two line segments"""
         empty = EmptyR1()
-        A0, A1 = curvea(0), curvea(1)
-        B0, B1 = curveb(0), curveb(1)
+        A0, A1 = curvea(curvea.knots[0]), curvea(curvea.knots[-1])
+        B0, B1 = curveb(curveb.knots[0]), curveb(curveb.knots[-1])
         dA = A1 - A0
         dB = B1 - B0
         B0mA0 = B0 - A0

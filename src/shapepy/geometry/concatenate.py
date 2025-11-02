@@ -4,15 +4,15 @@ Contains methods to concatenate curves
 
 from typing import Iterable, Union
 
-from ..analytic import Bezier
-from ..tools import Is, NotExpectedError
+from ..loggers import debug
+from ..tools import Is, NotExpectedError, pairs
 from .base import IGeometricCurve
 from .piecewise import PiecewiseCurve
-from .point import cross
 from .segment import Segment
 from .unparam import UPiecewiseCurve, USegment
 
 
+@debug("shapepy.geometry.concatenate")
 def concatenate(curves: Iterable[IGeometricCurve]) -> IGeometricCurve:
     """
     Concatenates the given curves.
@@ -29,6 +29,7 @@ def concatenate(curves: Iterable[IGeometricCurve]) -> IGeometricCurve:
     raise NotExpectedError(str(tuple(str(type(c)) for c in curves)))
 
 
+@debug("shapepy.geometry.concatenate")
 def concatenate_usegments(
     usegments: Iterable[USegment],
 ) -> Union[USegment, UPiecewiseCurve]:
@@ -37,7 +38,12 @@ def concatenate_usegments(
     """
     usegments = tuple(usegments)
     assert all(Is.instance(useg, USegment) for useg in usegments)
-    union = concatenate_segments(useg.parametrize() for useg in usegments)
+    segments = list(useg.parametrize() for useg in usegments)
+    for i in range(len(segments) - 1):
+        delta = segments[i].knots[-1] - segments[i + 1].knots[0]
+        segments[i + 1] = segments[i + 1].shift(delta)
+
+    union = concatenate_segments(segments)
     return (
         USegment(union)
         if Is.instance(union, Segment)
@@ -45,6 +51,7 @@ def concatenate_usegments(
     )
 
 
+@debug("shapepy.geometry.concatenate")
 def concatenate_segments(
     segments: Iterable[Segment],
 ) -> Union[Segment, PiecewiseCurve]:
@@ -54,15 +61,19 @@ def concatenate_segments(
     segments = tuple(segments)
     if len(segments) == 0:
         raise ValueError(f"Number sizes: {len(segments)}")
+    for segi, segj in pairs(segments):
+        if segi.knots[-1] != segj.knots[0]:
+            raise ValueError(f"Invalid domains: {segi.domain}|{segj.domain}")
     filtsegments = []
     segments = iter(segments)
     segmenti = next(segments)
     for segmentj in segments:
-        try:
-            segmenti = bezier_and_bezier(segmenti, segmentj)
-        except ValueError:
+        union = bezier_and_bezier(segmenti, segmentj)
+        if union is None:
             filtsegments.append(segmenti)
             segmenti = segmentj
+        else:
+            segmenti = union
     filtsegments.append(segmenti)
     return (
         PiecewiseCurve(filtsegments)
@@ -71,25 +82,17 @@ def concatenate_segments(
     )
 
 
+@debug("shapepy.geometry.concatenate")
 def bezier_and_bezier(curvea: Segment, curveb: Segment) -> Segment:
     """Computes the union of two bezier curves"""
-    if not Is.instance(curvea, Segment):
-        raise TypeError(f"Invalid type: {type(curvea)}")
-    if not Is.instance(curveb, Segment):
-        raise TypeError(f"Invalid type: {type(curveb)}")
-    if abs(cross(curvea(1, 1), curveb(0, 1))) > 1e-6:
-        raise ValueError
-    if curvea.xfunc.degree != curveb.xfunc.degree:
-        raise ValueError
-    if curvea.yfunc.degree != curveb.yfunc.degree:
-        raise ValueError
-    if curvea.xfunc.degree > 1 or curvea.yfunc.degree > 1:
-        raise ValueError
 
-    if curvea(1) != curveb(0):
-        raise ValueError
-    startpoint = curvea(0)
-    endpoint = curveb(1)
-    nxfunc = Bezier((startpoint[0], endpoint[0]))
-    nyfunc = Bezier((startpoint[1], endpoint[1]))
-    return Segment(nxfunc, nyfunc)
+    if (
+        not Is.instance(curvea, Segment)
+        or not Is.instance(curveb, Segment)
+        or curvea.knots[-1] != curveb.knots[0]
+        or curvea.xfunc != curveb.xfunc
+        or curvea.yfunc != curveb.yfunc
+    ):
+        return None
+
+    return Segment(curvea.xfunc, curveb.yfunc, curvea.domain | curveb.domain)

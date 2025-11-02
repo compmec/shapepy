@@ -4,7 +4,7 @@ Tests the PiecewiseCurve class
 
 import pytest
 
-from shapepy.geometry.factory import FactorySegment
+from shapepy.geometry.factory import FactoryPiecewise, FactorySegment
 from shapepy.geometry.piecewise import PiecewiseCurve
 
 
@@ -24,28 +24,35 @@ def test_begin():
 @pytest.mark.order(14)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_build():
+    vertices = [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+    FactoryPiecewise.polygonal(vertices)
+
     points = [
         ((0, 0), (1, 0)),
         ((1, 0), (1, 1)),
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    segments = tuple(map(FactorySegment.bezier, points))
-    PiecewiseCurve(segments)
+    FactoryPiecewise.bezier(points)
 
 
 @pytest.mark.order(14)
 @pytest.mark.dependency(depends=["test_build"])
 def test_box():
+
+    vertices = [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+    piecewise = FactoryPiecewise.polygonal(vertices)
+    box = piecewise.box()
+    assert box.lowpt == (0, 0)
+    assert box.toppt == (1, 1)
+
     points = [
         ((0, 0), (1, 0)),
         ((1, 0), (1, 1)),
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    piecewise = PiecewiseCurve(segments)
+    piecewise = FactoryPiecewise.bezier(points)
     box = piecewise.box()
     assert box.lowpt == (0, 0)
     assert box.toppt == (1, 1)
@@ -54,15 +61,19 @@ def test_box():
 @pytest.mark.order(14)
 @pytest.mark.dependency(depends=["test_build"])
 def test_evaluate():
+    vertices = [(0, 0), (1, 0), (1, 1), (0, 1), (0, 0)]
+    piecewise = FactoryPiecewise.polygonal(vertices)
+    box = piecewise.box()
+    assert box.lowpt == (0, 0)
+    assert box.toppt == (1, 1)
+
     points = [
         ((0, 0), (1, 0)),
         ((1, 0), (1, 1)),
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    piecewise = PiecewiseCurve(segments)
+    piecewise = FactoryPiecewise.bezier(points)
     assert piecewise(0) == (0, 0)
     assert piecewise(1) == (1, 0)
     assert piecewise(2) == (1, 1)
@@ -84,9 +95,7 @@ def test_print():
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    piecewise = PiecewiseCurve(segments)
+    piecewise = FactoryPiecewise.bezier(points)
     str(piecewise)
     repr(piecewise)
 

@@ -7,6 +7,7 @@ from fractions import Fraction
 import pytest
 
 from shapepy.geometry.factory import FactorySegment
+from shapepy.loggers import enable_logger
 
 
 @pytest.mark.order(13)
@@ -127,14 +128,15 @@ class TestSplitUnite:
         half = Fraction(1, 2)
         points = [(0, 0), (1, 0)]
         curve = FactorySegment.bezier(points)
-        curvea = FactorySegment.bezier([(0, 0), (half, 0)])
-        curveb = FactorySegment.bezier([(half, 0), (1, 0)])
+        curvea = FactorySegment.bezier([(0, 0), (half, 0)], [0, half])
+        curveb = FactorySegment.bezier([(half, 0), (1, 0)], [half, 1])
         assert curve.extract([0, half]) == curvea
         assert curve.extract([half, 1]) == curveb
         assert curve.split([half]) == (curvea, curveb)
 
-        test = curvea | curveb
-        assert test == curve
+        with enable_logger("shapepy.geometry"):
+            test = curvea | curveb
+            assert test == curve
 
     @pytest.mark.order(13)
     @pytest.mark.timeout(10)
