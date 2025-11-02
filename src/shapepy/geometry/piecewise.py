@@ -8,8 +8,9 @@ from collections import defaultdict
 from typing import Iterable, Tuple, Union
 
 from ..loggers import debug
+from ..rbool import SubSetR1, create_interval
 from ..scalar.reals import Real
-from ..tools import Is, To, vectorize
+from ..tools import Is, To, pairs, vectorize
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D
@@ -21,23 +22,22 @@ class PiecewiseCurve(IParametrizedCurve):
     Defines a piecewise curve that is the concatenation of several segments.
     """
 
-    def __init__(
-        self,
-        segments: Iterable[Segment],
-        knots: Union[None, Iterable[Real]] = None,
-    ):
-        segments = tuple(segments)
+    def __init__(self, segments: Iterable[Segment]):
+        segments: Tuple[Segment, ...] = tuple(segments)
         if not all(Is.instance(seg, Segment) for seg in segments):
             raise ValueError("All segments must be instances of Segment")
-        if knots is None:
-            knots = tuple(map(To.rational, range(len(segments) + 1)))
-        else:
-            knots = tuple(sorted(map(To.finite, knots)))
-        for segi, segj in zip(segments, segments[1:]):
-            if segi(1) != segj(0):
-                raise ValueError("Not Continuous curve")
+
+        for segi, segj in pairs(segments):
+            if segi.knots[-1] != segj.knots[0]:
+                raise ValueError(f"{segi.domain} =|= {segj.domain}")
+            knot = segi.knots[-1]
+            if segi(knot) != segj(knot):
+                raise ValueError(f"Not Continuous curve at {knot}")
+        knots = list(seg.knots[0] for seg in segments)
+        knots.append(segments[-1].knots[-1])
         self.__segments = segments
-        self.__knots = knots
+        self.__knots = tuple(knots)
+        self.__domain = create_interval(knots[0], knots[-1])
 
     def __str__(self):
         msgs = []
@@ -46,6 +46,10 @@ class PiecewiseCurve(IParametrizedCurve):
             msg = f"{interval}: {segmenti}"
             msgs.append(msg)
         return r"{" + ", ".join(msgs) + r"}"
+
+    @property
+    def domain(self) -> SubSetR1:
+        return self.__domain
 
     @property
     def knots(self) -> Tuple[Real]:

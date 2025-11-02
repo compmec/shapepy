@@ -36,10 +36,10 @@ def move(curve: IGeometricCurve, vector: Point2D) -> IGeometricCurve:
     if Is.instance(curve, Segment):
         newxfunc = curve.xfunc + vector.xcoord
         newyfunc = curve.yfunc + vector.ycoord
-        return Segment(newxfunc, newyfunc)
+        return Segment(newxfunc, newyfunc, curve.domain)
     if Is.instance(curve, PiecewiseCurve):
         newsegs = (move(seg, vector) for seg in curve)
-        return PiecewiseCurve(newsegs, curve.knots)
+        return PiecewiseCurve(newsegs)
     if not Is.instance(curve, IParametrizedCurve):
         return curve.__class__(move(curve.parametrize(), vector))
     raise NotExpectedError(f"Invalid typo: {type(curve)}")
@@ -70,10 +70,10 @@ def scale(
     if Is.instance(curve, Segment):
         newxfunc = curve.xfunc * (amount if Is.real(amount) else amount[0])
         newyfunc = curve.yfunc * (amount if Is.real(amount) else amount[1])
-        return Segment(newxfunc, newyfunc)
+        return Segment(newxfunc, newyfunc, curve.domain)
     if Is.instance(curve, PiecewiseCurve):
         newsegs = (scale(seg, amount) for seg in curve)
-        return PiecewiseCurve(newsegs, curve.knots)
+        return PiecewiseCurve(newsegs)
     if not Is.instance(curve, IParametrizedCurve):
         return curve.__class__(scale(curve.parametrize(), amount))
     raise NotExpectedError(f"Invalid typo: {type(curve)}")
@@ -104,10 +104,10 @@ def rotate(curve: IGeometricCurve, angle: Angle) -> IGeometricCurve:
         cos, sin = angle.cos(), angle.sin()
         newxfunc = cos * curve.xfunc - sin * curve.yfunc
         newyfunc = sin * curve.xfunc + cos * curve.yfunc
-        return Segment(newxfunc, newyfunc)
+        return Segment(newxfunc, newyfunc, curve.domain)
     if Is.instance(curve, PiecewiseCurve):
         newsegs = (rotate(seg, angle) for seg in curve)
-        return PiecewiseCurve(newsegs, curve.knots)
+        return PiecewiseCurve(newsegs)
     if not Is.instance(curve, IParametrizedCurve):
         return curve.__class__(rotate(curve.parametrize(), angle))
     raise NotExpectedError(f"Invalid typo: {type(curve)}")

@@ -7,6 +7,7 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from typing import Iterable, Tuple
 
+from ..rbool import SubSetR1
 from ..scalar.reals import Real
 from .box import Box
 from .point import Point2D
@@ -78,6 +79,14 @@ class IParametrizedCurve(IGeometricCurve):
         """
         The length of the curve
         If the curve is not bounded, returns infinity
+        """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
+    def domain(self) -> SubSetR1:
+        """
+        The domain of validity of the curve
         """
         raise NotImplementedError
 
