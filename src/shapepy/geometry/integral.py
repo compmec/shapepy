@@ -4,11 +4,14 @@ Contains functions to integrate over a segment
 
 from __future__ import annotations
 
-from copy import copy
 from functools import partial
 
 from ..analytic.base import IAnalytic
-from ..analytic.tools import find_minimum
+from ..analytic.tools import (
+    derivate_analytic,
+    find_minimum,
+    integrate_analytic,
+)
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math
 from ..tools import Is, To
@@ -37,11 +40,11 @@ class IntegrateSegment:
         assert Is.instance(curve, Segment)
         xfunc = curve.xfunc
         yfunc = curve.yfunc
-        pcrossdp = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
+        pcrossdp = xfunc * derivate_analytic(yfunc)
+        pcrossdp -= yfunc * derivate_analytic(xfunc)
         function = (xfunc**expx) * (yfunc**expy) * pcrossdp
-        assert Is.analytic(function)
-        ipoly = function.integrate()
-        return (ipoly(1) - ipoly(0)) / (expx + expy + 2)
+        assert Is.instance(function, IAnalytic)
+        return integrate_analytic(function, [0, 1]) / (expx + expy + 2)
 
     @staticmethod
     def turns(curve: Segment, point: Point2D) -> float:
@@ -61,9 +64,8 @@ class IntegrateSegment:
         radius_square = deltax * deltax + deltay * deltay
         if find_minimum(radius_square, [0, 1]) < 1e-6:
             return To.rational(1, 2)
-        crossf = (
-            deltax * copy(deltay).derivate() - deltay * copy(deltax).derivate()
-        )
+        crossf = deltax * derivate_analytic(deltay)
+        crossf -= deltay * derivate_analytic(deltax)
         function = partial(
             lambda t, cf, rs: cf(t) / rs(t), cf=crossf, rs=radius_square
         )
