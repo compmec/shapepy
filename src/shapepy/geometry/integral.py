@@ -7,11 +7,7 @@ from __future__ import annotations
 from functools import partial
 
 from ..analytic.base import IAnalytic
-from ..analytic.tools import (
-    derivate_analytic,
-    find_minimum,
-    integrate_analytic,
-)
+from ..analytic.tools import find_minimum
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math
 from ..tools import Is, To
@@ -40,11 +36,11 @@ class IntegrateSegment:
         assert Is.instance(curve, Segment)
         xfunc = curve.xfunc
         yfunc = curve.yfunc
-        pcrossdp = xfunc * derivate_analytic(yfunc)
-        pcrossdp -= yfunc * derivate_analytic(xfunc)
+        pcrossdp = xfunc * yfunc.derivate()
+        pcrossdp -= yfunc * xfunc.derivate()
         function = (xfunc**expx) * (yfunc**expy) * pcrossdp
         assert Is.instance(function, IAnalytic)
-        return integrate_analytic(function, [0, 1]) / (expx + expy + 2)
+        return function.integrate([0, 1]) / (expx + expy + 2)
 
     @staticmethod
     def turns(curve: Segment, point: Point2D) -> float:
@@ -64,8 +60,8 @@ class IntegrateSegment:
         radius_square = deltax * deltax + deltay * deltay
         if find_minimum(radius_square, [0, 1]) < 1e-6:
             return To.rational(1, 2)
-        crossf = deltax * derivate_analytic(deltay)
-        crossf -= deltay * derivate_analytic(deltax)
+        crossf = deltax * deltay.derivate()
+        crossf -= deltay * deltax.derivate()
         function = partial(
             lambda t, cf, rs: cf(t) / rs(t), cf=crossf, rs=radius_square
         )

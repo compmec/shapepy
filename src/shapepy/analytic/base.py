@@ -84,6 +84,52 @@ class IAnalytic(ABC):
     def __mul__(self, other: Union[Real, IAnalytic]) -> IAnalytic:
         raise NotImplementedError
 
+    @abstractmethod
+    def derivate(self, times: int = 1) -> IAnalytic:
+        """
+        Derivate the polynomial curve, giving a new one
+
+        Example
+        -------
+        >>> poly = Polynomial([1, 2, 5])
+        >>> print(poly)
+        1 + 2 * t + 5 * t^2
+        >>> dpoly = derivate(poly)
+        >>> print(dpoly)
+        2 + 10 * t
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def integrate(self, domain: SubSetR1) -> Real:
+        """
+        Derivate the polynomial curve, giving a new one
+
+        Example
+        -------
+        >>> poly = Polynomial([1, 2, 5])
+        >>> print(poly)
+        1 + 2 * t + 5 * t^2
+        >>> dpoly = derivate(poly)
+        >>> print(dpoly)
+        2 + 10 * t
+        """
+        raise NotImplementedError
+
+    @abstractmethod
+    def compose(self, function: IAnalytic) -> IAnalytic:
+        """
+        Compose the analytic function: h(x) = f(g(x))
+
+        Example
+        -------
+        >>> f = Polynomial([0, 0, 1])  # f(x) = x^2
+        >>> g = Polynomial([-1, 1])  # f(x) = x - 1
+        >>> f.compose(g)  # h(x) = (x - 1)^2
+        1 - 2 * x + x^2
+        """
+        raise NotImplementedError
+
     def __neg__(self) -> IAnalytic:
         return -1 * self
 

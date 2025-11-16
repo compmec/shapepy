@@ -5,7 +5,6 @@ import pytest
 
 from shapepy.analytic.bezier import Bezier
 from shapepy.analytic.polynomial import Polynomial
-from shapepy.analytic.tools import scale_domain, shift_domain
 
 
 def generator_analytic(quantity: int):
@@ -177,7 +176,7 @@ def test_shift():
     tsample = np.linspace(-1, 1, 17)
     for funca in generator_analytic(100):
         amount = random.randint(-5, 5)
-        funcb = shift_domain(funca, amount)
+        funcb = funca.compose(Polynomial([amount, 1]))
         valuesa = funca(tsample)
         valuesb = funcb(amount + tsample)
         np.testing.assert_allclose(valuesa, valuesb)
@@ -201,7 +200,7 @@ def test_scale():
     tsample = np.linspace(-1, 1, 17)
     for funca in generator_analytic(100):
         amount = random.randint(2, 5)
-        funcb = scale_domain(funca, amount)
+        funcb = funca.compose(Polynomial([0, amount]))
         valuesa = funca(tsample)
         valuesb = funcb(amount * tsample)
         np.testing.assert_allclose(valuesa, valuesb, atol=1e-12, rtol=1)

@@ -7,7 +7,7 @@ from __future__ import annotations
 from numbers import Real
 from typing import Iterable, List, Union
 
-from ..rbool import SubSetR1, WholeR1, from_any
+from ..rbool import IntervalR1, SubSetR1, WholeR1, from_any, move, scale
 from ..scalar.reals import Math
 from ..tools import Is, To
 from .base import IAnalytic
@@ -127,6 +127,55 @@ class Polynomial(IAnalytic):
         for coef in coefs[::-1]:
             result = node * result + coef
         return result
+
+    def derivate(self, times=1):
+        if self.degree < times:
+            return Polynomial([0 * self[0]], self.domain)
+        coefs = (
+            Math.factorial(n + times) // Math.factorial(n) * coef
+            for n, coef in enumerate(self[times:])
+        )
+        return Polynomial(coefs, self.domain)
+
+    def integrate(self, domain):
+        domain = from_any(domain)
+        if domain not in self.domain:
+            raise ValueError(
+                f"Given domain {domain} is not subset of {self.domain}"
+            )
+        if not Is.instance(domain, IntervalR1):
+            raise ValueError(f"Cannot integrate over {domain}")
+        left, right = domain[0], domain[1]
+        potencias = [1]
+        result = 0
+        for i, coef in enumerate(self):
+            result += coef * sum(potencias) / (i + 1)
+            potencias.append(right * potencias[-1])
+            for j in range(i + 1):
+                potencias[j] *= left
+        return result * (right - left)
+
+    def compose(self, function: IAnalytic) -> Polynomial:
+        if not Is.instance(function, Polynomial):
+            raise TypeError(f"Analytic {type(function)} is not suported")
+        if function.degree != 1:
+            raise ValueError("Only polynomials of degree = 1 are allowed")
+        shift_amount, scale_amount = tuple(function)
+        coefs = list(self)
+        domain = self.domain
+        if scale_amount != 1:
+            inv = 1 / scale_amount
+            coefs = list(coef * inv**i for i, coef in enumerate(self))
+            domain = scale(domain, scale_amount)
+        if shift_amount != 0:
+            for i, coef in enumerate(tuple(coefs)):
+                for j in range(i):
+                    value = Math.binom(i, j) * (shift_amount ** (i - j))
+                    if (i + j) % 2:
+                        value *= -1
+                    coefs[j] += coef * value
+            domain = move(domain, shift_amount)
+        return Polynomial(coefs, domain)
 
     def __repr__(self):
         return str(self.domain) + ": " + self.__str__()

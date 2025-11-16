@@ -16,12 +16,8 @@ from copy import copy
 from typing import Iterable, Optional, Tuple
 
 from ..analytic.base import IAnalytic
-from ..analytic.tools import (
-    derivate_analytic,
-    find_minimum,
-    scale_domain,
-    shift_domain,
-)
+from ..analytic.bezier import Bezier
+from ..analytic.tools import find_minimum
 from ..loggers import debug
 from ..rbool import IntervalR1, from_any
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
@@ -110,8 +106,8 @@ class Segment(IParametrizedCurve):
         """
         if not Is.integer(times) or times <= 0:
             raise ValueError(f"Times must be integer >= 1, not {times}")
-        dxfunc = derivate_analytic(self.xfunc, times)
-        dyfunc = derivate_analytic(self.yfunc, times)
+        dxfunc = self.xfunc.derivate(times)
+        dyfunc = self.yfunc.derivate(times)
         return Segment(dxfunc, dyfunc)
 
     def box(self) -> Box:
@@ -136,13 +132,9 @@ class Segment(IParametrizedCurve):
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
-        half = To.rational(1, 2)
-        xfunc = shift_domain(
-            scale_domain(shift_domain(self.__xfunc, -half), -1), half
-        )
-        yfunc = shift_domain(
-            scale_domain(shift_domain(self.__yfunc, -half), -1), half
-        )
+        composition = Bezier([1, 0])
+        xfunc = self.__xfunc.compose(composition)
+        yfunc = self.__yfunc.compose(composition)
         return Segment(xfunc, yfunc)
 
     def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
@@ -160,8 +152,9 @@ class Segment(IParametrizedCurve):
             raise TypeError
         knota, knotb = interval[0], interval[1]
         denom = 1 / (knotb - knota)
-        nxfunc = scale_domain(shift_domain(self.xfunc, -knota), denom)
-        nyfunc = scale_domain(shift_domain(self.yfunc, -knota), denom)
+        composition = Bezier([(-knota) * denom, (1 - knota) * denom])
+        nxfunc = self.xfunc.compose(composition)
+        nyfunc = self.yfunc.compose(composition)
         return Segment(nxfunc, nyfunc)
 
 
@@ -171,10 +164,7 @@ def compute_length(segment: Segment) -> Real:
     Computes the length of the jordan curve
     """
     domain = (0, 1)
-    dpsquare = (
-        derivate_analytic(segment.xfunc) ** 2
-        + derivate_analytic(segment.yfunc) ** 2
-    )
+    dpsquare = segment.xfunc.derivate() ** 2 + segment.yfunc.derivate() ** 2
     assert Is.instance(dpsquare, IAnalytic)
     if dpsquare == dpsquare(0):  # Check if it's constant
         return (domain[1] - domain[0]) * Math.sqrt(dpsquare(0))

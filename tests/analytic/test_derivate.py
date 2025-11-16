@@ -2,8 +2,6 @@ import pytest
 
 from shapepy.analytic.bezier import Bezier
 from shapepy.analytic.polynomial import Polynomial
-from shapepy.analytic.tools import derivate_analytic
-from shapepy.tools import To
 
 
 @pytest.mark.order(9)
@@ -21,16 +19,16 @@ def test_begin():
 @pytest.mark.order(9)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_polynomial():
-    poly = To.polynomial([0])
-    assert derivate_analytic(poly) == 0
+    poly = Polynomial([0])
+    assert poly.derivate() == 0
 
-    poly = To.polynomial([3])
-    assert derivate_analytic(poly) == 0
+    poly = Polynomial([3])
+    assert poly.derivate() == 0
 
-    poly = To.polynomial([1, 1, 1, 1, 1])
-    assert derivate_analytic(poly, 1) == Polynomial([1, 2, 3, 4])
-    assert derivate_analytic(poly, 2) == Polynomial([2, 6, 12])
-    assert derivate_analytic(poly, 3) == Polynomial([6, 24])
+    poly = Polynomial([1, 1, 1, 1, 1])
+    assert poly.derivate(1) == Polynomial([1, 2, 3, 4])
+    assert poly.derivate(2) == Polynomial([2, 6, 12])
+    assert poly.derivate(3) == Polynomial([6, 24])
 
     assert poly.eval(0, 1) == 1
     assert poly.eval(1, 1) == 10
@@ -41,14 +39,14 @@ def test_polynomial():
 @pytest.mark.order(9)
 @pytest.mark.dependency(depends=["test_begin"])
 def test_bezier():
-    bezier = To.bezier([0])
-    assert derivate_analytic(bezier) == 0
+    bezier = Bezier([0])
+    assert bezier.derivate() == 0
 
-    bezier = To.bezier([3])
-    assert derivate_analytic(bezier) == 0
+    bezier = Bezier([3])
+    assert bezier.derivate() == 0
 
-    bezier = To.bezier([1, 1, 1, 1, 1])
-    assert derivate_analytic(bezier) == 0
+    bezier = Bezier([1, 1, 1, 1, 1])
+    assert bezier.derivate() == 0
 
     assert bezier.eval(0, 1) == 0
     assert bezier.eval(1, 1) == 0

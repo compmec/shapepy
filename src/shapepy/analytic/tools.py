@@ -9,14 +9,11 @@ import numpy as np
 from ..loggers import debug
 from ..rbool import (
     EmptyR1,
-    IntervalR1,
     SingleR1,
     SubSetR1,
     WholeR1,
     extract_knots,
     from_any,
-    move,
-    scale,
     unite,
 )
 from ..scalar.reals import Math, Real
@@ -65,70 +62,6 @@ def find_minimum(
     raise NotExpectedError(f"Invalid analytic: {type(analytic)}")
 
 
-@debug("shapepy.analytic.tools")
-def derivate_analytic(analytic: IAnalytic, times: int = 1) -> IAnalytic:
-    """
-    Derivate the analytic curve, giving a new one[]
-    """
-    if Is.instance(analytic, Polynomial):
-        return PolynomialFunctions.derivate(analytic, times)
-    raise NotExpectedError(f"Invalid analytic: {type(analytic)}")
-
-
-@debug("shapepy.analytic.tools")
-def integrate_analytic(analytic: IAnalytic, domain: SubSetR1) -> IAnalytic:
-    """
-    Derivate the analytic curve, giving a new one[]
-    """
-    if domain not in analytic.domain:
-        raise ValueError(
-            f"Given domain {domain} is not subset of {analytic.domain}"
-        )
-    if Is.instance(analytic, Polynomial):
-        return PolynomialFunctions.integrate(analytic, domain)
-    raise NotExpectedError(f"Invalid analytic: {type(analytic)}")
-
-
-def shift_domain(analytic: IAnalytic, amount: Real) -> IAnalytic:
-    """
-    Transforms the analytic p(t) into p(t-d) by
-    translating the analytic by 'd' to the right.
-
-    Example
-    -------
-    >>> old_poly = Polynomial([0, 0, 0, 1])
-    >>> print(old_poly)
-    t^3
-    >>> new_poly = shift_domain(poly, 1)  # transform to (t-1)^3
-    >>> print(new_poly)
-    - 1 + 3 * t - 3 * t^2 + t^3
-    """
-    amount = To.finite(amount)
-    if Is.instance(analytic, Polynomial):
-        return PolynomialFunctions.shift_domain(analytic, amount)
-    raise NotExpectedError(f"Invalid analytic: {type(analytic)}")
-
-
-def scale_domain(analytic: IAnalytic, amount: Real) -> IAnalytic:
-    """
-    Transforms the analytic p(t) into p(A*t) by
-    scaling the argument of the analytic by 'A'.
-
-    Example
-    -------
-    >>> old_poly = Polynomial([0, 2, 0, 1])
-    >>> print(old_poly)
-    2 * t + t^3
-    >>> new_poly = scale_domain(poly, 2)
-    >>> print(new_poly)
-    4 * t + 8 * t^3
-    """
-    amount = To.finite(amount)
-    if Is.instance(analytic, Polynomial):
-        return PolynomialFunctions.scale_domain(analytic, amount)
-    raise NotExpectedError(f"Invalid analytic: {type(analytic)}")
-
-
 class PolynomialFunctions:
     """Static class that stores static functions used for the generics
     functions above. This class specifics for Polynomial"""
@@ -171,7 +104,7 @@ class PolynomialFunctions:
         if domain == WholeR1() and polynomial.degree % 2:
             return EmptyR1()
         relation = {knot: polynomial(knot) for knot in extract_knots(domain)}
-        critical = find_roots(derivate_analytic(polynomial), domain)
+        critical = find_roots(polynomial.derivate(), domain)
         for knot in extract_knots(critical):
             relation[knot] = polynomial(knot)
         minvalue = min(relation.values(), default=float("inf"))
@@ -200,106 +133,10 @@ class PolynomialFunctions:
             return Math.NEGINF
         relation = {}
         relation = {knot: polynomial(knot) for knot in extract_knots(domain)}
-        critical = find_roots(derivate_analytic(polynomial), domain)
+        critical = find_roots(polynomial.derivate(), domain)
         for knot in extract_knots(critical):
             relation[knot] = polynomial(knot)
         return min(
             (val for key, val in relation.items() if key in domain),
             default=None,
         )
-
-    @staticmethod
-    def derivate(polynomial: Polynomial, times: int = 1) -> Polynomial:
-        """
-        Derivate the polynomial curve, giving a new one
-
-        Example
-        -------
-        >>> poly = Polynomial([1, 2, 5])
-        >>> print(poly)
-        1 + 2 * t + 5 * t^2
-        >>> dpoly = derivate(poly)
-        >>> print(dpoly)
-        2 + 10 * t
-        """
-        if polynomial.degree < times:
-            return Polynomial([0 * polynomial[0]], polynomial.domain)
-        coefs = (
-            Math.factorial(n + times) // Math.factorial(n) * coef
-            for n, coef in enumerate(polynomial[times:])
-        )
-        return Polynomial(coefs, polynomial.domain)
-
-    @staticmethod
-    def integrate(polynomial: Polynomial, domain: SubSetR1) -> Polynomial:
-        """
-        Derivate the polynomial curve, giving a new one
-
-        Example
-        -------
-        >>> poly = Polynomial([1, 2, 5])
-        >>> print(poly)
-        1 + 2 * t + 5 * t^2
-        >>> dpoly = derivate(poly)
-        >>> print(dpoly)
-        2 + 10 * t
-        """
-        domain = from_any(domain)
-        if domain not in polynomial.domain:
-            raise ValueError(
-                f"Given domain {domain} is not subset of {polynomial.domain}"
-            )
-        if not Is.instance(domain, IntervalR1):
-            raise ValueError(f"Cannot integrate over {domain}")
-        left, right = domain[0], domain[1]
-        potencias = [1]
-        result = 0
-        for i, coef in enumerate(polynomial):
-            result += coef * sum(potencias) / (i + 1)
-            potencias.append(right * potencias[-1])
-            for j in range(i + 1):
-                potencias[j] *= left
-        return result * (right - left)
-
-    @staticmethod
-    def shift_domain(polynomial: Polynomial, amount: Real) -> Polynomial:
-        """
-        Transforms the analytic p(t) into p(t-d) by
-        translating the analytic by 'd' to the right.
-
-        Example
-        -------
-        >>> old_poly = Polynomial([0, 0, 0, 1])
-        >>> print(old_poly)
-        t^3
-        >>> new_poly = shift_domain(poly, 1)  # transform to (t-1)^3
-        >>> print(new_poly)
-        - 1 + 3 * t - 3 * t^2 + t^3
-        """
-        newcoefs = list(polynomial)
-        for i, coef in enumerate(polynomial):
-            for j in range(i):
-                value = Math.binom(i, j) * (amount ** (i - j))
-                if (i + j) % 2:
-                    value *= -1
-                newcoefs[j] += coef * value
-        return Polynomial(newcoefs, move(polynomial.domain, amount))
-
-    @staticmethod
-    def scale_domain(polynomial: Polynomial, amount: Real) -> Polynomial:
-        """
-        Transforms the analytic p(t) into p(A*t) by
-        scaling the argument of the analytic by 'A'.
-
-        Example
-        -------
-        >>> old_poly = Polynomial([0, 2, 0, 1])
-        >>> print(old_poly)
-        2 * t + t^3
-        >>> new_poly = scale_domain(poly, 2)
-        >>> print(new_poly)
-        4 * t + 8 * t^3
-        """
-        inv = 1 / amount
-        coefs = tuple(coef * inv**i for i, coef in enumerate(polynomial))
-        return Polynomial(coefs, scale(polynomial.domain, amount))
