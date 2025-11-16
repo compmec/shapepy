@@ -5,89 +5,30 @@ is in fact, stores a list of spline-curves.
 
 from __future__ import annotations
 
-from collections import deque
-from copy import copy
-from typing import Iterable, Iterator
+from typing import Iterable, Iterator, List, Union
 
+from collections import deque
 from ..analytic import IAnalytic
-from ..loggers import debug
+from ..loggers import debug, get_logger
 from ..scalar.reals import Real
 from ..tools import CyclicContainer, Is, pairs, reverse
-from .base import IGeometricCurve
-from .box import Box
-from .piecewise import PiecewiseCurve
-from .point import Point2D
+from .point import Point2D, cross
 from .segment import Segment
-from .unparam import UPiecewiseCurve, USegment, clean_usegment, self_intersect
+from .unparam import UPiecewiseCurve, USegment, self_intersect
+from .base import Future
 
-
-def valid_segments_jordan(usegments: Iterable[USegment]) -> bool:
-    """Tells if the segments are valid to construct a jordan curve"""
-
-    if not all(Is.instance(u, (USegment, Segment)) for u in usegments):
-        raise ValueError(f"Invalid tipos: {tuple(map(type, usegments))}")
-    usegments = tuple(
-        USegment(s) if Is.instance(s, Segment) else s for s in usegments
-    )
-    if any(map(self_intersect, usegments)):
-        return False
-    for usegi, usegj in pairs(usegments, cyclic=True):
-        if usegi.end_point != usegj.start_point:
-            return False
-    return True
-
-
-class JordanCurve(IGeometricCurve):
+class JordanCurve(UPiecewiseCurve):
     """
     Jordan Curve is an arbitrary closed curve which doesn't intersect itself.
     It stores a list of 'segments', each segment is a bezier curve
     """
 
-    def __init__(self, usegments: Iterable[USegment]):
-        usegments = tuple(usegments)
-        if not valid_segments_jordan(usegments):
-            raise ValueError(
-                "Invalid segments: {"
-                + ", ".join(repr(useg.parametrize()) for useg in usegments)
-                + "}"
-            )
-
-        self.__usegments = CyclicContainer(usegments)
-        self.__piecewise = UPiecewiseCurve(self.__usegments).parametrize()
+    def __init__(self, usegments: Iterable[Union[Segment, USegment]]):
+        super().__init__(clean_jordan(usegments))
+        for usegi in self:
+            if self_intersect(usegi):
+                raise ValueError(f"Segment self-intersect! {usegi}")
         self.__area = None
-
-    def __copy__(self) -> JordanCurve:
-        return self.__deepcopy__(None)
-
-    def __deepcopy__(self, memo) -> JordanCurve:
-        """Returns a deep copy of the jordan curve"""
-        return self.__class__(map(copy, self))
-
-    def box(self) -> Box:
-        """The box which encloses the jordan curve
-
-        :return: The box which encloses the jordan curve
-        :rtype: Box
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> jordan.box()
-        Box with vertices (0, 0) and (4, 3)
-
-        """
-        box = None
-        for usegment in self:
-            box |= usegment.box()
-        return box
-
-    @property
-    def length(self) -> Real:
-        """The length of the curve"""
-        return sum(useg.length for useg in self)
 
     @property
     def area(self) -> Real:
@@ -95,43 +36,6 @@ class JordanCurve(IGeometricCurve):
         if self.__area is None:
             self.__area = compute_area(self)
         return self.__area
-
-    def parametrize(self) -> PiecewiseCurve:
-        """
-        Gives the piecewise curve
-        """
-        return self.__piecewise
-
-    @property
-    def piecewise(self) -> PiecewiseCurve:
-        """
-        Gives the internal piecewise curve
-        """
-        return self.__piecewise
-
-    def __iter__(self) -> Iterator[USegment]:
-        """Unparametrized Segments
-
-        When setting, it checks if the points are the same between
-        the junction of two segments to ensure a closed curve
-
-        :getter: Returns the tuple of connected planar beziers, not copy
-        :setter: Sets the segments of the jordan curve
-        :type: tuple[Segment]
-
-        Example use
-        -----------
-
-        >>> from shapepy import JordanCurve
-        >>> vertices = [(0, 0), (4, 0), (0, 3)]
-        >>> jordan = FactoryJordan.polygon(vertices)
-        >>> print(tuple(jordan))
-        (Segment (deg 1), Segment (deg 1), Segment (deg 1))
-        >>> print(tuple(jordan)[0])
-        Planar curve of degree 1 and control points ((0, 0), (4, 0))
-
-        """
-        yield from self.__usegments
 
     def vertices(self) -> Iterator[Point2D]:
         """Vertices
@@ -162,52 +66,43 @@ class JordanCurve(IGeometricCurve):
         )
 
     def __str__(self) -> str:
-        nsegs = len(self.__usegments)
-        msg = f"Jordan Curve with {nsegs} segments and vertices\n"
+        msg = f"Jordan Curve with {len(self)} segments and vertices\n"
         msg += str(self.vertices())
         return msg
 
     def __repr__(self) -> str:
-        nsegs = len(self.__usegments)
         box = self.box()
-        return f"JC[{nsegs}:{box.lowpt},{box.toppt}]"
+        return f"JC[{len(self)}:{box.lowpt},{box.toppt}]"
 
     def __eq__(self, other: JordanCurve) -> bool:
+        logger = get_logger("shapepy.geometry.jordancurve")
+        logger.info(f"     type: {type(other)}")
+        logger.info(f"     box: {self.box() == other.box()}")
+        logger.info(f"     len: {self.length == other.length}")
+        logger.info(
+            f"    area: {self.area == other.area}"
+        )
+        logger.info(
+            f"    all1: {all(point in self for point in other.vertices())}"
+        )
+        logger.info(
+            f"    all2: {all(point in other for point in self.vertices())}"
+        )
+        logger.info(
+            f"    cycl: {CyclicContainer(self) == CyclicContainer(other)}"
+        )
         return (
             Is.instance(other, JordanCurve)
             and self.box() == other.box()
             and self.length == other.length
+            and self.area == other.area
             and all(point in self for point in other.vertices())
             and all(point in other for point in self.vertices())
-            and CyclicContainer(self.clean()) == CyclicContainer(other.clean())
+            and CyclicContainer(self) == CyclicContainer(other)
         )
-
-    @debug("shapepy.geometry.jordancurve")
-    def clean(self) -> JordanCurve:
-        """Cleans the jordan curve"""
-        usegments = list(map(clean_usegment, self))
-        index = 0
-        while index + 1 < len(usegments):
-            union = usegments[index] | usegments[index + 1]
-            if not Is.instance(union, USegment):
-                index += 1
-            else:
-                usegments.pop(index)
-                usegments[index] = union
-        while len(usegments) > 1:
-            union = usegments[-1] | usegments[0]
-            if not Is.instance(union, USegment):
-                break
-            usegments.pop(0)
-            usegments[-1] = union
-        return JordanCurve(usegments)
 
     def __invert__(self) -> JordanCurve:
         return JordanCurve(reverse(~useg for useg in self))
-
-    def __contains__(self, point: Point2D) -> bool:
-        """Tells if the point is on the boundary"""
-        return any(point in useg for useg in self)
 
 
 @debug("shapepy.geometry.jordancurve")
@@ -229,14 +124,16 @@ def compute_area(jordan: JordanCurve) -> Real:
     return total / 2
 
 
-def clean_jordan(jordan: JordanCurve) -> JordanCurve:
+@debug("shapepy.geometry.jordan")
+def clean_jordan(
+    usegments: Iterable[Union[Segment, USegment]]
+) -> Iterator[Union[Segment, USegment]]:
     """Cleans the jordan curve
 
-    Removes the uncessary nodes from jordan curve,
-    for example, after calling ``split`` function
+    Removes the uncessary nodes from jordan curve
 
-    :return: The same curve
-    :rtype: JordanCurve
+    :return: The set of segments
+    :rtype: A set of segments
 
     Example use
     -----------
@@ -249,31 +146,27 @@ def clean_jordan(jordan: JordanCurve) -> JordanCurve:
     ((0, 0), (4, 0), (0, 3))
 
     """
-    usegments = deque(map(clean_usegment, jordan))
-    for _ in range(len(usegments) + 1):
-        union = usegments[0] | usegments[1]
-        if Is.instance(union, USegment):
-            usegments.popleft()
-            usegments.popleft()
-            usegments.appendleft(union)
+    logger = get_logger("shapepy.geometry.jordan")
+    logger.info(f"Segments = ")
+    usegments = deque(usegments)
+    endvectors = []
+    for i, usegment in enumerate(usegments):
+        segment = usegment.parametrize()
+        logger.info(f"    {i}: {segment}")
+        vectora = segment.eval(segment.knots[0], 1)
+        vectorb = segment.eval(segment.knots[-1], 1)
+        endvectors.append((vectora, vectorb))
+    crosses: List[Real] = []
+    for (_, vectb), (vecta, _) in pairs(endvectors, cyclic=True):
+        crosses.append(cross(vectb, vecta))
+    logger.info(f"End vectors = {endvectors}")
+    logger.info(f"Crosses = {crosses}")
+    if not any(c == 0 for c in crosses):
+        return usegments
+    for i, c in enumerate(crosses):
+        if c != 0:
+            break
         usegments.rotate()
-    return JordanCurve(usegments)
-
-
-def is_jordan(obj: object) -> bool:
-    """
-    Checks if the parameter is a Jordan Curve
-
-    Parameters
-    ----------
-    obj : The object to be tested
-
-    Returns
-    -------
-    bool
-        True if the obj is a Jordan Curve, False otherwise
-    """
-    return Is.instance(obj, JordanCurve)
-
-
-Is.jordan = is_jordan
+    usegments = Future.concatenate(usegments)
+    return usegments
+    

@@ -455,28 +455,24 @@ class TestOthers:
     def test_clean(self):
         verticesa = [(-1, 0), (0, 0), (1, 0), (0, 1)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1, 0), (1, 0), (0, 1)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb
 
         verticesa = [(-1.0, 0.0), (0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb
 
         verticesa = [(0, 0), (1, 0), (0, 1), (-1, 0)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1, 0), (1, 0), (0, 1)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb
 
         verticesa = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (-1.0, 0.0)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb

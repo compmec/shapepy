@@ -82,7 +82,7 @@ class IntegrateJordan:
 
         I = int x^expx * y^expy * ds
         """
-        assert Is.jordan(jordan)
+        assert Is.instance(jordan, JordanCurve)
         return sum(
             IntegrateSegment.polynomial(usegment.parametrize(), expx, expy)
             for usegment in jordan

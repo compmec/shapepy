@@ -5,7 +5,7 @@ Defines the class USegment and UPiecewise, which is equivalent to
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Iterator, Tuple, Union
 
 from ..analytic.polynomial import Polynomial
 from ..scalar.reals import Real
@@ -84,29 +84,87 @@ class UPiecewiseCurve(IGeometricCurve):
 
     def __init__(self, usegments: Iterable[Union[Segment, USegment]]):
         self.__usegments = tuple(usegments)
+        self.__piecewise = None
 
     @property
     def length(self) -> Real:
-        raise NotImplementedError
+        """The length of the curve"""
+        return sum(useg.length for useg in self)
+
+    def __iter__(self) -> Iterator[Union[Segment, USegment]]:
+        """Unparametrized Segments
+
+        When setting, it checks if the points are the same between
+        the junction of two segments to ensure a closed curve
+
+        :getter: Returns the tuple of connected planar beziers, not copy
+        :setter: Sets the segments of the jordan curve
+        :type: tuple[Segment]
+
+        Example use
+        -----------
+
+        >>> from shapepy import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = FactoryJordan.polygon(vertices)
+        >>> print(tuple(jordan))
+        (Segment (deg 1), Segment (deg 1), Segment (deg 1))
+        >>> print(tuple(jordan)[0])
+        Planar curve of degree 1 and control points ((0, 0), (4, 0))
+
+        """
+        yield from (
+            useg if Is.instance(useg, USegment) else USegment(useg)
+            for useg in self.__usegments
+        )
+
+    def __len__(self) -> int:
+        return len(self.__usegments)
+
+    def __contains__(self, point: Point2D) -> bool:
+        """Tells if the point is on the boundary"""
+        return any(point in useg for useg in self)
 
     def box(self) -> Box:
-        raise NotImplementedError
+        """The box which encloses the jordan curve
+
+        :return: The box which encloses the jordan curve
+        :rtype: Box
+
+        Example use
+        -----------
+
+        >>> from shapepy import JordanCurve
+        >>> vertices = [(0, 0), (4, 0), (0, 3)]
+        >>> jordan = FactoryJordan.polygon(vertices)
+        >>> jordan.box()
+        Box with vertices (0, 0) and (4, 3)
+
+        """
+        box = None
+        for usegment in self:
+            box |= usegment.box()
+        return box
 
     def parametrize(self) -> PiecewiseCurve:
         """Gives a parametrized curve"""
-        newsegs = []
-        for i, usegment in enumerate(self.__usegments):
-            segment = usegment.parametrize()
-            pointa = segment(segment.knots[0])
-            pointb = segment(segment.knots[-1])
-            composition = find_linear_composition(segment.knots, [i, i + 1])
-            xfunc = segment.xfunc.compose(composition)
-            yfunc = segment.yfunc.compose(composition)
-            segment = Segment(xfunc, yfunc, domain=[i, i + 1])
-            assert segment(segment.knots[0]) == pointa
-            assert segment(segment.knots[-1]) == pointb
-            newsegs.append(segment)
-        return PiecewiseCurve(newsegs)
+        if self.__piecewise is None:
+            newsegs = []
+            for i, usegment in enumerate(self.__usegments):
+                segment = usegment.parametrize()
+                pointa = segment(segment.knots[0])
+                pointb = segment(segment.knots[-1])
+                composition = find_linear_composition(
+                    segment.knots, [i, i + 1]
+                )
+                xfunc = segment.xfunc.compose(composition)
+                yfunc = segment.yfunc.compose(composition)
+                segment = Segment(xfunc, yfunc, domain=[i, i + 1])
+                assert segment(segment.knots[0]) == pointa
+                assert segment(segment.knots[-1]) == pointb
+                newsegs.append(segment)
+            self.__piecewise = PiecewiseCurve(newsegs)
+        return self.__piecewise
 
 
 def find_linear_composition(

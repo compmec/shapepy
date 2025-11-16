@@ -448,7 +448,7 @@ class FollowPath:
         Returns a list of jordan curves which is the result
         of the intersection between 'jordansa' and 'jordansb'
         """
-        assert all(map(Is.jordan, jordans))
+        assert all(Is.instance(j, JordanCurve) for j in jordans)
         bez_indexs = []
         for ind_jord, ind_seg in start_indexs:
             indices_matrix = FollowPath.pursue_path(ind_jord, ind_seg, jordans)
