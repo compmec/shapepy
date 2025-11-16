@@ -104,8 +104,7 @@ class FactoryJordan:
         """
         beziers = spline_curve.split(spline_curve.knots)
         segments = (
-            FactorySegment.bezier(bezier.ctrlpoints).clean()
-            for bezier in beziers
+            FactorySegment.bezier(bezier.ctrlpoints) for bezier in beziers
         )
         return JordanCurve(map(USegment, segments))
 

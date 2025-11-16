@@ -16,6 +16,7 @@ from copy import copy
 from typing import Iterable, Optional, Tuple
 
 from ..analytic.base import IAnalytic
+from ..analytic.bezier import Bezier
 from ..analytic.tools import find_minimum
 from ..loggers import debug
 from ..rbool import IntervalR1, from_any
@@ -40,8 +41,8 @@ class Segment(IParametrizedCurve):
             raise TypeError
         self.__length = None
         self.__knots = (To.rational(0, 1), To.rational(1, 1))
-        self.__xfunc = xfunc.clean()
-        self.__yfunc = yfunc.clean()
+        self.__xfunc = xfunc
+        self.__yfunc = yfunc
 
     def __str__(self) -> str:
         return f"BS{list(self.knots)}:({self.xfunc}, {self.yfunc})"
@@ -68,8 +69,8 @@ class Segment(IParametrizedCurve):
 
     @vectorize(1, 0)
     def __call__(self, node: Real, derivate: int = 0) -> Point2D:
-        xcoord = self.xfunc(node, derivate)
-        ycoord = self.yfunc(node, derivate)
+        xcoord = self.xfunc.eval(node, derivate)
+        ycoord = self.yfunc.eval(node, derivate)
         return cartesian(xcoord, ycoord)
 
     @property
@@ -105,8 +106,8 @@ class Segment(IParametrizedCurve):
         """
         if not Is.integer(times) or times <= 0:
             raise ValueError(f"Times must be integer >= 1, not {times}")
-        dxfunc = copy(self.xfunc).derivate(times)
-        dyfunc = copy(self.yfunc).derivate(times)
+        dxfunc = self.xfunc.derivate(times)
+        dyfunc = self.yfunc.derivate(times)
         return Segment(dxfunc, dyfunc)
 
     def box(self) -> Box:
@@ -120,12 +121,6 @@ class Segment(IParametrizedCurve):
         ymax = -find_minimum(-self.yfunc, [0, 1])
         return Box(cartesian(xmin, ymin), cartesian(xmax, ymax))
 
-    def clean(self) -> Segment:
-        """Cleans the segment"""
-        self.__xfunc = self.__xfunc.clean()
-        self.__yfunc = self.__yfunc.clean()
-        return self
-
     def __copy__(self) -> Segment:
         return self.__deepcopy__(None)
 
@@ -137,9 +132,9 @@ class Segment(IParametrizedCurve):
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
-        half = To.rational(1, 2)
-        xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
-        yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
+        composition = Bezier([1, 0])
+        xfunc = self.__xfunc.compose(composition)
+        yfunc = self.__yfunc.compose(composition)
         return Segment(xfunc, yfunc)
 
     def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
@@ -157,8 +152,9 @@ class Segment(IParametrizedCurve):
             raise TypeError
         knota, knotb = interval[0], interval[1]
         denom = 1 / (knotb - knota)
-        nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
-        nyfunc = copy(self.yfunc).shift(-knota).scale(denom)
+        composition = Bezier([(-knota) * denom, (1 - knota) * denom])
+        nxfunc = self.xfunc.compose(composition)
+        nyfunc = self.yfunc.compose(composition)
         return Segment(nxfunc, nyfunc)
 
 
@@ -168,10 +164,8 @@ def compute_length(segment: Segment) -> Real:
     Computes the length of the jordan curve
     """
     domain = (0, 1)
-    dpsquare: IAnalytic = (
-        segment.xfunc.derivate() ** 2 + segment.yfunc.derivate() ** 2
-    )
-    assert Is.analytic(dpsquare)
+    dpsquare = segment.xfunc.derivate() ** 2 + segment.yfunc.derivate() ** 2
+    assert Is.instance(dpsquare, IAnalytic)
     if dpsquare == dpsquare(0):  # Check if it's constant
         return (domain[1] - domain[0]) * Math.sqrt(dpsquare(0))
     integrator = IntegratorFactory.clenshaw_curtis(3)

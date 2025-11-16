@@ -36,23 +36,7 @@ def test_degree():
     bezier = Bezier([1, 2])
     assert bezier.degree == 1
     bezier = Bezier([1, 2, 3])
-    assert bezier.degree == 2
-
-
-@pytest.mark.order(4)
-@pytest.mark.dependency(depends=["test_build"])
-def test_coefficients():
-    bezier = Bezier([0])
-    assert bezier[0] == 0
-    bezier = Bezier([1])
-    assert bezier[0] == 1
-    bezier = Bezier([1, 2])
-    assert bezier[0] == 1
-    assert bezier[1] == 2
-    bezier = Bezier([1, 2, 3])
-    assert bezier[0] == 1
-    assert bezier[1] == 2
-    assert bezier[2] == 3
+    assert bezier.degree == 1
 
 
 @pytest.mark.order(4)
@@ -194,26 +178,22 @@ def test_conversions():
     for _ in range(ntests):
         degree = np.random.randint(0, 6)
         ctrlpoints = tuple(np.random.randint(-3, 4, degree + 1))
-        bezier = Bezier(ctrlpoints)
         for _ in range(4):
-            bezier = bezier2polynomial(bezier)
-            bezier = polynomial2bezier(bezier)
-            assert bezier == Bezier(ctrlpoints)
+            poly_coefs = bezier2polynomial(ctrlpoints)
+            bezier_coefs = tuple(polynomial2bezier(poly_coefs))
+            assert bezier_coefs == ctrlpoints
 
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(depends=["test_build", "test_matrices"])
 def test_clean():
-    ctrlpoints = [1, 2, 3, 4]
-    bezier = Bezier(ctrlpoints)
-    assert bezier.clean() == Bezier([1, 4])
+    assert Bezier([1, 2, 3, 4]) == Bezier([1, 4])
 
 
 @pytest.mark.order(4)
 @pytest.mark.dependency(
     depends=[
         "test_build",
-        "test_coefficients",
         "test_degree",
         "test_matrices",
         "test_compare",

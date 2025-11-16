@@ -9,6 +9,7 @@ from collections import deque
 from copy import copy
 from typing import Iterable, Iterator
 
+from ..analytic import IAnalytic
 from ..loggers import debug
 from ..scalar.reals import Real
 from ..tools import CyclicContainer, Is, pairs, reverse
@@ -201,10 +202,10 @@ def compute_area(jordan: JordanCurve) -> Real:
         segment = usegment.parametrize()
         xfunc = segment.xfunc
         yfunc = segment.yfunc
-        poly = xfunc * yfunc.derivate() - yfunc * xfunc.derivate()
-        assert Is.analytic(poly)
-        ipoly = poly.integrate()
-        total += ipoly(1) - ipoly(0)
+        poly = xfunc * yfunc.derivate()
+        poly -= yfunc * xfunc.derivate()
+        assert Is.instance(poly, IAnalytic)
+        total += poly.integrate([0, 1])
     return total / 2
 
 

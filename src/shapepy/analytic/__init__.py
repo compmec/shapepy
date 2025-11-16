@@ -9,5 +9,7 @@ The usual classes are:
 * Bezier
 """
 
+from ..tools import To
+from .base import IAnalytic
 from .bezier import Bezier
 from .polynomial import Polynomial
