@@ -5,8 +5,9 @@ Defines the class USegment and UPiecewise, which is equivalent to
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable
+from typing import Iterable, Tuple, Union
 
+from ..analytic.polynomial import Polynomial
 from ..scalar.reals import Real
 from ..tools import Is
 from .base import IGeometricCurve
@@ -51,12 +52,12 @@ class USegment(IGeometricCurve):
     @property
     def start_point(self) -> Point2D:
         """Gives the start point of the USegment"""
-        return self.__segment(0)
+        return self.__segment(self.__segment.knots[0])
 
     @property
     def end_point(self) -> Point2D:
         """Gives the end point of the USegment"""
-        return self.__segment(1)
+        return self.__segment(self.__segment.knots[-1])
 
     def box(self) -> Box:
         """
@@ -73,13 +74,15 @@ class USegment(IGeometricCurve):
             raise TypeError
         segi = self.parametrize()
         segj = other.parametrize()
-        return segi(0) == segj(0) and segi(1) == segj(1)
+        return segi(segi.knots[0]) == segj(segj.knots[0]) and segi(
+            segi.knots[-1]
+        ) == segj(segj.knots[-1])
 
 
 class UPiecewiseCurve(IGeometricCurve):
     """Equivalent to PiecewiseCurve, but ignores the parametrization"""
 
-    def __init__(self, usegments: Iterable[USegment]):
+    def __init__(self, usegments: Iterable[Union[Segment, USegment]]):
         self.__usegments = tuple(usegments)
 
     @property
@@ -91,7 +94,44 @@ class UPiecewiseCurve(IGeometricCurve):
 
     def parametrize(self) -> PiecewiseCurve:
         """Gives a parametrized curve"""
-        return PiecewiseCurve(useg.parametrize() for useg in self.__usegments)
+        newsegs = []
+        for i, usegment in enumerate(self.__usegments):
+            segment = usegment.parametrize()
+            pointa = segment(segment.knots[0])
+            pointb = segment(segment.knots[-1])
+            composition = find_linear_composition(segment.knots, [i, i + 1])
+            xfunc = segment.xfunc.compose(composition)
+            yfunc = segment.yfunc.compose(composition)
+            segment = Segment(xfunc, yfunc, domain=[i, i + 1])
+            assert segment(segment.knots[0]) == pointa
+            assert segment(segment.knots[-1]) == pointb
+            newsegs.append(segment)
+        return PiecewiseCurve(newsegs)
+
+
+def find_linear_composition(
+    domain: Tuple[Real, Real], image: Tuple[Real, Real]
+) -> Polynomial:
+    """
+    From a function f(x) defined in [a, b] (image),
+    we want to find a linear function g(t) in the domain [c, d] such
+
+    * h(t) = f(g(t))
+
+    Therefore
+        g(c) = a
+        g(d) = b
+    From hypothesis, g(t) = A + B * t
+        A + B * c = a
+        A + B * d = b
+    Therefore
+        B = (b-a)/(d-c)
+        A = (a*d-c*b)/(d-c)
+    """
+    denom = 1 / (domain[1] - domain[0])
+    const = denom * (image[0] * domain[1] - image[1] * domain[0])
+    slope = denom * (image[1] - image[0])
+    return Polynomial([const, slope])
 
 
 def clean_usegment(usegment: USegment) -> USegment:

@@ -21,6 +21,22 @@ from .segment import Segment
 from .unparam import UPiecewiseCurve, USegment, clean_usegment, self_intersect
 
 
+def valid_segments_jordan(usegments: Iterable[USegment]) -> bool:
+    """Tells if the segments are valid to construct a jordan curve"""
+
+    if not all(Is.instance(u, (USegment, Segment)) for u in usegments):
+        raise ValueError(f"Invalid tipos: {tuple(map(type, usegments))}")
+    usegments = tuple(
+        USegment(s) if Is.instance(s, Segment) else s for s in usegments
+    )
+    if any(map(self_intersect, usegments)):
+        return False
+    for usegi, usegj in pairs(usegments, cyclic=True):
+        if usegi.end_point != usegj.start_point:
+            return False
+    return True
+
+
 class JordanCurve(IGeometricCurve):
     """
     Jordan Curve is an arbitrary closed curve which doesn't intersect itself.
@@ -29,16 +45,13 @@ class JordanCurve(IGeometricCurve):
 
     def __init__(self, usegments: Iterable[USegment]):
         usegments = tuple(usegments)
-        if not all(Is.instance(u, (USegment, Segment)) for u in usegments):
-            raise ValueError(f"Invalid tipos: {tuple(map(type, usegments))}")
-        usegments = tuple(
-            USegment(s) if Is.instance(s, Segment) else s for s in usegments
-        )
-        if any(map(self_intersect, usegments)):
-            raise ValueError("Segment must not self intersect")
-        for usegi, usegj in pairs(usegments, cyclic=True):
-            if usegi.end_point != usegj.start_point:
-                raise ValueError("The segments are not continuous")
+        if not valid_segments_jordan(usegments):
+            raise ValueError(
+                "Invalid segments: {"
+                + ", ".join(repr(useg.parametrize()) for useg in usegments)
+                + "}"
+            )
+
         self.__usegments = CyclicContainer(usegments)
         self.__piecewise = UPiecewiseCurve(self.__usegments).parametrize()
         self.__area = None
@@ -139,7 +152,14 @@ class JordanCurve(IGeometricCurve):
         ((0, 0), (4, 0), (0, 3))
 
         """
-        yield from (useg.start_point for useg in self)
+        yield from (
+            (
+                useg.start_point
+                if Is.instance(useg, USegment)
+                else useg.eval(useg.knots[0])
+            )
+            for useg in self
+        )
 
     def __str__(self) -> str:
         nsegs = len(self.__usegments)

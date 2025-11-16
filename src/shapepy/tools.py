@@ -113,9 +113,12 @@ def reverse(objs: Iterable[Any]) -> Iterable[Any]:
     return tuple(objs)[::-1]
 
 
+T = TypeVar("T")
+
+
 def pairs(
-    objs: Iterable[Any], /, *, cyclic: bool = False
-) -> Iterable[Tuple[Any, Any]]:
+    objs: Iterable[T], /, *, cyclic: bool = False
+) -> Iterable[Tuple[T, T]]:
     """Gives pairs of the objects in sequence
 
     Example
@@ -133,9 +136,6 @@ def pairs(
 
 class NotExpectedError(Exception):
     """Raised when arrives in a section that were not expected"""
-
-
-T = TypeVar("T")
 
 
 class CyclicContainer(Generic[T]):

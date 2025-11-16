@@ -5,9 +5,11 @@ Defines the base class for Geometric curves
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Iterable, Tuple
+from typing import Iterable, Tuple, Union
 
+from ..rbool import IntervalR1, WholeR1
 from ..scalar.reals import Real
+from ..tools import vectorize
 from .box import Box
 from .point import Point2D
 
@@ -74,16 +76,28 @@ class IParametrizedCurve(IGeometricCurve):
 
     @property
     @abstractmethod
+    def domain(self) -> Union[IntervalR1, WholeR1]:
+        """
+        The domain where the curve is defined.
+        """
+        raise NotImplementedError
+
+    @property
+    @abstractmethod
     def knots(self) -> Tuple[Real, ...]:
         """
-        The length of the curve
-        If the curve is not bounded, returns infinity
+        The subdivisions on the domain
         """
         raise NotImplementedError
 
     @abstractmethod
-    def __call__(self, node: Real, derivate: int = 0) -> Point2D:
+    def eval(self, node: Real, derivate: int = 0) -> Point2D:
+        """Evaluates the curve at given node"""
         raise NotImplementedError
+
+    @vectorize(1, 0)
+    def __call__(self, node: Real):
+        return self.eval(node, 0)
 
     def __and__(self, other: IParametrizedCurve):
         return Future.intersect(self, other)

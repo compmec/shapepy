@@ -5,12 +5,34 @@ Implementation of a polynomial class
 from __future__ import annotations
 
 from numbers import Real
-from typing import Iterable, List, Union
+from typing import Iterable, Iterator, List, Union
 
 from ..rbool import IntervalR1, SubSetR1, WholeR1, from_any, move, scale
+from ..rbool.tools import is_continuous
 from ..scalar.reals import Math
 from ..tools import Is, To
 from .base import IAnalytic
+
+
+def scale_coefs(coefs: Iterable[Real], amount: Real) -> Iterator[Real]:
+    """Computes the polynomial p(t/A) from the coefficients of p(t)"""
+    if amount != 1:
+        inv = 1 / amount
+        coefs = (coef * inv**i for i, coef in enumerate(coefs))
+    yield from coefs
+
+
+def shift_coefs(coefs: Iterable[Real], amount: Real) -> Iterator[Real]:
+    """Computes the polynomial p(t-a) from the coefficients of p(t)"""
+    if amount != 0:
+        coefs = list(coefs)
+        for i, coef in enumerate(tuple(coefs)):
+            for j in range(i):
+                value = Math.binom(i, j) * (amount ** (i - j))
+                if (i + j) % 2:
+                    value *= -1
+                coefs[j] += coef * value
+    yield from coefs
 
 
 class Polynomial(IAnalytic):
@@ -36,7 +58,12 @@ class Polynomial(IAnalytic):
     5
     """
 
-    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = WholeR1()):
+    def __init__(
+        self, coefs: Iterable[Real], *, domain: Union[None, SubSetR1] = None
+    ):
+        domain = WholeR1() if domain is None else from_any(domain)
+        if not is_continuous(domain):
+            raise ValueError(f"Domain {domain} is not continuous")
         if not Is.iterable(coefs):
             raise TypeError("Expected an iterable of coefficients")
         coefs = tuple(coefs)
@@ -44,7 +71,7 @@ class Polynomial(IAnalytic):
             raise ValueError("Cannot receive an empty tuple")
         degree = max((i for i, v in enumerate(coefs) if v * v > 0), default=0)
         self.__coefs = coefs[: degree + 1]
-        self.__domain = from_any(domain)
+        self.__domain = domain
 
     @property
     def domain(self) -> SubSetR1:
@@ -81,7 +108,7 @@ class Polynomial(IAnalytic):
         if not Is.instance(other, IAnalytic):
             coefs = list(self)
             coefs[0] += other
-            return Polynomial(coefs, self.domain)
+            return Polynomial(coefs, domain=self.domain)
         if not Is.instance(other, Polynomial):
             return NotImplemented
         coefs = [0] * (1 + max(self.degree, other.degree))
@@ -89,18 +116,20 @@ class Polynomial(IAnalytic):
             coefs[i] += coef
         for i, coef in enumerate(other):
             coefs[i] += coef
-        return Polynomial(coefs, self.domain)
+        return Polynomial(coefs, domain=self.domain)
 
     def __mul__(self, other: Union[Real, Polynomial]) -> Polynomial:
         if not Is.instance(other, IAnalytic):
-            return Polynomial((other * coef for coef in self), self.domain)
+            return Polynomial(
+                (other * coef for coef in self), domain=self.domain
+            )
         if not Is.instance(other, Polynomial):
             return NotImplemented
         coefs = [0 * self[0]] * (self.degree + other.degree + 1)
         for i, coefi in enumerate(self):
             for j, coefj in enumerate(other):
                 coefs[i + j] += coefi * coefj
-        return Polynomial(coefs, self.domain & other.domain)
+        return Polynomial(coefs, domain=self.domain & other.domain)
 
     def eval(self, node: Real, derivate: int = 0) -> Real:
         if node not in self.domain:
@@ -130,12 +159,12 @@ class Polynomial(IAnalytic):
 
     def derivate(self, times=1):
         if self.degree < times:
-            return Polynomial([0 * self[0]], self.domain)
+            return Polynomial([0 * self[0]], domain=self.domain)
         coefs = (
             Math.factorial(n + times) // Math.factorial(n) * coef
             for n, coef in enumerate(self[times:])
         )
-        return Polynomial(coefs, self.domain)
+        return Polynomial(coefs, domain=self.domain)
 
     def integrate(self, domain):
         domain = from_any(domain)
@@ -161,21 +190,9 @@ class Polynomial(IAnalytic):
         if function.degree != 1:
             raise ValueError("Only polynomials of degree = 1 are allowed")
         shift_amount, scale_amount = tuple(function)
-        coefs = list(self)
-        domain = self.domain
-        if scale_amount != 1:
-            inv = 1 / scale_amount
-            coefs = list(coef * inv**i for i, coef in enumerate(self))
-            domain = scale(domain, scale_amount)
-        if shift_amount != 0:
-            for i, coef in enumerate(tuple(coefs)):
-                for j in range(i):
-                    value = Math.binom(i, j) * (shift_amount ** (i - j))
-                    if (i + j) % 2:
-                        value *= -1
-                    coefs[j] += coef * value
-            domain = move(domain, shift_amount)
-        return Polynomial(coefs, domain)
+        coefs = shift_coefs(scale_coefs(self, scale_amount), shift_amount)
+        domain = move(scale(self.domain, scale_amount), shift_amount)
+        return Polynomial(coefs, domain=domain)
 
     def __repr__(self):
         return str(self.domain) + ": " + self.__str__()
