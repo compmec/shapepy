@@ -110,9 +110,3 @@ class IAnalytic(ABC):
 
     def __rmul__(self, other: Real) -> IAnalytic:
         return self.__mul__(other)
-
-
-class BaseAnalytic(IAnalytic):
-    """
-    Basic class that implements some functions
-    """

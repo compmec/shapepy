@@ -22,7 +22,6 @@ from ..rbool import (
 from ..scalar.reals import Math, Real
 from ..tools import Is, NotExpectedError, To
 from .base import IAnalytic
-from .bezier import Bezier, bezier2polynomial
 from .polynomial import Polynomial
 
 
