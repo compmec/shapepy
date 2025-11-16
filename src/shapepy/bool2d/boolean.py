@@ -6,7 +6,6 @@ operations between the SubSetR2 instances
 from __future__ import annotations
 
 from copy import copy
-from fractions import Fraction
 from typing import Dict, Iterable, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
@@ -370,12 +369,14 @@ class FollowPath:
                 jordansj = all_group_jordans[j]
                 for jordana in jordansi:
                     for jordanb in jordansj:
-                        intersection |= jordana.piecewise & jordanb.piecewise
+                        intersection |= (
+                            jordana.parametrize() & jordanb.parametrize()
+                        )
         intersection.evaluate()
         for jordans in all_group_jordans:
             for jordan in jordans:
-                split_knots = intersection.all_knots[id(jordan.piecewise)]
-                jordan.piecewise.split(split_knots)
+                split_knots = intersection.all_knots[id(jordan.parametrize())]
+                jordan.parametrize().split(split_knots)
 
     @staticmethod
     def pursue_path(
@@ -396,14 +397,14 @@ class FollowPath:
         We suppose there's no triple intersection
         """
         matrix = []
-        all_segments = [tuple(jordan.piecewise) for jordan in jordans]
+        all_segments = [tuple(jordan.parametrize()) for jordan in jordans]
         while True:
             index_segment %= len(all_segments[index_jordan])
             segment = all_segments[index_jordan][index_segment]
             if (index_jordan, index_segment) in matrix:
                 break
             matrix.append((index_jordan, index_segment))
-            last_point = segment(1)
+            last_point = segment(segment.knots[-1])
             possibles = []
             for i, jordan in enumerate(jordans):
                 if i == index_jordan:
@@ -415,7 +416,7 @@ class FollowPath:
                 continue
             index_jordan = possibles[0]
             for j, segj in enumerate(all_segments[index_jordan]):
-                if segj(0) == last_point:
+                if segj(segj.knots[0]) == last_point:
                     index_segment = j
                     break
         return CyclicContainer(matrix)
@@ -434,7 +435,7 @@ class FollowPath:
         """
         beziers = []
         for index_jordan, index_segment in matrix_indexs:
-            new_bezier = jordans[index_jordan].piecewise[index_segment]
+            new_bezier = jordans[index_jordan].parametrize()[index_segment]
             new_bezier = copy(new_bezier)
             beziers.append(USegment(new_bezier))
         new_jordan = JordanCurve(beziers)
@@ -480,7 +481,7 @@ class FollowPath:
         """
         for i, jordan in enumerate(shapea.jordans):
             for j, segment in enumerate(jordan.parametrize()):
-                mid_point = segment(Fraction(1, 2))
+                mid_point = segment((segment.knots[0] + segment.knots[-1]) / 2)
                 density = shapeb.density(mid_point)
                 mid_point_in = (float(density) > 0 and closed) or density == 1
                 if not inside ^ mid_point_in:

@@ -5,17 +5,18 @@ is in fact, stores a list of spline-curves.
 
 from __future__ import annotations
 
+from collections import deque
 from typing import Iterable, Iterator, List, Union
 
-from collections import deque
 from ..analytic import IAnalytic
 from ..loggers import debug, get_logger
 from ..scalar.reals import Real
 from ..tools import CyclicContainer, Is, pairs, reverse
+from .base import Future
 from .point import Point2D, cross
 from .segment import Segment
 from .unparam import UPiecewiseCurve, USegment, self_intersect
-from .base import Future
+
 
 class JordanCurve(UPiecewiseCurve):
     """
@@ -60,7 +61,7 @@ class JordanCurve(UPiecewiseCurve):
             (
                 useg.start_point
                 if Is.instance(useg, USegment)
-                else useg.eval(useg.knots[0])
+                else useg(useg.knots[0])
             )
             for useg in self
         )
@@ -76,19 +77,17 @@ class JordanCurve(UPiecewiseCurve):
 
     def __eq__(self, other: JordanCurve) -> bool:
         logger = get_logger("shapepy.geometry.jordancurve")
-        logger.info(f"     type: {type(other)}")
-        logger.info(f"     box: {self.box() == other.box()}")
-        logger.info(f"     len: {self.length == other.length}")
-        logger.info(
-            f"    area: {self.area == other.area}"
-        )
-        logger.info(
+        logger.debug(f"     type: {type(other)}")
+        logger.debug(f"     box: {self.box() == other.box()}")
+        logger.debug(f"     len: {self.length == other.length}")
+        logger.debug(f"    area: {self.area == other.area}")
+        logger.debug(
             f"    all1: {all(point in self for point in other.vertices())}"
         )
-        logger.info(
+        logger.debug(
             f"    all2: {all(point in other for point in self.vertices())}"
         )
-        logger.info(
+        logger.debug(
             f"    cycl: {CyclicContainer(self) == CyclicContainer(other)}"
         )
         return (
@@ -120,7 +119,7 @@ def compute_area(jordan: JordanCurve) -> Real:
         poly = xfunc * yfunc.derivate()
         poly -= yfunc * xfunc.derivate()
         assert Is.instance(poly, IAnalytic)
-        total += poly.integrate([0, 1])
+        total += poly.integrate(segment.domain)
     return total / 2
 
 
@@ -147,26 +146,27 @@ def clean_jordan(
 
     """
     logger = get_logger("shapepy.geometry.jordan")
-    logger.info(f"Segments = ")
+    logger.debug("Segments = ")
     usegments = deque(usegments)
     endvectors = []
     for i, usegment in enumerate(usegments):
+        if not Is.instance(usegment, (Segment, USegment)):
+            raise ValueError
         segment = usegment.parametrize()
-        logger.info(f"    {i}: {segment}")
+        logger.debug(f"    {i}: {segment}")
         vectora = segment.eval(segment.knots[0], 1)
         vectorb = segment.eval(segment.knots[-1], 1)
         endvectors.append((vectora, vectorb))
     crosses: List[Real] = []
     for (_, vectb), (vecta, _) in pairs(endvectors, cyclic=True):
         crosses.append(cross(vectb, vecta))
-    logger.info(f"End vectors = {endvectors}")
-    logger.info(f"Crosses = {crosses}")
+    logger.debug(f"End vectors = {endvectors}")
+    logger.debug(f"Crosses = {crosses}")
     if not any(c == 0 for c in crosses):
         return usegments
-    for i, c in enumerate(crosses):
-        if c != 0:
-            break
+    index = len(crosses) - 1
+    while index > 0 and crosses[index] == 0:
         usegments.rotate()
+        index -= 1
     usegments = Future.concatenate(usegments)
     return usegments
-    

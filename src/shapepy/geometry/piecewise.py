@@ -36,7 +36,9 @@ class PiecewiseCurve(IParametrizedCurve):
             pointa = segi(segi.knots[-1])
             pointb = segj(segj.knots[0])
             if pointa != pointb:
-                raise ValueError(f"Not continuous curve: {pointa} != {pointb}")
+                raise ValueError(
+                    f"{segi} not continuous with {segj}: {pointa} != {pointb}"
+                )
         self.__domain = IntervalR1(knots[0], knots[-1])
         self.__segments = segments
         self.__knots = tuple(knots)
@@ -113,6 +115,7 @@ class PiecewiseCurve(IParametrizedCurve):
             box |= bezier.box()
         return box
 
+    @debug("shapepy.geometry.piecewise")
     def split(self, nodes: Iterable[Real]) -> None:
         """
         Creates an opening in the piecewise curve
@@ -137,11 +140,9 @@ class PiecewiseCurve(IParametrizedCurve):
             if i not in spansnodes:
                 newsegments.append(segmenti)
                 continue
-            knota, knotb = self.knots[i], self.knots[i + 1]
-            unit_nodes = (
-                (knot - knota) / (knotb - knota) for knot in spansnodes[i]
-            )
-            newsegments += list(segmenti.split(unit_nodes))
+            divisions = sorted(spansnodes[i] | set(segmenti.knots))
+            for ka, kb in zip(divisions, divisions[1:]):
+                newsegments.append(segmenti.section([ka, kb]))
         self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
         self.__segments = tuple(newsegments)
 

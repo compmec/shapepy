@@ -96,7 +96,7 @@ class IParametrizedCurve(IGeometricCurve):
         raise NotImplementedError
 
     @vectorize(1, 0)
-    def __call__(self, node: Real):
+    def __call__(self, node: Real) -> Point2D:
         return self.eval(node, 0)
 
     def __and__(self, other: IParametrizedCurve):

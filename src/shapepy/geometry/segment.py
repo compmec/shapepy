@@ -52,7 +52,7 @@ class Segment(IParametrizedCurve):
             domain = from_any(domain)
             if not is_continuous(domain):
                 raise TypeError(f"Domain is not continuous: {domain}")
-            elif domain not in (xfunc.domain & yfunc.domain):
+            if domain not in (xfunc.domain & yfunc.domain):
                 raise ValueError(
                     f"Given domain must be in {xfunc.domain & yfunc.domain}"
                 )

@@ -117,7 +117,7 @@ class SimpleShape(SubSetR2):
 
     def __contains_curve(self, curve: SingleCurve) -> bool:
         piecewise = curve.internal.parametrize()
-        vertices = map(piecewise, piecewise.knots[:-1])
+        vertices = map(piecewise.eval, piecewise.knots[:-1])
         if not all(map(self.__contains_point, vertices)):
             return False
         inters = piecewise & self.jordan
@@ -125,7 +125,7 @@ class SimpleShape(SubSetR2):
             return True
         knots = sorted(inters.all_knots[id(piecewise)])
         midknots = ((k0 + k1) / 2 for k0, k1 in zip(knots, knots[1:]))
-        midpoints = map(piecewise, midknots)
+        midpoints = map(piecewise.eval, midknots)
         return all(map(self.__contains_point, midpoints))
 
     # pylint: disable=chained-comparison

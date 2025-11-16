@@ -8,9 +8,7 @@ import numpy as np
 import pytest
 
 from shapepy.geometry.factory import FactoryJordan
-from shapepy.geometry.jordancurve import clean_jordan
 from shapepy.geometry.transform import move, rotate, scale
-from shapepy.loggers import enable_logger
 from shapepy.scalar.angle import degrees, radians
 
 
@@ -153,17 +151,17 @@ class TestJordanPolygon:
         vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
         square1 = FactoryJordan.polygon(vertices1)
         param0 = square0.parametrize()
-        assert param0(0) == (1, 0)
-        assert param0(1) == (-1, 2)
-        assert param0(2) == (-3, 0)
-        assert param0(3) == (-1, -2)
-        assert param0(4) == (1, 0)
+        assert param0.eval(0) == (1, 0)
+        assert param0.eval(1) == (-1, 2)
+        assert param0.eval(2) == (-3, 0)
+        assert param0.eval(3) == (-1, -2)
+        assert param0.eval(4) == (1, 0)
         param1 = square1.parametrize()
-        assert param1(0) == (-1, 0)
-        assert param1(1) == (1, 2)
-        assert param1(2) == (3, 0)
-        assert param1(3) == (1, -2)
-        assert param1(4) == (-1, 0)
+        assert param1.eval(0) == (-1, 0)
+        assert param1.eval(1) == (1, 2)
+        assert param1.eval(2) == (3, 0)
+        assert param1.eval(3) == (1, -2)
+        assert param1.eval(4) == (-1, 0)
 
         inters = param0 & param0
         assert inters.all_subsets[id(param0)] == [0, 4]
@@ -172,15 +170,11 @@ class TestJordanPolygon:
         assert inters.all_subsets[id(param1)] == [0, 4]
         assert inters.all_knots[id(param1)] == {0, 1, 2, 3, 4}
 
-        with enable_logger("shapepy.geometry.intersection", level="DEBUG"):
-            inters = param0 & param1
-            print(param0)
-            print(param1)
-            print(inters)
-            assert inters.all_subsets[id(param0)] == {0.5, 3.5}
-            assert inters.all_knots[id(param0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
-            assert inters.all_subsets[id(param1)] == {0.5, 3.5}
-            assert inters.all_knots[id(param1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        inters = param0 & param1
+        assert inters.all_subsets[id(param0)] == {0.5, 3.5}
+        assert inters.all_knots[id(param0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
+        assert inters.all_subsets[id(param1)] == {0.5, 3.5}
+        assert inters.all_knots[id(param1)] == {0, 0.5, 1, 2, 3, 3.5, 4}
 
         vertices1 = [(-1, 0), (1, -2), (3, 0), (1, 2)]
         square1 = FactoryJordan.polygon(vertices1)

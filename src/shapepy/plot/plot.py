@@ -31,7 +31,7 @@ def patch_segment(segment: Segment):
     commands = []
     xfunc, yfunc = segment.xfunc, segment.yfunc
     if xfunc.degree <= 1 and yfunc.degree <= 1:
-        vertices.append(segment(1))
+        vertices.append(segment(segment.knots[-1]))
         commands.append(Path.LINETO)
     elif xfunc.degree == 2 and yfunc.degree == 2:
         xfunc: Bezier = segment.xfunc
@@ -50,7 +50,7 @@ def path_shape(connected: ConnectedShape) -> Path:
     commands = []
     for jordan in connected.jordans:
         segments = tuple(useg.parametrize() for useg in jordan)
-        vertices.append(segments[0](0))
+        vertices.append(segments[0](segments[0].knots[0]))
         commands.append(Path.MOVETO)
         for segment in segments:
             verts, comms = patch_segment(segment)
@@ -67,7 +67,7 @@ def path_jordan(jordan: JordanCurve) -> Path:
     Creates the commands for matplotlib to plot the jordan curve
     """
     segments = tuple(useg.parametrize() for useg in jordan)
-    vertices = [segments[0](0)]
+    vertices = [segments[0](segments[0].knots[0])]
     commands = [Path.MOVETO]
     for segment in segments:
         verts, comms = patch_segment(segment)

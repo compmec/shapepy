@@ -127,6 +127,8 @@ class FactoryJordan:
             middle_point = rotate(middle_point, angle)
         end_point = all_ctrlpoints[0][0]
         all_ctrlpoints.append([start_point, middle_point, end_point])
-        return JordanCurve(
-            map(USegment, map(FactorySegment.bezier, all_ctrlpoints))
+        segments = (
+            FactorySegment.bezier(pts, [i, i + 1])
+            for i, pts in enumerate(all_ctrlpoints)
         )
+        return JordanCurve(segments)

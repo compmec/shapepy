@@ -116,16 +116,16 @@ def test_evaluate():
         assert bezier(1) == c
 
     bezier = Bezier([10, 20], [0, 1])
-    assert bezier.eval(0) == 10
-    assert bezier.eval(1) == 20
+    assert bezier(0) == 10
+    assert bezier(1) == 20
 
     bezier = Bezier([10, 20], [-1, 1])
-    assert bezier.eval(-1) == 10
-    assert bezier.eval(1) == 20
+    assert bezier(-1) == 10
+    assert bezier(1) == 20
 
     bezier = Bezier([10, 20], [-1, 2])
-    assert bezier.eval(-1) == 10
-    assert bezier.eval(2) == 20
+    assert bezier(-1) == 10
+    assert bezier(2) == 20
 
 
 @pytest.mark.order(4)

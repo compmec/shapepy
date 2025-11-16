@@ -241,17 +241,23 @@ def segment_and_segment(
         return IntersectionSegments.lines(curvea, curveb)
     nptsa = max(curvea.xfunc.degree, curvea.yfunc.degree) + 4
     nptsb = max(curveb.xfunc.degree, curveb.yfunc.degree) + 4
-    usample = list(NodeSampleFactory.closed_linspace(nptsa))
-    vsample = list(NodeSampleFactory.closed_linspace(nptsb))
+    usample = [
+        curvea.knots[0] + u * (curvea.knots[-1] - curvea.knots[0])
+        for u in NodeSampleFactory.closed_linspace(nptsa)
+    ]
+    vsample = [
+        curveb.knots[0] + u * (curveb.knots[-1] - curveb.knots[0])
+        for u in NodeSampleFactory.closed_linspace(nptsb)
+    ]
     pairs = []
     for ui in usample:
         pairs += [(ui, vj) for vj in vsample]
     for _ in range(3):
         pairs = IntersectionSegments.bezier_and_bezier(curvea, curveb, pairs)
-        pairs.insert(0, (0, 0))
-        pairs.insert(0, (0, 1))
-        pairs.insert(0, (1, 0))
-        pairs.insert(0, (1, 1))
+        pairs.insert(0, (curvea.knots[0], curveb.knots[0]))
+        pairs.insert(0, (curvea.knots[0], curveb.knots[-1]))
+        pairs.insert(0, (curvea.knots[-1], curveb.knots[0]))
+        pairs.insert(0, (curvea.knots[-1], curveb.knots[-1]))
         # Filter values by distance of points
         tol_norm = 1e-6
         pairs = IntersectionSegments.filter_distance(
@@ -281,8 +287,10 @@ class IntersectionSegments:
         """Finds the intersection of two line segments"""
         empty = EmptyR1()
         logger = get_logger("shapepy.geometry.intersection")
-        A0, A1 = curvea(curvea.knots[0]), curvea(curvea.knots[-1])
-        B0, B1 = curveb(curveb.knots[0]), curveb(curveb.knots[-1])
+        A0 = curvea(curvea.knots[0])
+        A1 = curvea(curvea.knots[-1])
+        B0 = curveb(curveb.knots[0])
+        B1 = curveb(curveb.knots[-1])
         dA = A1 - A0
         dB = B1 - B0
         B0mA0 = B0 - A0
@@ -369,8 +377,9 @@ class IntersectionSegments:
                     continue
                 newu = u - (mat11 * vect0 - mat01 * vect1) / deter
                 newv = v - (mat00 * vect1 - mat01 * vect0) / deter
-                pair = (min(1, max(0, newu)), min(1, max(0, newv)))
-                new_pairs.add(pair)
+                newu = min(curvea.knots[-1], max(curvea.knots[0], newu))
+                newv = min(curveb.knots[-1], max(curveb.knots[0], newv))
+                new_pairs.add((newu, newv))
             pairs = list(new_pairs)
             for i, (ui, vi) in enumerate(pairs):
                 if Is.instance(ui, Fraction):

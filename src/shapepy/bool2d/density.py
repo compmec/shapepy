@@ -32,13 +32,13 @@ def half_density_jordan(
         deltax = segment.xfunc - point.xcoord
         deltay = segment.yfunc - point.ycoord
         radius_square = deltax * deltax + deltay * deltay
-        minimal = find_minimum(radius_square, [0, 1])
+        minimal = find_minimum(radius_square, segment.domain)
         if minimal < 1e-6:
-            place = where_minimum(radius_square, [0, 1])
+            place = where_minimum(radius_square, segment.domain)
             if not Is.instance(place, SingleR1):
                 raise NotExpectedError(f"Not single value: {place}")
             parameter = To.finite(place.internal)
-            angle = segment(parameter, 1).angle
+            angle = segment.eval(parameter, 1).angle
             return line(angle)
     raise NotExpectedError("Not found minimum < 1e-6")
 
@@ -61,10 +61,10 @@ def lebesgue_density_jordan(
 
     segments = tuple(jordan.parametrize())
     for i, segmenti in enumerate(segments):
-        if point == segmenti(0):
+        if point == segmenti.eval(segmenti.knots[0]):
             segmentj = segments[(i - 1) % len(segments)]
-            anglei = segmenti(0, 1).angle
-            anglej = segmentj(1, 1).angle
+            anglei = segmenti.eval(segmenti.knots[0], 1).angle
+            anglej = segmentj.eval(segmentj.knots[-1], 1).angle
             return sector(anglei, ~anglej)
 
     turns = IntegrateJordan.turns(jordan, point)
