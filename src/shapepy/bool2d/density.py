@@ -61,7 +61,7 @@ def lebesgue_density_jordan(
 
     segments = tuple(jordan.parametrize())
     for i, segmenti in enumerate(segments):
-        if point == segmenti.eval(segmenti.knots[0]):
+        if point == segmenti(segmenti.knots[0]):
             segmentj = segments[(i - 1) % len(segments)]
             anglei = segmenti.eval(segmenti.knots[0], 1).angle
             anglej = segmentj.eval(segmentj.knots[-1], 1).angle

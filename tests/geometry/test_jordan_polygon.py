@@ -151,17 +151,17 @@ class TestJordanPolygon:
         vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
         square1 = FactoryJordan.polygon(vertices1)
         param0 = square0.parametrize()
-        assert param0.eval(0) == (1, 0)
-        assert param0.eval(1) == (-1, 2)
-        assert param0.eval(2) == (-3, 0)
-        assert param0.eval(3) == (-1, -2)
-        assert param0.eval(4) == (1, 0)
+        assert param0(0) == (1, 0)
+        assert param0(1) == (-1, 2)
+        assert param0(2) == (-3, 0)
+        assert param0(3) == (-1, -2)
+        assert param0(4) == (1, 0)
         param1 = square1.parametrize()
-        assert param1.eval(0) == (-1, 0)
-        assert param1.eval(1) == (1, 2)
-        assert param1.eval(2) == (3, 0)
-        assert param1.eval(3) == (1, -2)
-        assert param1.eval(4) == (-1, 0)
+        assert param1(0) == (-1, 0)
+        assert param1(1) == (1, 2)
+        assert param1(2) == (3, 0)
+        assert param1(3) == (1, -2)
+        assert param1(4) == (-1, 0)
 
         inters = param0 & param0
         assert inters.all_subsets[id(param0)] == [0, 4]
