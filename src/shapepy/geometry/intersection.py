@@ -337,7 +337,7 @@ class IntersectionSegments:
         u1 = curveb.knots[0] + u1 * (curveb.knots[-1] - curveb.knots[0])
         if t0 == t1 or u0 == u1:
             logger.debug("6) Single, Single")
-            return create_single(t0), create_single(u0)
+            return create_single(t0), create_single(u1)
         logger.debug("7) Interval, Interval")
         return create_interval(t0, t1), create_interval(u0, u1)
 

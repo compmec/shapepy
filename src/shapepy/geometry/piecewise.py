@@ -141,7 +141,7 @@ class PiecewiseCurve(IParametrizedCurve):
                 newsegments.append(segmenti)
                 continue
             divisions = sorted(spansnodes[i] | set(segmenti.knots))
-            for ka, kb in zip(divisions, divisions[1:]):
+            for ka, kb in pairs(divisions):
                 newsegments.append(segmenti.section([ka, kb]))
         self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
         self.__segments = tuple(newsegments)
