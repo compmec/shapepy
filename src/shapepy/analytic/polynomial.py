@@ -110,7 +110,7 @@ class Polynomial(IAnalytic):
             coefs[0] += other
             return Polynomial(coefs, domain=self.domain)
         if not Is.instance(other, Polynomial):
-            return NotImplemented
+            raise NotImplementedError
         coefs = [0] * (1 + max(self.degree, other.degree))
         for i, coef in enumerate(self):
             coefs[i] += coef
@@ -124,7 +124,7 @@ class Polynomial(IAnalytic):
                 (other * coef for coef in self), domain=self.domain
             )
         if not Is.instance(other, Polynomial):
-            return NotImplemented
+            raise NotImplementedError
         coefs = [0 * self[0]] * (self.degree + other.degree + 1)
         for i, coefi in enumerate(self):
             for j, coefj in enumerate(other):

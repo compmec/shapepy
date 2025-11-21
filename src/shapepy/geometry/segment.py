@@ -40,22 +40,19 @@ class Segment(IParametrizedCurve):
         xfunc: IAnalytic,
         yfunc: IAnalytic,
         *,
-        domain: Union[None, IntervalR1, WholeR1] = None,
+        domain: Union[IntervalR1, WholeR1],
     ):
         if not Is.instance(xfunc, IAnalytic):
             raise TypeError
         if not Is.instance(yfunc, IAnalytic):
             raise TypeError
-        if domain is None:
-            domain = xfunc.domain & yfunc.domain
-        else:
-            domain = from_any(domain)
-            if not is_continuous(domain):
-                raise TypeError(f"Domain is not continuous: {domain}")
-            if domain not in (xfunc.domain & yfunc.domain):
-                raise ValueError(
-                    f"Given domain must be in {xfunc.domain & yfunc.domain}"
-                )
+        domain = from_any(domain)
+        if not is_continuous(domain):
+            raise TypeError(f"Domain is not continuous: {domain}")
+        if domain not in (xfunc.domain & yfunc.domain):
+            raise ValueError(
+                f"Given domain must be in {xfunc.domain & yfunc.domain}"
+            )
         self.__length = None
         self.__domain = domain
         self.__knots = (infimum(self.domain), supremum(self.domain))
@@ -183,19 +180,3 @@ def compute_length(segment: Segment) -> Real:
         return Math.sqrt(dpsquare(node))
 
     return adaptative.integrate(function, segment.domain)
-
-
-def is_segment(obj: object) -> bool:
-    """
-    Checks if the parameter is a Segment
-
-    Parameters
-    ----------
-    obj : The object to be tested
-
-    Returns
-    -------
-    bool
-        True if the obj is a Segment, False otherwise
-    """
-    return Is.instance(obj, Segment)

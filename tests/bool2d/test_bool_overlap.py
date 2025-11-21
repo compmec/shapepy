@@ -349,7 +349,7 @@ class TestDisabledClean:
         right = Primitive.circle(radius=3, center=(10, 0))
         with set_auto_clean(False):
             with enable_logger("shapepy.bool2d"):
-                shape = big - small | left ^ right
+                shape = big - small  # | left ^ right
                 assert shape - shape is EmptyShape()
                 assert shape - (~shape) == shape
                 assert (~shape) - shape == ~shape

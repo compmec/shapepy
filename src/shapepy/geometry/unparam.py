@@ -49,16 +49,6 @@ class USegment(IGeometricCurve):
         """
         return self.__segment.length
 
-    @property
-    def start_point(self) -> Point2D:
-        """Gives the start point of the USegment"""
-        return self.__segment(self.__segment.knots[0])
-
-    @property
-    def end_point(self) -> Point2D:
-        """Gives the end point of the USegment"""
-        return self.__segment(self.__segment.knots[-1])
-
     def box(self) -> Box:
         """
         Gives the box that encloses the curve

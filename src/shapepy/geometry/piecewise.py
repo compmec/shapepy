@@ -97,8 +97,8 @@ class PiecewiseCurve(IParametrizedCurve):
         """
         if not Is.real(node):
             raise ValueError
-        if node < self.knots[0] or self.knots[-1] < node:
-            return None
+        if node not in self.domain:
+            raise ValueError(f"Node {node} is not in {self.domain}")
         for i, knot in enumerate(self.knots[1:]):
             if node < knot:
                 return i
@@ -147,10 +147,7 @@ class PiecewiseCurve(IParametrizedCurve):
         self.__segments = tuple(newsegments)
 
     def eval(self, node: float, derivate: int = 0) -> Point2D:
-        index = self.span(node)
-        if index is None:
-            raise ValueError(f"Node {node} is out of bounds")
-        return self[index].eval(node, derivate)
+        return self[self.span(node)].eval(node, derivate)
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""

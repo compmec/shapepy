@@ -233,8 +233,6 @@ def segment_and_segment(
     """Computes the intersection between two segment curves"""
     assert Is.instance(curvea, Segment)
     assert Is.instance(curveb, Segment)
-    if curvea.box() & curveb.box() is None:
-        return EmptyR1(), EmptyR1()
     if curvea == curveb:
         return curvea.domain, curveb.domain
     if segment_is_linear(curvea) and segment_is_linear(curveb):
@@ -320,7 +318,6 @@ class IntersectionSegments:
         if t1 < t0:
             t0, t1 = t1, t0
         if t1 < 0 or 1 < t0:
-            logger.debug("5) Empty, Empty")
             return empty, empty
 
         u0 = inner(A0 - B0, dB) / dBodB
@@ -432,76 +429,3 @@ class IntersectionSegments:
                     j += 1
             index += 1
         return tuple(pairs)
-
-
-def intersect_piecewises(
-    curvea: PiecewiseCurve,
-    curveb: PiecewiseCurve,
-) -> Tuple[SubSetR1, SubSetR1]:
-    r"""Computes the intersection between two jordan curves
-
-    Finds the values of (:math:`a^{\star}`, :math:`b^{\star}`,
-    :math:`u^{\star}`, :math:`v^{\star}`) such
-
-    .. math::
-        S_{a^{\star}}(u^{\star}) == O_{b^{\star}}(v^{\star})
-
-    It computes the intersection between each pair of segments
-    from ``self`` and ``other`` and returns the matrix of coefficients
-
-    .. math::
-
-        \begin{bmatrix}
-        a_0 & b_0 & u_0 & v_0 \\
-        a_1 & b_1 & u_1 & v_1 \\
-        \vdots & \vdots & \vdots & \vdots \\
-        a_{n} & b_{n} & u_{n} & v_{n}
-        \end{bmatrix}
-
-    If two bezier curves are equal, then ``u_i = v_i = None``
-
-    * ``0 <= a_i < len(self.segments)``
-    * ``0 <= b_i < len(other.segments)``
-    * ``0 <= u_i <= 1`` or ``None``
-    * ``0 <= v_i <= 1`` or ``None``
-
-    Parameters
-    ----------
-    other : JordanCurve
-        The jordan curve which intersects ``self``
-    equal_beziers : bool, default = True
-        Flag to return (or not) when two segments are equal
-
-        If the flag ``equal_beziers`` are inactive,
-        then will remove when ``(ui, vi) == (None, None)``.
-
-    end_points : bool, default = True
-        Flag to return (or not) when jordans intersect at end points
-
-        If the flag ``end_points`` are inactive,
-        then will remove when ``(ui, vi)`` are
-        ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
-
-    :return: The matrix of coefficients ``[(ai, bi, ui, vi)]``
-                or an empty tuple in case of non-intersection
-    :rtype: tuple[(int, int, float, float)]
-
-
-    Example use
-    -----------
-    >>> from shapepy import JordanCurve
-    >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
-    >>> jordan_a = FactoryJordan.polygon(vertices_a)
-    >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]
-    >>> jordan_b = FactoryJordan.polygon(vertices_b)
-    >>> jordan_a.intersection(jordan_b)
-    ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
-
-    """
-    subseta, subsetb = EmptyR1(), EmptyR1()
-    for sbezier in curvea:
-        for obezier in curveb:
-            suba, subb = segment_and_segment(sbezier, obezier)
-            subseta |= suba
-            subsetb |= subb
-    return subseta, subsetb

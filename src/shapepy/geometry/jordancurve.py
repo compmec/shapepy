@@ -57,14 +57,9 @@ class JordanCurve(UPiecewiseCurve):
         ((0, 0), (4, 0), (0, 3))
 
         """
-        yield from (
-            (
-                useg.start_point
-                if Is.instance(useg, USegment)
-                else useg(useg.knots[0])
-            )
-            for useg in self
-        )
+        for useg in self:
+            seg = useg.parametrize()
+            yield seg.eval(seg.knots[0])
 
     def __str__(self) -> str:
         msg = f"Jordan Curve with {len(self)} segments and vertices\n"
