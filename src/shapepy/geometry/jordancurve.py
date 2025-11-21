@@ -120,7 +120,7 @@ def compute_area(jordan: JordanCurve) -> Real:
 
 @debug("shapepy.geometry.jordan")
 def clean_jordan(
-    usegments: Iterable[Union[Segment, USegment]]
+    usegments: Iterable[Union[Segment, USegment]],
 ) -> Iterator[Union[Segment, USegment]]:
     """Cleans the jordan curve
 
