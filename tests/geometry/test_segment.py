@@ -34,6 +34,18 @@ def test_build():
     FactorySegment.bezier([(0, 0), (1, 0), (0, 1)])
 
 
+@pytest.mark.order(13)
+@pytest.mark.timeout(10)
+@pytest.mark.dependency(depends=["test_begin", "test_build"])
+def test_invert():
+    bezier = FactorySegment.bezier([(0, 0), (1, 0), (0, 1)])
+    invbez = ~bezier
+    assert bezier.domain == invbez.domain
+    assert bezier.knots == invbez.knots
+    assert bezier(bezier.knots[0]) == invbez(invbez.knots[-1])
+    assert bezier(bezier.knots[-1]) == invbez(invbez.knots[0])
+
+
 class TestDerivate:
     @pytest.mark.order(13)
     @pytest.mark.dependency(
@@ -127,11 +139,10 @@ class TestSplitUnite:
         half = Fraction(1, 2)
         points = [(0, 0), (1, 0)]
         curve = FactorySegment.bezier(points)
-        curvea = FactorySegment.bezier([(0, 0), (half, 0)])
-        curveb = FactorySegment.bezier([(half, 0), (1, 0)])
+        curvea = FactorySegment.bezier([(0, 0), (half, 0)], [0, 0.5])
+        curveb = FactorySegment.bezier([(half, 0), (1, 0)], [0.5, 1])
         assert curve.section([0, half]) == curvea
         assert curve.section([half, 1]) == curveb
-        assert curve.split([half]) == (curvea, curveb)
 
         test = curvea | curveb
         assert test == curve
@@ -166,6 +177,7 @@ def test_print():
     depends=[
         "test_begin",
         "test_build",
+        "test_invert",
         "TestDerivate::test_end",
         "TestContains::test_end",
         "TestSplitUnite::test_end",

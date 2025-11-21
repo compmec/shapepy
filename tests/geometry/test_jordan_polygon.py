@@ -8,7 +8,6 @@ import numpy as np
 import pytest
 
 from shapepy.geometry.factory import FactoryJordan
-from shapepy.geometry.jordancurve import clean_jordan
 from shapepy.geometry.transform import move, rotate, scale
 from shapepy.scalar.angle import degrees, radians
 
@@ -152,7 +151,17 @@ class TestJordanPolygon:
         vertices1 = [(-1, 0), (1, 2), (3, 0), (1, -2)]
         square1 = FactoryJordan.polygon(vertices1)
         param0 = square0.parametrize()
+        assert param0(0) == (1, 0)
+        assert param0(1) == (-1, 2)
+        assert param0(2) == (-3, 0)
+        assert param0(3) == (-1, -2)
+        assert param0(4) == (1, 0)
         param1 = square1.parametrize()
+        assert param1(0) == (-1, 0)
+        assert param1(1) == (1, 2)
+        assert param1(2) == (3, 0)
+        assert param1(3) == (1, -2)
+        assert param1(4) == (-1, 0)
 
         inters = param0 & param0
         assert inters.all_subsets[id(param0)] == [0, 4]
@@ -162,9 +171,6 @@ class TestJordanPolygon:
         assert inters.all_knots[id(param1)] == {0, 1, 2, 3, 4}
 
         inters = param0 & param1
-        print(param0)
-        print(param1)
-        print(inters)
         assert inters.all_subsets[id(param0)] == {0.5, 3.5}
         assert inters.all_knots[id(param0)] == {0, 0.5, 1, 2, 3, 3.5, 4}
         assert inters.all_subsets[id(param1)] == {0.5, 3.5}
@@ -443,28 +449,24 @@ class TestOthers:
     def test_clean(self):
         verticesa = [(-1, 0), (0, 0), (1, 0), (0, 1)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1, 0), (1, 0), (0, 1)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb
 
         verticesa = [(-1.0, 0.0), (0.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb
 
         verticesa = [(0, 0), (1, 0), (0, 1), (-1, 0)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1, 0), (1, 0), (0, 1)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb
 
         verticesa = [(0.0, 0.0), (1.0, 0.0), (0.0, 1.0), (-1.0, 0.0)]
         jordana = FactoryJordan.polygon(verticesa)
-        jordana = clean_jordan(jordana)
         verticesb = [(-1.0, 0.0), (1.0, 0.0), (0.0, 1.0)]
         jordanb = FactoryJordan.polygon(verticesb)
         assert jordana == jordanb

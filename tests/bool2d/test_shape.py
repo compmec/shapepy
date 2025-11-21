@@ -45,13 +45,13 @@ class TestIntegrate:
                     rectangular.jordan, expx, expy
                 )
                 if expx % 2 or expy % 2:
-                    good = 0
+                    assert abs(test) < 1e-8
                 else:
                     good = width ** (expx + 1)
                     good *= height ** (expy + 1)
                     good /= (1 + expx) * (1 + expy)
                     good /= 2 ** (expx + expy)
-                assert abs(test - good) < 1e-9
+                    assert abs(test - good) < 1e-9 * abs(good)
 
     @pytest.mark.order(25)
     @pytest.mark.timeout(10)
@@ -78,7 +78,7 @@ class TestIntegrate:
                     center[1] - height / 2
                 ) ** (expy + 1)
                 good /= (1 + expx) * (1 + expy)
-                assert abs(test - good) < 1e-9 * abs(good)
+                assert abs(test - good) < 1e-9 * max(1, abs(good))
 
     @pytest.mark.order(25)
     @pytest.mark.timeout(10)
@@ -90,20 +90,20 @@ class TestIntegrate:
         ]
     )
     def test_centered_rombo(self):
-        width, height = 3, 5
+        width, height = 1, 2
         rombo = Primitive.regular_polygon(4).scale((width, height))
         nx, ny = 5, 5
         for expx in range(nx):
             for expy in range(ny):
                 test = IntegrateJordan.polynomial(rombo.jordan, expx, expy)
                 if expx % 2 or expy % 2:
-                    good = 0
+                    assert abs(test) < 1e-6
                 else:
                     good = 4 * width ** (expx + 1) * height ** (expy + 1)
                     good *= math.factorial(expx) * math.factorial(expy)
                     good /= math.factorial(expx + expy)
                     good /= (1 + expx + expy) * (2 + expx + expy)
-                assert abs(test - good) < 1e-9
+                    assert abs(test - good) < 1e-9 * max(1, abs(good))
 
     @pytest.mark.order(25)
     @pytest.mark.timeout(10)

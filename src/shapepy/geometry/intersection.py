@@ -14,6 +14,7 @@ import math
 from fractions import Fraction
 from typing import Dict, Iterable, Set, Tuple, Union
 
+from ..loggers import debug, get_logger
 from ..rbool import (
     EmptyR1,
     SubSetR1,
@@ -24,7 +25,7 @@ from ..rbool import (
 )
 from ..scalar.nodes_sample import NodeSampleFactory
 from ..scalar.reals import Real
-from ..tools import Is, NotExpectedError
+from ..tools import Is
 from .base import IGeometricCurve, IParametrizedCurve
 from .piecewise import PiecewiseCurve
 from .point import cross, inner
@@ -206,11 +207,19 @@ def param_and_param(
     """Computes the intersection between two parametrized curves"""
     assert Is.instance(curvea, IParametrizedCurve)
     assert Is.instance(curveb, IParametrizedCurve)
-    if Is.segment(curvea) and Is.segment(curveb):
-        return segment_and_segment(curvea, curveb)
-    if Is.piecewise(curvea) and Is.piecewise(curveb):
-        return intersect_piecewises(curvea, curveb)
-    raise NotExpectedError
+    if curvea.box() & curveb.box() is None:
+        return EmptyR1(), EmptyR1()
+    if Is.instance(curvea, PiecewiseCurve):
+        subseta, subsetb = EmptyR1(), EmptyR1()
+        for segmenta in curvea:
+            subb, suba = param_and_param(segmenta, curveb)
+            subseta |= suba
+            subsetb |= subb
+        return subseta, subsetb
+    if Is.instance(curveb, PiecewiseCurve):
+        # pylint: disable=arguments-out-of-order
+        return param_and_param(curveb, curvea)[::-1]
+    return segment_and_segment(curvea, curveb)
 
 
 def segment_is_linear(segment: Segment) -> bool:
@@ -224,25 +233,29 @@ def segment_and_segment(
     """Computes the intersection between two segment curves"""
     assert Is.instance(curvea, Segment)
     assert Is.instance(curveb, Segment)
-    if curvea.box() & curveb.box() is None:
-        return EmptyR1(), EmptyR1()
     if curvea == curveb:
-        return create_interval(0, 1), create_interval(0, 1)
+        return curvea.domain, curveb.domain
     if segment_is_linear(curvea) and segment_is_linear(curveb):
         return IntersectionSegments.lines(curvea, curveb)
     nptsa = max(curvea.xfunc.degree, curvea.yfunc.degree) + 4
     nptsb = max(curveb.xfunc.degree, curveb.yfunc.degree) + 4
-    usample = list(NodeSampleFactory.closed_linspace(nptsa))
-    vsample = list(NodeSampleFactory.closed_linspace(nptsb))
+    usample = [
+        curvea.knots[0] + u * (curvea.knots[-1] - curvea.knots[0])
+        for u in NodeSampleFactory.closed_linspace(nptsa)
+    ]
+    vsample = [
+        curveb.knots[0] + u * (curveb.knots[-1] - curveb.knots[0])
+        for u in NodeSampleFactory.closed_linspace(nptsb)
+    ]
     pairs = []
     for ui in usample:
         pairs += [(ui, vj) for vj in vsample]
     for _ in range(3):
         pairs = IntersectionSegments.bezier_and_bezier(curvea, curveb, pairs)
-        pairs.insert(0, (0, 0))
-        pairs.insert(0, (0, 1))
-        pairs.insert(0, (1, 0))
-        pairs.insert(0, (1, 1))
+        pairs.insert(0, (curvea.knots[0], curveb.knots[0]))
+        pairs.insert(0, (curvea.knots[0], curveb.knots[-1]))
+        pairs.insert(0, (curvea.knots[-1], curveb.knots[0]))
+        pairs.insert(0, (curvea.knots[-1], curveb.knots[-1]))
         # Filter values by distance of points
         tol_norm = 1e-6
         pairs = IntersectionSegments.filter_distance(
@@ -267,11 +280,15 @@ class IntersectionSegments:
 
     # pylint: disable=invalid-name, too-many-return-statements, too-many-locals
     @staticmethod
+    @debug("shapepy.geometry.intersection")
     def lines(curvea: Segment, curveb: Segment) -> Tuple[SubSetR1, SubSetR1]:
         """Finds the intersection of two line segments"""
         empty = EmptyR1()
-        A0, A1 = curvea(0), curvea(1)
-        B0, B1 = curveb(0), curveb(1)
+        logger = get_logger("shapepy.geometry.intersection")
+        A0 = curvea(curvea.knots[0])
+        A1 = curvea(curvea.knots[-1])
+        B0 = curveb(curveb.knots[0])
+        B1 = curveb(curveb.knots[-1])
         dA = A1 - A0
         dB = B1 - B0
         B0mA0 = B0 - A0
@@ -279,13 +296,19 @@ class IntersectionSegments:
         if dAxdB != 0:  # Lines are not parallel
             t0 = cross(B0mA0, dB) / dAxdB
             if t0 < 0 or 1 < t0:
+                logger.debug("1) Empty, Empty")
                 return empty, empty
             u0 = cross(B0mA0, dA) / dAxdB
             if u0 < 0 or 1 < u0:
+                logger.debug("2) Empty, Empty")
                 return empty, empty
+            t0 = curvea.knots[0] + t0 * (curvea.knots[-1] - curvea.knots[0])
+            u0 = curveb.knots[0] + u0 * (curveb.knots[-1] - curveb.knots[0])
+            logger.debug("3) Single, Single")
             return create_single(t0), create_single(u0)
         # Lines are parallel
         if cross(dA, B0mA0) != 0:
+            logger.debug("4) Empty, Empty")
             return empty, empty  # Parallel, but not colinear
         # Compute the projections
         dAodA = inner(dA, dA)
@@ -305,8 +328,14 @@ class IntersectionSegments:
         t1 = min(max(0, t1), 1)
         u0 = min(max(0, u0), 1)
         u1 = min(max(0, u1), 1)
+        t0 = curvea.knots[0] + t0 * (curvea.knots[-1] - curvea.knots[0])
+        u0 = curveb.knots[0] + u0 * (curveb.knots[-1] - curveb.knots[0])
+        t1 = curvea.knots[0] + t1 * (curvea.knots[-1] - curvea.knots[0])
+        u1 = curveb.knots[0] + u1 * (curveb.knots[-1] - curveb.knots[0])
         if t0 == t1 or u0 == u1:
+            logger.debug("6) Single, Single")
             return create_single(t0), create_single(u1)
+        logger.debug("7) Interval, Interval")
         return create_interval(t0, t1), create_interval(u0, u1)
 
     # pylint: disable=too-many-locals
@@ -345,8 +374,9 @@ class IntersectionSegments:
                     continue
                 newu = u - (mat11 * vect0 - mat01 * vect1) / deter
                 newv = v - (mat00 * vect1 - mat01 * vect0) / deter
-                pair = (min(1, max(0, newu)), min(1, max(0, newv)))
-                new_pairs.add(pair)
+                newu = min(curvea.knots[-1], max(curvea.knots[0], newu))
+                newv = min(curveb.knots[-1], max(curveb.knots[0], newv))
+                new_pairs.add((newu, newv))
             pairs = list(new_pairs)
             for i, (ui, vi) in enumerate(pairs):
                 if Is.instance(ui, Fraction):
@@ -399,81 +429,3 @@ class IntersectionSegments:
                     j += 1
             index += 1
         return tuple(pairs)
-
-
-def intersect_piecewises(
-    curvea: PiecewiseCurve,
-    curveb: PiecewiseCurve,
-) -> Tuple[SubSetR1, SubSetR1]:
-    r"""Computes the intersection between two jordan curves
-
-    Finds the values of (:math:`a^{\star}`, :math:`b^{\star}`,
-    :math:`u^{\star}`, :math:`v^{\star}`) such
-
-    .. math::
-        S_{a^{\star}}(u^{\star}) == O_{b^{\star}}(v^{\star})
-
-    It computes the intersection between each pair of segments
-    from ``self`` and ``other`` and returns the matrix of coefficients
-
-    .. math::
-
-        \begin{bmatrix}
-        a_0 & b_0 & u_0 & v_0 \\
-        a_1 & b_1 & u_1 & v_1 \\
-        \vdots & \vdots & \vdots & \vdots \\
-        a_{n} & b_{n} & u_{n} & v_{n}
-        \end{bmatrix}
-
-    If two bezier curves are equal, then ``u_i = v_i = None``
-
-    * ``0 <= a_i < len(self.segments)``
-    * ``0 <= b_i < len(other.segments)``
-    * ``0 <= u_i <= 1`` or ``None``
-    * ``0 <= v_i <= 1`` or ``None``
-
-    Parameters
-    ----------
-    other : JordanCurve
-        The jordan curve which intersects ``self``
-    equal_beziers : bool, default = True
-        Flag to return (or not) when two segments are equal
-
-        If the flag ``equal_beziers`` are inactive,
-        then will remove when ``(ui, vi) == (None, None)``.
-
-    end_points : bool, default = True
-        Flag to return (or not) when jordans intersect at end points
-
-        If the flag ``end_points`` are inactive,
-        then will remove when ``(ui, vi)`` are
-        ``(0, 0)``, ``(0, 1)``, ``(1, 0)`` or ``(1, 1)``
-
-    :return: The matrix of coefficients ``[(ai, bi, ui, vi)]``
-                or an empty tuple in case of non-intersection
-    :rtype: tuple[(int, int, float, float)]
-
-
-    Example use
-    -----------
-    >>> from shapepy import JordanCurve
-    >>> vertices_a = [(0, 0), (2, 0), (2, 2), (0, 2)]
-    >>> jordan_a = FactoryJordan.polygon(vertices_a)
-    >>> vertices_b = [(1, 1), (3, 1), (3, 3), (1, 3)]
-    >>> jordan_b = FactoryJordan.polygon(vertices_b)
-    >>> jordan_a.intersection(jordan_b)
-    ((1, 0, 1/2, 1/2), (2, 3, 1/2, 1/2))
-
-    """
-    assert Is.piecewise(curvea)
-    assert Is.piecewise(curveb)
-
-    subseta, subsetb = EmptyR1(), EmptyR1()
-    for ai, sbezier in enumerate(curvea):
-        for bj, obezier in enumerate(curveb):
-            suba, subb = segment_and_segment(sbezier, obezier)
-            suba = suba.scale(curvea.knots[ai + 1] - curvea.knots[ai])
-            subseta |= suba.move(curvea.knots[ai])
-            subb = subb.scale(curveb.knots[bj + 1] - curveb.knots[bj])
-            subsetb |= subb.move(curveb.knots[bj])
-    return subseta, subsetb

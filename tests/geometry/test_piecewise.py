@@ -30,9 +30,10 @@ def test_build():
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    PiecewiseCurve(segments, knots)
+    segments = (
+        FactorySegment.bezier(pts, [i, i + 1]) for i, pts in enumerate(points)
+    )
+    PiecewiseCurve(segments)
 
 
 @pytest.mark.order(14)
@@ -44,9 +45,10 @@ def test_box():
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    piecewise = PiecewiseCurve(segments, knots)
+    segments = (
+        FactorySegment.bezier(pts, [i, i + 1]) for i, pts in enumerate(points)
+    )
+    piecewise = PiecewiseCurve(segments)
     box = piecewise.box()
     assert box.lowpt == (0, 0)
     assert box.toppt == (1, 1)
@@ -61,9 +63,10 @@ def test_evaluate():
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    piecewise = PiecewiseCurve(segments, knots)
+    segments = (
+        FactorySegment.bezier(pts, [i, i + 1]) for i, pts in enumerate(points)
+    )
+    piecewise = PiecewiseCurve(segments)
     assert piecewise(0) == (0, 0)
     assert piecewise(1) == (1, 0)
     assert piecewise(2) == (1, 1)
@@ -115,9 +118,10 @@ def test_print():
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    piecewise = PiecewiseCurve(segments, knots)
+    segments = (
+        FactorySegment.bezier(pts, [i, i + 1]) for i, pts in enumerate(points)
+    )
+    piecewise = PiecewiseCurve(segments)
     str(piecewise)
     repr(piecewise)
 

@@ -7,13 +7,11 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
-from ..loggers import debug
-from ..rbool import SubSetR1, WholeR1
+from ..rbool import SubSetR1
 from ..scalar.quadrature import inner
 from ..scalar.reals import Math, Rational, Real
-from ..tools import Is, NotExpectedError, To
-from .base import BaseAnalytic, IAnalytic
-from .polynomial import Polynomial
+from ..tools import Is, To
+from .polynomial import Polynomial, scale_coefs, shift_coefs
 
 
 @lru_cache(maxsize=None)
@@ -53,141 +51,38 @@ def inverse_caract_matrix(degree: int) -> Tuple[Tuple[Rational, ...], ...]:
     return tuple(map(tuple, matrix))
 
 
-def bezier2polynomial(bezier: Bezier) -> Polynomial:
+def bezier2polynomial(coefs: Iterable[Real]) -> Iterable[Real]:
     """
     Converts a Bezier instance to Polynomial
     """
-    coefs = tuple(bezier)
+    coefs = tuple(coefs)
     matrix = bezier_caract_matrix(len(coefs) - 1)
-    poly_coefs = (inner(weights, bezier) for weights in matrix)
-    return Polynomial(poly_coefs, bezier.domain)
+    return (inner(weights, coefs) for weights in matrix)
 
 
-def polynomial2bezier(polynomial: Polynomial) -> Bezier:
+def polynomial2bezier(coefs: Iterable[Real]) -> Iterable[Real]:
     """
     Converts a Polynomial instance to a Bezier
     """
-    coefs = tuple(polynomial)
+    coefs = tuple(coefs)
     matrix = inverse_caract_matrix(len(coefs) - 1)
-    ctrlpoints = (inner(weights, coefs) for weights in matrix)
-    return Bezier(ctrlpoints, polynomial.domain)
+    return (inner(weights, coefs) for weights in matrix)
 
 
-class Bezier(BaseAnalytic):
+class Bezier(Polynomial):
     """
     Defines the Bezier class, that allows evaluating and operating
     such as adding, subtracting, multiplying, etc
     """
 
-    def __init__(self, coefs: Iterable[Real], domain: SubSetR1 = WholeR1()):
-        super().__init__(coefs, domain)
-        self.__polynomial = bezier2polynomial(self)
-
-    @property
-    def degree(self) -> int:
-        """
-        Returns the degree of the polynomial, which is the
-        highest power of t with a non-zero coefficient.
-        If the polynomial is constant, returns 0.
-        """
-        return self.__polynomial.degree
-
-    def __eq__(self, value: object) -> bool:
-        if not Is.instance(value, IAnalytic):
-            if Is.real(value):
-                return all(ctrlpoint == value for ctrlpoint in self)
-            return NotImplemented
-        if self.domain != value.domain:
-            return False
-        if isinstance(value, Bezier):
-            return self.__polynomial == bezier2polynomial(value)
-        if isinstance(value, Polynomial):
-            return self.__polynomial == value
-        raise NotExpectedError
-
-    def __add__(self, other: Union[Real, Polynomial, Bezier]) -> Bezier:
-        if Is.instance(other, Bezier):
-            other = bezier2polynomial(other)
-        sumpoly = self.__polynomial + other
-        return polynomial2bezier(sumpoly)
-
-    def __mul__(self, other: Union[Real, Polynomial, Bezier]) -> Bezier:
-        if Is.instance(other, Bezier):
-            other = bezier2polynomial(other)
-        mulpoly = self.__polynomial * other
-        return polynomial2bezier(mulpoly)
-
-    def __call__(self, node: Real, derivate: int = 0) -> Real:
-        return self.__polynomial(node, derivate)
-
-    def __str__(self):
-        return str(self.__polynomial)
-
-    @debug("shapepy.analytic.bezier")
-    def clean(self) -> Bezier:
-        """
-        Decreases the degree of the bezier curve if possible
-        """
-        return polynomial2bezier(bezier2polynomial(self).clean())
-
-    @debug("shapepy.analytic.bezier")
-    def scale(self, amount: Real) -> Bezier:
-        """
-        Transforms the polynomial p(t) into p(A*t) by
-        scaling the argument of the polynomial by 'A'.
-
-        p(t) = a0 + a1 * t + ... + ap * t^p
-        p(A * t) = a0 + a1 * (A*t) + ... + ap * (A * t)^p
-                = b0 + b1 * t + ... + bp * t^p
-
-        Example
-        -------
-        >>> old_poly = Polynomial([0, 0, 0, 1])
-        >>> print(old_poly)
-        t^3
-        >>> new_poly = scale(poly, 1)  # transform to (t-1)^3
-        >>> print(new_poly)
-        - 1 + 3 * t - 3 * t^2 + t^3
-        """
-        return polynomial2bezier(bezier2polynomial(self).scale(amount))
-
-    @debug("shapepy.analytic.bezier")
-    def shift(self, amount: Real) -> Bezier:
-        """
-        Transforms the bezier p(t) into p(t-d) by
-        translating the bezier by 'd' to the right.
-        """
-        return polynomial2bezier(bezier2polynomial(self).shift(amount))
-
-    @debug("shapepy.analytic.bezier")
-    def integrate(self, times: int = 1) -> Bezier:
-        """
-        Integrates the bezier analytic
-
-        Example
-        -------
-        >>> poly = Polynomial([1, 2, 5])
-        >>> print(poly)
-        1 + 2 * t + 5 * t^2
-        >>> ipoly = integrate(poly)
-        >>> print(ipoly)
-        t + t^2 + (5/3) * t^3
-        """
-        return polynomial2bezier(bezier2polynomial(self).integrate(times))
-
-    @debug("shapepy.analytic.bezier")
-    def derivate(self, times: int = 1) -> Bezier:
-        """
-        Derivate the bezier curve, giving a new one
-        """
-        return polynomial2bezier(bezier2polynomial(self).derivate(times))
-
-
-def to_bezier(coefs: Iterable[Real]) -> Bezier:
-    """
-    Creates a Bezier instance
-    """
-    return Bezier(coefs).clean()
-
-
-To.bezier = to_bezier
+    def __init__(
+        self,
+        coefs: Iterable[Real],
+        reparam: Tuple[Real, Real] = (0, 1),
+        *,
+        domain: Union[None, SubSetR1] = None,
+    ):
+        coefs = tuple(bezier2polynomial(coefs))
+        knota, knotb = reparam
+        coefs = shift_coefs(scale_coefs(coefs, knotb - knota), knota)
+        super().__init__(coefs, domain=domain)

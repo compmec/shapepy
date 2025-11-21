@@ -13,15 +13,17 @@ File that defines the classes
 from __future__ import annotations
 
 from copy import copy
-from typing import Iterable, Optional, Tuple
+from typing import Optional, Tuple, Union
 
 from ..analytic.base import IAnalytic
-from ..analytic.tools import find_minimum
+from ..analytic.bezier import Bezier
+from ..analytic.tools import find_minimum, is_constant
 from ..loggers import debug
-from ..rbool import IntervalR1, from_any
+from ..rbool import IntervalR1, WholeR1, from_any, infimum, supremum
+from ..rbool.tools import is_continuous
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math, Real
-from ..tools import Is, To, pairs, vectorize
+from ..tools import Is, To
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D, cartesian
@@ -33,44 +35,37 @@ class Segment(IParametrizedCurve):
     that contains a bezier curve inside it
     """
 
-    def __init__(self, xfunc: IAnalytic, yfunc: IAnalytic):
+    def __init__(
+        self,
+        xfunc: IAnalytic,
+        yfunc: IAnalytic,
+        *,
+        domain: Union[IntervalR1, WholeR1],
+    ):
         if not Is.instance(xfunc, IAnalytic):
             raise TypeError
         if not Is.instance(yfunc, IAnalytic):
             raise TypeError
+        domain = from_any(domain)
+        if not is_continuous(domain):
+            raise TypeError(f"Domain is not continuous: {domain}")
+        if domain not in (xfunc.domain & yfunc.domain):
+            raise ValueError(
+                f"Given domain must be in {xfunc.domain & yfunc.domain}"
+            )
         self.__length = None
-        self.__knots = (To.rational(0, 1), To.rational(1, 1))
-        self.__xfunc = xfunc.clean()
-        self.__yfunc = yfunc.clean()
+        self.__domain = domain
+        self.__knots = (infimum(self.domain), supremum(self.domain))
+        self.__xfunc = xfunc
+        self.__yfunc = yfunc
 
-    def __str__(self) -> str:
-        return f"BS{list(self.knots)}:({self.xfunc}, {self.yfunc})"
+    @property
+    def domain(self) -> Union[IntervalR1, WholeR1]:
+        return self.__domain
 
-    def __repr__(self) -> str:
-        return str(self)
-
-    def __eq__(self, other: Segment) -> bool:
-        return (
-            Is.instance(other, Segment)
-            and self.xfunc == other.xfunc
-            and self.yfunc == other.yfunc
-        )
-
-    @debug("shapepy.geometry.segment")
-    def __contains__(self, point: Point2D) -> bool:
-        point = To.point(point)
-        if point not in self.box():
-            return False
-        deltax = self.xfunc - point.xcoord
-        deltay = self.yfunc - point.ycoord
-        dist_square = deltax * deltax + deltay * deltay
-        return find_minimum(dist_square, [0, 1]) < 1e-12
-
-    @vectorize(1, 0)
-    def __call__(self, node: Real, derivate: int = 0) -> Point2D:
-        xcoord = self.xfunc(node, derivate)
-        ycoord = self.yfunc(node, derivate)
-        return cartesian(xcoord, ycoord)
+    @property
+    def knots(self) -> Tuple[Real, Real]:
+        return self.__knots
 
     @property
     def xfunc(self) -> IAnalytic:
@@ -88,16 +83,38 @@ class Segment(IParametrizedCurve):
 
     @property
     def length(self) -> Real:
-        """
-        The length of the segment
-        """
         if self.__length is None:
             self.__length = compute_length(self)
         return self.__length
 
-    @property
-    def knots(self) -> Tuple[Real, Real]:
-        return self.__knots
+    def __str__(self) -> str:
+        return f"BS{self.domain}:({self.xfunc}, {self.yfunc})"
+
+    def __repr__(self) -> str:
+        return str(self)
+
+    def __eq__(self, other: Segment) -> bool:
+        return (
+            Is.instance(other, Segment)
+            and self.domain == other.domain
+            and self.xfunc == other.xfunc
+            and self.yfunc == other.yfunc
+        )
+
+    @debug("shapepy.geometry.segment")
+    def __contains__(self, point: Point2D) -> bool:
+        point = To.point(point)
+        if point not in self.box():
+            return False
+        deltax = self.xfunc - point.xcoord
+        deltay = self.yfunc - point.ycoord
+        dist_square = deltax * deltax + deltay * deltay
+        return find_minimum(dist_square, self.domain) < 1e-12
+
+    def eval(self, node: Real, derivate: int = 0) -> Point2D:
+        xcoord = self.xfunc.eval(node, derivate)
+        ycoord = self.yfunc.eval(node, derivate)
+        return cartesian(xcoord, ycoord)
 
     def derivate(self, times: Optional[int] = 1) -> Segment:
         """
@@ -105,62 +122,45 @@ class Segment(IParametrizedCurve):
         """
         if not Is.integer(times) or times <= 0:
             raise ValueError(f"Times must be integer >= 1, not {times}")
-        dxfunc = copy(self.xfunc).derivate(times)
-        dyfunc = copy(self.yfunc).derivate(times)
-        return Segment(dxfunc, dyfunc)
+        dxfunc = self.xfunc.derivate(times)
+        dyfunc = self.yfunc.derivate(times)
+        return Segment(dxfunc, dyfunc, domain=self.domain)
 
     def box(self) -> Box:
         """Returns two points which defines the minimal exterior rectangle
 
         Returns the pair (A, B) with A[0] <= B[0] and A[1] <= B[1]
         """
-        xmin = find_minimum(self.xfunc, [0, 1])
-        xmax = -find_minimum(-self.xfunc, [0, 1])
-        ymin = find_minimum(self.yfunc, [0, 1])
-        ymax = -find_minimum(-self.yfunc, [0, 1])
+        xmin = find_minimum(self.xfunc, self.domain)
+        xmax = -find_minimum(-self.xfunc, self.domain)
+        ymin = find_minimum(self.yfunc, self.domain)
+        ymax = -find_minimum(-self.yfunc, self.domain)
         return Box(cartesian(xmin, ymin), cartesian(xmax, ymax))
-
-    def clean(self) -> Segment:
-        """Cleans the segment"""
-        self.__xfunc = self.__xfunc.clean()
-        self.__yfunc = self.__yfunc.clean()
-        return self
 
     def __copy__(self) -> Segment:
         return self.__deepcopy__(None)
 
     def __deepcopy__(self, memo) -> Segment:
-        return Segment(copy(self.xfunc), copy(self.yfunc))
+        return Segment(copy(self.xfunc), copy(self.yfunc), domain=self.domain)
 
     def __invert__(self) -> Segment:
         """
         Inverts the direction of the curve.
         If the curve is clockwise, it becomes counterclockwise
         """
-        half = To.rational(1, 2)
-        xfunc = self.__xfunc.shift(-half).scale(-1).shift(half)
-        yfunc = self.__yfunc.shift(-half).scale(-1).shift(half)
-        return Segment(xfunc, yfunc)
+        composition = Bezier(
+            [self.knots[-1], self.knots[0]], [self.knots[0], self.knots[-1]]
+        )
+        xfunc = self.__xfunc.compose(composition)
+        yfunc = self.__yfunc.compose(composition)
+        return Segment(xfunc, yfunc, domain=self.domain)
 
-    @debug("shapepy.geometry.segment")
-    def split(self, nodes: Iterable[Real]) -> Tuple[Segment, ...]:
-        """
-        Splits the curve into more segments
-        """
-        nodes = (n for n in nodes if self.knots[0] <= n <= self.knots[-1])
-        nodes = sorted(set(nodes) | set(self.knots))
-        return tuple(self.section([ka, kb]) for ka, kb in pairs(nodes))
-
-    def section(self, interval: IntervalR1) -> Segment:
+    def section(self, domain: Union[IntervalR1, WholeR1]) -> Segment:
         """Extracts a subsegment from the given segment"""
-        interval = from_any(interval)
-        if not Is.instance(interval, IntervalR1):
-            raise TypeError
-        knota, knotb = interval[0], interval[1]
-        denom = 1 / (knotb - knota)
-        nxfunc = copy(self.xfunc).shift(-knota).scale(denom)
-        nyfunc = copy(self.yfunc).shift(-knota).scale(denom)
-        return Segment(nxfunc, nyfunc)
+        domain = from_any(domain)
+        if domain not in self.domain:
+            raise ValueError(f"Given {domain} not in {self.domain}")
+        return Segment(self.xfunc, self.yfunc, domain=domain)
 
 
 @debug("shapepy.geometry.segment")
@@ -168,36 +168,15 @@ def compute_length(segment: Segment) -> Real:
     """
     Computes the length of the jordan curve
     """
-    domain = (0, 1)
-    dpsquare: IAnalytic = (
-        segment.xfunc.derivate() ** 2 + segment.yfunc.derivate() ** 2
-    )
-    assert Is.analytic(dpsquare)
-    if dpsquare == dpsquare(0):  # Check if it's constant
-        return (domain[1] - domain[0]) * Math.sqrt(dpsquare(0))
+    dpsquare = segment.xfunc.derivate() ** 2 + segment.yfunc.derivate() ** 2
+    assert Is.instance(dpsquare, IAnalytic)
+    if is_constant(dpsquare):  # Check if it's constant
+        knota, knotb = segment.knots
+        return (knotb - knota) * Math.sqrt(dpsquare((knota + knotb) / 2))
     integrator = IntegratorFactory.clenshaw_curtis(3)
     adaptative = AdaptativeIntegrator(integrator, 1e-9, 12)
 
     def function(node):
         return Math.sqrt(dpsquare(node))
 
-    return adaptative.integrate(function, domain)
-
-
-def is_segment(obj: object) -> bool:
-    """
-    Checks if the parameter is a Segment
-
-    Parameters
-    ----------
-    obj : The object to be tested
-
-    Returns
-    -------
-    bool
-        True if the obj is a Segment, False otherwise
-    """
-    return Is.instance(obj, Segment)
-
-
-Is.segment = is_segment
+    return adaptative.integrate(function, segment.domain)
