@@ -87,11 +87,6 @@ class SimpleShape(SubSetR2):
         return self.__jordancurve
 
     @property
-    def jordans(self) -> Tuple[JordanCurve]:
-        """Gives the jordan curve that defines the boundary"""
-        return (self.__jordancurve,)
-
-    @property
     def area(self) -> Real:
         """The internal area that is enclosed by the shape"""
         return self.__jordancurve.area
@@ -120,7 +115,7 @@ class SimpleShape(SubSetR2):
         vertices = map(piecewise, piecewise.knots[:-1])
         if not all(map(self.__contains_point, vertices)):
             return False
-        inters = piecewise & self.__jordancurve.piecewise
+        inters = piecewise & self.__jordancurve.parametrize()
         if not inters:  # There's no intersection between curves
             return True
         knots = sorted(inters.all_knots[id(piecewise)])
@@ -224,15 +219,6 @@ class ConnectedShape(SubSetR2):
     def __iter__(self) -> Iterator[SimpleShape]:
         yield from self.__subshapes
 
-    @property
-    def jordans(self) -> Tuple[JordanCurve, ...]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
-        """
-        return tuple(shape.jordan for shape in self)
-
     def move(self, vector: Point2D) -> ConnectedShape:
         vector = To.point(vector)
         return ConnectedShape(sub.move(vector) for sub in self)
@@ -303,18 +289,6 @@ class DisjointShape(SubSetR2):
     def area(self) -> Real:
         """The internal area that is enclosed by the shape"""
         return sum(sub.area for sub in self)
-
-    @property
-    def jordans(self) -> Tuple[JordanCurve, ...]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
-        """
-        jordans = []
-        for subshape in self:
-            jordans += list(subshape.jordans)
-        return tuple(jordans)
 
     def __eq__(self, other: SubSetR2):
         assert Is.instance(other, SubSetR2)

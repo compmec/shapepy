@@ -136,32 +136,6 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
 
 
 @debug("shapepy.bool2d.boolean")
-def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
-    """
-    Cleans complementar of given subset
-
-    Parameters
-    ----------
-    subset: SubSetR2
-        The subset to be cleaned
-
-    Return
-    ------
-    SubSetR2
-        The cleaned subset
-    """
-    assert Is.instance(subset, LazyNot)
-    inverted = ~subset
-    if Is.instance(inverted, SimpleShape):
-        return SimpleShape(~inverted.jordan, True)
-    if Is.instance(inverted, ConnectedShape):
-        return DisjointShape((~s).clean() for s in inverted)
-    if Is.instance(inverted, DisjointShape):
-        return shape_from_jordans(~jordan for jordan in inverted.jordans)
-    raise NotImplementedError(f"Missing typo: {type(inverted)}")
-
-
-@debug("shapepy.bool2d.boolean")
 def contains_bool2d(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     """
     Checks if B is inside A
@@ -355,8 +329,8 @@ class GraphComputer:
         # for key in djordans.keys() & ijordans.keys():
         #     djordans.pop(key)
         #     ijordans.pop(key)
-        piecewises = [jordan.piecewise for jordan in djordans.values()]
-        piecewises += [(~jordan).piecewise for jordan in ijordans.values()]
+        piecewises = [jordan.parametrize() for jordan in djordans.values()]
+        piecewises += [(~jordan).parametrize() for jordan in ijordans.values()]
         logger.debug(f"Quantity of piecewises: {len(piecewises)}")
         with graph_manager():
             graphs = tuple(map(curve2graph, piecewises))

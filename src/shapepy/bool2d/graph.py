@@ -21,7 +21,7 @@ GAP = "    "
 
 def get_label(
     item: Union[IParametrizedCurve, SingleNode, Node, SinglePath],
-) -> str:
+) -> str:  # pragma: no cover
     """Gives the label of the item, for printing purpose"""
     if type(item) in all_containers:
         container = all_containers[type(item)].values()
@@ -225,8 +225,8 @@ class GroupNodes(Iterable[Node]):
         """Add a Node into the group of nodes.
 
         If it's already included, only skips the insertion"""
-        if Is.instance(item, SingleNode):
-            item = get_node({item})
+        if not Is.instance(item, Node):
+            raise TypeError
         self.__nodes.add(item)
         return item
 

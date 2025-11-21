@@ -88,25 +88,23 @@ def test_section():
         ((1, 1), (0, 1)),
         ((0, 1), (0, 0)),
     ]
-    knots = range(len(points) + 1)
-    segments = tuple(map(FactorySegment.bezier, points))
-    piecewise = PiecewiseCurve(segments, knots)
+    segments = tuple(
+        FactorySegment.bezier(pts, [i, i + 1]) for i, pts in enumerate(points)
+    )
+    piecewise = PiecewiseCurve(segments)
     assert piecewise.section([0, 1]) == segments[0]
     assert piecewise.section([1, 2]) == segments[1]
     assert piecewise.section([2, 3]) == segments[2]
     assert piecewise.section([3, 4]) == segments[3]
 
     assert piecewise.section([0, 0.5]) == segments[0].section([0, 0.5])
-    assert piecewise.section([1, 1.5]) == segments[1].section([0, 0.5])
-    assert piecewise.section([2, 2.5]) == segments[2].section([0, 0.5])
-    assert piecewise.section([3, 3.5]) == segments[3].section([0, 0.5])
+    assert piecewise.section([1, 1.5]) == segments[1].section([1, 1.5])
+    assert piecewise.section([2, 2.5]) == segments[2].section([2, 2.5])
+    assert piecewise.section([3, 3.5]) == segments[3].section([3, 3.5])
     assert piecewise.section([0.5, 1]) == segments[0].section([0.5, 1])
-    assert piecewise.section([1.5, 2]) == segments[1].section([0.5, 1])
-    assert piecewise.section([2.5, 3]) == segments[2].section([0.5, 1])
-    assert piecewise.section([3.5, 4]) == segments[3].section([0.5, 1])
-
-    # good = PiecewiseCurve()
-    # assert piecewise.section([0.5, 1.5]) == PiecewiseCurve()
+    assert piecewise.section([1.5, 2]) == segments[1].section([1.5, 2])
+    assert piecewise.section([2.5, 3]) == segments[2].section([2.5, 3])
+    assert piecewise.section([3.5, 4]) == segments[3].section([3.5, 4])
 
 
 @pytest.mark.order(14)

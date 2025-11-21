@@ -4,13 +4,12 @@ Defines the piecewise curve class
 
 from __future__ import annotations
 
-from collections import defaultdict
-from typing import Iterable, Iterator, List, Tuple, Union
+from typing import Iterable, Iterator, Tuple, Union
 
 from ..loggers import debug
-from ..rbool import IntervalR1, WholeR1, from_any, infimum, supremum
+from ..rbool import IntervalR1, WholeR1, from_any
 from ..scalar.reals import Real
-from ..tools import Is, To, pairs
+from ..tools import Is, pairs
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D
@@ -123,38 +122,6 @@ class PiecewiseCurve(IParametrizedCurve):
             box |= bezier.box()
         return box
 
-    def split(self, nodes: Iterable[Real]) -> None:
-        """
-        Creates an opening in the piecewise curve
-
-        Example
-        >>> piecewise.knots
-        (0, 1, 2, 3)
-        >>> piecewise.snap([0.5, 1.2])
-        >>> piecewise.knots
-        (0, 0.5, 1, 1.2, 2, 3)
-        """
-        nodes = set(map(To.finite, nodes)) - set(self.knots)
-        spansnodes = defaultdict(set)
-        for node in nodes:
-            span = self.span(node)
-            if span is not None:
-                spansnodes[span].add(node)
-        if len(spansnodes) == 0:
-            return
-        newsegments: List[Segment] = []
-        for i, segmenti in enumerate(self):
-            if i not in spansnodes:
-                newsegments.append(segmenti)
-                continue
-            knota, knotb = self.knots[i], self.knots[i + 1]
-            unit_nodes = (
-                (knot - knota) / (knotb - knota) for knot in spansnodes[i]
-            )
-            newsegments += list(segmenti.split(unit_nodes))
-        self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
-        self.__segments = tuple(newsegments)
-
     def eval(self, node: float, derivate: int = 0) -> Point2D:
         return self[self.span(node)].eval(node, derivate)
 
@@ -163,45 +130,15 @@ class PiecewiseCurve(IParametrizedCurve):
         return any(point in bezier for bezier in self)
 
     @debug("shapepy.geometry.piecewise")
-    def section(self, domain: Union[IntervalR1, WholeR1]) -> PiecewiseCurve:
+    def section(
+        self, domain: Union[IntervalR1, WholeR1]
+    ) -> Union[Segment, PiecewiseCurve]:
         domain = from_any(domain)
         if domain not in self.domain:
             raise ValueError(f"Invalid {domain} not in {self.domain}")
-        knots = tuple(self.knots)
-        segments = tuple(self.__segments)
-        if domain == [self.knots[0], self.knots[-1]]:
-            return self
-        knota, knotb = infimum(domain), supremum(domain)
-        if knota == knotb:
-            raise ValueError(f"Invalid {domain}")
-        spana, spanb = self.span(knota), self.span(knotb)
-        if knota == knots[spana] and knotb == knots[spanb]:
-            segs = segments[spana:spanb]
-            return segs[0] if len(segs) == 1 else PiecewiseCurve(segs)
-        if spana == spanb:
-            denom = 1 / (knots[spana + 1] - knots[spana])
-            uknota = denom * (knota - knots[spana])
-            uknotb = denom * (knotb - knots[spana])
-            domain = [uknota, uknotb]
-            segment = segments[spana]
-            return segment.section(domain)
-        if spanb == spana + 1 and knotb == knots[spanb]:
-            denom = 1 / (knots[spana + 1] - knots[spana])
-            uknota = denom * (knota - knots[spana])
-            return segments[spana].section([uknota, 1])
-        newsegs: List[Segment] = []
-        if knots[spana] < knota:
-            denom = 1 / (knots[spana + 1] - knots[spana])
-            domain = [denom * (knota - knots[spana]), 1]
-            segment = segments[spana]
-            segment = segment.section(domain)
-            newsegs.append(segment)
-        else:
-            newsegs.append(segments[spana])
-        newsegs += list(segments[spana + 1 : spanb])
-        if knotb != knots[spanb]:
-            denom = 1 / (knots[spanb + 1] - knots[spanb])
-            domain = [0, denom * (knotb - knots[spanb])]
-            segment = segments[spanb].section(domain)
-            newsegs.append(segment)
-        return PiecewiseCurve(newsegs)
+        newsegs = []
+        for segmenti in self.__segments:
+            inter = segmenti.domain & domain
+            if Is.instance(inter, (IntervalR1, WholeR1)):
+                newsegs.append(segmenti.section(inter))
+        return newsegs[0] if len(newsegs) == 1 else PiecewiseCurve(newsegs)
