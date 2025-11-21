@@ -55,24 +55,24 @@ def test_matrices():
 @pytest.mark.dependency(depends=["test_build", "test_degree", "test_matrices"])
 def test_compare():
     domain = [0, 1]
-    bezier = Bezier([1], domain)
-    assert bezier == Polynomial([1], domain)
+    bezier = Bezier([1], domain=domain)
+    assert bezier == Polynomial([1], domain=domain)
     assert bezier == 1
 
-    bezier = Bezier([1, 1, 1], domain)
-    assert bezier == Polynomial([1], domain)
+    bezier = Bezier([1, 1, 1], domain=domain)
+    assert bezier == Polynomial([1], domain=domain)
     assert bezier == 1
 
-    bezier = Bezier([1, 2], domain)
-    assert bezier == Polynomial([1, 1], domain)
-    bezier = Bezier([1, 2, 3], domain)
-    assert bezier == Polynomial([1, 2], domain)
+    bezier = Bezier([1, 2], domain=domain)
+    assert bezier == Polynomial([1, 1], domain=domain)
+    bezier = Bezier([1, 2, 3], domain=domain)
+    assert bezier == Polynomial([1, 2], domain=domain)
 
     assert bezier != 1
     assert bezier != "asd"
 
     assert Bezier([1, 1, 1]) == Bezier([1])
-    assert Bezier([1, 1], [0, 1]) != Bezier([1], [-1, 2])
+    assert Bezier([1, 1], domain=[0, 1]) != Bezier([1], domain=[-1, 2])
 
 
 @pytest.mark.order(4)
@@ -114,6 +114,18 @@ def test_evaluate():
         assert bezier(0) == a
         assert bezier(0.5) == (a + 2 * b + c) / 4
         assert bezier(1) == c
+
+    bezier = Bezier([10, 20], [0, 1])
+    assert bezier(0) == 10
+    assert bezier(1) == 20
+
+    bezier = Bezier([10, 20], [-1, 1])
+    assert bezier(-1) == 10
+    assert bezier(1) == 20
+
+    bezier = Bezier([10, 20], [-1, 2])
+    assert bezier(-1) == 10
+    assert bezier(2) == 20
 
 
 @pytest.mark.order(4)

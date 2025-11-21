@@ -235,3 +235,27 @@ def subset_length(subset: SubSetR1) -> Real:
     if Is.instance(subset, DisjointR1):
         return sum(map(subset_length, subset.intervals))
     return 0
+
+
+def is_bounded(subset: SubSetR1) -> Real:
+    """
+    Tells if the given subset is limited, meaning it does not contain INF
+    """
+    subset = Future.convert(subset)
+    return not Is.instance(subset, WholeR1) and (
+        not (
+            Is.instance(subset, IntervalR1)
+            and not (Math.NEGINF < subset[0] and subset[1] < Math.POSINF)
+        )
+        and not (
+            Is.instance(subset, DisjointR1)
+            and not all(map(is_bounded, subset))
+        )
+    )
+
+
+def is_continuous(subset: SubSetR1) -> Real:
+    """
+    Tells if the given subset is continuous, there's no gaps
+    """
+    return not Is.instance(Future.convert(subset), DisjointR1)

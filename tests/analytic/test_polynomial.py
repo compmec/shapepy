@@ -148,7 +148,7 @@ def test_print():
     assert str(poly) == "1 + 2 * t + 3 * t^2"
     repr(poly)
 
-    poly = Polynomial([1, 2, 3], [0, 1])
+    poly = Polynomial([1, 2, 3], domain=[0, 1])
     assert repr(poly) == "[0, 1]: 1 + 2 * t + 3 * t^2"
 
 

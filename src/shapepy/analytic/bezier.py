@@ -7,11 +7,11 @@ from __future__ import annotations
 from functools import lru_cache
 from typing import Iterable, Tuple, Union
 
-from ..rbool import SubSetR1, WholeR1, from_any
+from ..rbool import SubSetR1
 from ..scalar.quadrature import inner
 from ..scalar.reals import Math, Rational, Real
 from ..tools import Is, To
-from .polynomial import Polynomial
+from .polynomial import Polynomial, scale_coefs, shift_coefs
 
 
 @lru_cache(maxsize=None)
@@ -76,8 +76,13 @@ class Bezier(Polynomial):
     """
 
     def __init__(
-        self, coefs: Iterable[Real], domain: Union[None, SubSetR1] = None
+        self,
+        coefs: Iterable[Real],
+        reparam: Tuple[Real, Real] = (0, 1),
+        *,
+        domain: Union[None, SubSetR1] = None,
     ):
-        domain = WholeR1() if domain is None else from_any(domain)
-        poly_coefs = tuple(bezier2polynomial(coefs))
-        super().__init__(poly_coefs, domain)
+        coefs = tuple(bezier2polynomial(coefs))
+        knota, knotb = reparam
+        coefs = shift_coefs(scale_coefs(coefs, knotb - knota), knota)
+        super().__init__(coefs, domain=domain)

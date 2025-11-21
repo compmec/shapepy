@@ -8,6 +8,7 @@ from functools import partial
 
 from ..analytic.base import IAnalytic
 from ..analytic.tools import find_minimum
+from ..loggers import debug, get_logger
 from ..scalar.quadrature import AdaptativeIntegrator, IntegratorFactory
 from ..scalar.reals import Math
 from ..tools import Is, To
@@ -26,6 +27,7 @@ class IntegrateSegment:
     adaptative = AdaptativeIntegrator(direct, 1e-6)
 
     @staticmethod
+    @debug("shapepy.geometry.integral")
     def polynomial(curve: Segment, expx: int, expy: int):
         """
         Computes the integral
@@ -39,8 +41,10 @@ class IntegrateSegment:
         pcrossdp = xfunc * yfunc.derivate()
         pcrossdp -= yfunc * xfunc.derivate()
         function = (xfunc**expx) * (yfunc**expy) * pcrossdp
+        logger = get_logger("shapepy.geometry.integral")
+        logger.debug(f"Integrating {function} over {curve.domain}")
         assert Is.instance(function, IAnalytic)
-        return function.integrate([0, 1]) / (expx + expy + 2)
+        return function.integrate(curve.domain) / (expx + expy + 2)
 
     @staticmethod
     def turns(curve: Segment, point: Point2D) -> float:
@@ -58,14 +62,14 @@ class IntegrateSegment:
         deltax: IAnalytic = curve.xfunc - point.xcoord
         deltay: IAnalytic = curve.yfunc - point.ycoord
         radius_square = deltax * deltax + deltay * deltay
-        if find_minimum(radius_square, [0, 1]) < 1e-6:
+        if find_minimum(radius_square, curve.domain) < 1e-6:
             return To.rational(1, 2)
         crossf = deltax * deltay.derivate()
         crossf -= deltay * deltax.derivate()
         function = partial(
             lambda t, cf, rs: cf(t) / rs(t), cf=crossf, rs=radius_square
         )
-        radians = IntegrateSegment.adaptative.integrate(function, [0, 1])
+        radians = IntegrateSegment.adaptative.integrate(function, curve.domain)
         return radians / Math.tau
 
 
@@ -76,13 +80,14 @@ class IntegrateJordan:
     """
 
     @staticmethod
+    @debug("shapepy.geometry.integral")
     def polynomial(jordan: JordanCurve, expx: int, expy: int):
         """
         Computes the integral
 
         I = int x^expx * y^expy * ds
         """
-        assert Is.jordan(jordan)
+        assert Is.instance(jordan, JordanCurve)
         return sum(
             IntegrateSegment.polynomial(usegment.parametrize(), expx, expy)
             for usegment in jordan

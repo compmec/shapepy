@@ -5,11 +5,12 @@ Defines the piecewise curve class
 from __future__ import annotations
 
 from collections import defaultdict
-from typing import Iterable, Tuple, Union
+from typing import Iterable, Iterator, Tuple, Union
 
 from ..loggers import debug
+from ..rbool import IntervalR1
 from ..scalar.reals import Real
-from ..tools import Is, To, vectorize
+from ..tools import Is, To, pairs
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D
@@ -21,37 +22,39 @@ class PiecewiseCurve(IParametrizedCurve):
     Defines a piecewise curve that is the concatenation of several segments.
     """
 
-    def __init__(
-        self,
-        segments: Iterable[Segment],
-        knots: Union[None, Iterable[Real]] = None,
-    ):
+    def __init__(self, segments: Iterable[Segment]):
         segments = tuple(segments)
         if not all(Is.instance(seg, Segment) for seg in segments):
             raise ValueError("All segments must be instances of Segment")
-        if knots is None:
-            knots = tuple(map(To.rational, range(len(segments) + 1)))
-        else:
-            knots = tuple(sorted(map(To.finite, knots)))
-        for segi, segj in zip(segments, segments[1:]):
-            if segi(1) != segj(0):
-                raise ValueError("Not Continuous curve")
+        knots = list(segments[0].knots)
+        for segi, segj in pairs(segments):
+            knots.append(segj.knots[-1])
+            if segi.knots[-1] != segj.knots[0]:
+                raise ValueError(
+                    f"{segi.domain} and {segj.domain} not consecutive"
+                )
+            pointa = segi(segi.knots[-1])
+            pointb = segj(segj.knots[0])
+            if pointa != pointb:
+                raise ValueError(
+                    f"{segi} not continuous with {segj}: {pointa} != {pointb}"
+                )
+        self.__domain = IntervalR1(knots[0], knots[-1])
         self.__segments = segments
-        self.__knots = knots
+        self.__knots = tuple(knots)
 
     def __str__(self):
-        msgs = []
-        for i, segmenti in enumerate(self.__segments):
-            interval = [self.knots[i], self.knots[i + 1]]
-            msg = f"{interval}: {segmenti}"
-            msgs.append(msg)
-        return r"{" + ", ".join(msgs) + r"}"
+        return r"{" + ", ".join(map(str, self)) + r"}"
+
+    def __repr__(self):
+        return self.__str__()
 
     @property
-    def knots(self) -> Tuple[Real]:
-        """
-        Get the knots of the piecewise curve.
-        """
+    def domain(self):
+        return self.__domain
+
+    @property
+    def knots(self) -> Tuple[Real, ...]:
         return self.__knots
 
     @property
@@ -61,7 +64,7 @@ class PiecewiseCurve(IParametrizedCurve):
         """
         return sum(seg.length for seg in self)
 
-    def __iter__(self):
+    def __iter__(self) -> Iterator[Segment]:
         yield from self.__segments
 
     def __getitem__(self, index: int) -> Segment:
@@ -94,8 +97,8 @@ class PiecewiseCurve(IParametrizedCurve):
         """
         if not Is.real(node):
             raise ValueError
-        if node < self.knots[0] or self.knots[-1] < node:
-            return None
+        if node not in self.domain:
+            raise ValueError(f"Node {node} is not in {self.domain}")
         for i, knot in enumerate(self.knots[1:]):
             if node < knot:
                 return i
@@ -112,6 +115,7 @@ class PiecewiseCurve(IParametrizedCurve):
             box |= bezier.box()
         return box
 
+    @debug("shapepy.geometry.piecewise")
     def split(self, nodes: Iterable[Real]) -> None:
         """
         Creates an opening in the piecewise curve
@@ -136,43 +140,15 @@ class PiecewiseCurve(IParametrizedCurve):
             if i not in spansnodes:
                 newsegments.append(segmenti)
                 continue
-            knota, knotb = self.knots[i], self.knots[i + 1]
-            unit_nodes = (
-                (knot - knota) / (knotb - knota) for knot in spansnodes[i]
-            )
-            newsegments += list(segmenti.split(unit_nodes))
+            divisions = sorted(spansnodes[i] | set(segmenti.knots))
+            for ka, kb in pairs(divisions):
+                newsegments.append(segmenti.section([ka, kb]))
         self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
         self.__segments = tuple(newsegments)
 
-    @vectorize(1, 0)
-    def __call__(self, node: float, derivate: int = 0) -> Point2D:
-        index = self.span(node)
-        if index is None:
-            raise ValueError(f"Node {node} is out of bounds")
-        knota, knotb = self.knots[index], self.knots[index + 1]
-        unitparam = (node - knota) / (knotb - knota)
-        segment = self[index]
-        return segment(unitparam, derivate)
+    def eval(self, node: float, derivate: int = 0) -> Point2D:
+        return self[self.span(node)].eval(node, derivate)
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
-
-
-def is_piecewise(obj: object) -> bool:
-    """
-    Checks if the parameter is a Piecewise curve
-
-    Parameters
-    ----------
-    obj : The object to be tested
-
-    Returns
-    -------
-    bool
-        True if the obj is a PiecewiseCurve, False otherwise
-    """
-    return Is.instance(obj, PiecewiseCurve)
-
-
-Is.piecewise = is_piecewise

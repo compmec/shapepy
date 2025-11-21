@@ -4,11 +4,9 @@ Contains methods to concatenate curves
 
 from typing import Iterable, Union
 
-from ..analytic import Bezier
 from ..tools import Is, NotExpectedError
 from .base import IGeometricCurve
 from .piecewise import PiecewiseCurve
-from .point import cross
 from .segment import Segment
 from .unparam import UPiecewiseCurve, USegment
 
@@ -23,7 +21,7 @@ def concatenate(curves: Iterable[IGeometricCurve]) -> IGeometricCurve:
     if not all(Is.instance(curve, IGeometricCurve) for curve in curves):
         raise ValueError
     if all(Is.instance(curve, Segment) for curve in curves):
-        return concatenate_segments(curves)
+        return simplify_piecewise(PiecewiseCurve(curves))
     if all(Is.instance(curve, USegment) for curve in curves):
         return concatenate_usegments(curves)
     raise NotExpectedError(str(tuple(str(type(c)) for c in curves)))
@@ -35,32 +33,28 @@ def concatenate_usegments(
     """
     Concatenates all the unparametrized segments
     """
-    usegments = tuple(usegments)
-    assert all(Is.instance(useg, USegment) for useg in usegments)
-    union = concatenate_segments(useg.parametrize() for useg in usegments)
+    union = simplify_piecewise(UPiecewiseCurve(usegments).parametrize())
     return (
         USegment(union)
         if Is.instance(union, Segment)
-        else UPiecewiseCurve(map(USegment, union))
+        else UPiecewiseCurve(union)
     )
 
 
-def concatenate_segments(
-    segments: Iterable[Segment],
+def simplify_piecewise(
+    piecewise: PiecewiseCurve,
 ) -> Union[Segment, PiecewiseCurve]:
     """
     Concatenates all the segments
     """
-    segments = tuple(segments)
-    if len(segments) == 0:
-        raise ValueError(f"Number sizes: {len(segments)}")
     filtsegments = []
-    segments = iter(segments)
+    segments = iter(piecewise)
     segmenti = next(segments)
     for segmentj in segments:
-        try:
-            segmenti = bezier_and_bezier(segmenti, segmentj)
-        except ValueError:
+        if can_concatenate(segmenti, segmentj):
+            domain = segmenti.domain | segmentj.domain
+            segmenti = Segment(segmenti.xfunc, segmenti.yfunc, domain=domain)
+        else:
             filtsegments.append(segmenti)
             segmenti = segmentj
     filtsegments.append(segmenti)
@@ -71,25 +65,6 @@ def concatenate_segments(
     )
 
 
-def bezier_and_bezier(curvea: Segment, curveb: Segment) -> Segment:
-    """Computes the union of two bezier curves"""
-    if not Is.instance(curvea, Segment):
-        raise TypeError(f"Invalid type: {type(curvea)}")
-    if not Is.instance(curveb, Segment):
-        raise TypeError(f"Invalid type: {type(curveb)}")
-    if abs(cross(curvea(1, 1), curveb(0, 1))) > 1e-6:
-        raise ValueError
-    if curvea.xfunc.degree != curveb.xfunc.degree:
-        raise ValueError
-    if curvea.yfunc.degree != curveb.yfunc.degree:
-        raise ValueError
-    if curvea.xfunc.degree > 1 or curvea.yfunc.degree > 1:
-        raise ValueError
-
-    if curvea(1) != curveb(0):
-        raise ValueError
-    startpoint = curvea(0)
-    endpoint = curveb(1)
-    nxfunc = Bezier((startpoint[0], endpoint[0]))
-    nyfunc = Bezier((startpoint[1], endpoint[1]))
-    return Segment(nxfunc, nyfunc)
+def can_concatenate(curvea: Segment, curveb: Segment) -> bool:
+    """Tells if it's possible to concatenate two segments into a single one"""
+    return curvea.xfunc == curveb.xfunc and curvea.yfunc == curveb.yfunc

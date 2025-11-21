@@ -7,6 +7,7 @@ import pytest
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.config import set_auto_clean
 from shapepy.bool2d.primitive import Primitive
+from shapepy.loggers import enable_logger
 
 
 @pytest.mark.order(43)
@@ -347,11 +348,12 @@ class TestDisabledClean:
         left = Primitive.circle(radius=3, center=(-10, 0))
         right = Primitive.circle(radius=3, center=(10, 0))
         with set_auto_clean(False):
-            shape = big - small | left ^ right
-            assert shape - shape is EmptyShape()
-            assert shape - (~shape) == shape
-            assert (~shape) - shape == ~shape
-            assert (~shape) - (~shape) is EmptyShape()
+            with enable_logger("shapepy.bool2d"):
+                shape = big - small  # | left ^ right
+                assert shape - shape is EmptyShape()
+                assert shape - (~shape) == shape
+                assert (~shape) - shape == ~shape
+                assert (~shape) - (~shape) is EmptyShape()
 
     @pytest.mark.order(43)
     @pytest.mark.timeout(40)

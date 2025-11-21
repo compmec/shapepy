@@ -62,6 +62,11 @@ def find_minimum(
     raise NotExpectedError(f"Invalid analytic: {type(analytic)}")
 
 
+def is_constant(analytic: IAnalytic) -> bool:
+    """Tells if the given analytic function is constant"""
+    return Is.instance(analytic, Polynomial) and analytic.degree == 0
+
+
 class PolynomialFunctions:
     """Static class that stores static functions used for the generics
     functions above. This class specifics for Polynomial"""

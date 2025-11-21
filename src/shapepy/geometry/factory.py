@@ -11,7 +11,9 @@ import numpy as np
 
 from ..analytic import Bezier
 from ..loggers import debug
-from ..tools import To
+from ..rbool import IntervalR1
+from ..scalar.reals import Real
+from ..tools import To, pairs
 from .jordancurve import JordanCurve
 from .point import Point2D, cartesian, rotate
 from .segment import Segment
@@ -26,7 +28,9 @@ class FactorySegment:
 
     @staticmethod
     @debug("shapepy.geometry.factory")
-    def bezier(ctrlpoints: Iterable[Point2D]) -> Segment:
+    def bezier(
+        ctrlpoints: Iterable[Point2D], limits: Tuple[Real, Real] = (0, 1)
+    ) -> Segment:
         """Initialize a bezier segment from a list of control points
 
         :param ctrlpoints: The list of control points
@@ -34,10 +38,11 @@ class FactorySegment:
         :return: The created segment
         :rtype: Segment
         """
+        domain = IntervalR1(limits[0], limits[1], True, True)
         ctrlpoints = tuple(map(To.point, ctrlpoints))
-        xfunc = Bezier((pt[0] for pt in ctrlpoints))
-        yfunc = Bezier((pt[1] for pt in ctrlpoints))
-        return Segment(xfunc, yfunc)
+        xfunc = Bezier((pt[0] for pt in ctrlpoints), limits)
+        yfunc = Bezier((pt[1] for pt in ctrlpoints), limits)
+        return Segment(xfunc, yfunc, domain=domain)
 
 
 class FactoryJordan:
@@ -65,14 +70,11 @@ class FactoryJordan:
         ((0, 0), (4, 0), (0, 3))
 
         """
-        vertices = list(map(To.point, vertices))
-        nverts = len(vertices)
-        vertices.append(vertices[0])
-        beziers = [None] * nverts
-        for i in range(nverts):
-            ctrlpoints = vertices[i : i + 2]
-            new_bezier = FactorySegment.bezier(ctrlpoints)
-            beziers[i] = USegment(new_bezier)
+        vertices = tuple(map(To.point, vertices))
+        beziers = []
+        for i, points in enumerate(pairs(vertices, cyclic=True)):
+            new_bezier = FactorySegment.bezier(points, (i, i + 1))
+            beziers.append(USegment(new_bezier))
         return JordanCurve(beziers)
 
     @staticmethod
@@ -125,6 +127,8 @@ class FactoryJordan:
             middle_point = rotate(middle_point, angle)
         end_point = all_ctrlpoints[0][0]
         all_ctrlpoints.append([start_point, middle_point, end_point])
-        return JordanCurve(
-            map(USegment, map(FactorySegment.bezier, all_ctrlpoints))
+        segments = (
+            FactorySegment.bezier(pts, [i, i + 1])
+            for i, pts in enumerate(all_ctrlpoints)
         )
+        return JordanCurve(segments)
