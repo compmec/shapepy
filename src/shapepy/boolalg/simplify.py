@@ -33,9 +33,9 @@ def find_variables(tree: BoolTree[T]) -> Iterator[T]:
     yield from items.values()
 
 
-@debug("shapepy.scalar.boolalg")
+@debug("shapepy.boolalg.simplify")
 def simplify_tree(
-    tree: Union[T, BoolTree[T]], maxvars: int = 4
+    tree: Union[T, BoolTree[T]], maxvars: int = 16
 ) -> BoolTree[T]:
     """Simplifies given boolean expression"""
     if not Is.instance(tree, BoolTree):
@@ -62,7 +62,7 @@ class Implicants:
     NOTCARE = "-"
 
     @staticmethod
-    @debug("shapepy.scalar.boolalg")
+    @debug("shapepy.boolalg.simplify")
     def evaluate(tree: BoolTree, idsvars: Tuple[int], binary: int) -> bool:
         """Evaluates a single boolean expression"""
         if not Is.instance(tree, BoolTree):
@@ -80,7 +80,7 @@ class Implicants:
         raise NotExpectedError(f"Invalid operator: {tree.operator}")
 
     @staticmethod
-    @debug("shapepy.scalar.boolalg")
+    @debug("shapepy.boolalg.simplify")
     def evaluate_table(
         tree: BoolTree, idsvars: Iterable[int]
     ) -> Iterator[bool]:
@@ -155,7 +155,7 @@ class Implicants:
         return tuple(implicants)
 
     @staticmethod
-    @debug("shapepy.scalar.boolalg")
+    @debug("shapepy.boolalg.simplify")
     def merge_prime_implicants(minterms: Iterable[str]) -> Set[str]:
         """Merge the prime implicants
 
@@ -206,7 +206,7 @@ class Implicants:
         return "".join(result)
 
     @staticmethod
-    @debug("shapepy.scalar.boolalg")
+    @debug("shapepy.boolalg.simplify")
     def sort_implicants(implicants: Iterable[str]) -> Iterable[str]:
         """Sorts the implicants by the simplest first"""
         implicants = tuple(implicants)

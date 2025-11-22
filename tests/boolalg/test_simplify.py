@@ -3,7 +3,6 @@ import pytest
 from shapepy.boolalg.converter import find_operator, string2tree, tree2string
 from shapepy.boolalg.simplify import simplify_tree
 from shapepy.boolalg.tree import Operators
-from shapepy.loggers import enable_logger
 
 
 @pytest.mark.order(1)
@@ -218,7 +217,7 @@ def test_simplify_multi_var():
 
     original = "a+b+c+d+e+f*a"
     tree = string2tree(original)
-    tree = simplify_tree(tree)
+    tree = simplify_tree(tree, 4)
     test = tree2string(tree)
     assert test == "a+b+c+d+e+(f*a)"
     tree = simplify_tree(tree, 8)
