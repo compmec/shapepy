@@ -10,6 +10,7 @@ or even unconnected shapes.
 from __future__ import annotations
 
 from copy import copy
+from functools import lru_cache
 from typing import Iterable, Iterator, Tuple, Union
 
 from ..geometry.box import Box
@@ -179,6 +180,8 @@ class SimpleShape(SubSetR2):
         """
         return self.jordan.box()
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.shape")
     def density(self, center: Point2D) -> Density:
         return lebesgue_density_jordan(self.jordan, center)
 
@@ -264,6 +267,8 @@ class ConnectedShape(SubSetR2):
             box |= sub.jordan.box()
         return box
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.shape")
     def density(self, center: Point2D) -> Density:
         center = To.point(center)
         densities = (sub.density(center) for sub in self)
@@ -357,6 +362,8 @@ class DisjointShape(SubSetR2):
             box |= sub.box()
         return box
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.shape")
     def density(self, center: Point2D) -> Real:
         center = To.point(center)
         return unite_densities((sub.density(center) for sub in self))
