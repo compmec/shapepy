@@ -6,19 +6,18 @@ operations between the SubSetR2 instances
 from __future__ import annotations
 
 from copy import copy
-from typing import Dict, Iterable, Tuple, Union
+from typing import Iterable, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.intersection import GeometricIntersectionCurves
 from ..geometry.unparam import USegment
 from ..loggers import debug
-from ..tools import CyclicContainer, Is, NotExpectedError
-from . import boolalg
+from ..tools import CyclicContainer, Is
 from .base import EmptyShape, Future, SubSetR2, WholeShape
 from .config import Config
 from .curve import SingleCurve
-from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
+from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy
 from .point import SinglePoint
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 
@@ -38,7 +37,7 @@ def invert_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The complementar subset
     """
-    return Boolalg.clean(RecipeLazy.invert(subset))
+    return RecipeLazy.invert(subset)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -56,8 +55,7 @@ def unite_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The united subset
     """
-    union = RecipeLazy.unite(subsets)
-    return Boolalg.clean(union)
+    return RecipeLazy.unite(subsets)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -75,8 +73,7 @@ def intersect_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    intersection = RecipeLazy.intersect(subsets)
-    return Boolalg.clean(intersection)
+    return RecipeLazy.intersect(subsets)
 
 
 @debug("shapepy.bool2d.boolean")
@@ -94,8 +91,7 @@ def xor_bool2d(subsets: Iterable[SubSetR2]) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    subset = RecipeLazy.xor(subsets)
-    return Boolalg.clean(subset)
+    return RecipeLazy.xor(subsets)
 
 
 # pylint: disable=too-many-return-statements
@@ -114,7 +110,6 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    subset = Boolalg.clean(subset)
     if not Is.lazy(subset):
         return subset
     if Is.instance(subset, LazyNot):
@@ -211,79 +206,6 @@ def contains_bool2d(subseta: SubSetR2, subsetb: SubSetR2) -> bool:
     raise NotImplementedError(
         f"Invalid typos: {type(subseta)}, {type(subsetb)}"
     )
-
-
-class Boolalg:
-    """Static methods to clean a SubSetR2 using algebraic simplifier"""
-
-    alphabet = "abcdefghijklmnop"
-    sub2var: Dict[SubSetR2, str] = {}
-
-    @staticmethod
-    def clean(subset: SubSetR2) -> SubSetR2:
-        """Simplifies the subset"""
-
-        if not Is.lazy(subset):
-            return subset
-        Boolalg.sub2var.clear()
-        original = Boolalg.subset2expression(subset)
-        simplified = boolalg.simplify(original)
-        if simplified != original:
-            subset = Boolalg.expression2subset(simplified)
-        Boolalg.sub2var.clear()
-        return subset
-
-    @staticmethod
-    def get_variable(subset: SubSetR2) -> str:
-        """Gets the variable represeting the subset"""
-        if subset not in Boolalg.sub2var:
-            index = len(Boolalg.sub2var)
-            if index > len(Boolalg.alphabet):
-                raise ValueError("Too many variables")
-            Boolalg.sub2var[subset] = Boolalg.alphabet[index]
-        return Boolalg.sub2var[subset]
-
-    @staticmethod
-    def subset2expression(subset: SubSetR2) -> str:
-        """Converts a SubSetR2 into a boolean expression"""
-        if not is_lazy(subset):
-            if Is.instance(subset, (EmptyShape, WholeShape)):
-                raise NotExpectedError("Lazy does not contain these")
-            return Boolalg.get_variable(subset)
-        if Is.instance(subset, LazyNot):
-            return boolalg.Formatter.invert_str(
-                Boolalg.subset2expression(~subset)
-            )
-        internals = map(Boolalg.subset2expression, subset)
-        if Is.instance(subset, LazyAnd):
-            return boolalg.Formatter.mult_strs(internals, boolalg.AND)
-        if Is.instance(subset, LazyOr):
-            return boolalg.Formatter.mult_strs(internals, boolalg.OR)
-        raise NotExpectedError
-
-    @staticmethod
-    def expression2subset(expression: str) -> SubSetR2:
-        """Converts a boolean expression into a SubSetR2"""
-        if expression == boolalg.TRUE:
-            return WholeShape()
-        if expression == boolalg.FALSE:
-            return EmptyShape()
-        for subset, variable in Boolalg.sub2var.items():
-            if expression == variable:
-                return subset
-        expression = boolalg.remove_parentesis(expression)
-        operator = boolalg.find_operator(expression)
-        if operator == boolalg.NOT:
-            subexpr = boolalg.extract(expression, boolalg.NOT)
-            inverted = Boolalg.expression2subset(subexpr)
-            return RecipeLazy.invert(inverted)
-        subexprs = boolalg.extract(expression, operator)
-        subsets = map(Boolalg.expression2subset, subexprs)
-        if operator == boolalg.OR:
-            return RecipeLazy.unite(subsets)
-        if operator == boolalg.AND:
-            return RecipeLazy.intersect(subsets)
-        raise NotExpectedError(f"Invalid expression: {expression}")
 
 
 def divide_connecteds(

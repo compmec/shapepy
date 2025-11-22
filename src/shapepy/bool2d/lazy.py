@@ -2,86 +2,86 @@
 
 from __future__ import annotations
 
-from collections import Counter
 from copy import deepcopy
-from typing import Iterable, Iterator, Type
+from typing import Iterable, Iterator, Union
 
+from ..boolalg.simplify import simplify_tree
+from ..boolalg.tree import (
+    BoolTree,
+    Operators,
+    false_tree,
+    items2tree,
+    true_tree,
+)
 from ..loggers import debug
-from ..tools import Is
+from ..tools import Is, NotExpectedError
 from .base import EmptyShape, SubSetR2, WholeShape
 from .density import intersect_densities, unite_densities
+
+
+def subset2tree(subset: SubSetR2) -> Union[SubSetR2, BoolTree]:
+    """Converts a subset into a tree equivalent"""
+    if Is.instance(subset, EmptyShape):
+        return false_tree()
+    if Is.instance(subset, WholeShape):
+        return true_tree()
+    if Is.instance(subset, LazyNot):
+        return items2tree((subset2tree(-subset),), Operators.NOT)
+    if Is.instance(subset, LazyAnd):
+        return items2tree(map(subset2tree, subset), Operators.AND)
+    if Is.instance(subset, LazyOr):
+        return items2tree(map(subset2tree, subset), Operators.OR)
+    return subset
+
+
+def tree2subset(tree: Union[SubSetR2, BoolTree]) -> SubSetR2:
+    """Converts a tree into the subset equivalent"""
+    if not Is.instance(tree, BoolTree):
+        return tree
+    if len(tree) == 0:
+        return WholeShape() if tree.operator == Operators.AND else EmptyShape()
+    if tree.operator == Operators.NOT:
+        return LazyNot(tree2subset(tuple(tree)[0]))
+    if tree.operator == Operators.AND:
+        return LazyAnd(map(tree2subset, tree))
+    if tree.operator == Operators.OR:
+        return LazyOr(map(tree2subset, tree))
+    raise NotExpectedError(f"Operator {tree.operator}")
+
+
+@debug("shapepy.bool2d.lazy")
+def operate(subsets: Iterable[SubSetR2], operator: Operators) -> SubSetR2:
+    """Computes the operation of the items, such as union, intersection"""
+    tree = items2tree(map(subset2tree, subsets), operator)
+    return tree2subset(simplify_tree(tree))
 
 
 class RecipeLazy:
     """Contains static methods that gives lazy recipes"""
 
     @staticmethod
-    def flatten(subsets: Iterable[SubSetR2], typo: Type) -> Iterator[SubSetR2]:
-        """Flattens the subsets"""
-        for subset in subsets:
-            if Is.instance(subset, typo):
-                yield from subset
-            else:
-                yield subset
-
-    @staticmethod
     @debug("shapepy.bool2d.lazy")
     def invert(subset: SubSetR2) -> SubSetR2:
         """Gives the complementar of the given subset"""
-        if Is.instance(subset, (EmptyShape, WholeShape, LazyNot)):
-            return -subset
-        return LazyNot(subset)
+        return operate((subset,), Operators.NOT)
 
     @staticmethod
     @debug("shapepy.bool2d.lazy")
     def intersect(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """Gives the recipe for the intersection of given subsets"""
-        subsets = RecipeLazy.flatten(subsets, LazyAnd)
-        subsets = frozenset(
-            s for s in subsets if not Is.instance(s, WholeShape)
-        )
-        if len(subsets) == 0:
-            return WholeShape()
-        if any(Is.instance(s, EmptyShape) for s in subsets):
-            return EmptyShape()
-        if len(subsets) == 1:
-            return tuple(subsets)[0]
-        return LazyAnd(subsets)
+        return operate(subsets, Operators.AND)
 
     @staticmethod
     @debug("shapepy.bool2d.contain")
     def unite(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """Gives the recipe for the union of given subsets"""
-        subsets = RecipeLazy.flatten(subsets, LazyOr)
-        subsets = frozenset(
-            s for s in subsets if not Is.instance(s, EmptyShape)
-        )
-        if len(subsets) == 0:
-            return EmptyShape()
-        if any(Is.instance(s, WholeShape) for s in subsets):
-            return WholeShape()
-        if len(subsets) == 1:
-            return tuple(subsets)[0]
-        return LazyOr(subsets)
+        return operate(subsets, Operators.OR)
 
     @staticmethod
     @debug("shapepy.bool2d.contain")
     def xor(subsets: Iterable[SubSetR2]) -> SubSetR2:
         """Gives the exclusive or of the given subsets"""
-        subsets = tuple(subsets)
-        dictids = dict(Counter(map(id, subsets)))
-        subsets = tuple(s for s in subsets if dictids[id(s)] % 2)
-        length = len(subsets)
-        if length == 0:
-            return EmptyShape()
-        if length == 1:
-            return subsets[0]
-        mid = length // 2
-        aset = RecipeLazy.xor(subsets[:mid])
-        bset = RecipeLazy.xor(subsets[mid:])
-        left = RecipeLazy.intersect((aset, RecipeLazy.invert(bset)))
-        righ = RecipeLazy.intersect((RecipeLazy.invert(aset), bset))
-        return RecipeLazy.unite((left, righ))
+        return operate(subsets, Operators.XOR)
 
 
 class LazyNot(SubSetR2):
