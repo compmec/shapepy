@@ -26,8 +26,8 @@ class Operators(Enum):
 
     NOT = 1
     AND = 2
-    OR = 3
-    XOR = 4
+    XOR = 3
+    OR = 4
 
 
 def flatten(items: Iterable[T], operator: Operators) -> Iterator[T]:

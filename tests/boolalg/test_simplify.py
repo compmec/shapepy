@@ -207,7 +207,7 @@ def test_simplify_multi_var():
         "((a)+a)+(b)": "a+b",
         "((a)+a)+(b+a)": "a+b",
         "a+b+c": "a+b+c",
-        "a+b*c": "a+(b*c)",
+        "a+b*c": "a+b*c",
     }
     for original, good in table.items():
         tree = string2tree(original)
@@ -219,7 +219,7 @@ def test_simplify_multi_var():
     tree = string2tree(original)
     tree = simplify_tree(tree, 4)
     test = tree2string(tree)
-    assert test == "a+b+c+d+e+(f*a)"
+    assert test == "a+b+c+d+e+f*a"
     tree = simplify_tree(tree, 8)
     test = tree2string(tree)
     assert test == "a+b+c+d+e"

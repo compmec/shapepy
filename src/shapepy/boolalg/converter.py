@@ -9,7 +9,7 @@ Example
 >>> tree
 OR["a", AND["b", "c"]]
 >>> tree2string(tree)
-a+(b*c)
+a+b*c
 """
 
 from typing import Iterator, List, Union
@@ -65,23 +65,24 @@ def tree2string(tree: Union[str, BoolTree[str]]) -> str:
     >>> tree = string2tree(msg)
     OR["a", AND["b", "c"]]
     >>> tree2string(tree)
-    a+(b*c)
+    a+b*c
     """
     if not Is.instance(tree, BoolTree):
         return tree
     if len(tree) == 0:
         return TRUE if tree.operator == Operators.AND else FALSE
-    if tree.operator == Operators.NOT:
-        item = tuple(tree)[0]
-        if Is.instance(item, BoolTree) and len(item) > 1:
-            return "!(" + tree2string(item) + ")"
-        return "!" + tree2string(item)
     items: List[str] = []
     for item in tree:
         stritem = tree2string(item)
-        if Is.instance(item, BoolTree) and len(item) > 1:
+        if (
+            Is.instance(item, BoolTree)
+            and len(item) > 1
+            and item.operator.value > tree.operator.value
+        ):
             stritem = "(" + stritem + ")"
         items.append(stritem)
+    if tree.operator == Operators.NOT:
+        return OPE2STR[tree.operator] + items[0]
     return OPE2STR[tree.operator].join(items)
 
 

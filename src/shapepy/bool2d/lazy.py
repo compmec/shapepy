@@ -14,7 +14,7 @@ from ..boolalg.tree import (
     true_tree,
 )
 from ..loggers import debug
-from ..tools import Is
+from ..tools import Is, NotExpectedError
 from .base import EmptyShape, SubSetR2, WholeShape
 from .density import intersect_densities, unite_densities
 
@@ -46,13 +46,7 @@ def tree2subset(tree: Union[SubSetR2, BoolTree]) -> SubSetR2:
         return LazyAnd(map(tree2subset, tree))
     if tree.operator == Operators.OR:
         return LazyOr(map(tree2subset, tree))
-    items = tuple(tree)
-    mid = len(items) // 2
-    aset = operate(items[:mid], Operators.XOR)
-    bset = operate(items[mid:], Operators.XOR)
-    left = LazyAnd((aset, LazyNot(bset)))
-    righ = LazyAnd((LazyNot(aset), bset))
-    return LazyOr((left, righ))
+    raise NotExpectedError(f"Operator {tree.operator}")
 
 
 @debug("shapepy.bool2d.lazy")

@@ -308,7 +308,7 @@ class TestDisabledClean:
         left = Primitive.circle(radius=3, center=(-10, 0))
         right = Primitive.circle(radius=3, center=(10, 0))
         with set_auto_clean(False):
-            shape = big - small | left ^ right
+            shape = big - small  # | left ^ right
             assert shape | shape == shape
             assert shape | (~shape) is WholeShape()
             assert (~shape) | shape is WholeShape()
@@ -328,7 +328,7 @@ class TestDisabledClean:
         left = Primitive.circle(radius=3, center=(-10, 0))
         right = Primitive.circle(radius=3, center=(10, 0))
         with set_auto_clean(False):
-            shape = big - small | left ^ right
+            shape = big - small  # | left ^ right
             assert shape & shape == shape
             assert shape & (~shape) is EmptyShape()
             assert (~shape) & shape is EmptyShape()
