@@ -46,7 +46,7 @@ class PiecewiseCurve(IParametrizedCurve):
         return r"{" + ", ".join(map(str, self)) + r"}"
 
     def __repr__(self):
-        return str(self)
+        return "[" + ", ".join(map(repr, self)) + "]"
 
     def __eq__(self, other: PiecewiseCurve):
         return (

@@ -54,10 +54,17 @@ class SimpleShape(SubSetR2):
         return SimpleShape(copy(self.__jordancurve))
 
     def __str__(self) -> str:  # pragma: no cover  # For debug
-        area = float(self.area)
-        vertices = tuple(map(tuple, self.jordan.vertices()))
-        return f"SimpleShape[{area:.2f}]:[{vertices}]"
+        vertices = ", ".join(map(str, self.jordan.vertices()))
+        return f"SimpleShape[{self.area}]:[{vertices}]"
 
+    def __repr__(self) -> str:  # pragma: no cover  # For debug
+        template = r'{"type":"SimpleShape","boundary":%s,"jordan":%s}'
+        return template % (
+            ("true" if self.boundary else "false"),
+            repr(self.jordan),
+        )
+
+    @debug("shapepy.bool2d.shape")
     def __eq__(self, other: SubSetR2) -> bool:
         """Compare two shapes
 
@@ -203,6 +210,11 @@ class ConnectedShape(SubSetR2):
     def __str__(self) -> str:  # pragma: no cover  # For debug
         return f"Connected shape total area {self.area}"
 
+    def __repr__(self) -> str:  # pragma: no cover  # For debug
+        template = r'{"type":"ConnectedShape","subshapes":[%s]}'
+        return template % ", ".join(map(repr, self))
+
+    @debug("shapepy.bool2d.shape")
     def __eq__(self, other: SubSetR2) -> bool:
         assert Is.instance(other, SubSetR2)
         return (
@@ -303,6 +315,10 @@ class DisjointShape(SubSetR2):
         msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self.__subshapes)} subshapes"
         return msg
+
+    def __repr__(self) -> str:  # pragma: no cover  # For debug
+        template = r'{"type":"DisjointShape","subshapes":[%s]}'
+        return template % ", ".join(map(repr, self))
 
     @debug("shapepy.bool2d.shape")
     def __hash__(self):

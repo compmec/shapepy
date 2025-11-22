@@ -101,7 +101,7 @@ class Point2D:
 
     def __str__(self) -> str:
         return (
-            f"({self.xcoord}, {self.ycoord})"
+            f"({str(self.xcoord)}, {str(self.ycoord)})"
             if Is.finite(self.radius)
             else f"({self.radius}:{self.angle})"
         )
