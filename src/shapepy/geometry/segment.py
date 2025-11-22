@@ -91,7 +91,8 @@ class Segment(IParametrizedCurve):
         return f"BS{self.domain}:({self.xfunc}, {self.yfunc})"
 
     def __repr__(self) -> str:
-        return str(self)
+        template = '{"type":"Segment","domain":"%s","xfunc":"%s","yfunc":"%s"}'
+        return template % (self.domain, self.xfunc, self.yfunc)
 
     def __eq__(self, other: Segment) -> bool:
         return (

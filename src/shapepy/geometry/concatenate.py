@@ -18,8 +18,9 @@ def concatenate(curves: Iterable[IGeometricCurve]) -> IGeometricCurve:
     Ignores all the curves parametrization
     """
     curves = tuple(curves)
-    if not all(Is.instance(curve, IGeometricCurve) for curve in curves):
-        raise ValueError
+    for curve in curves:
+        if not Is.instance(curve, IGeometricCurve):
+            raise TypeError(f"Received wrong type: {type(curve)}")
     if all(Is.instance(curve, Segment) for curve in curves):
         return simplify_piecewise(PiecewiseCurve(curves))
     if all(Is.instance(curve, USegment) for curve in curves):

@@ -10,6 +10,7 @@ or even unconnected shapes.
 from __future__ import annotations
 
 from copy import copy
+from functools import lru_cache
 from typing import Iterable, Iterator, Tuple, Union
 
 from ..geometry.box import Box
@@ -54,10 +55,17 @@ class SimpleShape(SubSetR2):
         return SimpleShape(copy(self.__jordancurve))
 
     def __str__(self) -> str:  # pragma: no cover  # For debug
-        area = float(self.area)
-        vertices = tuple(map(tuple, self.jordan.vertices()))
-        return f"SimpleShape[{area:.2f}]:[{vertices}]"
+        vertices = ", ".join(map(str, self.jordan.vertices()))
+        return f"SimpleShape[{self.area}]:[{vertices}]"
 
+    def __repr__(self) -> str:  # pragma: no cover  # For debug
+        template = r'{"type":"SimpleShape","boundary":%s,"jordan":%s}'
+        return template % (
+            ("true" if self.boundary else "false"),
+            repr(self.jordan),
+        )
+
+    @debug("shapepy.bool2d.shape")
     def __eq__(self, other: SubSetR2) -> bool:
         """Compare two shapes
 
@@ -85,11 +93,6 @@ class SimpleShape(SubSetR2):
     def jordan(self) -> JordanCurve:
         """Gives the jordan curve that defines the boundary"""
         return self.__jordancurve
-
-    @property
-    def jordans(self) -> Tuple[JordanCurve]:
-        """Gives the jordan curve that defines the boundary"""
-        return (self.__jordancurve,)
 
     @property
     def area(self) -> Real:
@@ -120,8 +123,8 @@ class SimpleShape(SubSetR2):
         vertices = map(piecewise, piecewise.knots[:-1])
         if not all(map(self.__contains_point, vertices)):
             return False
-        inters = piecewise & self.jordan
-        if not inters:
+        inters = piecewise & self.__jordancurve.parametrize()
+        if not inters:  # There's no intersection between curves
             return True
         knots = sorted(inters.all_knots[id(piecewise)])
         midknots = ((k0 + k1) / 2 for k0, k1 in zip(knots, knots[1:]))
@@ -177,6 +180,8 @@ class SimpleShape(SubSetR2):
         """
         return self.jordan.box()
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.shape")
     def density(self, center: Point2D) -> Density:
         return lebesgue_density_jordan(self.jordan, center)
 
@@ -208,6 +213,11 @@ class ConnectedShape(SubSetR2):
     def __str__(self) -> str:  # pragma: no cover  # For debug
         return f"Connected shape total area {self.area}"
 
+    def __repr__(self) -> str:  # pragma: no cover  # For debug
+        template = r'{"type":"ConnectedShape","subshapes":[%s]}'
+        return template % ", ".join(map(repr, self))
+
+    @debug("shapepy.bool2d.shape")
     def __eq__(self, other: SubSetR2) -> bool:
         assert Is.instance(other, SubSetR2)
         return (
@@ -223,15 +233,6 @@ class ConnectedShape(SubSetR2):
 
     def __iter__(self) -> Iterator[SimpleShape]:
         yield from self.__subshapes
-
-    @property
-    def jordans(self) -> Tuple[JordanCurve, ...]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
-        """
-        return tuple(shape.jordan for shape in self)
 
     def move(self, vector: Point2D) -> ConnectedShape:
         vector = To.point(vector)
@@ -266,6 +267,8 @@ class ConnectedShape(SubSetR2):
             box |= sub.jordan.box()
         return box
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.shape")
     def density(self, center: Point2D) -> Density:
         center = To.point(center)
         densities = (sub.density(center) for sub in self)
@@ -304,18 +307,6 @@ class DisjointShape(SubSetR2):
         """The internal area that is enclosed by the shape"""
         return sum(sub.area for sub in self)
 
-    @property
-    def jordans(self) -> Tuple[JordanCurve, ...]:
-        """Jordan curves that defines the shape
-
-        :getter: Returns a set of jordan curves
-        :type: tuple[JordanCurve]
-        """
-        jordans = []
-        for subshape in self:
-            jordans += list(subshape.jordans)
-        return tuple(jordans)
-
     def __eq__(self, other: SubSetR2):
         assert Is.instance(other, SubSetR2)
         return (
@@ -329,6 +320,10 @@ class DisjointShape(SubSetR2):
         msg = f"Disjoint shape with total area {self.area} and "
         msg += f"{len(self.__subshapes)} subshapes"
         return msg
+
+    def __repr__(self) -> str:  # pragma: no cover  # For debug
+        template = r'{"type":"DisjointShape","subshapes":[%s]}'
+        return template % ", ".join(map(repr, self))
 
     @debug("shapepy.bool2d.shape")
     def __hash__(self):
@@ -367,6 +362,8 @@ class DisjointShape(SubSetR2):
             box |= sub.box()
         return box
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.shape")
     def density(self, center: Point2D) -> Real:
         center = To.point(center)
         return unite_densities((sub.density(center) for sub in self))

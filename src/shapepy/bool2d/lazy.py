@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from collections import Counter
 from copy import deepcopy
+from functools import lru_cache
 from typing import Iterable, Iterator, Type
 
 from ..loggers import debug
@@ -132,8 +133,10 @@ class LazyNot(SubSetR2):
     def rotate(self, angle):
         return LazyNot(self.__internal.rotate(angle))
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.base")
     def density(self, center):
-        return ~self.__internal.density(center)
+        return ~(self.__internal.density(center))
 
 
 class LazyOr(SubSetR2):
@@ -183,6 +186,8 @@ class LazyOr(SubSetR2):
     def rotate(self, angle):
         return LazyOr(sub.rotate(angle) for sub in self)
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.lazy")
     def density(self, center):
         return unite_densities(sub.density(center) for sub in self)
 
@@ -234,6 +239,8 @@ class LazyAnd(SubSetR2):
     def rotate(self, angle):
         return LazyAnd(sub.rotate(angle) for sub in self)
 
+    @lru_cache(maxsize=1)
+    @debug("shapepy.bool2d.lazy")
     def density(self, center):
         return intersect_densities(sub.density(center) for sub in self)
 

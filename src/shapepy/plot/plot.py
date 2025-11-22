@@ -5,13 +5,18 @@ like shapes, curves, points, doing projections and so on
 
 from __future__ import annotations
 
-from typing import Optional
+from typing import Iterator, Optional, Union
 
 import matplotlib
 from matplotlib import pyplot
 
 from shapepy.bool2d.base import EmptyShape, WholeShape
-from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SubSetR2
+from shapepy.bool2d.shape import (
+    ConnectedShape,
+    DisjointShape,
+    SimpleShape,
+    SubSetR2,
+)
 from shapepy.geometry.jordancurve import JordanCurve
 from shapepy.geometry.segment import Segment
 
@@ -42,14 +47,16 @@ def patch_segment(segment: Segment):
     return vertices, commands
 
 
-def path_shape(connected: ConnectedShape) -> Path:
+def path_shape(simples: Iterator[SimpleShape]) -> Path:
     """
     Creates the commands for matplotlib to plot the shape
     """
     vertices = []
     commands = []
-    for jordan in connected.jordans:
-        segments = tuple(useg.parametrize() for useg in jordan)
+    for simple in simples:
+        if not Is.instance(simple, SimpleShape):
+            raise TypeError(f"Invalid type: {type(simple)}")
+        segments = tuple(simple.jordan.parametrize())
         vertices.append(segments[0](segments[0].knots[0]))
         commands.append(Path.MOVETO)
         for segment in segments:
@@ -80,6 +87,21 @@ def path_jordan(jordan: JordanCurve) -> Path:
         tuple(1e-6 * round(1e6 * val) for val in point) for point in vertices
     )
     return Path(vertices, commands)
+
+
+def shape2union_intersections(
+    shape: Union[SimpleShape, ConnectedShape, DisjointShape],
+) -> Iterator[Iterator[SimpleShape]]:
+    """Function used to transform any shape as a union
+    of intersection of simple shapes"""
+    if Is.instance(shape, SimpleShape):
+        return [[shape]]
+    if Is.instance(shape, ConnectedShape):
+        return [list(shape)]
+    result = []
+    for sub in shape:
+        result.append([sub] if Is.instance(sub, SimpleShape) else tuple(sub))
+    return result
 
 
 class ShapePloter:
@@ -164,23 +186,21 @@ class ShapePloter:
         fill_color = kwargs.pop("fill_color")
         alpha = kwargs.pop("alpha")
         marker = kwargs.pop("marker")
-        connecteds = (
-            list(shape) if Is.instance(shape, DisjointShape) else [shape]
-        )
+        connecteds = tuple(map(tuple, shape2union_intersections(shape)))
         for connected in connecteds:
             path = path_shape(connected)
-            if connected.area > 0:
+            if sum(s.area for s in connected) > 0:
                 patch = PathPatch(path, color=fill_color, alpha=alpha)
             else:
                 self.gca().set_facecolor("#BFFFBF")
                 patch = PathPatch(path, color="white", alpha=1)
             self.gca().add_patch(patch)
-            for jordan in connected.jordans:
-                path = path_jordan(jordan)
-                color = pos_color if jordan.area > 0 else neg_color
+            for simple in connected:
+                path = path_jordan(simple.jordan)
+                color = pos_color if simple.jordan.area > 0 else neg_color
                 patch = PathPatch(
                     path, edgecolor=color, facecolor="none", lw=2
                 )
                 self.gca().add_patch(patch)
-                xvals, yvals = zip(*jordan.vertices())
+                xvals, yvals = zip(*simple.jordan.vertices())
                 self.gca().scatter(xvals, yvals, color=color, marker=marker)

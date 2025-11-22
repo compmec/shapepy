@@ -4,13 +4,12 @@ Defines the piecewise curve class
 
 from __future__ import annotations
 
-from collections import defaultdict
 from typing import Iterable, Iterator, Tuple, Union
 
 from ..loggers import debug
-from ..rbool import IntervalR1
+from ..rbool import IntervalR1, WholeR1, from_any
 from ..scalar.reals import Real
-from ..tools import Is, To, pairs
+from ..tools import Is, pairs
 from .base import IParametrizedCurve
 from .box import Box
 from .point import Point2D
@@ -47,7 +46,15 @@ class PiecewiseCurve(IParametrizedCurve):
         return r"{" + ", ".join(map(str, self)) + r"}"
 
     def __repr__(self):
-        return self.__str__()
+        return "[" + ", ".join(map(repr, self)) + "]"
+
+    def __eq__(self, other: PiecewiseCurve):
+        return (
+            Is.instance(other, PiecewiseCurve)
+            and self.length == other.length
+            and self.knots == other.knots
+            and tuple(self) == tuple(other)
+        )
 
     @property
     def domain(self):
@@ -115,40 +122,23 @@ class PiecewiseCurve(IParametrizedCurve):
             box |= bezier.box()
         return box
 
-    @debug("shapepy.geometry.piecewise")
-    def split(self, nodes: Iterable[Real]) -> None:
-        """
-        Creates an opening in the piecewise curve
-
-        Example
-        >>> piecewise.knots
-        (0, 1, 2, 3)
-        >>> piecewise.snap([0.5, 1.2])
-        >>> piecewise.knots
-        (0, 0.5, 1, 1.2, 2, 3)
-        """
-        nodes = set(map(To.finite, nodes)) - set(self.knots)
-        spansnodes = defaultdict(set)
-        for node in nodes:
-            span = self.span(node)
-            if span is not None:
-                spansnodes[span].add(node)
-        if len(spansnodes) == 0:
-            return
-        newsegments = []
-        for i, segmenti in enumerate(self):
-            if i not in spansnodes:
-                newsegments.append(segmenti)
-                continue
-            divisions = sorted(spansnodes[i] | set(segmenti.knots))
-            for ka, kb in pairs(divisions):
-                newsegments.append(segmenti.section([ka, kb]))
-        self.__knots = tuple(sorted(list(self.knots) + list(nodes)))
-        self.__segments = tuple(newsegments)
-
     def eval(self, node: float, derivate: int = 0) -> Point2D:
         return self[self.span(node)].eval(node, derivate)
 
     def __contains__(self, point: Point2D) -> bool:
         """Tells if the point is on the boundary"""
         return any(point in bezier for bezier in self)
+
+    @debug("shapepy.geometry.piecewise")
+    def section(
+        self, domain: Union[IntervalR1, WholeR1]
+    ) -> Union[Segment, PiecewiseCurve]:
+        domain = from_any(domain)
+        if domain not in self.domain:
+            raise ValueError(f"Invalid {domain} not in {self.domain}")
+        newsegs = []
+        for segmenti in self.__segments:
+            inter = segmenti.domain & domain
+            if Is.instance(inter, (IntervalR1, WholeR1)):
+                newsegs.append(segmenti.section(inter))
+        return newsegs[0] if len(newsegs) == 1 else PiecewiseCurve(newsegs)

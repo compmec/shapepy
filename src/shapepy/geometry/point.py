@@ -86,6 +86,9 @@ class Point2D:
             self.__angle = arg(self.__xcoord, self.__ycoord)
         return self.__angle
 
+    def __hash__(self):
+        return hash((self.xcoord, self.ycoord))
+
     def __copy__(self) -> Point2D:
         return +self
 
@@ -98,7 +101,7 @@ class Point2D:
 
     def __str__(self) -> str:
         return (
-            f"({self.xcoord}, {self.ycoord})"
+            f"({str(self.xcoord)}, {str(self.ycoord)})"
             if Is.finite(self.radius)
             else f"({self.radius}:{self.angle})"
         )

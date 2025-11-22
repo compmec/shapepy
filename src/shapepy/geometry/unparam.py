@@ -21,6 +21,8 @@ class USegment(IGeometricCurve):
     """Equivalent to Segment, but ignores the parametrization"""
 
     def __init__(self, segment: Segment):
+        if not Is.instance(segment, Segment):
+            raise TypeError(f"Expected {Segment}, not {type(segment)}")
         self.__segment = segment
 
     def __copy__(self) -> USegment:

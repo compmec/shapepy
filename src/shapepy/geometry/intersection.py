@@ -12,7 +12,7 @@ from __future__ import annotations
 
 import math
 from fractions import Fraction
-from typing import Dict, Iterable, Set, Tuple, Union
+from typing import Dict, Iterable, Set, Tuple
 
 from ..loggers import debug, get_logger
 from ..rbool import (
@@ -51,22 +51,15 @@ class GeometricIntersectionCurves:
     It stores inside 'curves' the a
     """
 
-    def __init__(
-        self,
-        curves: Iterable[IGeometricCurve],
-        pairs: Union[None, Iterable[Tuple[int, int]]] = None,
-    ):
+    def __init__(self, curves: Iterable[IGeometricCurve]):
         curves = tuple(curves)
-        if not all(Is.instance(curve, IGeometricCurve) for curve in curves):
-            raise TypeError
-        if pairs is None:
-            pairs: Set[Tuple[int, int]] = set()
-            for i in range(len(curves)):
-                for j in range(i + 1, len(curves)):
-                    pairs.add((i, j))
-        else:
-            pairs = ((i, j) if i < j else (j, i) for i, j in pairs)
-            pairs = set(map(tuple, pairs))
+        for curve in curves:
+            if not Is.instance(curve, IGeometricCurve):
+                raise TypeError(f"Invalid type: {type(curve)}")
+        pairs: Set[Tuple[int, int]] = set()
+        for i in range(len(curves)):
+            for j in range(i + 1, len(curves)):
+                pairs.add((i, j))
         self.__pairs = pairs
         self.__curves = curves
         self.__all_knots = None
@@ -177,21 +170,8 @@ class GeometricIntersectionCurves:
             return subset, subset
         return curve_and_curve(curvea, curveb)
 
-    def __or__(
-        self, other: GeometricIntersectionCurves
-    ) -> GeometricIntersectionCurves:
-        n = len(self.curves)
-        newcurves = list(self.curves) + list(other.curves)
-        newparis = list(self.pairs)
-        for i, j in other.pairs:
-            newparis.append((i + n, j + n))
-        for i in range(len(self.curves)):
-            for j in range(len(other.curves)):
-                newparis.append((i, n + j))
-        return GeometricIntersectionCurves(newcurves, newparis)
-
     def __bool__(self):
-        return all(v == EmptyR1() for v in self.all_subsets.values())
+        return any(v != EmptyR1() for v in self.all_subsets.values())
 
 
 def curve_and_curve(

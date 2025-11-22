@@ -105,3 +105,10 @@ class IParametrizedCurve(IGeometricCurve):
     def parametrize(self) -> IParametrizedCurve:
         """Gives a parametrized curve"""
         return self
+
+    @abstractmethod
+    def section(
+        self, domain: Union[IntervalR1, WholeR1]
+    ) -> IParametrizedCurve:
+        """Gives the section of the curve"""
+        raise NotImplementedError

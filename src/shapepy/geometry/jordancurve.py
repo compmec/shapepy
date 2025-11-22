@@ -67,8 +67,8 @@ class JordanCurve(UPiecewiseCurve):
         return msg
 
     def __repr__(self) -> str:
-        box = self.box()
-        return f"JC[{len(self)}:{box.lowpt},{box.toppt}]"
+        template = r'{"type":"JordanCurve","curve":%s}'
+        return template % repr(self.parametrize())
 
     def __eq__(self, other: JordanCurve) -> bool:
         logger = get_logger("shapepy.geometry.jordancurve")

@@ -138,6 +138,13 @@ class NotExpectedError(Exception):
     """Raised when arrives in a section that were not expected"""
 
 
+class NotContinousError(Exception):
+    """Raised when a curve is not continuous"""
+
+
+T = TypeVar("T")
+
+
 class CyclicContainer(Generic[T]):
     """
     Class that allows checking if there's a circular similarity
@@ -160,6 +167,12 @@ class CyclicContainer(Generic[T]):
 
     def __len__(self) -> int:
         return len(self.__values)
+
+    def __str__(self) -> str:
+        return "Cycle(" + ", ".join(map(str, self)) + ")"
+
+    def __repr__(self):
+        return "Cy(" + ", ".join(map(repr, self)) + ")"
 
     def __eq__(self, other):
         if not Is.instance(other, CyclicContainer):
