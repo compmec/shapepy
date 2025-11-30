@@ -6,16 +6,14 @@ operations between the SubSetR2 instances
 from __future__ import annotations
 
 from collections import Counter
-from copy import copy
-from typing import Dict, Iterable, Iterator, Tuple, Union
+from typing import Iterable, Iterator, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
 
 from ..geometry.segment import Segment
 from ..geometry.unparam import USegment
 from ..loggers import debug, get_logger
-from ..tools import CyclicContainer, Is, NotExpectedError
-from . import boolalg
+from ..tools import CyclicContainer, Is
 from .base import EmptyShape, Future, SubSetR2, WholeShape
 from .config import Config
 from .curve import SingleCurve
@@ -27,7 +25,7 @@ from .graph import (
     graph_manager,
     intersect_graphs,
 )
-from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy, is_lazy
+from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy
 from .point import SinglePoint
 from .shape import ConnectedShape, DisjointShape, SimpleShape
 
@@ -120,7 +118,7 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    if not Is.lazy(subset):
+    if not Is.instance(subset, (LazyAnd, LazyNot, LazyOr)):
         return subset
     logger = get_logger("shapepy.bool2d.boole")
     jordans = GraphComputer.clean(subset)

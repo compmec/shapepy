@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from copy import deepcopy
 from functools import lru_cache
-from typing import Iterable, Iterator, Type
+from typing import Iterable, Iterator, Union
 
 from ..boolalg.simplify import simplify_tree
 from ..boolalg.tree import (
@@ -243,8 +243,3 @@ class LazyAnd(SubSetR2):
     @debug("shapepy.bool2d.lazy")
     def density(self, center):
         return intersect_densities(sub.density(center) for sub in self)
-
-
-def is_lazy(subset: SubSetR2) -> bool:
-    """Tells if the given subset is a Lazy evaluated instance"""
-    return Is.instance(subset, (LazyAnd, LazyNot, LazyOr))
