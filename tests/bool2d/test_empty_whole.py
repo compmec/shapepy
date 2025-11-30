@@ -17,6 +17,7 @@ from shapepy.scalar.angle import degrees
 @pytest.mark.order(21)
 @pytest.mark.dependency(
     depends=[
+        "tests/boolalg/test_simplify.py::test_all",
         "tests/geometry/test_integral.py::test_all",
         "tests/geometry/test_jordan_curve.py::test_all",
     ],
