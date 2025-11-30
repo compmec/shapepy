@@ -11,19 +11,20 @@ from shapepy import lebesgue_density
 from shapepy.bool2d.base import EmptyShape, WholeShape
 from shapepy.bool2d.density import lebesgue_density_jordan
 from shapepy.bool2d.primitive import Primitive
-from shapepy.bool2d.shape import ConnectedShape, DisjointShape
+from shapepy.bool2d.shape import ConnectedShape, DisjointShape, SimpleShape
 from shapepy.geometry.factory import FactoryJordan
 from shapepy.geometry.point import polar
+from shapepy.loggers import enable_logger
 from shapepy.scalar.angle import degrees, turns
 
 
 @pytest.mark.order(23)
 @pytest.mark.dependency(
     depends=[
-        "tests/geometry/test_integral.py::test_all",
-        "tests/geometry/test_jordan_polygon.py::test_all",
-        "tests/bool2d/test_empty_whole.py::test_end",
-        "tests/bool2d/test_primitive.py::test_end",
+        # "tests/geometry/test_integral.py::test_all",
+        # "tests/geometry/test_jordan_polygon.py::test_all",
+        # "tests/bool2d/test_empty_whole.py::test_end",
+        # "tests/bool2d/test_primitive.py::test_end",
     ],
     scope="session",
 )

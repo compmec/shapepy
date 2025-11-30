@@ -280,6 +280,7 @@ class EmptyShape(SubSetR2):
     def rotate(self, _):
         return self
 
+    @debug("shapepy.bool2d.base")
     def density(self, center: Point2D) -> Density:
         return Density.zero
 

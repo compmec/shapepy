@@ -5,18 +5,26 @@ operations between the SubSetR2 instances
 
 from __future__ import annotations
 
-from copy import copy
-from typing import Iterable, Tuple, Union
+from collections import Counter
+from typing import Iterable, Iterator, Tuple, Union
 
 from shapepy.geometry.jordancurve import JordanCurve
 
-from ..geometry.intersection import GeometricIntersectionCurves
+from ..geometry.segment import Segment
 from ..geometry.unparam import USegment
-from ..loggers import debug
+from ..loggers import debug, get_logger
 from ..tools import CyclicContainer, Is
 from .base import EmptyShape, Future, SubSetR2, WholeShape
 from .config import Config
 from .curve import SingleCurve
+from .graph import (
+    Edge,
+    Graph,
+    Node,
+    curve2graph,
+    graph_manager,
+    intersect_graphs,
+)
 from .lazy import LazyAnd, LazyNot, LazyOr, RecipeLazy
 from .point import SinglePoint
 from .shape import ConnectedShape, DisjointShape, SimpleShape
@@ -110,56 +118,16 @@ def clean_bool2d(subset: SubSetR2) -> SubSetR2:
     SubSetR2
         The intersection subset
     """
-    if not Is.lazy(subset):
+    if not Is.instance(subset, (LazyAnd, LazyNot, LazyOr)):
         return subset
-    if Is.instance(subset, LazyNot):
-        return clean_bool2d_not(subset)
-    subsets = tuple(subset)
-    assert len(subsets) == 2
-    shapea, shapeb = subsets
-    shapea = clean_bool2d(shapea)
-    shapeb = clean_bool2d(shapeb)
-    if Is.instance(subset, LazyAnd):
-        if shapeb in shapea:
-            return copy(shapeb)
-        if shapea in shapeb:
-            return copy(shapea)
-        jordans = FollowPath.and_shapes(shapea, shapeb)
-    elif Is.instance(subset, LazyOr):
-        if shapeb in shapea:
-            return copy(shapea)
-        if shapea in shapeb:
-            return copy(shapeb)
-        jordans = FollowPath.or_shapes(shapea, shapeb)
+    logger = get_logger("shapepy.bool2d.boole")
+    jordans = GraphComputer.clean(subset)
+    for i, jordan in enumerate(jordans):
+        logger.debug(f"{i}: {jordan}")
     if len(jordans) == 0:
-        return EmptyShape() if Is.instance(subset, LazyAnd) else WholeShape()
+        density = subset.density((0, 0))
+        return EmptyShape() if float(density) == 0 else WholeShape()
     return shape_from_jordans(jordans)
-
-
-@debug("shapepy.bool2d.boolean")
-def clean_bool2d_not(subset: LazyNot) -> SubSetR2:
-    """
-    Cleans complementar of given subset
-
-    Parameters
-    ----------
-    subset: SubSetR2
-        The subset to be cleaned
-
-    Return
-    ------
-    SubSetR2
-        The cleaned subset
-    """
-    assert Is.instance(subset, LazyNot)
-    inverted = ~subset
-    if Is.instance(inverted, SimpleShape):
-        return SimpleShape(~inverted.jordan, True)
-    if Is.instance(inverted, ConnectedShape):
-        return DisjointShape((~s).clean() for s in inverted)
-    if Is.instance(inverted, DisjointShape):
-        return shape_from_jordans(~jordan for jordan in inverted.jordans)
-    raise NotImplementedError(f"Missing typo: {type(inverted)}")
 
 
 @debug("shapepy.bool2d.boolean")
@@ -269,202 +237,175 @@ def shape_from_jordans(jordans: Tuple[JordanCurve]) -> SubSetR2:
     return DisjointShape(connecteds)
 
 
-class FollowPath:
-    """
-    Class responsible to compute the final jordan curve
-    result from boolean operation between two simple shapes
-
-    """
+class GraphComputer:
+    """Contains static methods to use Graph to compute boolean operations"""
 
     @staticmethod
-    def split_on_intersection(
-        all_group_jordans: Iterable[Iterable[JordanCurve]],
-    ):
-        """
-        Find the intersections between two jordan curves and call split on the
-        nodes which intersects
-        """
-        intersection = GeometricIntersectionCurves([])
-        all_group_jordans = tuple(map(tuple, all_group_jordans))
-        for i, jordansi in enumerate(all_group_jordans):
-            for j in range(i + 1, len(all_group_jordans)):
-                jordansj = all_group_jordans[j]
-                for jordana in jordansi:
-                    for jordanb in jordansj:
-                        intersection |= (
-                            jordana.parametrize() & jordanb.parametrize()
-                        )
-        intersection.evaluate()
-        for jordans in all_group_jordans:
-            for jordan in jordans:
-                split_knots = intersection.all_knots[id(jordan.parametrize())]
-                jordan.parametrize().split(split_knots)
+    @debug("shapepy.bool2d.boole")
+    def clean(subset: SubSetR2) -> Iterator[JordanCurve]:
+        """Cleans the subset using the graphs"""
+        logger = get_logger("shapepy.bool2d.boole")
+        pairs = tuple(GraphComputer.extract(subset))
+        djordans = {id(j): j for b, j in pairs if b}
+        ijordans = {id(j): j for b, j in pairs if not b}
+        # for key in djordans.keys() & ijordans.keys():
+        #     djordans.pop(key)
+        #     ijordans.pop(key)
+        piecewises = [jordan.parametrize() for jordan in djordans.values()]
+        piecewises += [(~jordan).parametrize() for jordan in ijordans.values()]
+        logger.debug(f"Quantity of piecewises: {len(piecewises)}")
+        with graph_manager():
+            graphs = tuple(map(curve2graph, piecewises))
+            logger.debug("Computing intersections")
+            graph = intersect_graphs(graphs)
+            logger.debug("Finished graph intersections")
+            for edge in tuple(graph.edges):
+                density = subset.density(edge.pointm)
+                if not 0 < float(density) < 1:
+                    graph.remove_edge(edge)
+            logger.debug("After removing the edges" + str(graph))
+            graphs = tuple(GraphComputer.extract_disjoint_graphs(graph))
+            all_edges = map(GraphComputer.unique_closed_path, graphs)
+            all_edges = tuple(e for e in all_edges if e is not None)
+            logger.debug("all edges = ")
+            for i, edges in enumerate(all_edges):
+                logger.debug(f"    {i}: {edges}")
+            jordans = tuple(map(GraphComputer.edges2jordan, all_edges))
+        return jordans
 
     @staticmethod
-    def pursue_path(
-        index_jordan: int, index_segment: int, jordans: Tuple[JordanCurve]
-    ) -> CyclicContainer[Tuple[int, int]]:
-        """
-        Given a list of jordans, it returns a matrix of integers like
-        [(a1, b1), (a2, b2), (a3, b3), ..., (an, bn)] such
-            End point of jordans[a_{i}].segments[b_{i}]
-            Start point of jordans[a_{i+1}].segments[b_{i+1}]
-        are equal
-
-        The first point (a1, b1) = (index_jordan, index_segment)
-
-        The end point of jordans[an].segments[bn] is equal to
-        the start point of jordans[a1].segments[b1]
-
-        We suppose there's no triple intersection
-        """
-        matrix = []
-        all_segments = [tuple(jordan.parametrize()) for jordan in jordans]
-        while True:
-            index_segment %= len(all_segments[index_jordan])
-            segment = all_segments[index_jordan][index_segment]
-            if (index_jordan, index_segment) in matrix:
-                break
-            matrix.append((index_jordan, index_segment))
-            last_point = segment(segment.knots[-1])
-            possibles = []
-            for i, jordan in enumerate(jordans):
-                if i == index_jordan:
-                    continue
-                if last_point in jordan:
-                    possibles.append(i)
-            if len(possibles) == 0:
-                index_segment += 1
-                continue
-            index_jordan = possibles[0]
-            for j, segj in enumerate(all_segments[index_jordan]):
-                if segj(segj.knots[0]) == last_point:
-                    index_segment = j
-                    break
-        return CyclicContainer(matrix)
+    def extract(subset: SubSetR2) -> Iterator[Tuple[bool, JordanCurve]]:
+        """Extracts the simple shapes from the subset"""
+        if isinstance(subset, SimpleShape):
+            yield (True, subset.jordan)
+        elif Is.instance(subset, (ConnectedShape, DisjointShape)):
+            for subshape in subset:
+                yield from GraphComputer.extract(subshape)
+        elif Is.instance(subset, LazyNot):
+            for var, jordan in GraphComputer.extract(~subset):
+                yield (not var, jordan)
+        elif Is.instance(subset, (LazyOr, LazyAnd)):
+            for subsubset in subset:
+                yield from GraphComputer.extract(subsubset)
 
     @staticmethod
-    def indexs_to_jordan(
-        jordans: Tuple[JordanCurve],
-        matrix_indexs: CyclicContainer[Tuple[int, int]],
-    ) -> JordanCurve:
-        """
-        Given 'n' jordan curves, and a matrix of integers
-        [(a0, b0), (a1, b1), ..., (am, bm)]
-        Returns a myjordan (JordanCurve instance) such
-        len(myjordan.segments) = matrix_indexs.shape[0]
-        myjordan.segments[i] = jordans[ai].segments[bi]
-        """
-        beziers = []
-        for index_jordan, index_segment in matrix_indexs:
-            new_bezier = jordans[index_jordan].parametrize()[index_segment]
-            new_bezier = copy(new_bezier)
-            beziers.append(USegment(new_bezier))
-        new_jordan = JordanCurve(beziers)
-        return new_jordan
+    def extract_disjoint_graphs(graph: Graph) -> Iterable[Graph]:
+        """Separates the given graph into disjoint graphs"""
+        edges = list(graph.edges)
+        while len(edges) > 0:
+            edge = edges.pop(0)
+            current_edges = {edge}
+            search_edges = {edge}
+            while len(search_edges) > 0:
+                end_nodes = {edge.nodeb for edge in search_edges}
+                search_edges = {
+                    edge for edge in edges if edge.nodea in end_nodes
+                }
+                for edge in search_edges:
+                    edges.remove(edge)
+                current_edges |= search_edges
+            yield Graph(current_edges)
 
     @staticmethod
-    def follow_path(
-        jordans: Tuple[JordanCurve], start_indexs: Tuple[Tuple[int]]
-    ) -> Tuple[JordanCurve]:
-        """
-        Returns a list of jordan curves which is the result
-        of the intersection between 'jordansa' and 'jordansb'
-        """
-        assert all(Is.instance(j, JordanCurve) for j in jordans)
-        bez_indexs = []
-        for ind_jord, ind_seg in start_indexs:
-            indices_matrix = FollowPath.pursue_path(ind_jord, ind_seg, jordans)
-            if indices_matrix not in bez_indexs:
-                bez_indexs.append(indices_matrix)
-        new_jordans = []
-        for indices_matrix in bez_indexs:
-            jordan = FollowPath.indexs_to_jordan(jordans, indices_matrix)
-            new_jordans.append(jordan)
-        return tuple(new_jordans)
+    def possible_paths(
+        edges: Iterable[Edge], start_node: Node
+    ) -> Iterator[Tuple[Edge, ...]]:
+        """Returns all the possible paths that begins at start_node"""
+        edges = tuple(edges)
+        indices = set(i for i, e in enumerate(edges) if e.nodea == start_node)
+        other_edges = tuple(e for i, e in enumerate(edges) if i not in indices)
+        for edge in (edges[i] for i in indices):
+            subpaths = tuple(
+                GraphComputer.possible_paths(other_edges, edge.nodeb)
+            )
+            if len(subpaths) == 0:
+                yield (edge,)
+            else:
+                for subpath in subpaths:
+                    yield (edge,) + subpath
 
     @staticmethod
-    def midpoints_one_shape(
-        shapea: Union[SimpleShape, ConnectedShape, DisjointShape],
-        shapeb: Union[SimpleShape, ConnectedShape, DisjointShape],
-        closed: bool,
-        inside: bool,
-    ) -> Iterable[Tuple[int, int]]:
-        """
-        Returns a matrix [(a0, b0), (a1, b1), ...]
-        such the middle point of
-            shapea.jordans[a0].segments[b0]
-        is inside/outside the shapeb
-
-        If parameter ``closed`` is True, consider a
-        point in boundary is inside.
-        If ``closed=False``, a boundary point is outside
-
-        """
-        for i, jordan in enumerate(shapea.jordans):
-            for j, segment in enumerate(jordan.parametrize()):
-                mid_point = segment((segment.knots[0] + segment.knots[-1]) / 2)
-                density = shapeb.density(mid_point)
-                mid_point_in = (float(density) > 0 and closed) or density == 1
-                if not inside ^ mid_point_in:
-                    yield (i, j)
+    def closed_paths(
+        edges: Tuple[Edge, ...], start_node: Node
+    ) -> Iterator[CyclicContainer[Edge]]:
+        """Gets all the closed paths that starts at given node"""
+        logger = get_logger("shapepy.bool2d.boolean")
+        paths = tuple(GraphComputer.possible_paths(edges, start_node))
+        logger.debug(
+            f"all paths starting with {repr(start_node)}: {len(paths)} paths"
+        )
+        # for i, path in enumerate(paths):
+        #     logger.debug(f"    {i}: {path}")
+        closeds = []
+        for path in paths:
+            if path[0].nodea == path[-1].nodeb:
+                closeds.append(CyclicContainer(path))
+        return closeds
 
     @staticmethod
-    def midpoints_shapes(
-        shapea: SubSetR2, shapeb: SubSetR2, closed: bool, inside: bool
-    ) -> Tuple[Tuple[int, int]]:
-        """
-        This function computes the indexes of the midpoints from
-        both shapes, shifting the indexs of shapeb.jordans
-        """
-        indexsa = FollowPath.midpoints_one_shape(
-            shapea, shapeb, closed, inside
-        )
-        indexsb = FollowPath.midpoints_one_shape(  # pylint: disable=W1114
-            shapeb, shapea, closed, inside
-        )
-        indexsa = list(indexsa)
-        njordansa = len(shapea.jordans)
-        for indjorb, indsegb in indexsb:
-            indexsa.append((njordansa + indjorb, indsegb))
-        return tuple(indexsa)
+    def all_closed_paths(graph: Graph) -> Iterator[CyclicContainer[Edge]]:
+        """Reads the graphs and extracts the unique paths"""
+        if not Is.instance(graph, Graph):
+            raise TypeError
+
+        # logger.debug("Extracting unique paths from the graph")
+        # logger.debug(str(graph))
+
+        edges = tuple(graph.edges)
+
+        def sorter(x):
+            return x[1]
+
+        logger = get_logger("shapepy.bool2d.boole")
+        counter = Counter(e.nodea for e in edges)
+        logger.debug(f"counter = {dict(counter)}")
+        snodes = tuple(k for k, _ in sorted(counter.items(), key=sorter))
+        logger.debug(f"snodes = {snodes}")
+        all_paths = []
+        for start_node in snodes:
+            all_paths += list(
+                GraphComputer.closed_paths(graph.edges, start_node)
+            )
+        return all_paths
 
     @staticmethod
-    def or_shapes(shapea: SubSetR2, shapeb: SubSetR2) -> Tuple[JordanCurve]:
-        """
-        Computes the set of jordan curves that defines the boundary of
-        the union between the two base shapes
-        """
-        assert Is.instance(
-            shapea, (SimpleShape, ConnectedShape, DisjointShape)
-        )
-        assert Is.instance(
-            shapeb, (SimpleShape, ConnectedShape, DisjointShape)
-        )
-        FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
-        indexs = FollowPath.midpoints_shapes(
-            shapea, shapeb, closed=True, inside=False
-        )
-        all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
-        new_jordans = FollowPath.follow_path(all_jordans, indexs)
-        return new_jordans
+    @debug("shapepy.bool2d.boole")
+    def unique_closed_path(graph: Graph) -> Union[None, CyclicContainer[Edge]]:
+        """Reads the graphs and extracts the unique paths"""
+        all_paths = list(GraphComputer.all_closed_paths(graph))
+        for path in all_paths:
+            return path
+        return None
 
     @staticmethod
-    def and_shapes(shapea: SubSetR2, shapeb: SubSetR2) -> Tuple[JordanCurve]:
-        """
-        Computes the set of jordan curves that defines the boundary of
-        the intersection between the two base shapes
-        """
-        assert Is.instance(
-            shapea, (SimpleShape, ConnectedShape, DisjointShape)
-        )
-        assert Is.instance(
-            shapeb, (SimpleShape, ConnectedShape, DisjointShape)
-        )
-        FollowPath.split_on_intersection([shapea.jordans, shapeb.jordans])
-        indexs = FollowPath.midpoints_shapes(
-            shapea, shapeb, closed=False, inside=True
-        )
-        all_jordans = tuple(shapea.jordans) + tuple(shapeb.jordans)
-        new_jordans = FollowPath.follow_path(all_jordans, indexs)
-        return new_jordans
+    @debug("shapepy.bool2d.boole")
+    def edges2jordan(edges: CyclicContainer[Edge]) -> JordanCurve:
+        """Converts the given connected edges into a Jordan Curve"""
+        logger = get_logger("shapepy.bool2d.boole")
+        logger.debug(f"len(edges) = {len(edges)}")
+        edges = tuple(edges)
+        if len(edges) == 1:
+            path = tuple(tuple(edges)[0].singles)[0]
+            logger.debug(f"path = {path}")
+            curve = path.curve.section([path.knota, path.knotb])
+            logger.debug(f"curve = {curve}")
+            if isinstance(curve, Segment):
+                usegments = [USegment(curve)]
+            else:
+                usegments = list(map(USegment, curve))
+            logger.debug(f"usegments = {usegments}")
+            return JordanCurve(usegments)
+        usegments = []
+        for edge in tuple(edges):
+            path = tuple(edge.singles)[0]
+            interval = [path.knota, path.knotb]
+            # logger.info(f"interval = {interval}")
+            subcurve = path.curve.section(interval)
+            if Is.instance(subcurve, Segment):
+                usegments.append(USegment(subcurve))
+            else:
+                usegments += list(map(USegment, subcurve))
+        # logger.info(f"Returned: {len(usegments)}")
+        # for i, useg in enumerate(usegments):
+        #     logger.info(f"    {i}: {useg.parametrize()}")
+        return JordanCurve(usegments)

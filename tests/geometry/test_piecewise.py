@@ -81,6 +81,34 @@ def test_evaluate():
 
 @pytest.mark.order(14)
 @pytest.mark.dependency(depends=["test_build"])
+def test_section():
+    points = [
+        ((0, 0), (1, 0)),
+        ((1, 0), (1, 1)),
+        ((1, 1), (0, 1)),
+        ((0, 1), (0, 0)),
+    ]
+    segments = tuple(
+        FactorySegment.bezier(pts, [i, i + 1]) for i, pts in enumerate(points)
+    )
+    piecewise = PiecewiseCurve(segments)
+    assert piecewise.section([0, 1]) == segments[0]
+    assert piecewise.section([1, 2]) == segments[1]
+    assert piecewise.section([2, 3]) == segments[2]
+    assert piecewise.section([3, 4]) == segments[3]
+
+    assert piecewise.section([0, 0.5]) == segments[0].section([0, 0.5])
+    assert piecewise.section([1, 1.5]) == segments[1].section([1, 1.5])
+    assert piecewise.section([2, 2.5]) == segments[2].section([2, 2.5])
+    assert piecewise.section([3, 3.5]) == segments[3].section([3, 3.5])
+    assert piecewise.section([0.5, 1]) == segments[0].section([0.5, 1])
+    assert piecewise.section([1.5, 2]) == segments[1].section([1.5, 2])
+    assert piecewise.section([2.5, 3]) == segments[2].section([2.5, 3])
+    assert piecewise.section([3.5, 4]) == segments[3].section([3.5, 4])
+
+
+@pytest.mark.order(14)
+@pytest.mark.dependency(depends=["test_build"])
 def test_print():
     points = [
         ((0, 0), (1, 0)),
@@ -103,6 +131,7 @@ def test_print():
         "test_build",
         "test_box",
         "test_evaluate",
+        "test_section",
         "test_print",
     ]
 )
